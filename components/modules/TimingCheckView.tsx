@@ -11,20 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { parseMinutes } from "@/lib/timing";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 interface TimingResult {
   suggestions: string[];
   rationale: string;
-}
-
-const timingRegex = /(\d+)\s*(?:min|minuten|m)\b/gi;
-
-export function parseMinutes(content: string) {
-  return Array.from(content.matchAll(timingRegex)).map((match) =>
-    Number(match[1]),
-  );
 }
 
 export function TimingCheckView() {

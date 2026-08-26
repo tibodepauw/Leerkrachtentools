@@ -134,12 +134,18 @@ export function mockReflection(goals: string[]): ReflectionDraft {
         : "",
   }));
   const questions: string[] = [];
-  if (goalRows.some((goal) => goal.reach === "onbekend")) {
-    questions.push("Bereikte bij D2 en D3 een meerderheid of minderheid het doel?");
+  if (
+    goalRows.some(
+      (goal) => goal.reach === "onbekend" || !goal.evidence,
+    )
+  ) {
+    questions.push(
+      "Welke doelen bereikten een meerderheid of minderheid, en welk concreet leerlinggedrag bewijst dat?",
+    );
   }
-  if (goalRows.some((goal) => !goal.evidence)) {
-    questions.push("Welk concreet leerlinggedrag toont dat de doelen bereikt zijn?");
-  }
+  questions.push(
+    "Welke betrokkenheidsfactoren realiseerde je, en wat leerde deze les je over jezelf als leerkracht?",
+  );
   return {
     goals: goalRows,
     engagement: [],
