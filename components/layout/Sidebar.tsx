@@ -153,7 +153,10 @@ function SidebarContent({
           onClick={onNavigate}
           className="group flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-neutral-900"
         >
-          <Avatar className="size-9 border border-neutral-700">
+          <Avatar
+            key={accountLabel(account)}
+            className="size-9 border border-neutral-700"
+          >
             <AvatarFallback className="bg-neutral-800 text-xs font-semibold text-white">
               {initials(account)}
             </AvatarFallback>
