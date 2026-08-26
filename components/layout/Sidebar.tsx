@@ -112,7 +112,7 @@ function SidebarContent({
           <Sparkles className="size-4" />
         </div>
         <div>
-          <p className="text-sm font-semibold tracking-tight">Leerkrachtentools</p>
+          <p className="text-sm font-black tracking-tight">Leerkrachtentools</p>
           <p className="text-xs text-neutral-500">Thomas More · BALO</p>
         </div>
       </div>

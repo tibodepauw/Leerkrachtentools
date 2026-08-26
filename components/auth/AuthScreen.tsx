@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, LockKeyhole, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,15 +68,9 @@ export function AuthScreen() {
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-black px-4 py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.12),transparent_45%)]" />
       <div className="relative w-full max-w-md">
-        <div className="mb-8 flex items-center justify-center gap-3">
-          <div className="grid size-10 place-items-center rounded-xl bg-white text-black">
-            <ShieldCheck className="size-5" />
-          </div>
-          <div>
-            <p className="font-semibold tracking-tight">Leerkrachtentools</p>
-            <p className="text-xs text-neutral-500">Beveiligde toegang</p>
-          </div>
-        </div>
+        <h1 className="mb-10 text-center text-4xl font-black tracking-[-0.06em] text-white sm:text-5xl">
+          Leerkrachtentools
+        </h1>
 
         <Card className="border-neutral-800 bg-neutral-950/90 shadow-2xl">
           <CardHeader>
@@ -87,7 +81,7 @@ export function AuthScreen() {
                 <LockKeyhole className="size-4" />
               )}
             </div>
-            <CardTitle>
+            <CardTitle className="text-xl font-extrabold">
               {step === "email"
                 ? "Log in met je e-mailadres"
                 : "Controleer je inbox"}

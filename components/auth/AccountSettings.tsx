@@ -130,7 +130,7 @@ export function AccountSettings({
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Instellingen</h1>
+            <h1 className="text-2xl font-black tracking-tight">Instellingen</h1>
             <p className="text-sm text-neutral-500">Beheer je profiel, plan en privacy.</p>
           </div>
         </div>
