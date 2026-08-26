@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { ArrowLeft, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -186,6 +187,7 @@ export function AuthScreen() {
         </Card>
         <p className="mt-5 text-center text-xs leading-5 text-neutral-600">
           We bewaren je e-mailadres voor toegang en beveiliging. Lesinhoud wordt niet in deze accountdatabase opgeslagen.
+          {" "}<Link href="/privacy" className="underline hover:text-neutral-400">Lees het privacyoverzicht.</Link>
         </p>
       </div>
     </main>

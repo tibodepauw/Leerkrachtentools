@@ -3,6 +3,17 @@
 import { useState } from "react";
 import { LogOut, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -66,6 +77,15 @@ export function ActiveLessonBar({
         ? "Je ontvangt toekomstige projectupdates."
         : "Je ontvangt geen projectupdates meer.",
     );
+  }
+
+  async function deleteAccount() {
+    const response = await fetch("/api/account", { method: "DELETE" });
+    if (!response.ok) {
+      toast.error("Account kon niet worden verwijderd.");
+      return;
+    }
+    window.location.reload();
   }
 
   return (
@@ -192,6 +212,27 @@ export function ActiveLessonBar({
                   </p>
                 </div>
               </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-fit">
+                    Verwijder account en e-mailadres
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Account definitief verwijderen?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Je e-mailadres, marketingtoestemming en alle actieve sessies worden onmiddellijk verwijderd. Je lokale lescontext blijft alleen in deze browser staan.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteAccount}>
+                      Definitief verwijderen
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </DialogContent>
           </Dialog>
           <Button
