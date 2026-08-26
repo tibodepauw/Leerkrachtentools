@@ -29,22 +29,27 @@ const modules = {
 
 export function Dashboard({
   userEmail,
-  marketingOptIn,
+  displayName,
+  tier,
 }: {
   userEmail: string;
-  marketingOptIn: boolean;
+  displayName: string | null;
+  tier: string;
 }) {
   const activeModule = useLessonStore((state) => state.activeModule);
   const ActiveModule = modules[activeModule];
 
   return (
     <div className="min-h-screen bg-black">
-      <Sidebar />
+      <Sidebar
+        account={{
+          email: userEmail,
+          displayName,
+          tier,
+        }}
+      />
       <div className="lg:pl-64">
-        <ActiveLessonBar
-          userEmail={userEmail}
-          initialMarketingOptIn={marketingOptIn}
-        />
+        <ActiveLessonBar userEmail={userEmail} />
         <main>
           <ActiveModule />
         </main>

@@ -27,6 +27,8 @@ export function getDatabase() {
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
+      display_name TEXT,
+      tier TEXT NOT NULL DEFAULT 'free',
       email_verified_at INTEGER NOT NULL,
       marketing_opt_in INTEGER NOT NULL DEFAULT 0,
       marketing_consent_at INTEGER,
@@ -62,6 +64,21 @@ export function getDatabase() {
     CREATE INDEX IF NOT EXISTS sessions_user_id ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS sessions_expires_at ON sessions(expires_at);
   `);
+  const userColumns = new Set(
+    (
+      database.prepare("PRAGMA table_info(users)").all() as Array<{
+        name: string;
+      }>
+    ).map((column) => column.name),
+  );
+  if (!userColumns.has("display_name")) {
+    database.exec("ALTER TABLE users ADD COLUMN display_name TEXT");
+  }
+  if (!userColumns.has("tier")) {
+    database.exec(
+      "ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'",
+    );
+  }
   return database;
 }
 

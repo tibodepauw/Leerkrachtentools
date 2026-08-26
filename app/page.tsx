@@ -15,7 +15,8 @@ export default async function Home() {
   return session ? (
     <Dashboard
       userEmail={session.email}
-      marketingOptIn={session.marketingOptIn}
+      displayName={session.displayName}
+      tier={session.tier}
     />
   ) : (
     <AuthScreen />

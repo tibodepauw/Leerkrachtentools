@@ -1,22 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { LogOut, RotateCcw, SlidersHorizontal } from "lucide-react";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -38,16 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { EducationNetwork } from "@/types";
 
-export function ActiveLessonBar({
-  userEmail,
-  initialMarketingOptIn,
-}: {
-  userEmail: string;
-  initialMarketingOptIn: boolean;
-}) {
-  const [marketingOptIn, setMarketingOptIn] = useState(
-    initialMarketingOptIn,
-  );
+export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
   const lesson = useLessonStore((state) => state.lesson);
   const setField = useLessonStore((state) => state.setField);
   const setGoal = useLessonStore((state) => state.setGoal);
@@ -56,35 +33,6 @@ export function ActiveLessonBar({
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.reload();
-  }
-
-  async function updateMarketingConsent(checked: boolean) {
-    const previous = marketingOptIn;
-    setMarketingOptIn(checked);
-    const response = await fetch("/api/account/marketing-consent", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ marketingOptIn: checked }),
-    });
-    if (!response.ok) {
-      setMarketingOptIn(previous);
-      toast.error("Toestemming kon niet worden bijgewerkt.");
-      return;
-    }
-    toast.success(
-      checked
-        ? "Je ontvangt toekomstige projectupdates."
-        : "Je ontvangt geen projectupdates meer.",
-    );
-  }
-
-  async function deleteAccount() {
-    const response = await fetch("/api/account", { method: "DELETE" });
-    if (!response.ok) {
-      toast.error("Account kon niet worden verwijderd.");
-      return;
-    }
     window.location.reload();
   }
 
@@ -193,46 +141,6 @@ export function ActiveLessonBar({
                 <RotateCcw className="size-4" />
                 Sessie wissen
               </Button>
-              <Separator />
-              <div className="flex items-start gap-3 rounded-lg border border-neutral-800 p-3">
-                <Checkbox
-                  id="account-marketing"
-                  checked={marketingOptIn}
-                  onCheckedChange={(checked) =>
-                    updateMarketingConsent(checked === true)
-                  }
-                  className="mt-0.5"
-                />
-                <div>
-                  <Label htmlFor="account-marketing" className="font-normal">
-                    Ontvang updates over het toekomstige project
-                  </Label>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    Je kunt deze toestemming hier altijd weer intrekken.
-                  </p>
-                </div>
-              </div>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-fit">
-                    Verwijder account en e-mailadres
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Account definitief verwijderen?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Je e-mailadres, marketingtoestemming en alle actieve sessies worden onmiddellijk verwijderd. Je lokale lescontext blijft alleen in deze browser staan.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuleren</AlertDialogCancel>
-                    <AlertDialogAction onClick={deleteAccount}>
-                      Definitief verwijderen
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
             </DialogContent>
           </Dialog>
           <Button

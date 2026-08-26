@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import {
   AudioLines,
   BookOpenCheck,
@@ -10,10 +12,15 @@ import {
   Menu,
   MessageSquareQuote,
   ScanText,
+  Settings,
   Sparkles,
   Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Avatar,
+  AvatarFallback,
+} from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -69,7 +76,32 @@ const sections = [
   }>;
 }>;
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+interface AccountSummary {
+  email: string;
+  displayName: string | null;
+  tier: string;
+}
+
+function accountLabel(account: AccountSummary) {
+  return account.displayName || account.email.split("@")[0];
+}
+
+function initials(account: AccountSummary) {
+  return accountLabel(account)
+    .split(/[\s._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toLocaleUpperCase("nl-BE"))
+    .join("");
+}
+
+function SidebarContent({
+  account,
+  onNavigate,
+}: {
+  account: AccountSummary;
+  onNavigate?: () => void;
+}) {
   const activeModule = useLessonStore((state) => state.activeModule);
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
 
@@ -115,25 +147,52 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           ))}
         </nav>
       </ScrollArea>
+      <div className="border-t border-neutral-800 p-3">
+        <Link
+          href="/settings"
+          onClick={onNavigate}
+          className="group flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-neutral-900"
+        >
+          <Avatar className="size-9 border border-neutral-700">
+            <AvatarFallback className="bg-neutral-800 text-xs font-semibold text-white">
+              {initials(account)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-white">
+              {accountLabel(account)}
+            </p>
+            <p className="text-xs capitalize text-neutral-500">
+              {account.tier === "free" ? "Gratis" : account.tier}
+            </p>
+          </div>
+          <Settings className="size-4 text-neutral-600 transition-colors group-hover:text-neutral-300" />
+        </Link>
+      </div>
     </div>
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ account }: { account: AccountSummary }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-neutral-800 lg:block">
-        <SidebarContent />
+        <SidebarContent account={account} />
       </aside>
       <div className="fixed left-3 top-3 z-50 lg:hidden">
-        <Sheet>
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button size="icon" variant="outline" aria-label="Open navigatie">
               <Menu className="size-4" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-72 border-neutral-800 p-0">
-            <SidebarContent />
+            <SidebarContent
+              account={account}
+              onNavigate={() => setMobileOpen(false)}
+            />
           </SheetContent>
         </Sheet>
       </div>

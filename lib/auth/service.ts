@@ -168,6 +168,8 @@ interface CodeRow {
 interface UserRow {
   id: string;
   email: string;
+  display_name: string | null;
+  tier: string;
   marketing_opt_in: number;
 }
 
@@ -240,7 +242,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
 
   const user = db
     .prepare(
-      "SELECT id, email, marketing_opt_in FROM users WHERE email = ?",
+      "SELECT id, email, display_name, tier, marketing_opt_in FROM users WHERE email = ?",
     )
     .get(email) as UserRow;
   const sessionToken = randomBytes(32).toString("base64url");
@@ -256,6 +258,8 @@ export function verifyLoginCode(emailValue: string, code: string) {
     user: {
       id: user.id,
       email: user.email,
+      displayName: user.display_name,
+      tier: user.tier,
       marketingOptIn: Boolean(user.marketing_opt_in),
     },
   };
@@ -267,7 +271,8 @@ export function getSession(token?: string) {
   const db = getDatabase();
   const row = db
     .prepare(
-      `SELECT users.id, users.email, users.marketing_opt_in, sessions.expires_at
+      `SELECT users.id, users.email, users.display_name, users.tier,
+              users.marketing_opt_in, sessions.expires_at
        FROM sessions
        JOIN users ON users.id = sessions.user_id
        WHERE sessions.token_hash = ? AND sessions.expires_at >= ?`,
@@ -283,6 +288,8 @@ export function getSession(token?: string) {
   return {
     id: row.id,
     email: row.email,
+    displayName: row.display_name,
+    tier: row.tier,
     marketingOptIn: Boolean(row.marketing_opt_in),
     expiresAt: row.expires_at,
   };
