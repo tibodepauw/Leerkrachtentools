@@ -132,7 +132,7 @@ function SidebarContent({
                       onNavigate?.();
                     }}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors",
+                      "flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm transition-colors",
                       activeModule === item.id
                         ? "bg-neutral-800 text-white"
                         : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100",
