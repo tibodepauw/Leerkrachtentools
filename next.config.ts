@@ -17,6 +17,7 @@ const contentSecurityPolicy = [
 const nextConfig: NextConfig = {
   output: "standalone",
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  devIndicators: false,
   serverExternalPackages: ["better-sqlite3"],
   experimental: {
     serverActions: {
