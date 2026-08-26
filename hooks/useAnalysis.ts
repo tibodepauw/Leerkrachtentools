@@ -25,6 +25,10 @@ export function useAnalysis<T>() {
       const payload = (await response.json()) as
         | AnalysisResponse<T>
         | { error?: string };
+      if (response.status === 401) {
+        window.location.reload();
+        throw new Error("Je sessie is verlopen.");
+      }
       if (!response.ok || !("data" in payload)) {
         throw new Error(
           "error" in payload && payload.error

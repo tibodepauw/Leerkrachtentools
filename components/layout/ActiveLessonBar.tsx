@@ -1,8 +1,11 @@
 "use client";
 
-import { RotateCcw, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
+import { LogOut, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -24,12 +27,46 @@ import { Separator } from "@/components/ui/separator";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { EducationNetwork } from "@/types";
 
-export function ActiveLessonBar() {
+export function ActiveLessonBar({
+  userEmail,
+  initialMarketingOptIn,
+}: {
+  userEmail: string;
+  initialMarketingOptIn: boolean;
+}) {
+  const [marketingOptIn, setMarketingOptIn] = useState(
+    initialMarketingOptIn,
+  );
   const lesson = useLessonStore((state) => state.lesson);
   const setField = useLessonStore((state) => state.setField);
   const setGoal = useLessonStore((state) => state.setGoal);
   const setNetwork = useLessonStore((state) => state.setNetwork);
   const clearSession = useLessonStore((state) => state.clearSession);
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.reload();
+  }
+
+  async function updateMarketingConsent(checked: boolean) {
+    const previous = marketingOptIn;
+    setMarketingOptIn(checked);
+    const response = await fetch("/api/account/marketing-consent", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ marketingOptIn: checked }),
+    });
+    if (!response.ok) {
+      setMarketingOptIn(previous);
+      toast.error("Toestemming kon niet worden bijgewerkt.");
+      return;
+    }
+    toast.success(
+      checked
+        ? "Je ontvangt toekomstige projectupdates."
+        : "Je ontvangt geen projectupdates meer.",
+    );
+  }
 
   return (
     <header className="sticky top-0 z-20 border-b border-neutral-800 bg-black/90 backdrop-blur-xl">
@@ -50,6 +87,9 @@ export function ActiveLessonBar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <span className="hidden max-w-44 truncate text-xs text-neutral-500 xl:inline">
+            {userEmail}
+          </span>
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
@@ -133,8 +173,36 @@ export function ActiveLessonBar() {
                 <RotateCcw className="size-4" />
                 Sessie wissen
               </Button>
+              <Separator />
+              <div className="flex items-start gap-3 rounded-lg border border-neutral-800 p-3">
+                <Checkbox
+                  id="account-marketing"
+                  checked={marketingOptIn}
+                  onCheckedChange={(checked) =>
+                    updateMarketingConsent(checked === true)
+                  }
+                  className="mt-0.5"
+                />
+                <div>
+                  <Label htmlFor="account-marketing" className="font-normal">
+                    Ontvang updates over het toekomstige project
+                  </Label>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    Je kunt deze toestemming hier altijd weer intrekken.
+                  </p>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={logout}
+            aria-label="Uitloggen"
+            title="Uitloggen"
+          >
+            <LogOut className="size-4" />
+          </Button>
         </div>
       </div>
     </header>

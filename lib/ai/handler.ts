@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import type { z } from "zod";
+import {
+  sessionFromRequest,
+  unauthorizedResponse,
+} from "@/lib/auth/guard";
 import { runStructured } from "@/lib/ai/router";
 import type { ProviderName } from "@/lib/ai/providers";
 
@@ -25,6 +29,7 @@ export function createAnalysisHandler<T>({
   buildMock: (input: InputRecord) => T;
 }) {
   return async function POST(request: Request) {
+    if (!sessionFromRequest(request)) return unauthorizedResponse();
     try {
       const input = (await request.json()) as InputRecord;
       const preferred =

@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  sessionFromRequest,
+  unauthorizedResponse,
+} from "@/lib/auth/guard";
 import { mockManualExtraction } from "@/lib/ai/mocks";
 import { prompts } from "@/lib/ai/prompts";
 import { runStructured } from "@/lib/ai/router";
@@ -7,6 +11,7 @@ import { manualExtractionSchema } from "@/lib/ai/schemas";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  if (!sessionFromRequest(request)) return unauthorizedResponse();
   try {
     const input = (await request.json()) as {
       fileName?: string;

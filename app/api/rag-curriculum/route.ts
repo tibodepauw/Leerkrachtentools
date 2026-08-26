@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import {
+  sessionFromRequest,
+  unauthorizedResponse,
+} from "@/lib/auth/guard";
+import {
   futureCurriculum,
   searchCurriculum,
 } from "@/lib/rag/vectorSearch";
@@ -9,6 +13,7 @@ const networks = new Set(["ZILL", "OVSG", "GO"]);
 const MATCH_THRESHOLD = 0.08;
 
 export async function POST(request: Request) {
+  if (!sessionFromRequest(request)) return unauthorizedResponse();
   try {
     const body = (await request.json()) as {
       goal?: string;

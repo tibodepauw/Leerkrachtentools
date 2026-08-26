@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import {
+  sessionFromRequest,
+  unauthorizedResponse,
+} from "@/lib/auth/guard";
+import {
   enforceThomasMoreDialogue,
   isStrictThomasMoreDialogue,
 } from "@/lib/ai/dialogue";
@@ -11,6 +15,7 @@ import { dialogueSchema } from "@/lib/ai/schemas";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  if (!sessionFromRequest(request)) return unauthorizedResponse();
   try {
     const input = (await request.json()) as { content?: string };
     const result = await runStructured({
