@@ -9,6 +9,11 @@ export interface StructuredRequest<T> {
   prompt: string;
   mock: T;
   preferredProvider?: ProviderName;
+  file?: {
+    data: string;
+    mediaType: string;
+    filename?: string;
+  };
 }
 
 export interface StructuredResult<T> {
@@ -65,12 +70,36 @@ export async function runStructured<T>(
 ): Promise<StructuredResult<T>> {
   const errors: string[] = [];
 
-  for (const candidate of getModelCandidates(request.preferredProvider)) {
+  const candidates = getModelCandidates(request.preferredProvider);
+  if (request.file) {
+    candidates.sort((left, right) =>
+      left.name === "google" ? -1 : right.name === "google" ? 1 : 0,
+    );
+  }
+
+  for (const candidate of candidates) {
     try {
       const result = await generateText({
         model: candidate.model,
         system: request.system,
-        prompt: request.prompt,
+        ...(request.file
+          ? {
+              messages: [
+                {
+                  role: "user" as const,
+                  content: [
+                    { type: "text" as const, text: request.prompt },
+                    {
+                      type: "file" as const,
+                      data: request.file.data,
+                      mediaType: request.file.mediaType,
+                      filename: request.file.filename,
+                    },
+                  ],
+                },
+              ],
+            }
+          : { prompt: request.prompt }),
         output: Output.object({ schema: request.schema }),
         maxOutputTokens: 2400,
         temperature: 0.2,
