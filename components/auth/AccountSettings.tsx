@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Check,
@@ -53,6 +54,7 @@ export function AccountSettings({
   tier,
   marketingOptIn: initialMarketingOptIn,
 }: AccountSettingsProps) {
+  const router = useRouter();
   const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
   const [marketingOptIn, setMarketingOptIn] = useState(
     initialMarketingOptIn,
@@ -100,7 +102,8 @@ export function AccountSettings({
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/";
+    router.push("/");
+    router.refresh();
   }
 
   async function deleteAccount() {
@@ -109,7 +112,8 @@ export function AccountSettings({
       toast.error("Account kon niet worden verwijderd.");
       return;
     }
-    window.location.href = "/";
+    router.push("/");
+    router.refresh();
   }
 
   return (
