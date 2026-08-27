@@ -2,6 +2,7 @@
 
 import { ActiveLessonBar } from "@/components/layout/ActiveLessonBar";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { AlignmentAuditView } from "@/components/modules/AlignmentAuditView";
 import { CurriculumRagView } from "@/components/modules/CurriculumRagView";
 import { DialogueFormatterView } from "@/components/modules/DialogueFormatterView";
@@ -12,6 +13,7 @@ import { ManualScannerView } from "@/components/modules/ManualScannerView";
 import { SpellcheckView } from "@/components/modules/SpellcheckView";
 import { TimingCheckView } from "@/components/modules/TimingCheckView";
 import { VoiceReflectionView } from "@/components/modules/VoiceReflectionView";
+import { useAppReady } from "@/hooks/useAppReady";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 const modules = {
@@ -36,8 +38,13 @@ export function Dashboard({
   displayName: string | null;
   tier: string;
 }) {
+  const ready = useAppReady();
   const activeModule = useLessonStore((state) => state.activeModule);
   const ActiveModule = modules[activeModule];
+
+  if (!ready) {
+    return <AppLoadingScreen label="Leerkrachtentools laden…" />;
+  }
 
   return (
     <div className="min-h-screen bg-black">

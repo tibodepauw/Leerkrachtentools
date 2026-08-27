@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { ClipboardCheck, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 interface FullAuditResult {
@@ -23,10 +24,10 @@ interface FullAuditResult {
 }
 
 export function FullAuditView() {
-  const lesson = useLessonStore((state) => state.lesson);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
-  const [content, setContent] = useState(lesson.lessonPreparation);
+  const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<FullAuditResult>();
+  const actionDisabled = loading || !content.trim();
 
   return (
     <ModuleShell
@@ -36,12 +37,16 @@ export function FullAuditView() {
       input={
         <div className="space-y-4">
           <Textarea rows={22} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Plak de volledige concept-lesvoorbereiding..." />
-          <Button variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar alle modules</Button>
+          <Button type="button" variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar alle modules</Button>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button disabled={loading || !content.trim()} onClick={() => analyze("/api/full-audit", { content })}>
+          <ModuleActionButton
+            disabled={actionDisabled}
+            disabledReason="Plak eerst je concept-lesvoorbereiding in het invoerveld."
+            onClick={() => analyze("/api/full-audit", { content })}
+          >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <ClipboardCheck className="size-4" />}
             Start totale audit
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

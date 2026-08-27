@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { BookOpenCheck, ExternalLink, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { useLessonGoalText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { CurriculumGoal, EducationNetwork } from "@/types";
 
@@ -72,10 +73,9 @@ function GoalCard({ title, match }: { title: string; match: MatchedGoal }) {
 export function CurriculumRagView() {
   const lesson = useLessonStore((state) => state.lesson);
   const setNetwork = useLessonStore((state) => state.setNetwork);
-  const [goal, setGoal] = useState(
-    lesson.goals.find((item) => item.text)?.text ?? "",
-  );
+  const [goal, setGoal] = useLessonGoalText();
   const { analyze, result, loading, error } = useAnalysis<RagResult>();
+  const actionDisabled = loading || !goal.trim();
 
   return (
     <ModuleShell
@@ -111,8 +111,9 @@ export function CurriculumRagView() {
             Referentie: {lesson.referenceSchoolYear}. Pas dit aan via “Actieve les”.
           </p>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button
-            disabled={loading || !goal.trim()}
+          <ModuleActionButton
+            disabled={actionDisabled}
+            disabledReason="Vul eerst een actief lesdoel in of zet er één via Doelverbeteraar."
             onClick={() =>
               analyze("/api/rag-curriculum", {
                 goal,
@@ -123,7 +124,7 @@ export function CurriculumRagView() {
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <BookOpenCheck className="size-4" />}
             Zoek officiële koppelingen
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

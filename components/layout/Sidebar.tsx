@@ -127,6 +127,7 @@ function SidebarContent({
                 {section.items.map((item) => (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => {
                       setActiveModule(item.id);
                       onNavigate?.();

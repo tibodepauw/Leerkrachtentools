@@ -3,13 +3,16 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, LockKeyhole, Mail } from "lucide-react";
+import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useClientMounted } from "@/hooks/useAppReady";
 
 export function AuthScreen() {
+  const mounted = useClientMounted();
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -62,6 +65,10 @@ export function AuthScreen() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!mounted) {
+    return <AppLoadingScreen label="Inlogscherm laden…" />;
   }
 
   return (

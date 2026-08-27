@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Loader2, Target } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 type Coverage = "gedekt" | "gedeeltelijk" | "ontbreekt";
@@ -41,9 +42,10 @@ function CoverageBadge({ value }: { value: Coverage }) {
 export function AlignmentAuditView() {
   const lesson = useLessonStore((state) => state.lesson);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
-  const [content, setContent] = useState(lesson.lessonPreparation);
+  const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<AlignmentResult>();
   const goals = lesson.goals.map((goal) => `${goal.id}: ${goal.text}`);
+  const actionDisabled = loading || !content.trim();
 
   return (
     <ModuleShell
@@ -57,12 +59,16 @@ export function AlignmentAuditView() {
           </div>
           <Label htmlFor="alignment-content">Lesopbouw</Label>
           <Textarea id="alignment-content" rows={18} value={content} onChange={(event) => setContent(event.target.value)} />
-          <Button variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar sessie</Button>
+          <Button type="button" variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar sessie</Button>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button disabled={loading || !content.trim()} onClick={() => analyze("/api/audit-alignment", { goals: lesson.goals.map((goal) => goal.text), content })}>
+          <ModuleActionButton
+            disabled={actionDisabled}
+            disabledReason="Plak eerst je lesopbouw in het invoerveld."
+            onClick={() => analyze("/api/audit-alignment", { goals: lesson.goals.map((goal) => goal.text), content })}
+          >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Target className="size-4" />}
             Controleer alignering
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

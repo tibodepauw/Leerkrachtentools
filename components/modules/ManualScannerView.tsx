@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileUp, Loader2, RefreshCw } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -80,10 +81,14 @@ export function ManualScannerView() {
             />
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button onClick={submit} disabled={loading || (!content && !fileName)}>
+          <ModuleActionButton
+            onClick={submit}
+            disabled={loading || (!content && !fileName)}
+            disabledReason="Upload een handleiding of plak eerst tekst in het invoerveld."
+          >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             Gegevens extraheren
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

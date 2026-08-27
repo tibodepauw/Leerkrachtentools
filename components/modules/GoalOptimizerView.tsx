@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { useLessonGoalText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { GoalTaxonomy } from "@/types";
 
@@ -24,10 +25,10 @@ interface GoalResult {
 }
 
 export function GoalOptimizerView() {
-  const lessonGoal = useLessonStore((state) => state.lesson.goals[0].text);
-  const [goal, setGoal] = useState(lessonGoal);
+  const [goal, setGoal] = useLessonGoalText();
   const setActiveGoal = useLessonStore((state) => state.setActiveGoal);
   const { analyze, result, loading, error } = useAnalysis<GoalResult>();
+  const actionDisabled = loading || !goal.trim();
 
   return (
     <ModuleShell
@@ -47,13 +48,14 @@ export function GoalOptimizerView() {
             />
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button
+          <ModuleActionButton
             onClick={() => analyze("/api/analyze-goals", { goal })}
-            disabled={loading || !goal.trim()}
+            disabled={actionDisabled}
+            disabledReason="Typ of plak eerst een lesdoel in het invoerveld."
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             Verbeter lesdoel
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 interface EngagementResult {
@@ -22,11 +23,11 @@ interface EngagementResult {
 }
 
 export function EngagementView() {
-  const lesson = useLessonStore((state) => state.lesson);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const setField = useLessonStore((state) => state.setField);
-  const [content, setContent] = useState(lesson.lessonPreparation);
+  const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<EngagementResult>();
+  const actionDisabled = loading || !content.trim();
 
   function syncFactors() {
     if (!result) return;
@@ -47,12 +48,16 @@ export function EngagementView() {
         <div className="space-y-4">
           <Label htmlFor="engagement-content">Volledige lesvoorbereiding</Label>
           <Textarea id="engagement-content" rows={20} value={content} onChange={(event) => setContent(event.target.value)} />
-          <Button variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar sessie</Button>
+          <Button type="button" variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar sessie</Button>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button disabled={loading || !content.trim()} onClick={() => analyze("/api/audit-engagement", { content })}>
+          <ModuleActionButton
+            disabled={actionDisabled}
+            disabledReason="Plak eerst je lesvoorbereiding in het invoerveld."
+            onClick={() => analyze("/api/audit-engagement", { content })}
+          >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
             Analyseer zes factoren
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

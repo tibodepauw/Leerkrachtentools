@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Loader2, MessageSquareQuote } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 interface DialogueResult {
@@ -18,10 +19,10 @@ interface DialogueResult {
 }
 
 export function DialogueFormatterView() {
-  const preparation = useLessonStore((state) => state.lesson.lessonPreparation);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
-  const [content, setContent] = useState(preparation);
+  const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<DialogueResult>();
+  const actionDisabled = loading || !content.trim();
 
   return (
     <ModuleShell
@@ -35,10 +36,14 @@ export function DialogueFormatterView() {
             <Textarea id="dialogue" rows={16} value={content} onChange={(event) => setContent(event.target.value)} />
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button disabled={loading || !content.trim()} onClick={() => analyze("/api/format-dialogue", { content })}>
+          <ModuleActionButton
+            disabled={actionDisabled}
+            disabledReason="Plak eerst een lesfase of instructie in het invoerveld."
+            onClick={() => analyze("/api/format-dialogue", { content })}
+          >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <MessageSquareQuote className="size-4" />}
             Format voor Thomas More
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

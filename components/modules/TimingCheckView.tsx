@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Clock3, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { parseMinutes } from "@/lib/timing";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 interface TimingResult {
@@ -23,12 +24,13 @@ interface TimingResult {
 export function TimingCheckView() {
   const lesson = useLessonStore((state) => state.lesson);
   const setField = useLessonStore((state) => state.setField);
-  const [content, setContent] = useState(lesson.lessonPreparation);
+  const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<TimingResult>();
   const minutes = useMemo(() => parseMinutes(content), [content]);
   const sum = minutes.reduce((total, value) => total + value, 0);
   const deviation = sum - lesson.totalMinutes;
   const status = deviation === 0 ? "groen" : Math.abs(deviation) <= 5 ? "oranje" : "rood";
+  const actionDisabled = loading || minutes.length === 0;
 
   return (
     <ModuleShell
@@ -52,13 +54,14 @@ export function TimingCheckView() {
             />
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button
-            disabled={loading || minutes.length === 0}
+          <ModuleActionButton
+            disabled={actionDisabled}
+            disabledReason="Voeg eerst minuten toe in je fase-headers, bv. “Instap — 5 min”."
             onClick={() => analyze("/api/audit-timing", { totalMinutes: String(lesson.totalMinutes), content: `Gevonden tijden: ${minutes.join(", ")}. Som: ${sum}. Afwijking: ${deviation}.` })}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Clock3 className="size-4" />}
             Vraag optimalisaties
-          </Button>
+          </ModuleActionButton>
         </div>
       }
       output={

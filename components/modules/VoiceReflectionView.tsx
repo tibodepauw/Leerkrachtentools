@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Mic, Square, WandSparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export function VoiceReflectionView() {
     useAnalysis<ReflectionDraft>();
   const questions = result?.data.followUpQuestions ?? [];
   const isFinal = Boolean(result && questions.length === 0);
+  const actionDisabled = loading || (!content.trim() && !recorder.audio);
 
   async function submit(extra = "") {
     const audioData = recorder.audio
@@ -118,10 +120,14 @@ export function VoiceReflectionView() {
             </CardContent>
           </Card>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <Button disabled={loading || (!content.trim() && !recorder.audio)} onClick={() => submit()}>
+          <ModuleActionButton
+            disabled={actionDisabled}
+            disabledReason="Typ eerst je reflectie of maak een korte audio-opname."
+            onClick={() => submit()}
+          >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <WandSparkles className="size-4" />}
             Fase A · analyseer reflectie
-          </Button>
+          </ModuleActionButton>
           {questions.length > 0 && (
             <Card className="border-orange-900/60">
               <CardHeader>
