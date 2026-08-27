@@ -127,7 +127,7 @@ export function AuthScreen() {
                   </div>
                 </div>
                 {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-                <Button className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="size-4 animate-spin" />}
                   Stuur verificatiecode
                 </Button>
@@ -158,7 +158,11 @@ export function AuthScreen() {
                   )}
                 </div>
                 {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-                <Button className="w-full" disabled={loading || code.length !== 6}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || code.length !== 6}
+                >
                   {loading && <Loader2 className="size-4 animate-spin" />}
                   Veilig inloggen
                 </Button>
