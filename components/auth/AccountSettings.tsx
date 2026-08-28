@@ -37,6 +37,9 @@ interface AccountSettingsProps {
   displayName: string | null;
   tier: string;
   marketingOptIn: boolean;
+  appVersion: string;
+  appCommit: string | null;
+  githubRepo: string | null;
 }
 
 function initials(name: string, email: string) {
@@ -53,6 +56,9 @@ export function AccountSettings({
   displayName: initialDisplayName,
   tier,
   marketingOptIn: initialMarketingOptIn,
+  appVersion,
+  appCommit,
+  githubRepo,
 }: AccountSettingsProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
@@ -176,14 +182,47 @@ export function AccountSettings({
             <CardHeader className="flex-row items-center justify-between">
               <div>
                 <CardTitle>Status</CardTitle>
-                <CardDescription>Je huidige toegangsniveau.</CardDescription>
+                <CardDescription>
+                  Je toegangsniveau en geïnstalleerde appversie.
+                </CardDescription>
               </div>
               <Badge variant="secondary" className="capitalize">
                 {tier === "free" ? "Gratis" : tier}
               </Badge>
             </CardHeader>
-            <CardContent className="text-sm text-neutral-400">
-              Je gebruikt alle beschikbare Leerkrachtentools binnen de gratis tier.
+            <CardContent className="space-y-3 text-sm text-neutral-400">
+              <p>
+                Je gebruikt alle beschikbare Leerkrachtentools binnen de
+                gratis tier.
+              </p>
+              <div className="rounded-lg border border-neutral-800 p-3">
+                <dl className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-neutral-600">
+                      Versie
+                    </dt>
+                    <dd className="font-mono text-neutral-200">v{appVersion}</dd>
+                  </div>
+                  {appCommit ? (
+                    <div>
+                      <dt className="text-xs uppercase tracking-wide text-neutral-600">
+                        Build
+                      </dt>
+                      <dd className="font-mono text-neutral-200">{appCommit}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+                {githubRepo ? (
+                  <a
+                    href={`${githubRepo}/releases`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-block text-xs text-neutral-300 underline-offset-4 hover:text-white hover:underline"
+                  >
+                    Vergelijk met releases op GitHub
+                  </a>
+                ) : null}
+              </div>
             </CardContent>
           </Card>
 

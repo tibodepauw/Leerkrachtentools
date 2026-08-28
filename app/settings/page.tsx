@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AccountSettings } from "@/components/auth/AccountSettings";
+import { getAppVersionInfo } from "@/lib/app/version";
 import {
   getSession,
   SESSION_COOKIE,
@@ -16,12 +17,17 @@ export default async function SettingsPage() {
   const session = getSession(cookieStore.get(SESSION_COOKIE)?.value);
   if (!session) redirect("/");
 
+  const appVersion = getAppVersionInfo();
+
   return (
     <AccountSettings
       email={session.email}
       displayName={session.displayName}
       tier={session.tier}
       marketingOptIn={session.marketingOptIn}
+      appVersion={appVersion.version}
+      appCommit={appVersion.commit}
+      githubRepo={appVersion.githubRepo}
     />
   );
 }

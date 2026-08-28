@@ -1,6 +1,37 @@
 import type { NextConfig } from "next";
+import { execSync } from "node:child_process";
+import packageJson from "./package.json";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
+
+function resolveGitCommit() {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) {
+    return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7);
+  }
+  if (process.env.GITHUB_SHA) {
+    return process.env.GITHUB_SHA.slice(0, 7);
+  }
+  try {
+    return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim();
+  } catch {
+    return "dev";
+  }
+}
+
+function resolveGitHubRepo() {
+  if (process.env.NEXT_PUBLIC_GITHUB_REPO) {
+    return process.env.NEXT_PUBLIC_GITHUB_REPO;
+  }
+  try {
+    const remote = execSync("git remote get-url github", {
+      encoding: "utf8",
+    }).trim();
+    const match = remote.match(/github\.com[:/](.+?)(?:\.git)?$/);
+    return match ? `https://github.com/${match[1]}` : "";
+  } catch {
+    return "";
+  }
+}
 
 // Strict CSP only in production. In development Next/Turbopack needs eval +
 // websockets; a tight CSP previously left the SSR HTML visible while React
@@ -20,6 +51,11 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  env: {
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
+    NEXT_PUBLIC_APP_COMMIT: resolveGitCommit(),
+    NEXT_PUBLIC_GITHUB_REPO: resolveGitHubRepo(),
+  },
   // Cursor previews / tunnels often hit the dev server from non-localhost hosts.
   allowedDevOrigins: [
     "127.0.0.1",
