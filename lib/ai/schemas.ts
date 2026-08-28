@@ -10,6 +10,7 @@ export const manualExtractionSchema = z.object({
 });
 
 export const goalImprovementSchema = z.object({
+  status: z.enum(["goed", "verbeterd"]),
   original: z.string(),
   improved: z.string(),
   rationale: z.string(),

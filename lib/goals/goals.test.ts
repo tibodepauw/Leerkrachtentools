@@ -15,6 +15,25 @@ describe("doelverbeteraar", () => {
     expect(result.improved.toLocaleLowerCase("nl-BE")).toContain("hoofdsteden");
     expect(result.improved.toLocaleLowerCase("nl-BE")).not.toContain("romein");
   });
+
+  it("laat een goed doel ongewijzigd", () => {
+    const original =
+      "De leerlingen kunnen minstens drie relevante historische bronnen selecteren en correct verwerken.";
+    const result = improveLessonGoal(original);
+
+    expect(result.status).toBe("goed");
+    expect(result.improved).toBe(original);
+    expect(result.addedTerms).toEqual([]);
+    expect(result.removedTerms).toEqual([]);
+  });
+
+  it("markeert een wezenlijk aangepast doel als verbeterd", () => {
+    const result = improveLessonGoal(
+      "De leerlingen kennen de hoofdsteden van Europa",
+    );
+
+    expect(result.status).toBe("verbeterd");
+  });
 });
 
 describe("MC-DAS-SPM herkenner", () => {

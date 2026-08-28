@@ -12,12 +12,18 @@ letterlijk of duidelijk herkenbaar terug in rawPublisherGoals, in de volgorde wa
 ze voorkomen.`,
 
   goal: `${baseSystemPrompt}
-Verbeter één lesdoel volgens Thomas More. Behoud strikt hetzelfde onderwerp,
-thema en leerstof — verzin geen nieuw lesinhoudelijk thema. Het doel moet
-enkelvoudig zijn, starten met "De leerlingen kunnen", observeerbaar en
-meetbaar gedrag bevatten en concrete voorwaarden of criteria noemen. Vermijd
-kennen, begrijpen, weten en inzicht hebben. Geef het originele doel terug in
-original en alleen de verbeterde versie in improved.`,
+Beoordeel eerst eerlijk of één lesdoel volgens de Thomas More-regels al goed is.
+Een goed doel is enkelvoudig, bevat duidelijk observeerbaar leerlinggedrag en is
+voldoende concreet om achteraf te beoordelen. Het hoeft niet geforceerd langer
+te worden en niet elk doel heeft een getal, extra voorwaarde of extra criterium
+nodig. Voeg nooit willekeurige aantallen, criteria of inhoud toe.
+Als het doel al goed is: zet status op "goed", neem de invoer ongewijzigd over in
+original én improved, laat removedTerms en addedTerms leeg en leg bondig uit
+waarom het voldoet.
+Alleen bij een wezenlijk probleem zet je status op "verbeterd" en herschrijf je
+zo minimaal mogelijk. Behoud strikt hetzelfde onderwerp, thema en leerstof.
+Vermijd niet-observeerbare werkwoorden zoals kennen, begrijpen, weten en inzicht
+hebben. Geef het originele doel terug in original.`,
 
   goalTaxonomy: `${baseSystemPrompt}
 Classificeer één lesdoel als MC (mentaal-cognitief), DAS (dynamisch-affectief)

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
@@ -12,6 +12,7 @@ import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 interface GoalImprovementResult {
+  status: "goed" | "verbeterd";
   original: string;
   improved: string;
   rationale: string;
@@ -28,6 +29,11 @@ export function GoalOptimizerView() {
   const { analyze, result, loading, error } =
     useAnalysis<GoalImprovementResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
+  const isAlreadyGood =
+    result?.data.status === "goed" ||
+    (result?.data.original.trim() === result?.data.improved.trim() &&
+      result?.data.addedTerms.length === 0 &&
+      result?.data.removedTerms.length === 0);
 
   return (
     <ModuleShell
@@ -64,47 +70,66 @@ export function GoalOptimizerView() {
       output={
         result ? (
           <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Visuele verbetering</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-red-400 line-through decoration-red-500/70">
-                  {result.data.original}
-                </p>
-                <ArrowRight className="size-4 text-neutral-600" />
-                <p className="text-sm leading-6 text-emerald-300">
-                  {result.data.improved}
-                </p>
-                <CopyButton value={result.data.improved} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="space-y-3 pt-5 text-sm">
-                <p>{result.data.rationale}</p>
-                {result.data.removedTerms.length > 0 && (
-                  <p className="text-neutral-500">
-                    Verwijderd: {result.data.removedTerms.join(", ")}
+            {isAlreadyGood ? (
+              <Card className="border-emerald-500/30 bg-emerald-500/5">
+                <CardContent className="space-y-3 pt-5">
+                  <div className="flex items-center gap-2 text-emerald-300">
+                    <CheckCircle2 className="size-5" />
+                    <p className="font-medium">Dit doel is al goed</p>
+                  </div>
+                  <p className="text-sm leading-6">{result.data.original}</p>
+                  <p className="text-sm text-neutral-400">
+                    {result.data.rationale}
                   </p>
-                )}
-                {result.data.addedTerms.length > 0 && (
-                  <p className="text-neutral-500">
-                    Toegevoegd: {result.data.addedTerms.join(", ")}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Visuele verbetering</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-red-400 line-through decoration-red-500/70">
+                    {result.data.original}
                   </p>
-                )}
-              </CardContent>
-            </Card>
-            <Button
-              type="button"
-              onClick={() => {
-                const index = goals.findIndex((goal) => goal.id === selectedId);
-                if (index >= 0) {
-                  replaceGoalText(index, result.data.improved);
-                }
-              }}
-            >
-              Vervang {selectedId} met verbeterde versie
-            </Button>
+                  <ArrowRight className="size-4 text-neutral-600" />
+                  <p className="text-sm leading-6 text-emerald-300">
+                    {result.data.improved}
+                  </p>
+                  <CopyButton value={result.data.improved} />
+                </CardContent>
+              </Card>
+            )}
+            {!isAlreadyGood ? (
+              <>
+                <Card>
+                  <CardContent className="space-y-3 pt-5 text-sm">
+                    <p>{result.data.rationale}</p>
+                    {result.data.removedTerms.length > 0 && (
+                      <p className="text-neutral-500">
+                        Verwijderd: {result.data.removedTerms.join(", ")}
+                      </p>
+                    )}
+                    {result.data.addedTerms.length > 0 && (
+                      <p className="text-neutral-500">
+                        Toegevoegd: {result.data.addedTerms.join(", ")}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    const index = goals.findIndex((goal) => goal.id === selectedId);
+                    if (index >= 0) {
+                      replaceGoalText(index, result.data.improved);
+                    }
+                  }}
+                >
+                  Vervang {selectedId} met verbeterde versie
+                </Button>
+              </>
+            ) : null}
           </div>
         ) : (
           <EmptyOutput>

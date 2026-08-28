@@ -13,6 +13,16 @@ const VAGUE_VERBS: Array<{
 const CRITERIA_PATTERN =
   /\b(minstens|ten minste|maximaal|correct|zelfstandig|aan de hand van|met behulp van|in groep|individueel|steeds|minstens \d+|ten minste \d+)\b/iu;
 
+function isAlreadyGoodGoal(text: string) {
+  const hasExpectedSubject = /^De leerlingen kunnen\b/u.test(text);
+  const hasVagueVerb = VAGUE_VERBS.some((rule) => {
+    rule.pattern.lastIndex = 0;
+    return rule.pattern.test(text);
+  });
+
+  return hasExpectedSubject && !hasVagueVerb && CRITERIA_PATTERN.test(text);
+}
+
 function normalizeSubject(text: string) {
   const normalized = text.trim().replace(/\s+/g, " ");
 
@@ -71,6 +81,19 @@ export function improveLessonGoal(original: string) {
   const removedTerms: string[] = [];
   const addedTerms: string[] = [];
 
+  if (isAlreadyGoodGoal(trimmed)) {
+    return {
+      status: "goed" as const,
+      original: trimmed,
+      improved: trimmed,
+      rationale:
+        "Dit doel is al duidelijk, observeerbaar en voldoende concreet. Er is geen inhoudelijke verbetering nodig.",
+      removedTerms,
+      addedTerms,
+      criteria: extractGoalCriteria(trimmed),
+    };
+  }
+
   let improved = normalizeSubject(trimmed);
   if (/^De leerlingen\b/u.test(improved) && !/^De leerlingen\b/u.test(trimmed)) {
     addedTerms.push("De leerlingen");
@@ -94,6 +117,7 @@ export function improveLessonGoal(original: string) {
   }
 
   return {
+    status: "verbeterd" as const,
     original: trimmed,
     improved,
     rationale:
