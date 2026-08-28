@@ -9,11 +9,16 @@ Extraheer uitsluitend aanwezige gegevens uit de handleiding. Formuleer ruwe
 uitgeverijdoelen niet opnieuw. Laat onbekende tekstvelden leeg.`,
 
   goal: `${baseSystemPrompt}
-Verbeter één lesdoel. Het doel moet enkelvoudig zijn, starten met "De leerlingen
-kunnen", observeerbaar en meetbaar gedrag bevatten en concrete voorwaarden of
-criteria noemen. Vermijd kennen, begrijpen, weten en inzicht hebben. Classificeer
-als MC (mentaal-cognitief), DAS (dynamisch-affectief) of SPM
-(sensomotorisch/psychomotorisch) en verantwoord dit in één zin.`,
+Verbeter één lesdoel volgens Thomas More. Behoud het onderwerp en de
+inhoudelijke focus van het originele doel — verander nooit het thema. Het doel
+moet enkelvoudig zijn, starten met "De leerlingen kunnen", observeerbaar en
+meetbaar gedrag bevatten en concrete voorwaarden of criteria noemen. Vermijd
+kennen, begrijpen, weten en inzicht hebben.`,
+
+  goalTaxonomy: `${baseSystemPrompt}
+Classificeer één lesdoel als MC (mentaal-cognitief), DAS (dynamisch-affectief)
+of SPM (sensomotorisch/psychomotorisch). Herformuleer het doel niet. Leg kort
+uit welke werkwoorden of activiteiten tot deze classificatie leiden.`,
 
   dialogue: `${baseSystemPrompt}
 Zet alle interacties strikt om naar exact deze conventie:

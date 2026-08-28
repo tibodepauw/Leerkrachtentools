@@ -1,4 +1,6 @@
 import type { ReflectionDraft } from "@/types";
+import { classifyGoalTaxonomy } from "@/lib/goals/classifyTaxonomy";
+import { improveLessonGoal } from "@/lib/goals/improveGoal";
 
 export const mockManualExtraction = {
   learningArea: "Mens en maatschappij",
@@ -14,17 +16,11 @@ export const mockManualExtraction = {
 };
 
 export function mockGoalAnalysis(original: string) {
-  return {
-    original,
-    improved:
-      "De leerlingen kunnen minstens drie kenmerken van een Romeinse stad correct benoemen aan de hand van een bronnenkaart.",
-    taxonomy: "MC" as const,
-    rationale:
-      "Dit is een mentaal-cognitief doel omdat leerlingen kennis waarneembaar oproepen en benoemen.",
-    removedTerms: ["kennen", "begrijpen"],
-    addedTerms: ["benoemen", "minstens drie", "aan de hand van een bronnenkaart"],
-    criteria: ["minstens drie kenmerken", "correct", "met bronnenkaart"],
-  };
+  return improveLessonGoal(original);
+}
+
+export function mockGoalTaxonomy(original: string) {
+  return classifyGoalTaxonomy(original);
 }
 
 export const mockDialogue = {

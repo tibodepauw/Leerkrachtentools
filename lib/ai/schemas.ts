@@ -9,14 +9,25 @@ export const manualExtractionSchema = z.object({
   rawPublisherGoals: z.array(z.string()).max(3),
 });
 
-export const goalAnalysisSchema = z.object({
+export const goalImprovementSchema = z.object({
   original: z.string(),
   improved: z.string(),
-  taxonomy: z.enum(["MC", "DAS", "SPM"]),
   rationale: z.string(),
   removedTerms: z.array(z.string()),
   addedTerms: z.array(z.string()),
   criteria: z.array(z.string()),
+});
+
+export const goalTaxonomySchema = z.object({
+  original: z.string(),
+  taxonomy: z.enum(["MC", "DAS", "SPM"]),
+  rationale: z.string(),
+  indicators: z.array(z.string()),
+  definition: z.string(),
+});
+
+export const goalAnalysisSchema = goalImprovementSchema.extend({
+  taxonomy: z.enum(["MC", "DAS", "SPM"]),
 });
 
 export const dialogueSchema = z.object({
