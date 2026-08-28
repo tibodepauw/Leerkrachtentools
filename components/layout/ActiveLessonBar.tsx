@@ -120,6 +120,26 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                     placeholder="2025-2026"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="total-minutes">Totale lestijd (minuten)</Label>
+                  <Input
+                    id="total-minutes"
+                    type="number"
+                    min={1}
+                    max={240}
+                    value={lesson.totalMinutes}
+                    onChange={(event) =>
+                      setField(
+                        "totalMinutes",
+                        Math.max(1, Number(event.target.value) || 1),
+                      )
+                    }
+                  />
+                  <p className="text-xs text-neutral-500">
+                    Standaard 50 min; kies bv. 45 of 60 min voor kortere of
+                    langere lessen.
+                  </p>
+                </div>
               </div>
               <Separator />
               <div className="space-y-3">

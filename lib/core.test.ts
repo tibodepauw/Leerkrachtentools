@@ -4,19 +4,30 @@ import {
   isStrictThomasMoreDialogue,
 } from "@/lib/ai/dialogue";
 import { searchCurriculum } from "@/lib/rag/vectorSearch";
-import { parseMinutes } from "@/lib/timing";
+import { parsePhaseMinutes, sumPhaseMinutes } from "@/lib/timing";
 
 describe("deterministische timing", () => {
-  it("herkent min, minuten en m", () => {
+  it("herkent min, minuten en m in fase-headers", () => {
     expect(
-      parseMinutes(
+      parsePhaseMinutes(
         "Instap 5 min\nInstructie 15 minuten\nVerwerking 25 m\nAfronding 5 MIN",
       ),
     ).toEqual([5, 15, 25, 5]);
   });
 
-  it("negeert getallen zonder tijdseenheid", () => {
-    expect(parseMinutes("Fase 1 met 12 leerlingen en 10 min")).toEqual([10]);
+  it("negeert minuten in losse zinnen binnen een fase", () => {
+    expect(
+      parsePhaseMinutes(
+        "Instap — 5 min\nLeerlingen krijgen 10 min om te tekenen.\nInstructie — 15 min",
+      ),
+    ).toEqual([5, 15]);
+  });
+
+  it("berekent de som en afwijking t.o.v. totale lestijd", () => {
+    const content =
+      "Instap — 5 min\nInstructie — 15 min\nVerwerking — 25 min\nAfronding — 5 min";
+    expect(sumPhaseMinutes(content)).toBe(50);
+    expect(sumPhaseMinutes(content) - 45).toBe(5);
   });
 });
 

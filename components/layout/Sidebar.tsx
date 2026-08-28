@@ -53,7 +53,7 @@ const sections = [
         icon: MessageSquareQuote,
       },
       { id: "spellcheck", label: "Taalfoutencheck", icon: ScanText },
-      { id: "timing-check", label: "Timing & tijd", icon: Clock3 },
+      { id: "timing-check", label: "Timing", icon: Clock3 },
     ],
   },
   {
