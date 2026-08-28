@@ -4,7 +4,6 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import {
-  futureCurriculum,
   searchCurriculum,
 } from "@/lib/rag/vectorSearch";
 import type { CurriculumGoal, EducationNetwork } from "@/types";
@@ -66,15 +65,6 @@ export async function POST(request: Request) {
           ? { ...match.goal, score: match.score }
           : "niet gevonden",
         alternatives,
-        futurePlans: futureCurriculum({
-          source: body.source,
-          network: body.network,
-        }).map((goal) => ({
-          code: goal.code,
-          version: goal.version,
-          approvalStatus: goal.approvalStatus,
-          sourceUrl: goal.sourceUrl,
-        })),
         corpusNotice:
           body.source === "minimumdoel"
             ? "Vlaamse overheidsdoelen uit de lokale bronseed. Controleer de officiële bron en geldigheid voor indiening."

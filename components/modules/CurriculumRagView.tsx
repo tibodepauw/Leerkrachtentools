@@ -35,12 +35,6 @@ type MatchedGoal = (CurriculumGoal & { score: number }) | "niet gevonden";
 interface MatcherResult {
   goal: MatchedGoal;
   alternatives: Array<CurriculumGoal & { score: number }>;
-  futurePlans: Array<{
-    code: string;
-    version: string;
-    approvalStatus: string;
-    sourceUrl: string;
-  }>;
   corpusNotice: string;
 }
 
@@ -244,22 +238,6 @@ function GoalMatcher({ source }: { source: GoalSource }) {
             <p className="rounded-md border border-neutral-800 bg-neutral-950 p-3 text-xs leading-5 text-neutral-500">
               {result.data.corpusNotice}
             </p>
-            {result.data.futurePlans.length > 0 ? (
-              <Card className="border-dashed">
-                <CardHeader>
-                  <CardTitle className="text-xs text-neutral-400">
-                    Apart gehouden toekomstplannen
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-xs text-neutral-500">
-                  {result.data.futurePlans.map((plan) => (
-                    <p key={plan.code}>
-                      {plan.code} · {plan.approvalStatus}
-                    </p>
-                  ))}
-                </CardContent>
-              </Card>
-            ) : null}
           </div>
         ) : (
           <EmptyOutput>{copy.empty}</EmptyOutput>
