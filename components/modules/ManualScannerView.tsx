@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { ManualExtraction } from "@/types";
 
@@ -63,6 +64,26 @@ export function ManualScannerView() {
     await analyze("/api/extract-manual", payload);
   }
 
+  async function extractAndSync(overrides?: {
+    content?: string;
+    fileName?: string;
+    fileData?: string;
+    mediaType?: string;
+  }) {
+    const response = await analyze("/api/extract-manual", {
+      content: overrides?.content ?? content,
+      fileName: overrides?.fileName ?? fileName,
+      fileData: overrides?.fileData ?? fileData,
+      mediaType: overrides?.mediaType ?? mediaType,
+    });
+
+    if (response?.data) {
+      syncFromExtraction(response.data);
+    }
+
+    return response;
+  }
+
   async function selectFile(file?: File) {
     if (!file) return;
     setUploadError("");
@@ -86,7 +107,7 @@ export function ManualScannerView() {
       setFileData(base64);
       if (file.type.startsWith("text/")) setContent(nextContent);
 
-      await submit({
+      await extractAndSync({
         content: nextContent,
         fileName: file.name,
         fileData: base64,
@@ -155,7 +176,7 @@ export function ManualScannerView() {
           </div>
           {error ? <p className="text-sm text-red-400">{error}</p> : null}
           <ModuleActionButton
-            onClick={() => submit()}
+            onClick={() => extractAndSync()}
             disabled={loading || (!content && !fileName)}
             disabledReason="Upload een handleiding of plak eerst tekst in het invoerveld."
           >
@@ -202,13 +223,22 @@ export function ManualScannerView() {
                 <CardTitle className="text-sm">Ruwe uitgeverijdoelen</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                {result.data.rawPublisherGoals.map((goal) => (
-                  <p key={goal}>• {goal}</p>
+                {result.data.rawPublisherGoals.map((goal, index) => (
+                  <p key={`${goal}-${index}`}>• {goal}</p>
                 ))}
               </CardContent>
             </Card>
+            {result.data.rawPublisherGoals.length > MAX_LESSON_GOALS ? (
+              <p className="text-xs text-amber-400">
+                Meer dan {MAX_LESSON_GOALS} doelen gevonden. Alleen de eerste{" "}
+                {MAX_LESSON_GOALS} zijn overgenomen in Actieve les.
+              </p>
+            ) : null}
+            <p className="text-xs text-neutral-500">
+              Doelen zijn automatisch naar Actieve les gesynchroniseerd.
+            </p>
             <Button onClick={() => syncFromExtraction(result.data)}>
-              Zet alles in actieve les
+              Opnieuw synchroniseren
             </Button>
           </div>
         ) : (

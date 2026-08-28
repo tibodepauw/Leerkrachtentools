@@ -7,7 +7,9 @@ export const prompts = {
   manual: `${baseSystemPrompt}
 Extraheer uitsluitend aanwezige gegevens uit de handleiding of het bijgevoegde document.
 Formuleer ruwe uitgeverijdoelen niet opnieuw en verzin geen lesinhoud. Laat onbekende
-tekstvelden leeg en geef maximaal drie letterlijke of duidelijk herkenbare uitgeverijdoelen.`,
+tekstvelden leeg. Geef elke aparte lesdoel- of uitgeverijdoelzin uit het document
+letterlijk of duidelijk herkenbaar terug in rawPublisherGoals, in de volgorde waarin
+ze voorkomen.`,
 
   goal: `${baseSystemPrompt}
 Verbeter één lesdoel volgens Thomas More. Behoud strikt hetzelfde onderwerp,

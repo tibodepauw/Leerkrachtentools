@@ -48,7 +48,8 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
           </div>
           <p className="truncate text-xs text-neutral-500">
             {lesson.targetGroup || "Doelgroep nog niet ingevuld"} ·{" "}
-            {lesson.goals.filter((goal) => goal.text).length}/3 doelen actief
+            {lesson.goals.filter((goal) => goal.text).length}/{lesson.goals.length}{" "}
+            doelen actief
           </p>
         </div>
 

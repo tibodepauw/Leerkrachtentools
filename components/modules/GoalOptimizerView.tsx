@@ -3,14 +3,13 @@
 import { ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
+import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
-import { useLessonGoalText } from "@/hooks/useLessonText";
+import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 interface GoalImprovementResult {
@@ -23,35 +22,41 @@ interface GoalImprovementResult {
 }
 
 export function GoalOptimizerView() {
-  const [goal, setGoal] = useLessonGoalText();
-  const setActiveGoal = useLessonStore((state) => state.setActiveGoal);
+  const { goals, selectedId, setSelectedId, text, setText } =
+    useSelectedLessonGoal();
+  const setGoal = useLessonStore((state) => state.setGoal);
   const { analyze, result, loading, error } = useAnalysis<GoalImprovementResult>();
-  const actionDisabled = loading || !goal.trim();
+  const actionDisabled = loading || !text.trim();
 
   return (
     <ModuleShell
       title="Doelverbeteraar"
-      description="Herschrijft één doel via Gemini volgens de Thomas More-regels. Het onderwerp van het doel blijft behouden."
+      description="Herschrijft lesdoelen via Gemini volgens de Thomas More-regels. Kies het doel dat je wilt verbeteren; doelen uit je handleiding staan automatisch in Actieve les."
       input={
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="goal">Ruw of zelfgeschreven lesdoel</Label>
-            <Textarea
-              id="goal"
-              value={goal}
-              onChange={(event) => setGoal(event.target.value)}
-              rows={8}
-              placeholder="Leerling kan zoogdieren herkennen..."
-            />
-          </div>
+          <LessonGoalSelector
+            id="goal"
+            label="Kies een lesdoel"
+            goals={goals}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            text={text}
+            onTextChange={setText}
+            rows={8}
+            placeholder="Leerling kan zoogdieren herkennen..."
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
-            onClick={() => analyze("/api/analyze-goals", { goal })}
+            onClick={() => analyze("/api/analyze-goals", { goal: text })}
             disabled={actionDisabled}
-            disabledReason="Typ of plak eerst een lesdoel in het invoerveld."
+            disabledReason="Kies een doel met tekst of vul er eerst één in."
           >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            Verbeter lesdoel
+            {loading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Sparkles className="size-4" />
+            )}
+            Verbeter {selectedId}
           </ModuleActionButton>
         </div>
       }
@@ -96,8 +101,16 @@ export function GoalOptimizerView() {
                 </div>
               </CardContent>
             </Card>
-            <Button type="button" onClick={() => setActiveGoal(result.data.improved)}>
-              Zet als actief lesdoel
+            <Button
+              type="button"
+              onClick={() => {
+                const index = goals.findIndex((goal) => goal.id === selectedId);
+                if (index >= 0) {
+                  setGoal(index, { text: result.data.improved });
+                }
+              }}
+            >
+              Vervang {selectedId} met verbeterde versie
             </Button>
           </div>
         ) : (

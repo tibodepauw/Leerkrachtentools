@@ -2,14 +2,13 @@
 
 import { Brain, Loader2 } from "lucide-react";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
+import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
-import { useLessonGoalText } from "@/hooks/useLessonText";
+import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { GoalTaxonomy } from "@/types";
 
@@ -28,35 +27,41 @@ const taxonomyLabels: Record<GoalTaxonomy, string> = {
 };
 
 export function GoalTaxonomyView() {
-  const [goal, setGoal] = useLessonGoalText();
-  const setActiveGoal = useLessonStore((state) => state.setActiveGoal);
+  const { goals, selectedId, setSelectedId, text, setText } =
+    useSelectedLessonGoal();
+  const setGoal = useLessonStore((state) => state.setGoal);
   const { analyze, result, loading, error } = useAnalysis<GoalTaxonomyResult>();
-  const actionDisabled = loading || !goal.trim();
+  const actionDisabled = loading || !text.trim();
 
   return (
     <ModuleShell
       title="MC–DAS–SPM herkenner"
-      description="Classificeert één lesdoel via Gemini als MC, DAS of SPM zonder het doel te herschrijven."
+      description="Classificeert lesdoelen via Gemini als MC, DAS of SPM zonder het doel te herschrijven."
       input={
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="taxonomy-goal">Lesdoel om te classificeren</Label>
-            <Textarea
-              id="taxonomy-goal"
-              value={goal}
-              onChange={(event) => setGoal(event.target.value)}
-              rows={8}
-              placeholder="De leerlingen kunnen zoogdieren herkennen..."
-            />
-          </div>
+          <LessonGoalSelector
+            id="taxonomy-goal"
+            label="Kies een lesdoel"
+            goals={goals}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            text={text}
+            onTextChange={setText}
+            rows={8}
+            placeholder="De leerlingen kunnen zoogdieren herkennen..."
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
-            onClick={() => analyze("/api/classify-goal-taxonomy", { goal })}
+            onClick={() => analyze("/api/classify-goal-taxonomy", { goal: text })}
             disabled={actionDisabled}
-            disabledReason="Typ of plak eerst een lesdoel in het invoerveld."
+            disabledReason="Kies een doel met tekst of vul er eerst één in."
           >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Brain className="size-4" />}
-            Herken taxonomie
+            {loading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Brain className="size-4" />
+            )}
+            Herken taxonomie voor {selectedId}
           </ModuleActionButton>
         </div>
       }
@@ -97,11 +102,17 @@ export function GoalTaxonomyView() {
             </Card>
             <Button
               type="button"
-              onClick={() =>
-                setActiveGoal(result.data.original, result.data.taxonomy)
-              }
+              onClick={() => {
+                const index = goals.findIndex((goal) => goal.id === selectedId);
+                if (index >= 0) {
+                  setGoal(index, {
+                    text: result.data.original,
+                    taxonomy: result.data.taxonomy,
+                  });
+                }
+              }}
             >
-              Bewaar taxonomie op actief lesdoel
+              Bewaar taxonomie op {selectedId}
             </Button>
           </div>
         ) : (

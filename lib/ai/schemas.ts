@@ -6,7 +6,7 @@ export const manualExtractionSchema = z.object({
   topic: z.string(),
   targetGroup: z.string(),
   materials: z.array(z.string()),
-  rawPublisherGoals: z.array(z.string()).max(3),
+  rawPublisherGoals: z.array(z.string()).max(12),
 });
 
 export const goalImprovementSchema = z.object({

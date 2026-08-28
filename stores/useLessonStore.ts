@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { buildGoalsFromPublisher } from "@/lib/goals/lessonGoals";
 import type {
   ActiveLesson,
   EducationNetwork,
@@ -88,21 +89,26 @@ export const useLessonStore = create<LessonStore>()(
           };
         }),
       syncFromExtraction: (data) =>
-        set((state) => ({
-          lesson: {
-            ...state.lesson,
-            topic: data.topic,
-            learningArea: data.learningArea,
-            component: data.component,
-            targetGroup: data.targetGroup,
-            materials: data.materials,
-            rawPublisherGoals: data.rawPublisherGoals,
-            goals: state.lesson.goals.map((goal, index) => ({
-              ...goal,
-              text: data.rawPublisherGoals[index] ?? goal.text,
-            })),
-          },
-        })),
+        set((state) => {
+          const publisherGoals = data.rawPublisherGoals.filter((goal) =>
+            goal.trim(),
+          );
+          return {
+            lesson: {
+              ...state.lesson,
+              topic: data.topic,
+              learningArea: data.learningArea,
+              component: data.component,
+              targetGroup: data.targetGroup,
+              materials: data.materials,
+              rawPublisherGoals: publisherGoals,
+              goals: buildGoalsFromPublisher(
+                publisherGoals,
+                state.lesson.goals,
+              ),
+            },
+          };
+        }),
       syncPreparation: (lessonPreparation) =>
         set((state) => ({
           lesson: { ...state.lesson, lessonPreparation },
