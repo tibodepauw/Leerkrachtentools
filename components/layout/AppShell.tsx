@@ -5,6 +5,7 @@ interface AccountSummary {
   email: string;
   displayName: string | null;
   tier: string;
+  profileImageUrl?: string | null;
 }
 
 export function AppShell({

@@ -16,6 +16,7 @@ export default async function Home() {
     <Dashboard
       userEmail={session.email}
       displayName={session.displayName}
+      profileImageUrl={session.profileImageUrl}
       tier={session.tier}
     />
   ) : (

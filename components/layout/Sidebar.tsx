@@ -21,10 +21,7 @@ import {
   Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Avatar,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/shared/ProfileAvatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useLessonStore } from "@/stores/useLessonStore";
@@ -85,19 +82,11 @@ interface AccountSummary {
   email: string;
   displayName: string | null;
   tier: string;
+  profileImageUrl?: string | null;
 }
 
 function accountLabel(account: AccountSummary) {
   return account.displayName || account.email.split("@")[0];
-}
-
-function initials(account: AccountSummary) {
-  return accountLabel(account)
-    .split(/[\s._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toLocaleUpperCase("nl-BE"))
-    .join("");
 }
 
 function SidebarContent({
@@ -220,14 +209,13 @@ function SidebarContent({
             isSettings && "bg-neutral-800",
           )}
         >
-          <Avatar
-            key={accountLabel(account)}
-            className="size-9 border border-neutral-700"
-          >
-            <AvatarFallback className="bg-neutral-800 text-xs font-semibold text-white">
-              {initials(account)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileAvatar
+            email={account.email}
+            displayName={account.displayName}
+            profileImageUrl={account.profileImageUrl}
+            sizeClassName="size-9"
+            fallbackClassName="text-xs font-semibold text-white"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">
               {accountLabel(account)}

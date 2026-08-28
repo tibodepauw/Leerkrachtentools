@@ -23,6 +23,7 @@ export default async function SettingsPage() {
     <AccountSettings
       email={session.email}
       displayName={session.displayName}
+      profileImageUrl={session.profileImageUrl}
       tier={session.tier}
       marketingOptIn={session.marketingOptIn}
       appVersion={appVersion.version}

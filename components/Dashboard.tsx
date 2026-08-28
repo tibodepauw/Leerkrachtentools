@@ -40,10 +40,12 @@ const modules = {
 export function Dashboard({
   userEmail,
   displayName,
+  profileImageUrl,
   tier,
 }: {
   userEmail: string;
   displayName: string | null;
+  profileImageUrl: string | null;
   tier: string;
 }) {
   const ready = useAppReady();
@@ -60,6 +62,7 @@ export function Dashboard({
         email: userEmail,
         displayName,
         tier,
+        profileImageUrl,
       }}
     >
       <ActiveLessonBar userEmail={userEmail} />

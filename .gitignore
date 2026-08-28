@@ -22,6 +22,7 @@
 /data/*.db
 /data/*.db-shm
 /data/*.db-wal
+/data/avatars/
 
 # misc
 .DS_Store

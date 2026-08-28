@@ -98,6 +98,9 @@ export function getDatabase() {
       "ALTER TABLE users ADD COLUMN ai_cloudflare_account_id TEXT",
     );
   }
+  if (!userColumns.has("profile_image_path")) {
+    database.exec("ALTER TABLE users ADD COLUMN profile_image_path TEXT");
+  }
   return database;
 }
 

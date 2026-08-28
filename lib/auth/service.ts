@@ -11,6 +11,7 @@ import {
   cleanExpiredAuthRecords,
   getDatabase,
 } from "@/lib/auth/database";
+import { profileImageUrl } from "@/lib/auth/profileImage";
 import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
 
 export const SESSION_COOKIE = "leerkrachtentools_session";
@@ -166,6 +167,8 @@ interface UserRow {
   display_name: string | null;
   tier: string;
   marketing_opt_in: number;
+  profile_image_path?: string | null;
+  updated_at?: number;
 }
 
 export function verifyLoginCode(emailValue: string, code: string) {
@@ -237,7 +240,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
 
   const user = db
     .prepare(
-      "SELECT id, email, display_name, tier, marketing_opt_in FROM users WHERE email = ?",
+      "SELECT id, email, display_name, tier, marketing_opt_in, profile_image_path, updated_at FROM users WHERE email = ?",
     )
     .get(email) as UserRow;
   const sessionToken = randomBytes(32).toString("base64url");
@@ -256,6 +259,9 @@ export function verifyLoginCode(emailValue: string, code: string) {
       displayName: user.display_name,
       tier: user.tier,
       marketingOptIn: Boolean(user.marketing_opt_in),
+      profileImageUrl: user.profile_image_path
+        ? profileImageUrl(user.updated_at ?? Date.now())
+        : null,
     },
   };
 }
@@ -267,7 +273,8 @@ export function getSession(token?: string) {
   const row = db
     .prepare(
       `SELECT users.id, users.email, users.display_name, users.tier,
-              users.marketing_opt_in, sessions.expires_at
+              users.marketing_opt_in, users.profile_image_path, users.updated_at,
+              sessions.expires_at
        FROM sessions
        JOIN users ON users.id = sessions.user_id
        WHERE sessions.token_hash = ? AND sessions.expires_at >= ?`,
@@ -286,6 +293,9 @@ export function getSession(token?: string) {
     displayName: row.display_name,
     tier: row.tier,
     marketingOptIn: Boolean(row.marketing_opt_in),
+    profileImageUrl: row.profile_image_path
+      ? profileImageUrl(row.updated_at ?? Date.now())
+      : null,
     expiresAt: row.expires_at,
   };
 }

@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ProfileAvatar } from "@/components/shared/ProfileAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +35,7 @@ import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
 interface AccountSettingsProps {
   email: string;
   displayName: string | null;
+  profileImageUrl: string | null;
   tier: string;
   marketingOptIn: boolean;
   appVersion: string;
@@ -42,18 +43,10 @@ interface AccountSettingsProps {
   githubRepo: string | null;
 }
 
-function initials(name: string, email: string) {
-  return (name || email.split("@")[0])
-    .split(/[\s._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toLocaleUpperCase("nl-BE"))
-    .join("");
-}
-
 export function AccountSettings({
   email,
   displayName: initialDisplayName,
+  profileImageUrl: initialProfileImageUrl,
   tier,
   marketingOptIn: initialMarketingOptIn,
   appVersion,
@@ -62,6 +55,7 @@ export function AccountSettings({
 }: AccountSettingsProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
+  const [profileImageUrl, setProfileImageUrl] = useState(initialProfileImageUrl);
   const [marketingOptIn, setMarketingOptIn] = useState(
     initialMarketingOptIn,
   );
@@ -128,15 +122,18 @@ export function AccountSettings({
         email,
         displayName,
         tier,
+        profileImageUrl,
       }}
     >
       <div className="w-full p-4 lg:p-6">
         <div className="mb-8 flex items-center gap-4">
-          <Avatar className="size-14 border border-neutral-700">
-            <AvatarFallback className="bg-neutral-800 text-lg font-semibold">
-              {initials(displayName, email)}
-            </AvatarFallback>
-          </Avatar>
+          <ProfileAvatar
+            email={email}
+            displayName={displayName}
+            profileImageUrl={profileImageUrl}
+            editable
+            onProfileImageChange={setProfileImageUrl}
+          />
           <div>
             <h1 className="text-2xl font-black tracking-tight">Instellingen</h1>
             <p className="text-sm text-neutral-500">
@@ -149,7 +146,10 @@ export function AccountSettings({
           <Card>
             <CardHeader>
               <CardTitle>Profiel</CardTitle>
-              <CardDescription>Deze naam verschijnt alleen in jouw accountmenu.</CardDescription>
+              <CardDescription>
+                Pas je naam en profielfoto aan. Je foto verschijnt in het
+                accountmenu links onderaan.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={saveProfile} className="space-y-4">
