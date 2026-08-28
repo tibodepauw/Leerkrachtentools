@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/guard";
 import { runStructured } from "@/lib/ai/router";
 import type { ProviderName } from "@/lib/ai/providers";
+import { hasAnyAiProvider } from "@/lib/ai/providers";
 
 type InputRecord = Record<string, unknown>;
 
@@ -22,11 +23,15 @@ export function createAnalysisHandler<T>({
   system,
   buildPrompt,
   buildMock,
+  preferredProvider,
+  requireAi = false,
 }: {
   schema: z.ZodType<T>;
   system: string;
   buildPrompt: (input: InputRecord) => string;
   buildMock: (input: InputRecord) => T;
+  preferredProvider?: ProviderName;
+  requireAi?: boolean;
 }) {
   return async function POST(request: Request) {
     if (!sessionFromRequest(request)) return unauthorizedResponse();
@@ -36,13 +41,25 @@ export function createAnalysisHandler<T>({
         typeof input.provider === "string" &&
         providerNames.has(input.provider)
           ? (input.provider as ProviderName)
-          : undefined;
+          : preferredProvider;
+
+      if (requireAi && !hasAnyAiProvider()) {
+        return NextResponse.json(
+          {
+            error:
+              "Geen AI-provider geconfigureerd. Zet GOOGLE_GENERATIVE_AI_API_KEY in .env.local (Google AI Studio).",
+          },
+          { status: 503 },
+        );
+      }
+
       const result = await runStructured({
         schema,
         system,
         prompt: buildPrompt(input),
         mock: buildMock(input),
         preferredProvider: preferred,
+        allowLocalMock: !requireAi,
       });
       return NextResponse.json(result);
     } catch (error) {

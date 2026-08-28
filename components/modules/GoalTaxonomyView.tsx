@@ -37,7 +37,7 @@ export function GoalTaxonomyView() {
     <ModuleShell
       eyebrow="Doelen & curriculum"
       title="MC–DAS–SPM herkenner"
-      description="Classificeert één lesdoel als mentaal-cognitief, dynamisch-affectief of sensomotorisch/psychomotorisch zonder het doel te herschrijven."
+      description="Classificeert één lesdoel via Gemini als MC, DAS of SPM zonder het doel te herschrijven."
       input={
         <div className="space-y-4">
           <div className="space-y-2">

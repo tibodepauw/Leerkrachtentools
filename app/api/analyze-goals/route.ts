@@ -10,4 +10,6 @@ export const POST = createAnalysisHandler({
   system: prompts.goal,
   buildPrompt: (input) => `Ruw lesdoel:\n${text(input, "goal")}`,
   buildMock: (input) => mockGoalAnalysis(text(input, "goal")),
+  preferredProvider: "google",
+  requireAi: true,
 });

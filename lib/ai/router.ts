@@ -9,6 +9,7 @@ export interface StructuredRequest<T> {
   prompt: string;
   mock: T;
   preferredProvider?: ProviderName;
+  allowLocalMock?: boolean;
   file?: {
     data: string;
     mediaType: string;
@@ -130,6 +131,14 @@ export async function runStructured<T>(
         `cloudflare: ${error instanceof Error ? error.message : "onbekende fout"}`,
       );
     }
+  }
+
+  if (request.allowLocalMock === false) {
+    throw new Error(
+      errors.length
+        ? `Geen AI-provider beschikbaar: ${errors.join(" · ")}`
+        : "Geen AI-provider geconfigureerd. Voeg GOOGLE_GENERATIVE_AI_API_KEY toe.",
+    );
   }
 
   return { data: request.mock, provider: "local", fallbackErrors: errors };

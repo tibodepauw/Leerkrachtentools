@@ -12,8 +12,16 @@ cp .env.example .env.local
 npm run dev -- --hostname 0.0.0.0 --port 43127
 ```
 
-AI-keys zijn optioneel. Zonder keys gebruikt de applicatie lokale,
-deterministische demo-antwoorden en de ingebouwde curriculumseed.
+AI-keys zijn optioneel voor de meeste modules. Zonder keys gebruikt de app lokale
+demo-antwoorden — behalve **Doelverbeteraar** en **MC–DAS–SPM herkenner**:
+daarvoor is een Google AI Studio-key verplicht.
+
+```bash
+GOOGLE_GENERATIVE_AI_API_KEY=jouw-key-van-aistudio.google.com
+GOOGLE_MODEL=gemini-2.5-flash-lite
+```
+
+Overige providers (Groq, Cerebras, …) blijven optioneel als fallback.
 
 E-mailauthenticatie werkt lokaal zonder Brevo-key met een zichtbare
 ontwikkelcode. Voor productie zijn `AUTH_SECRET`, `BREVO_API_KEY` en een

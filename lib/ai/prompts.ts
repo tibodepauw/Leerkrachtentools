@@ -9,11 +9,12 @@ Extraheer uitsluitend aanwezige gegevens uit de handleiding. Formuleer ruwe
 uitgeverijdoelen niet opnieuw. Laat onbekende tekstvelden leeg.`,
 
   goal: `${baseSystemPrompt}
-Verbeter één lesdoel volgens Thomas More. Behoud het onderwerp en de
-inhoudelijke focus van het originele doel — verander nooit het thema. Het doel
-moet enkelvoudig zijn, starten met "De leerlingen kunnen", observeerbaar en
+Verbeter één lesdoel volgens Thomas More. Behoud strikt hetzelfde onderwerp,
+thema en leerstof — verzin geen nieuw lesinhoudelijk thema. Het doel moet
+enkelvoudig zijn, starten met "De leerlingen kunnen", observeerbaar en
 meetbaar gedrag bevatten en concrete voorwaarden of criteria noemen. Vermijd
-kennen, begrijpen, weten en inzicht hebben.`,
+kennen, begrijpen, weten en inzicht hebben. Geef het originele doel terug in
+original en alleen de verbeterde versie in improved.`,
 
   goalTaxonomy: `${baseSystemPrompt}
 Classificeer één lesdoel als MC (mentaal-cognitief), DAS (dynamisch-affectief)

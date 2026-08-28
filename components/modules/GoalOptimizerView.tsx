@@ -32,7 +32,7 @@ export function GoalOptimizerView() {
     <ModuleShell
       eyebrow="Doelen & curriculum"
       title="Doelverbeteraar"
-      description="Herschrijft één doel volgens de Thomas More-regels. Het onderwerp van het doel blijft behouden."
+      description="Herschrijft één doel via Gemini volgens de Thomas More-regels. Het onderwerp van het doel blijft behouden."
       input={
         <div className="space-y-4">
           <div className="space-y-2">

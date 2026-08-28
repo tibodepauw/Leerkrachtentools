@@ -10,4 +10,6 @@ export const POST = createAnalysisHandler({
   system: prompts.goalTaxonomy,
   buildPrompt: (input) => `Lesdoel:\n${text(input, "goal")}`,
   buildMock: (input) => mockGoalTaxonomy(text(input, "goal")),
+  preferredProvider: "google",
+  requireAi: true,
 });

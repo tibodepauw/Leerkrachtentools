@@ -58,7 +58,7 @@ export function getModelCandidates(preferred?: ProviderName): ModelCandidate[] {
     });
     candidates.push({
       name: "google",
-      model: google(process.env.GOOGLE_MODEL ?? "gemini-2.5-flash"),
+      model: google(process.env.GOOGLE_MODEL ?? "gemini-2.5-flash-lite"),
     });
   }
 
@@ -73,4 +73,8 @@ export function hasCloudflare() {
     process.env.CLOUDFLARE_ACCOUNT_ID &&
       process.env.CLOUDFLARE_API_TOKEN,
   );
+}
+
+export function hasAnyAiProvider() {
+  return getModelCandidates().length > 0 || hasCloudflare();
 }
