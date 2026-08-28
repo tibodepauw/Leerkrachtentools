@@ -38,7 +38,7 @@ export function TimingCheckView() {
   return (
     <ModuleShell
       title="Timing"
-      description="Tel de vier lesfasen op en vergelijk met je totale lestijd. Die duur hoef niet 50 minuten te zijn — pas hem aan via Actieve les of hieronder; de som moet wel kloppen."
+      description="Controleer of de minuten in je vier lesfasen samen kloppen met je totale lestijd."
       input={
         <ModuleInputLayout
           fields={
@@ -59,8 +59,7 @@ export function TimingCheckView() {
                   }
                 />
                 <p className="text-xs text-neutral-500">
-                  Gedeeld met Actieve les. Veel scholen gebruiken 50 min, maar 45
-                  of 60 min kan ook.
+                  Standaard 50 minuten; pas aan naar 45 of 60 min indien nodig.
                 </p>
               </div>
               <LessonPreparationInput
