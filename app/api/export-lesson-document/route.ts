@@ -30,20 +30,29 @@ const exportSchema = z.object({
   lessonPreparation: z.string().max(500_000),
 });
 
-export async function POST(request: Request) {
-  const session = sessionFromRequest(request);
-  if (!session) return unauthorizedResponse();
+async function readExportInput(request: Request) {
+  const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
 
-  try {
+  if (contentType.includes("application/json")) {
+    const lesson = exportSchema.parse(await request.json()) as LessonExportPayload;
+    return {
+      lesson,
+      sourceBuffer: undefined,
+      sourceFileName: undefined,
+    };
+  }
+
+  if (
+    contentType.includes("multipart/form-data") ||
+    contentType.includes("application/x-www-form-urlencoded") ||
+    !contentType
+  ) {
     const formData = await request.formData();
     const lessonPayload = formData.get("lesson");
     const sourceDocument = formData.get("sourceDocument");
 
     if (typeof lessonPayload !== "string") {
-      return NextResponse.json(
-        { error: "Lesgegevens ontbreken." },
-        { status: 400 },
-      );
+      throw new Error("Lesgegevens ontbreken.");
     }
 
     const lesson = exportSchema.parse(JSON.parse(lessonPayload)) as LessonExportPayload;
@@ -52,15 +61,26 @@ export async function POST(request: Request) {
 
     if (sourceDocument instanceof File && sourceDocument.size > 0) {
       if (sourceDocument.size > LESSON_DOCUMENT_MAX_BYTES) {
-        return NextResponse.json(
-          { error: "Het bronbestand mag maximaal 15 MB zijn." },
-          { status: 400 },
-        );
+        throw new Error("Het bronbestand mag maximaal 15 MB zijn.");
       }
       sourceBuffer = Buffer.from(await sourceDocument.arrayBuffer());
       sourceFileName = sourceDocument.name;
     }
 
+    return { lesson, sourceBuffer, sourceFileName };
+  }
+
+  throw new Error(
+    "Upload het formulier opnieuw en probeer de download nog eens.",
+  );
+}
+
+export async function POST(request: Request) {
+  const session = sessionFromRequest(request);
+  if (!session) return unauthorizedResponse();
+
+  try {
+    const { lesson, sourceBuffer, sourceFileName } = await readExportInput(request);
     const exported = await exportLessonDocument(
       lesson,
       sourceBuffer,

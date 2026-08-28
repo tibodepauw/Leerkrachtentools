@@ -105,8 +105,9 @@ export function ActiveLessonView() {
         if (sourceBlob) {
           formData.append(
             "sourceDocument",
-            sourceBlob,
-            preparationDocument.fileName,
+            new File([sourceBlob], preparationDocument.fileName, {
+              type: preparationDocument.mimeType || sourceBlob.type,
+            }),
           );
         }
       }
@@ -114,6 +115,7 @@ export function ActiveLessonView() {
       const response = await fetch("/api/export-lesson-document", {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
 
       if (!response.ok) {
