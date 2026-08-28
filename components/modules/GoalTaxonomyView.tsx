@@ -73,7 +73,6 @@ export function GoalTaxonomyView() {
               <Badge variant="secondary">
                 {taxonomyLabels[result.data.taxonomy]}
               </Badge>
-              <Badge variant="outline">via {result.provider}</Badge>
             </div>
             <Card>
               <CardHeader>

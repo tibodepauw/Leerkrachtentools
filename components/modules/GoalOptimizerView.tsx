@@ -5,7 +5,6 @@ import { CopyButton } from "@/components/shared/CopyButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAnalysis } from "@/hooks/useAnalysis";
@@ -63,7 +62,6 @@ export function GoalOptimizerView() {
       output={
         result ? (
           <div className="space-y-4">
-            <Badge variant="outline">via {result.provider}</Badge>
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm">Visuele verbetering</CardTitle>

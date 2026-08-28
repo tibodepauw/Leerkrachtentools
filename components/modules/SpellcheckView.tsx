@@ -4,7 +4,6 @@ import { CheckCheck, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
@@ -66,7 +65,6 @@ export function SpellcheckView() {
             <Button onClick={() => setContent(result.data.improved)}>
               Vervang en verbeter
             </Button>
-            <Badge variant="outline">via {result.provider}</Badge>
           </div>
         ) : (
           <EmptyOutput>Suggesties en een volledig verbeterde versie verschijnen hier.</EmptyOutput>
