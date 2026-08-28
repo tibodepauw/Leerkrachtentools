@@ -30,6 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
 
 interface AccountSettingsProps {
@@ -181,38 +182,48 @@ export function AccountSettings({
           </Card>
 
           <Card>
-            <CardHeader className="flex-row items-center justify-between">
-              <div>
-                <CardTitle>Status</CardTitle>
-                <CardDescription>
-                  Je toegangsniveau en geïnstalleerde appversie.
-                </CardDescription>
-              </div>
-              <Badge variant="secondary" className="capitalize">
-                {tier === "free" ? "Gratis" : tier}
-              </Badge>
+            <CardHeader>
+              <CardTitle>Status</CardTitle>
+              <CardDescription>
+                Je toegangsniveau en geïnstalleerde appversie.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm text-neutral-400">
-              <p>
-                Je gebruikt alle beschikbare Leerkrachtentools binnen de
-                gratis tier.
-              </p>
+            <CardContent>
               <div className="rounded-lg border border-neutral-800 p-3">
-                <dl className="grid gap-3 sm:grid-cols-2">
+                <dl
+                  className={cn(
+                    "grid gap-3",
+                    appCommit ? "sm:grid-cols-3" : "sm:grid-cols-2",
+                  )}
+                >
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-neutral-600">
                       Versie
                     </dt>
-                    <dd className="font-mono text-neutral-200">v{appVersion}</dd>
+                    <dd className="mt-1 font-mono text-sm text-neutral-200">
+                      v{appVersion}
+                    </dd>
                   </div>
                   {appCommit ? (
                     <div>
                       <dt className="text-xs uppercase tracking-wide text-neutral-600">
                         Build
                       </dt>
-                      <dd className="font-mono text-neutral-200">{appCommit}</dd>
+                      <dd className="mt-1 font-mono text-sm text-neutral-200">
+                        {appCommit}
+                      </dd>
                     </div>
                   ) : null}
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-neutral-600">
+                      Status
+                    </dt>
+                    <dd className="mt-1">
+                      <Badge variant="secondary" className="capitalize">
+                        {tier === "free" ? "Gratis" : tier}
+                      </Badge>
+                    </dd>
+                  </div>
                 </dl>
                 {githubRepo ? (
                   <a
