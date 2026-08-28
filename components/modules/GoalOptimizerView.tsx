@@ -24,7 +24,9 @@ export function GoalOptimizerView() {
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
   const replaceGoalText = useLessonStore((state) => state.replaceGoalText);
-  const { analyze, result, loading, error } = useAnalysis<GoalImprovementResult>();
+  const analysisScope = `${selectedId}:${text.trim()}`;
+  const { analyze, result, loading, error } =
+    useAnalysis<GoalImprovementResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
 
   return (

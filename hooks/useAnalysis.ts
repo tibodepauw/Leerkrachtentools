@@ -8,8 +8,9 @@ export interface AnalysisResponse<T> {
   fallbackErrors: string[];
 }
 
-export function useAnalysis<T>() {
+export function useAnalysis<T>(scopeKey?: string) {
   const [result, setResult] = useState<AnalysisResponse<T> | null>(null);
+  const [activeScopeKey, setActiveScopeKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,6 +38,7 @@ export function useAnalysis<T>() {
         );
       }
       setResult(payload);
+      setActiveScopeKey(scopeKey ?? null);
       return payload;
     } catch (caught) {
       setError(
@@ -48,5 +50,8 @@ export function useAnalysis<T>() {
     }
   }
 
-  return { analyze, result, setResult, loading, error };
+  const scopedResult =
+    scopeKey !== undefined && activeScopeKey !== scopeKey ? null : result;
+
+  return { analyze, result: scopedResult, setResult, loading, error };
 }

@@ -126,7 +126,9 @@ function GoalMatcher({ source }: { source: GoalSource }) {
   const setNetwork = useLessonStore((state) => state.setNetwork);
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
-  const { analyze, result, loading, error } = useAnalysis<MatcherResult>();
+  const analysisScope = `${source}:${selectedId}:${text.trim()}`;
+  const { analyze, result, loading, error } =
+    useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
   const Icon = source === "minimumdoel" ? Landmark : BookOpenCheck;
 

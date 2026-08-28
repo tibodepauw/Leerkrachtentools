@@ -30,7 +30,9 @@ export function GoalTaxonomyView() {
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
   const setGoal = useLessonStore((state) => state.setGoal);
-  const { analyze, result, loading, error } = useAnalysis<GoalTaxonomyResult>();
+  const analysisScope = `${selectedId}:${text.trim()}`;
+  const { analyze, result, loading, error } =
+    useAnalysis<GoalTaxonomyResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
 
   return (
