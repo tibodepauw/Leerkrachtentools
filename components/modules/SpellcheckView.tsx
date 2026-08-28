@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
+import { ScrollFrame } from "@/components/shared/ScrollFrame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,7 +85,6 @@ export function SpellcheckView() {
             label="Lesvoorbereidingstekst"
             value={content}
             onChange={setContent}
-            rows={18}
           />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
@@ -105,8 +105,12 @@ export function SpellcheckView() {
                 <CardTitle className="text-sm">Verbeterde tekst</CardTitle>
                 <CopyButton value={result.data.improved} />
               </CardHeader>
-              <CardContent className="whitespace-pre-wrap text-sm leading-7">
-                {result.data.improved}
+              <CardContent className="p-0">
+                <ScrollFrame heightClassName="h-64">
+                  <p className="whitespace-pre-wrap px-4 py-3 text-sm leading-7">
+                    {result.data.improved}
+                  </p>
+                </ScrollFrame>
               </CardContent>
             </Card>
 

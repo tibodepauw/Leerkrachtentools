@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { ActiveLessonPrepHint } from "@/components/shared/ActiveLessonPrepHint";
+import { ScrollFrame } from "@/components/shared/ScrollFrame";
 
 interface LessonPreparationInputProps {
   id: string;
@@ -16,6 +17,7 @@ interface LessonPreparationInputProps {
   onChange: (value: string) => void;
   rows?: number;
   placeholder?: string;
+  frameHeightClassName?: string;
 }
 
 export function LessonPreparationInput({
@@ -23,8 +25,8 @@ export function LessonPreparationInput({
   label = "Lesvoorbereiding",
   value,
   onChange,
-  rows = 18,
   placeholder = "Plak je lesvoorbereiding of upload een document…",
+  frameHeightClassName = "h-72",
 }: LessonPreparationInputProps) {
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -93,13 +95,15 @@ export function LessonPreparationInput({
         />
       </label>
       {uploadError ? <p className="text-sm text-red-400">{uploadError}</p> : null}
-      <Textarea
-        id={id}
-        rows={rows}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-      />
+      <ScrollFrame heightClassName={frameHeightClassName} innerScroll={false}>
+        <Textarea
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="h-full min-h-0 resize-none overflow-y-auto rounded-none border-0 bg-transparent [field-sizing:fixed] focus-visible:ring-0"
+        />
+      </ScrollFrame>
     </div>
   );
 }

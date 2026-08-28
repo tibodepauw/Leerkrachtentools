@@ -19,18 +19,18 @@ export function ModuleShell({
           {description}
         </p>
       </div>
-      <div className="grid min-h-[calc(100vh-12rem)] gap-px overflow-hidden rounded-xl border border-neutral-800 bg-neutral-800 xl:grid-cols-2">
-        <section className="bg-neutral-950 p-4 sm:p-6">
-          <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+      <div className="grid h-[calc(100vh-11rem)] max-h-[calc(100vh-11rem)] gap-px overflow-hidden rounded-xl border border-neutral-800 bg-neutral-800 xl:grid-cols-2">
+        <section className="flex min-h-0 flex-col overflow-hidden bg-neutral-950 p-4 sm:p-6">
+          <p className="mb-5 shrink-0 text-xs font-semibold uppercase tracking-widest text-neutral-500">
             Invoer
           </p>
-          {input}
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">{input}</div>
         </section>
-        <section className="bg-black p-4 sm:p-6">
-          <p className="mb-5 text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        <section className="flex min-h-0 flex-col overflow-hidden bg-black p-4 sm:p-6">
+          <p className="mb-5 shrink-0 text-xs font-semibold uppercase tracking-widest text-neutral-500">
             Resultaat
           </p>
-          {output}
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">{output}</div>
         </section>
       </div>
     </div>
