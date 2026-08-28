@@ -2,11 +2,10 @@
 
 import { Loader2, Target } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -15,7 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
@@ -41,7 +39,6 @@ function CoverageBadge({ value }: { value: Coverage }) {
 
 export function AlignmentAuditView() {
   const lesson = useLessonStore((state) => state.lesson);
-  const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<AlignmentResult>();
   const goals = lesson.goals.map((goal) => `${goal.id}: ${goal.text}`);
@@ -57,13 +54,17 @@ export function AlignmentAuditView() {
           <div className="rounded-lg border border-neutral-800 p-4 text-sm">
             {goals.map((goal) => <p key={goal} className="mb-2 last:mb-0">{goal}</p>)}
           </div>
-          <Label htmlFor="alignment-content">Lesopbouw</Label>
-          <Textarea id="alignment-content" rows={18} value={content} onChange={(event) => setContent(event.target.value)} />
-          <Button type="button" variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar sessie</Button>
+          <LessonPreparationInput
+            id="alignment-content"
+            label="Lesopbouw"
+            value={content}
+            onChange={setContent}
+            rows={18}
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
             disabled={actionDisabled}
-            disabledReason="Plak eerst je lesopbouw in het invoerveld."
+            disabledReason="Upload of plak eerst je lesopbouw."
             onClick={() => analyze("/api/audit-alignment", { goals: lesson.goals.map((goal) => goal.text), content })}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Target className="size-4" />}

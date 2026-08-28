@@ -7,8 +7,7 @@ import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
@@ -23,7 +22,6 @@ interface EngagementResult {
 }
 
 export function EngagementView() {
-  const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const setField = useLessonStore((state) => state.setField);
   const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<EngagementResult>();
@@ -46,13 +44,17 @@ export function EngagementView() {
       description="Zelfstandige analyse van Leeractiviteit, Werkelijkheidsnabijheid, Leerlingeninitiatief, Positief klasklimaat, Expressie en Samen leren."
       input={
         <div className="space-y-4">
-          <Label htmlFor="engagement-content">Volledige lesvoorbereiding</Label>
-          <Textarea id="engagement-content" rows={20} value={content} onChange={(event) => setContent(event.target.value)} />
-          <Button type="button" variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar sessie</Button>
+          <LessonPreparationInput
+            id="engagement-content"
+            label="Volledige lesvoorbereiding"
+            value={content}
+            onChange={setContent}
+            rows={20}
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
             disabled={actionDisabled}
-            disabledReason="Plak eerst je lesvoorbereiding in het invoerveld."
+            disabledReason="Upload of plak eerst je lesvoorbereiding."
             onClick={() => analyze("/api/audit-engagement", { content })}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}

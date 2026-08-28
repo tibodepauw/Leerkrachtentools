@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
     "*.cursorusercontent.com",
   ],
   devIndicators: false,
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["better-sqlite3", "pdf-parse", "word-extractor"],
   experimental: {
     serverActions: {
       bodySizeLimit: "15mb",

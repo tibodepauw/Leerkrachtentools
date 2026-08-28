@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { cn } from "@/lib/utils";
 import { parsePhaseMinutes, timingDeviation } from "@/lib/timing";
 import { useAnalysis } from "@/hooks/useAnalysis";
@@ -60,24 +60,20 @@ export function TimingCheckView() {
               of 60 min kan ook.
             </p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="timing-content">
-              Vier lesfasen met minuten in de headers
-            </Label>
-            <Textarea
-              id="timing-content"
-              rows={18}
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              placeholder={
-                "Instapfase — 5 min\n...\nInstructiefase — 15 minuten\n...\nVerwerking — 25 m\n...\nAfronding — 5 min"
-              }
-            />
-          </div>
+          <LessonPreparationInput
+            id="timing-content"
+            label="Vier lesfasen met minuten in de headers"
+            value={content}
+            onChange={setContent}
+            rows={18}
+            placeholder={
+              "Instapfase — 5 min\n...\nInstructiefase — 15 minuten\n...\nVerwerking — 25 m\n...\nAfronding — 5 min"
+            }
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
             disabled={actionDisabled}
-            disabledReason='Voeg eerst minuten toe in je fase-headers, bv. "Instap — 5 min".'
+            disabledReason='Upload of plak eerst minuten in je fase-headers, bv. "Instap — 5 min".'
             onClick={() =>
               analyze("/api/audit-timing", {
                 totalMinutes: String(lesson.totalMinutes),

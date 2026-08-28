@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { EducationNetwork } from "@/types";
 
@@ -28,6 +29,7 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
   const lesson = useLessonStore((state) => state.lesson);
   const setField = useLessonStore((state) => state.setField);
   const setGoal = useLessonStore((state) => state.setGoal);
+  const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const setNetwork = useLessonStore((state) => state.setNetwork);
   const clearSession = useLessonStore((state) => state.clearSession);
 
@@ -157,6 +159,15 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                   </div>
                 ))}
               </div>
+              <Separator />
+              <LessonPreparationInput
+                id="active-lesson-preparation"
+                label="Lesvoorbereiding"
+                value={lesson.lessonPreparation}
+                onChange={syncPreparation}
+                rows={10}
+                placeholder="Upload of plak je lesvoorbereiding. Deze tekst deelt elke module."
+              />
               <Button variant="ghost" onClick={clearSession} className="self-start">
                 <RotateCcw className="size-4" />
                 Sessie wissen

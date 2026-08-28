@@ -8,10 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Textarea } from "@/components/ui/textarea";
+import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonPreparationText } from "@/hooks/useLessonText";
-import { useLessonStore } from "@/stores/useLessonStore";
 
 interface FullAuditResult {
   score: number;
@@ -24,7 +23,6 @@ interface FullAuditResult {
 }
 
 export function FullAuditView() {
-  const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<FullAuditResult>();
   const actionDisabled = loading || !content.trim();
@@ -36,12 +34,17 @@ export function FullAuditView() {
       description="Een stoplichtscore op doelen, leerplandoelen, taal, timing, alignering en betrokkenheid."
       input={
         <div className="space-y-4">
-          <Textarea rows={22} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Plak de volledige concept-lesvoorbereiding..." />
-          <Button type="button" variant="outline" onClick={() => syncPreparation(content)}>Sync invoer naar alle modules</Button>
+          <LessonPreparationInput
+            id="full-audit-content"
+            value={content}
+            onChange={setContent}
+            rows={22}
+            placeholder="Upload of plak de volledige concept-lesvoorbereiding…"
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
             disabled={actionDisabled}
-            disabledReason="Plak eerst je concept-lesvoorbereiding in het invoerveld."
+            disabledReason="Upload of plak eerst je concept-lesvoorbereiding."
             onClick={() => analyze("/api/full-audit", { content })}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <ClipboardCheck className="size-4" />}

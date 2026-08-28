@@ -7,11 +7,9 @@ import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonPreparationText } from "@/hooks/useLessonText";
-import { useLessonStore } from "@/stores/useLessonStore";
 
 interface SpellcheckResult {
   improved: string;
@@ -19,7 +17,6 @@ interface SpellcheckResult {
 }
 
 export function SpellcheckView() {
-  const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<SpellcheckResult>();
   const actionDisabled = loading || !content.trim();
@@ -31,12 +28,17 @@ export function SpellcheckView() {
       description="Controleert dt-fouten, formele instructietaal, didactische terminologie en professionele stijl."
       input={
         <div className="space-y-4">
-          <Label htmlFor="spell-content">Lesvoorbereidingstekst</Label>
-          <Textarea id="spell-content" rows={18} value={content} onChange={(event) => setContent(event.target.value)} />
+          <LessonPreparationInput
+            id="spell-content"
+            label="Lesvoorbereidingstekst"
+            value={content}
+            onChange={setContent}
+            rows={18}
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
             disabled={actionDisabled}
-            disabledReason="Plak eerst je lesvoorbereidingstekst in het invoerveld."
+            disabledReason="Upload of plak eerst je lesvoorbereiding."
             onClick={() => analyze("/api/spellcheck", { content })}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-4" />}
@@ -62,8 +64,8 @@ export function SpellcheckView() {
                 </CardContent>
               </Card>
             ))}
-            <Button onClick={() => { setContent(result.data.improved); syncPreparation(result.data.improved); }}>
-              Vervang, verbeter & sync
+            <Button onClick={() => setContent(result.data.improved)}>
+              Vervang en verbeter
             </Button>
             <Badge variant="outline">via {result.provider}</Badge>
           </div>

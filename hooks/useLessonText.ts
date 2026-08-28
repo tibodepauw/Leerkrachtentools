@@ -4,11 +4,9 @@ import { useState } from "react";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 export function useLessonPreparationText() {
-  const stored = useLessonStore((state) => state.lesson.lessonPreparation);
-  const [content, setContent] = useState("");
-  const value = content || stored;
-
-  return [value, setContent] as const;
+  const content = useLessonStore((state) => state.lesson.lessonPreparation);
+  const setContent = useLessonStore((state) => state.syncPreparation);
+  return [content, setContent] as const;
 }
 
 export function useLessonGoalText(fallback = "") {

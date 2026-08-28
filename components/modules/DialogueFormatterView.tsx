@@ -7,8 +7,7 @@ import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
@@ -31,14 +30,17 @@ export function DialogueFormatterView() {
       description="Zet ruwe instructies strikt om naar Lk/Lln-dialogen en cursieve bord- of organisatieacties."
       input={
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="dialogue">Ruwe lesfase of instructie</Label>
-            <Textarea id="dialogue" rows={16} value={content} onChange={(event) => setContent(event.target.value)} />
-          </div>
+          <LessonPreparationInput
+            id="dialogue"
+            label="Ruwe lesfase of instructie"
+            value={content}
+            onChange={setContent}
+            rows={16}
+          />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
             disabled={actionDisabled}
-            disabledReason="Plak eerst een lesfase of instructie in het invoerveld."
+            disabledReason="Upload of plak eerst een lesfase of instructie."
             onClick={() => analyze("/api/format-dialogue", { content })}
           >
             {loading ? <Loader2 className="size-4 animate-spin" /> : <MessageSquareQuote className="size-4" />}
