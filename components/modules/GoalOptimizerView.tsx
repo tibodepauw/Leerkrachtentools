@@ -30,7 +30,6 @@ export function GoalOptimizerView() {
 
   return (
     <ModuleShell
-      eyebrow="Doelen & leerplandoelen"
       title="Doelverbeteraar"
       description="Herschrijft één doel via Gemini volgens de Thomas More-regels. Het onderwerp van het doel blijft behouden."
       input={

@@ -10,7 +10,6 @@ export function ModulePlaceholder({
 }) {
   return (
     <ModuleShell
-      eyebrow="Module"
       title={title}
       description={description}
       input={

@@ -39,7 +39,6 @@ export function EngagementView() {
 
   return (
     <ModuleShell
-      eyebrow="Kwaliteitscontrole"
       title="Betrokkenheidsfactoren van Laevers"
       description="Zelfstandige analyse van Leeractiviteit, Werkelijkheidsnabijheid, Leerlingeninitiatief, Positief klasklimaat, Expressie en Samen leren."
       input={

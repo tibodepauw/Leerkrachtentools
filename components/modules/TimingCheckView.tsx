@@ -35,7 +35,6 @@ export function TimingCheckView() {
 
   return (
     <ModuleShell
-      eyebrow="Lesvoorbereiding"
       title="Timing"
       description="Tel de vier lesfasen op en vergelijk met je totale lestijd. Die duur hoef niet 50 minuten te zijn — pas hem aan via Actieve les of hieronder; de som moet wel kloppen."
       input={

@@ -1,14 +1,11 @@
 import type { ReactNode } from "react";
-import { Badge } from "@/components/ui/badge";
 
 export function ModuleShell({
-  eyebrow,
   title,
   description,
   input,
   output,
 }: {
-  eyebrow: string;
   title: string;
   description: string;
   input: ReactNode;
@@ -17,9 +14,6 @@ export function ModuleShell({
   return (
     <div className="mx-auto w-full max-w-[1500px] p-4 lg:p-6">
       <div className="mb-6">
-        <Badge variant="outline" className="mb-3 text-[10px] uppercase tracking-widest">
-          {eyebrow}
-        </Badge>
         <h1 className="text-2xl font-black tracking-tight">{title}</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
           {description}

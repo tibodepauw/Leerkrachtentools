@@ -50,7 +50,6 @@ export function ManualScannerView() {
 
   return (
     <ModuleShell
-      eyebrow="Input & extractie"
       title="Handleiding Scanner"
       description="Upload een PDF of afbeelding van een handleiding. Met Gemini wordt het document visueel gelezen; zonder key krijg je een duidelijke lokale demo."
       input={

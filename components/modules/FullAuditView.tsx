@@ -29,7 +29,6 @@ export function FullAuditView() {
 
   return (
     <ModuleShell
-      eyebrow="Kwaliteitscontrole"
       title="Totale lesvoorbereiding audit"
       description="Een stoplichtscore op doelen, leerplandoelen, taal, timing, alignering en betrokkenheid."
       input={

@@ -79,7 +79,6 @@ export function CurriculumRagView() {
 
   return (
     <ModuleShell
-      eyebrow="Doelen & leerplandoelen"
       title="Leerplandoelen matcher"
       description="Zoekt officiële minimumdoelen en leerplandoelen in een lokale, gebrande index. Toekomstige plannen zijn fysiek gescheiden en worden nooit als huidige match gebruikt."
       input={

@@ -23,7 +23,6 @@ export function SpellcheckView() {
 
   return (
     <ModuleShell
-      eyebrow="Lesvoorbereiding"
       title="Didactische taalfoutencheck"
       description="Controleert dt-fouten, formele instructietaal, didactische terminologie en professionele stijl."
       input={
