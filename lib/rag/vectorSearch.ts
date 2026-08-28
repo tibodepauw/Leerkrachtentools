@@ -64,6 +64,9 @@ function searchableText(goal: CurriculumGoal) {
   return [
     goal.text,
     goal.code,
+    goal.discipline,
+    goal.gradeLevel,
+    goal.framework,
     goal.domain,
     goal.subject,
     ...goal.keywords,

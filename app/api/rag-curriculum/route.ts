@@ -67,10 +67,11 @@ export async function POST(request: Request) {
         alternatives,
         corpusNotice:
           body.source === "minimumdoel"
-            ? "Vlaamse overheidsdoelen uit de lokale bronseed. Controleer de officiële bron en geldigheid voor indiening."
+            ? "Alleen geïndexeerde minimumdoelen (retrieval). Geen AI-generatie. Controleer code, leerjaar en officiële bron vóór indiening."
             : body.network === "OVSG"
-            ? "De OVSG-seed bevat alleen publiek verifieerbare inhoud. Importeer een toegestane LeerLokaal-export voor volledige doelcodes."
-            : "Leerplandoelen van het gekozen onderwijsnet uit de lokale bronseed. Controleer de officiële bron en versie voor indiening.",
+            ? "Alleen geïndexeerde leerplandoelen (retrieval). OVSG-seed bevat publiek verifieerbare inhoud; importeer LeerLokaal-export voor volledige codes."
+            : "Alleen geïndexeerde leerplandoelen (retrieval). Geen AI-generatie. Controleer code en officiële bron vóór indiening.",
+        retrievalMode: "indexed-only",
       },
       provider: "local",
       fallbackErrors: [],

@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAnalysis } from "@/hooks/useAnalysis";
+import { formatGoalMetadata } from "@/lib/rag/curriculumDisplay";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type {
@@ -51,7 +52,7 @@ const sourceCopy: Record<
   leerplandoel: {
     title: "Leerplandoelen matcher",
     description:
-      "Zoekt een passend leerplandoel binnen het leerplan van het gekozen onderwijsnet.",
+      "Zoekt uitsluitend in geïndexeerde leerplandoelen van het gekozen onderwijsnet. Er wordt niets verzonnen: elk resultaat komt letterlijk uit de bronindex met code en officiële tekst.",
     resultTitle: "Leerplandoel",
     action: "Zoek leerplandoel",
     empty:
@@ -60,7 +61,7 @@ const sourceCopy: Record<
   minimumdoel: {
     title: "Minimumdoelen matcher",
     description:
-      "Zoekt een passend minimumdoel van de Vlaamse overheid, onafhankelijk van het onderwijsnet.",
+      "Zoekt uitsluitend in geïndexeerde minimumdoelen van de Vlaamse overheid. Er wordt niets verzonnen: elk resultaat komt letterlijk uit de bronindex met code, leerjaar en officiële tekst.",
     resultTitle: "Minimumdoel Vlaamse overheid",
     action: "Zoek minimumdoel",
     empty:
@@ -103,8 +104,9 @@ function GoalCard({
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm leading-6">{match.text}</p>
-        <p className="text-xs text-neutral-500">
-          {match.domain} · {match.version}
+        <p className="text-xs text-neutral-500">{formatGoalMetadata(match)}</p>
+        <p className="text-xs text-neutral-600">
+          Thema: {match.subject} · {match.approvalStatus}
         </p>
         <div className="flex flex-wrap gap-2">
           <CopyButton value={`${match.code} — ${match.text}`} />

@@ -83,6 +83,9 @@ export interface CurriculumGoal {
   network: EducationNetwork | "VLAANDEREN";
   code: string;
   text: string;
+  discipline: string;
+  gradeLevel: string;
+  framework: string;
   domain: string;
   subject: string;
   schoolYears: string[];
