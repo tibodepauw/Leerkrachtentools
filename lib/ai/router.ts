@@ -20,6 +20,7 @@ export interface StructuredRequest<T> {
     mediaType: string;
     filename?: string;
   };
+  maxOutputTokens?: number;
   userAiConfig?: UserAiConfig | null;
 }
 
@@ -110,7 +111,7 @@ export async function runStructured<T>(
             }
           : { prompt: request.prompt }),
         output: Output.object({ schema: request.schema }),
-        maxOutputTokens: 2400,
+        maxOutputTokens: request.maxOutputTokens ?? 2400,
         temperature: 0.2,
         maxRetries: 1,
         abortSignal: AbortSignal.timeout(45_000),

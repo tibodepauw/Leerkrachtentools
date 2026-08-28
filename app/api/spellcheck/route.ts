@@ -12,4 +12,5 @@ export const POST = createAnalysisHandler({
   buildMock: (input) => mockSpellcheck(text(input, "content")),
   preferredProvider: "google",
   requireAi: true,
+  maxOutputTokens: 8192,
 });

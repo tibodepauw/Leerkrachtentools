@@ -26,6 +26,7 @@ export function createAnalysisHandler<T>({
   buildMock,
   preferredProvider,
   requireAi = false,
+  maxOutputTokens,
 }: {
   schema: z.ZodType<T>;
   system: string;
@@ -33,6 +34,7 @@ export function createAnalysisHandler<T>({
   buildMock: (input: InputRecord) => T;
   preferredProvider?: ProviderName;
   requireAi?: boolean;
+  maxOutputTokens?: number;
 }) {
   return async function POST(request: Request) {
     const session = sessionFromRequest(request);
@@ -65,6 +67,7 @@ export function createAnalysisHandler<T>({
         preferredProvider: preferred,
         allowLocalMock: !requireAi,
         userAiConfig,
+        maxOutputTokens,
       });
       return NextResponse.json(result);
     } catch (error) {

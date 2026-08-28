@@ -37,13 +37,15 @@ export const dialogueSchema = z.object({
 
 export const spellcheckSchema = z.object({
   improved: z.string(),
-  issues: z.array(
-    z.object({
-      original: z.string(),
-      replacement: z.string(),
-      reason: z.string(),
-    }),
-  ),
+  issues: z
+    .array(
+      z.object({
+        original: z.string(),
+        replacement: z.string(),
+        reason: z.string(),
+      }),
+    )
+    .max(50),
 });
 
 export const timingAdviceSchema = z.object({
