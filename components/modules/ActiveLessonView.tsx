@@ -7,18 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LessonDocumentPreview } from "@/components/shared/LessonDocumentPreview";
+import { getLessonDocument } from "@/lib/documents/documentStorage";
 import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { LessonExportPayload } from "@/types";
 
-function downloadName(topic: string) {
+function downloadName(topic: string, sourceFileName?: string | null) {
+  if (sourceFileName?.toLowerCase().endsWith(".docx")) {
+    const base = sourceFileName.replace(/\.docx$/iu, "");
+    return `${base}-bijgewerkt.docx`;
+  }
+
   const safeTopic = topic
     .trim()
     .toLocaleLowerCase("nl-BE")
     .replace(/[^a-z0-9à-ÿ]+/giu, "-")
     .replace(/^-|-$/gu, "");
-  return `lesvoorbereiding-${safeTopic || "actieve-les"}.docx`;
+  return `lesvoorbereiding-${safeTopic || "formulier"}.docx`;
+}
+
+function fileNameFromDisposition(header: string | null) {
+  if (!header) return null;
+  const match = header.match(/filename="([^"]+)"/i);
+  return match?.[1] ?? null;
 }
 
 export function ActiveLessonView() {
@@ -85,10 +97,23 @@ export function ActiveLessonView() {
         educationNetwork: lesson.educationNetwork,
         lessonPreparation: lesson.lessonPreparation,
       };
+      const formData = new FormData();
+      formData.append("lesson", JSON.stringify(payload));
+
+      if (preparationDocument) {
+        const sourceBlob = await getLessonDocument(preparationDocument.id);
+        if (sourceBlob) {
+          formData.append(
+            "sourceDocument",
+            sourceBlob,
+            preparationDocument.fileName,
+          );
+        }
+      }
+
       const response = await fetch("/api/export-lesson-document", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -101,7 +126,9 @@ export function ActiveLessonView() {
       const url = URL.createObjectURL(await response.blob());
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = downloadName(lesson.topic);
+      anchor.download =
+        fileNameFromDisposition(response.headers.get("Content-Disposition")) ??
+        downloadName(lesson.topic, preparationDocument?.fileName);
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -119,8 +146,9 @@ export function ActiveLessonView() {
         <div>
           <h1 className="text-2xl font-black tracking-tight">Actieve les</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
-            Bekijk je originele lesvoorbereiding als document. Verbeterde doelen
-            en metadata worden meegenomen in de Word-download.
+            Bekijk je originele lesvoorbereiding als document. De Word-download
+            past je geüploade formulier aan met je actuele lesdoelen en
+            lescontext.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -254,8 +282,10 @@ export function ActiveLessonView() {
               onUpload={openUploadDialog}
             />
             <p className="text-xs text-neutral-500">
-              Je ziet hier het originele Word- of PDF-bestand. Analysemodules
-              werken op de achtergrond nog steeds met geëxtraheerde tekst.
+              Je ziet hier het originele Word- of PDF-bestand. Bij downloaden
+              wordt je .docx-formulier bijgewerkt met je actuele doelen. Heb je
+              enkel een PDF geüpload, dan vullen we het officiële Word-sjabloon
+              in.
             </p>
           </CardContent>
         </Card>
