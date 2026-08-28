@@ -44,8 +44,7 @@ async function readExportInput(request: Request) {
 
   if (
     contentType.includes("multipart/form-data") ||
-    contentType.includes("application/x-www-form-urlencoded") ||
-    !contentType
+    contentType.includes("application/x-www-form-urlencoded")
   ) {
     const formData = await request.formData();
     const lessonPayload = formData.get("lesson");
