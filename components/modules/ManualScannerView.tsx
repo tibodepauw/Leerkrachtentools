@@ -5,7 +5,6 @@ import { FileUp, Loader2, RefreshCw } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -192,8 +191,7 @@ export function ManualScannerView() {
       output={
         result ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Badge variant="secondary">via {result.provider}</Badge>
+            <div className="flex justify-end">
               <CopyButton
                 value={JSON.stringify(result.data, null, 2)}
                 label="Kopieer alles"
