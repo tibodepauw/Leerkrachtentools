@@ -31,13 +31,13 @@ import type { ModuleId } from "@/types";
 
 const sections = [
   {
-    label: "Input & extractie",
+    label: "Input",
     items: [
       { id: "manual-scanner", label: "Handleiding Scanner", icon: FileScan },
     ],
   },
   {
-    label: "Doelen & leerplandoelen",
+    label: "Doelen",
     items: [
       { id: "goal-optimizer", label: "Doelverbeteraar", icon: Target },
       { id: "goal-taxonomy", label: "MC–DAS–SPM herkenner", icon: Brain },
