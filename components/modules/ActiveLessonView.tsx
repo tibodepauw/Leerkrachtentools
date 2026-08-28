@@ -195,9 +195,11 @@ export function ActiveLessonView() {
           </Card>
 
           <Card>
-            <CardHeader className="flex-row items-center justify-between">
-              <CardTitle className="text-sm">Actuele lesdoelen</CardTitle>
-              <Badge variant="secondary">{activeGoals.length}</Badge>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                Actuele lesdoelen
+                <Badge variant="outline">{activeGoals.length}</Badge>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {activeGoals.length > 0 ? (
