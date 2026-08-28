@@ -23,7 +23,7 @@ interface GoalImprovementResult {
 export function GoalOptimizerView() {
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
-  const setGoal = useLessonStore((state) => state.setGoal);
+  const replaceGoalText = useLessonStore((state) => state.replaceGoalText);
   const { analyze, result, loading, error } = useAnalysis<GoalImprovementResult>();
   const actionDisabled = loading || !text.trim();
 
@@ -97,7 +97,7 @@ export function GoalOptimizerView() {
               onClick={() => {
                 const index = goals.findIndex((goal) => goal.id === selectedId);
                 if (index >= 0) {
-                  setGoal(index, { text: result.data.improved });
+                  replaceGoalText(index, result.data.improved);
                 }
               }}
             >

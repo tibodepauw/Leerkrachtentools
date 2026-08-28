@@ -11,6 +11,7 @@ import {
   ClipboardCheck,
   Clock3,
   FileScan,
+  FileText,
   Menu,
   MessageSquareQuote,
   ScanText,
@@ -124,6 +125,19 @@ function SidebarContent({
       </div>
       <ScrollArea className="flex-1">
         <nav className="space-y-6 p-3">
+          <button
+            type="button"
+            onClick={() => openModule("active-lesson")}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm font-medium transition-colors",
+              !isSettings && activeModule === "active-lesson"
+                ? "bg-neutral-800 text-white"
+                : "text-neutral-300 hover:bg-neutral-900 hover:text-white",
+            )}
+          >
+            <FileText className="size-4 shrink-0" />
+            <span>Actieve les</span>
+          </button>
           {sections.map((section) => (
             <section key={section.label}>
               <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-600">

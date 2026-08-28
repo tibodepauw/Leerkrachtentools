@@ -3,6 +3,7 @@
 import { ActiveLessonBar } from "@/components/layout/ActiveLessonBar";
 import { AppShell } from "@/components/layout/AppShell";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
+import { ActiveLessonView } from "@/components/modules/ActiveLessonView";
 import { AlignmentAuditView } from "@/components/modules/AlignmentAuditView";
 import { CurriculumRagView } from "@/components/modules/CurriculumRagView";
 import { DialogueFormatterView } from "@/components/modules/DialogueFormatterView";
@@ -18,6 +19,7 @@ import { useAppReady } from "@/hooks/useAppReady";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 const modules = {
+  "active-lesson": ActiveLessonView,
   "manual-scanner": ManualScannerView,
   "goal-optimizer": GoalOptimizerView,
   "goal-taxonomy": GoalTaxonomyView,

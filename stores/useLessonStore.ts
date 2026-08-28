@@ -43,6 +43,7 @@ interface LessonStore {
     value: ActiveLesson[K],
   ) => void;
   setGoal: (index: number, goal: Partial<LessonGoal>) => void;
+  replaceGoalText: (index: number, text: string) => void;
   setActiveGoal: (text: string, taxonomy?: LessonGoal["taxonomy"]) => void;
   syncFromExtraction: (data: ManualExtraction) => void;
   syncPreparation: (text: string) => void;
@@ -69,6 +70,24 @@ export const useLessonStore = create<LessonStore>()(
             ),
           },
         })),
+      replaceGoalText: (index, text) =>
+        set((state) => {
+          const previousText = state.lesson.goals[index]?.text.trim() ?? "";
+          const lessonPreparation =
+            previousText && state.lesson.lessonPreparation.includes(previousText)
+              ? state.lesson.lessonPreparation.replaceAll(previousText, text)
+              : state.lesson.lessonPreparation;
+
+          return {
+            lesson: {
+              ...state.lesson,
+              lessonPreparation,
+              goals: state.lesson.goals.map((goal, goalIndex) =>
+                goalIndex === index ? { ...goal, text } : goal,
+              ),
+            },
+          };
+        }),
       setActiveGoal: (text, taxonomy) =>
         set((state) => {
           const firstEmpty = state.lesson.goals.findIndex(

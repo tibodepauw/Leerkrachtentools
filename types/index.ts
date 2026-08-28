@@ -1,6 +1,7 @@
 export type EducationNetwork = "ZILL" | "OVSG" | "GO";
 export type GoalTaxonomy = "MC" | "DAS" | "SPM";
 export type ModuleId =
+  | "active-lesson"
   | "manual-scanner"
   | "goal-optimizer"
   | "goal-taxonomy"
@@ -31,6 +32,18 @@ export interface LessonGoal {
   id: LessonGoalId;
   text: string;
   taxonomy?: GoalTaxonomy;
+}
+
+export interface LessonExportPayload {
+  topic: string;
+  learningArea: string;
+  component: string;
+  targetGroup: string;
+  materials: string[];
+  goals: LessonGoal[];
+  totalMinutes: number;
+  educationNetwork: EducationNetwork;
+  lessonPreparation: string;
 }
 
 export interface LessonPhase {
