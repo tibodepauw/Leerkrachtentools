@@ -3,6 +3,9 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createGroq } from "@ai-sdk/groq";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { LanguageModel } from "ai";
+import type { UserAiConfig } from "@/lib/ai/userCredentials";
+import { userAiConfigHasCredentials } from "@/lib/ai/userCredentials";
+import { defaultModelForProvider } from "@/lib/ai/listModels";
 
 export type ProviderName =
   | "google"
@@ -16,7 +19,7 @@ export interface ModelCandidate {
   model: LanguageModel;
 }
 
-export function getModelCandidates(preferred?: ProviderName): ModelCandidate[] {
+function envModelCandidates(preferred?: ProviderName): ModelCandidate[] {
   const candidates: ModelCandidate[] = [];
 
   if (process.env.GROQ_API_KEY) {
@@ -68,13 +71,90 @@ export function getModelCandidates(preferred?: ProviderName): ModelCandidate[] {
   );
 }
 
-export function hasCloudflare() {
+function userModelCandidates(
+  config: UserAiConfig,
+  preferred?: ProviderName,
+): ModelCandidate[] {
+  const modelId =
+    config.model.trim() || defaultModelForProvider(config.provider);
+
+  let candidate: ModelCandidate | null = null;
+
+  switch (config.provider) {
+    case "groq":
+      candidate = {
+        name: "groq",
+        model: createGroq({ apiKey: config.apiKey })(modelId),
+      };
+      break;
+    case "cerebras":
+      candidate = {
+        name: "cerebras",
+        model: createCerebras({ apiKey: config.apiKey })(modelId),
+      };
+      break;
+    case "sambanova":
+      candidate = {
+        name: "sambanova",
+        model: createOpenAI({
+          name: "sambanova",
+          apiKey: config.apiKey,
+          baseURL:
+            process.env.SAMBANOVA_BASE_URL ?? "https://api.sambanova.ai/v1",
+        }).chat(modelId),
+      };
+      break;
+    case "google":
+      candidate = {
+        name: "google",
+        model: createGoogleGenerativeAI({ apiKey: config.apiKey })(modelId),
+      };
+      break;
+    case "cloudflare":
+      return [];
+  }
+
+  if (!candidate) return [];
+  if (!preferred || preferred === candidate.name) return [candidate];
+  return [candidate];
+}
+
+export function getModelCandidates(
+  preferred?: ProviderName,
+  userConfig?: UserAiConfig | null,
+) {
+  if (userConfig?.enabled && userAiConfigHasCredentials(userConfig)) {
+    return userModelCandidates(userConfig, preferred);
+  }
+  return envModelCandidates(preferred);
+}
+
+export function hasCloudflare(userConfig?: UserAiConfig | null) {
+  if (userConfig?.enabled && userConfig.provider === "cloudflare") {
+    return userAiConfigHasCredentials(userConfig);
+  }
   return Boolean(
-    process.env.CLOUDFLARE_ACCOUNT_ID &&
-      process.env.CLOUDFLARE_API_TOKEN,
+    process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN,
   );
 }
 
-export function hasAnyAiProvider() {
-  return getModelCandidates().length > 0 || hasCloudflare();
+export function cloudflareCredentials(userConfig?: UserAiConfig | null) {
+  if (userConfig?.enabled && userConfig.provider === "cloudflare") {
+    return {
+      accountId: userConfig.cloudflareAccountId ?? "",
+      token: userConfig.apiKey,
+      model:
+        userConfig.model.trim() ||
+        defaultModelForProvider("cloudflare"),
+    };
+  }
+  return {
+    accountId: process.env.CLOUDFLARE_ACCOUNT_ID ?? "",
+    token: process.env.CLOUDFLARE_API_TOKEN ?? "",
+    model: process.env.CLOUDFLARE_MODEL ?? "@cf/meta/llama-3.1-8b-instruct",
+  };
+}
+
+export function hasAnyAiProvider(userConfig?: UserAiConfig | null) {
+  return getModelCandidates(undefined, userConfig).length > 0 || hasCloudflare(userConfig);
 }

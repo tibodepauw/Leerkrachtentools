@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
 
 interface AccountSettingsProps {
   email: string;
@@ -171,7 +172,7 @@ export function AccountSettings({
           <Card>
             <CardHeader className="flex-row items-center justify-between">
               <div>
-                <CardTitle>Abonnement</CardTitle>
+                <CardTitle>Status</CardTitle>
                 <CardDescription>Je huidige toegangsniveau.</CardDescription>
               </div>
               <Badge variant="secondary" className="capitalize">
@@ -182,6 +183,8 @@ export function AccountSettings({
               Je gebruikt alle beschikbare Leerkrachtentools binnen de gratis tier.
             </CardContent>
           </Card>
+
+          <ApiKeysSettings />
 
           <Card>
             <CardHeader>

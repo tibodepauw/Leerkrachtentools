@@ -1,7 +1,12 @@
 import { generateText, Output } from "ai";
 import type { z } from "zod";
-import { getModelCandidates, hasCloudflare } from "@/lib/ai/providers";
+import {
+  cloudflareCredentials,
+  getModelCandidates,
+  hasCloudflare,
+} from "@/lib/ai/providers";
 import type { ProviderName } from "@/lib/ai/providers";
+import type { UserAiConfig } from "@/lib/ai/userCredentials";
 
 export interface StructuredRequest<T> {
   schema: z.ZodType<T>;
@@ -15,6 +20,7 @@ export interface StructuredRequest<T> {
     mediaType: string;
     filename?: string;
   };
+  userAiConfig?: UserAiConfig | null;
 }
 
 export interface StructuredResult<T> {
@@ -32,13 +38,12 @@ async function callCloudflare<T>({
   schema,
   system,
   prompt,
+  userAiConfig,
 }: StructuredRequest<T>): Promise<T> {
-  const account = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const token = process.env.CLOUDFLARE_API_TOKEN;
+  const { accountId: account, token, model } = cloudflareCredentials(
+    userAiConfig,
+  );
   if (!account || !token) throw new Error("Cloudflare is niet geconfigureerd");
-
-  const model =
-    process.env.CLOUDFLARE_MODEL ?? "@cf/meta/llama-3.1-8b-instruct";
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/${model}`,
     {
@@ -71,7 +76,10 @@ export async function runStructured<T>(
 ): Promise<StructuredResult<T>> {
   const errors: string[] = [];
 
-  const candidates = getModelCandidates(request.preferredProvider);
+  const candidates = getModelCandidates(
+    request.preferredProvider,
+    request.userAiConfig,
+  );
   if (request.file) {
     candidates.sort((left, right) =>
       left.name === "google" ? -1 : right.name === "google" ? 1 : 0,
@@ -119,7 +127,7 @@ export async function runStructured<T>(
     }
   }
 
-  if (hasCloudflare()) {
+  if (hasCloudflare(request.userAiConfig)) {
     try {
       return {
         data: await callCloudflare(request),

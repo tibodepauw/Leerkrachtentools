@@ -79,6 +79,25 @@ export function getDatabase() {
       "ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'",
     );
   }
+  if (!userColumns.has("use_own_api_keys")) {
+    database.exec(
+      "ALTER TABLE users ADD COLUMN use_own_api_keys INTEGER NOT NULL DEFAULT 0",
+    );
+  }
+  if (!userColumns.has("ai_provider")) {
+    database.exec("ALTER TABLE users ADD COLUMN ai_provider TEXT");
+  }
+  if (!userColumns.has("ai_api_key_enc")) {
+    database.exec("ALTER TABLE users ADD COLUMN ai_api_key_enc TEXT");
+  }
+  if (!userColumns.has("ai_model")) {
+    database.exec("ALTER TABLE users ADD COLUMN ai_model TEXT");
+  }
+  if (!userColumns.has("ai_cloudflare_account_id")) {
+    database.exec(
+      "ALTER TABLE users ADD COLUMN ai_cloudflare_account_id TEXT",
+    );
+  }
   return database;
 }
 

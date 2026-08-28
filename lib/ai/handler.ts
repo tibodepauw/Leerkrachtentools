@@ -7,6 +7,7 @@ import {
 import { runStructured } from "@/lib/ai/router";
 import type { ProviderName } from "@/lib/ai/providers";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
+import { getUserAiConfig } from "@/lib/ai/userCredentials";
 
 type InputRecord = Record<string, unknown>;
 
@@ -34,20 +35,23 @@ export function createAnalysisHandler<T>({
   requireAi?: boolean;
 }) {
   return async function POST(request: Request) {
-    if (!sessionFromRequest(request)) return unauthorizedResponse();
+    const session = sessionFromRequest(request);
+    if (!session) return unauthorizedResponse();
     try {
       const input = (await request.json()) as InputRecord;
+      const userAiConfig = getUserAiConfig(session.id);
       const preferred =
         typeof input.provider === "string" &&
         providerNames.has(input.provider)
           ? (input.provider as ProviderName)
           : preferredProvider;
 
-      if (requireAi && !hasAnyAiProvider()) {
+      if (requireAi && !hasAnyAiProvider(userAiConfig)) {
         return NextResponse.json(
           {
-            error:
-              "Geen AI-provider geconfigureerd. Zet GOOGLE_GENERATIVE_AI_API_KEY in .env.local (Google AI Studio).",
+            error: userAiConfig?.enabled
+              ? "Eigen API-keys zijn ingeschakeld maar nog niet volledig ingevuld. Controleer instellingen."
+              : "Geen AI-provider geconfigureerd. Zet GOOGLE_GENERATIVE_AI_API_KEY in .env.local of vul eigen API-keys in bij instellingen.",
           },
           { status: 503 },
         );
@@ -60,6 +64,7 @@ export function createAnalysisHandler<T>({
         mock: buildMock(input),
         preferredProvider: preferred,
         allowLocalMock: !requireAi,
+        userAiConfig,
       });
       return NextResponse.json(result);
     } catch (error) {

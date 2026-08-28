@@ -1,0 +1,74 @@
+import { NextResponse } from "next/server";
+import {
+  sessionFromRequest,
+  unauthorizedResponse,
+} from "@/lib/auth/guard";
+import {
+  getUserAiConfig,
+  isProviderName,
+} from "@/lib/ai/userCredentials";
+import { listProviderModels } from "@/lib/ai/listModels";
+import type { ProviderName } from "@/lib/ai/providers";
+
+export async function POST(request: Request) {
+  const session = sessionFromRequest(request);
+  if (!session) return unauthorizedResponse();
+
+  const body = (await request.json()) as {
+    provider?: string;
+    apiKey?: string;
+    cloudflareAccountId?: string;
+  };
+
+  if (!isProviderName(body.provider ?? "")) {
+    return NextResponse.json(
+      { error: "Kies een geldige provider." },
+      { status: 400 },
+    );
+  }
+  const provider = body.provider as ProviderName;
+
+  const saved = getUserAiConfig(session.id);
+  const apiKey =
+    typeof body.apiKey === "string" && body.apiKey.trim()
+      ? body.apiKey.trim()
+      : saved?.apiKey ?? "";
+
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "Vul eerst een API-key in." },
+      { status: 400 },
+    );
+  }
+
+  const cloudflareAccountId =
+    typeof body.cloudflareAccountId === "string" &&
+    body.cloudflareAccountId.trim()
+      ? body.cloudflareAccountId.trim()
+      : saved?.cloudflareAccountId;
+
+  if (body.provider === "cloudflare" && !cloudflareAccountId) {
+    return NextResponse.json(
+      { error: "Vul je Cloudflare account ID in." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const models = await listProviderModels(provider, {
+      apiKey,
+      cloudflareAccountId,
+    });
+    return NextResponse.json({ models });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Modellen konden niet worden opgehaald.",
+      },
+      { status: 400 },
+    );
+  }
+}
