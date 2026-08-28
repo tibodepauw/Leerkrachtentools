@@ -1,7 +1,6 @@
 "use client";
 
 import { LogOut, RotateCcw, SlidersHorizontal } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -46,9 +45,6 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
             <p className="truncate text-sm font-medium">
               {lesson.topic || "Nieuwe les"}
             </p>
-            <Badge variant="outline" className="hidden text-[10px] sm:inline-flex">
-              {lesson.referenceSchoolYear}
-            </Badge>
           </div>
           <p className="truncate text-xs text-neutral-500">
             {lesson.targetGroup || "Doelgroep nog niet ingevuld"} ·{" "}
@@ -119,7 +115,7 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                     onChange={(event) =>
                       setField("referenceSchoolYear", event.target.value)
                     }
-                    placeholder="2025-2026"
+                    placeholder="Bijv. 2025-2026"
                   />
                 </div>
                 <div className="space-y-2">

@@ -24,7 +24,7 @@ const initialLesson: ActiveLesson = {
   ],
   totalMinutes: 50,
   educationNetwork: "ZILL",
-  referenceSchoolYear: "2025-2026",
+  referenceSchoolYear: "",
   lessonPreparation: "",
   phases: [
     { name: "Instap", text: "" },

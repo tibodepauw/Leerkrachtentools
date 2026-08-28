@@ -107,7 +107,9 @@ export function CurriculumRagView() {
             />
           </div>
           <p className="text-xs text-neutral-500">
-            Referentie: {lesson.referenceSchoolYear}. Pas dit aan via “Actieve les”.
+            {lesson.referenceSchoolYear
+              ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via “Actieve les”.`
+              : "Schooljaar optioneel instelbaar via Actieve les."}
           </p>
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
