@@ -1,9 +1,15 @@
 "use client";
 
-import { BookOpenCheck, ExternalLink, Loader2 } from "lucide-react";
+import {
+  BookOpenCheck,
+  ExternalLink,
+  Landmark,
+  Loader2,
+} from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
-import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
+import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
+import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,36 +21,78 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
-import { useLessonGoalText } from "@/hooks/useLessonText";
+import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
-import type { CurriculumGoal, EducationNetwork } from "@/types";
+import type {
+  CurriculumGoal,
+  EducationNetwork,
+} from "@/types";
 
+type GoalSource = CurriculumGoal["source"];
 type MatchedGoal = (CurriculumGoal & { score: number }) | "niet gevonden";
-interface RagResult {
-  minimumGoal: MatchedGoal;
-  curriculumGoal: MatchedGoal;
-  alternatives: unknown;
+
+interface MatcherResult {
+  goal: MatchedGoal;
   futurePlans: Array<{
     code: string;
     version: string;
     approvalStatus: string;
     sourceUrl: string;
   }>;
-  mode: string;
   corpusNotice: string;
 }
 
-function GoalCard({ title, match }: { title: string; match: MatchedGoal }) {
+const sourceCopy: Record<
+  GoalSource,
+  {
+    title: string;
+    description: string;
+    resultTitle: string;
+    action: string;
+    empty: string;
+  }
+> = {
+  leerplandoel: {
+    title: "Leerplandoelen matcher",
+    description:
+      "Zoekt een passend leerplandoel binnen het leerplan van het gekozen onderwijsnet.",
+    resultTitle: "Leerplandoel",
+    action: "Zoek leerplandoel",
+    empty:
+      "Een leerplandoel van het gekozen onderwijsnet verschijnt hier met bron en matchscore.",
+  },
+  minimumdoel: {
+    title: "Minimumdoelen matcher",
+    description:
+      "Zoekt een passend minimumdoel van de Vlaamse overheid, onafhankelijk van het onderwijsnet.",
+    resultTitle: "Minimumdoel Vlaamse overheid",
+    action: "Zoek minimumdoel",
+    empty:
+      "Een minimumdoel van de Vlaamse overheid verschijnt hier met bron en matchscore.",
+  },
+};
+
+function GoalCard({
+  title,
+  match,
+}: {
+  title: string;
+  match: MatchedGoal;
+}) {
   if (match === "niet gevonden") {
     return (
       <Card className="border-orange-900/60">
-        <CardHeader><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
-        <CardContent><Badge variant="outline">niet gevonden</Badge></CardContent>
+        <CardHeader>
+          <CardTitle className="text-sm">{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Badge variant="outline">Niet gevonden</Badge>
+        </CardContent>
       </Card>
     );
   }
+
   return (
     <Card>
       <CardHeader className="space-y-2">
@@ -56,12 +104,14 @@ function GoalCard({ title, match }: { title: string; match: MatchedGoal }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm leading-6">{match.text}</p>
-        <p className="text-xs text-neutral-500">{match.domain} · {match.version}</p>
+        <p className="text-xs text-neutral-500">
+          {match.domain} · {match.version}
+        </p>
         <div className="flex flex-wrap gap-2">
           <CopyButton value={`${match.code} — ${match.text}`} />
           <Button variant="outline" size="sm" asChild>
             <a href={match.sourceUrl} target="_blank" rel="noreferrer">
-              Bron <ExternalLink className="size-3" />
+              Officiële bron <ExternalLink className="size-3" />
             </a>
           </Button>
         </div>
@@ -70,86 +120,137 @@ function GoalCard({ title, match }: { title: string; match: MatchedGoal }) {
   );
 }
 
-export function CurriculumRagView() {
+function GoalMatcher({ source }: { source: GoalSource }) {
+  const copy = sourceCopy[source];
   const lesson = useLessonStore((state) => state.lesson);
   const setNetwork = useLessonStore((state) => state.setNetwork);
-  const [goal, setGoal] = useLessonGoalText();
-  const { analyze, result, loading, error } = useAnalysis<RagResult>();
-  const actionDisabled = loading || !goal.trim();
+  const { goals, selectedId, setSelectedId, text, setText } =
+    useSelectedLessonGoal();
+  const { analyze, result, loading, error } = useAnalysis<MatcherResult>();
+  const actionDisabled = loading || !text.trim();
+  const Icon = source === "minimumdoel" ? Landmark : BookOpenCheck;
 
   return (
     <ModuleShell
-      title="Leerplandoelen matcher"
-      description="Zoekt officiële minimumdoelen en leerplandoelen in een lokale, gebrande index. Toekomstige plannen zijn fysiek gescheiden en worden nooit als huidige match gebruikt."
+      title={copy.title}
+      description={copy.description}
       input={
         <div className="space-y-5">
-          <div className="space-y-2">
-            <Label>Onderwijsnet</Label>
-            <Select
-              value={lesson.educationNetwork}
-              onValueChange={(value) => setNetwork(value as EducationNetwork)}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ZILL">Katholiek Onderwijs · ZILL</SelectItem>
-                <SelectItem value="OVSG">OVSG · LeerLokaal</SelectItem>
-                <SelectItem value="GO">GO!</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="leerplandoel-goal">Actief lesdoel</Label>
-            <Textarea
-              id="leerplandoel-goal"
-              value={goal}
-              onChange={(event) => setGoal(event.target.value)}
-              rows={8}
-            />
-          </div>
+          {source === "leerplandoel" ? (
+            <div className="space-y-2">
+              <Label>Onderwijsnet</Label>
+              <Select
+                value={lesson.educationNetwork}
+                onValueChange={(value) =>
+                  setNetwork(value as EducationNetwork)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ZILL">
+                    Katholiek Onderwijs · ZILL
+                  </SelectItem>
+                  <SelectItem value="OVSG">OVSG · LeerLokaal</SelectItem>
+                  <SelectItem value="GO">GO!</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-neutral-800 p-3 text-sm">
+              <p className="font-medium">Bronniveau: Vlaamse overheid</p>
+              <p className="mt-1 text-xs leading-5 text-neutral-500">
+                Minimumdoelen gelden over de onderwijsnetten heen. Daarom hoef
+                je hier geen onderwijsnet te kiezen.
+              </p>
+            </div>
+          )}
+
+          <LessonGoalSelector
+            id={`${source}-goal`}
+            label="Kies een actief lesdoel"
+            goals={goals}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            text={text}
+            onTextChange={setText}
+            rows={8}
+          />
+
           <p className="text-xs text-neutral-500">
             {lesson.referenceSchoolYear
-              ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via “Actieve les”.`
+              ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via Actieve les.`
               : "Schooljaar optioneel instelbaar via Actieve les."}
           </p>
-          {error && <p className="text-sm text-red-400">{error}</p>}
+          {error ? <p className="text-sm text-red-400">{error}</p> : null}
           <ModuleActionButton
             disabled={actionDisabled}
-            disabledReason="Vul eerst een actief lesdoel in of zet er één via Doelverbeteraar."
+            disabledReason="Kies eerst een actief lesdoel of vul er één in."
             onClick={() =>
               analyze("/api/rag-curriculum", {
-                goal,
-                network: lesson.educationNetwork,
+                goal: text,
+                source,
+                network:
+                  source === "leerplandoel"
+                    ? lesson.educationNetwork
+                    : undefined,
                 schoolYear: lesson.referenceSchoolYear,
               })
             }
           >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <BookOpenCheck className="size-4" />}
-            Zoek officiële koppelingen
+            {loading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Icon className="size-4" />
+            )}
+            {copy.action}
           </ModuleActionButton>
         </div>
       }
       output={
         result ? (
           <div className="space-y-4">
-            <Badge variant="outline">{result.data.mode}</Badge>
-            <GoalCard title="Minimumdoel" match={result.data.minimumGoal} />
-            <GoalCard title={`Leerplandoel · ${lesson.educationNetwork}`} match={result.data.curriculumGoal} />
+            <GoalCard
+              title={
+                source === "leerplandoel"
+                  ? `${copy.resultTitle} · ${lesson.educationNetwork}`
+                  : copy.resultTitle
+              }
+              match={result.data.goal}
+            />
             <p className="rounded-md border border-neutral-800 bg-neutral-950 p-3 text-xs leading-5 text-neutral-500">
               {result.data.corpusNotice}
             </p>
-            {result.data.futurePlans.length > 0 && (
+            {result.data.futurePlans.length > 0 ? (
               <Card className="border-dashed">
-                <CardHeader><CardTitle className="text-xs text-neutral-400">Apart gehouden toekomstplannen</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-xs text-neutral-400">
+                    Apart gehouden toekomstplannen
+                  </CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-2 text-xs text-neutral-500">
-                  {result.data.futurePlans.map((plan) => <p key={plan.code}>{plan.code} · {plan.approvalStatus}</p>)}
+                  {result.data.futurePlans.map((plan) => (
+                    <p key={plan.code}>
+                      {plan.code} · {plan.approvalStatus}
+                    </p>
+                  ))}
                 </CardContent>
               </Card>
-            )}
+            ) : null}
           </div>
         ) : (
-          <EmptyOutput>Een minimumdoel en netwerkdoel met bron en matchscore verschijnen hier.</EmptyOutput>
+          <EmptyOutput>{copy.empty}</EmptyOutput>
         )
       }
     />
   );
+}
+
+export function CurriculumRagView() {
+  return <GoalMatcher source="leerplandoel" />;
+}
+
+export function MinimumGoalsView() {
+  return <GoalMatcher source="minimumdoel" />;
 }

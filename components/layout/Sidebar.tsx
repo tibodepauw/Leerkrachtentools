@@ -12,6 +12,7 @@ import {
   Clock3,
   FileScan,
   FileText,
+  Landmark,
   Menu,
   MessageSquareQuote,
   ScanText,
@@ -43,6 +44,7 @@ const sections = [
       { id: "goal-optimizer", label: "Doelverbeteraar", icon: Target },
       { id: "goal-taxonomy", label: "MC–DAS–SPM herkenner", icon: Brain },
       { id: "curriculum-rag", label: "Leerplandoelen", icon: BookOpenCheck },
+      { id: "minimum-goals", label: "Minimumdoelen", icon: Landmark },
     ],
   },
   {

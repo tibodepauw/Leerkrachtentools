@@ -6,6 +6,7 @@ export type ModuleId =
   | "goal-optimizer"
   | "goal-taxonomy"
   | "curriculum-rag"
+  | "minimum-goals"
   | "dialogue-formatter"
   | "spellcheck"
   | "timing-check"

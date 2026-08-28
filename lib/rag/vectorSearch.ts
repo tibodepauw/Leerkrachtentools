@@ -117,10 +117,17 @@ export function searchCurriculum({
     .slice(0, limit);
 }
 
-export function futureCurriculum(network: EducationNetwork) {
+export function futureCurriculum({
+  source,
+  network,
+}: {
+  source: CurriculumGoal["source"];
+  network?: EducationNetwork;
+}) {
   return curriculumData.filter(
     (goal) =>
       goal.status === "future" &&
-      (goal.network === network || goal.network === "VLAANDEREN"),
+      goal.source === source &&
+      (source === "minimumdoel" || goal.network === network),
   );
 }

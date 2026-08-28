@@ -5,7 +5,10 @@ import { AppShell } from "@/components/layout/AppShell";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { ActiveLessonView } from "@/components/modules/ActiveLessonView";
 import { AlignmentAuditView } from "@/components/modules/AlignmentAuditView";
-import { CurriculumRagView } from "@/components/modules/CurriculumRagView";
+import {
+  CurriculumRagView,
+  MinimumGoalsView,
+} from "@/components/modules/CurriculumRagView";
 import { DialogueFormatterView } from "@/components/modules/DialogueFormatterView";
 import { EngagementView } from "@/components/modules/EngagementView";
 import { FullAuditView } from "@/components/modules/FullAuditView";
@@ -24,6 +27,7 @@ const modules = {
   "goal-optimizer": GoalOptimizerView,
   "goal-taxonomy": GoalTaxonomyView,
   "curriculum-rag": CurriculumRagView,
+  "minimum-goals": MinimumGoalsView,
   "dialogue-formatter": DialogueFormatterView,
   spellcheck: SpellcheckView,
   "timing-check": TimingCheckView,

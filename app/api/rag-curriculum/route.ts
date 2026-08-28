@@ -7,7 +7,7 @@ import {
   futureCurriculum,
   searchCurriculum,
 } from "@/lib/rag/vectorSearch";
-import type { EducationNetwork } from "@/types";
+import type { CurriculumGoal, EducationNetwork } from "@/types";
 
 const networks = new Set(["ZILL", "OVSG", "GO"]);
 const MATCH_THRESHOLD = 0.08;
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       goal?: string;
       network?: EducationNetwork;
       schoolYear?: string;
+      source?: CurriculumGoal["source"];
     };
     if (!body.goal?.trim()) {
       return NextResponse.json(
@@ -26,54 +27,56 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    if (!body.network || !networks.has(body.network)) {
+    if (
+      body.source !== "minimumdoel" &&
+      body.source !== "leerplandoel"
+    ) {
+      return NextResponse.json(
+        { error: "Selecteer minimumdoelen of leerplandoelen." },
+        { status: 400 },
+      );
+    }
+    if (
+      body.source === "leerplandoel" &&
+      (!body.network || !networks.has(body.network))
+    ) {
       return NextResponse.json(
         { error: "Selecteer een geldig onderwijsnet." },
         { status: 400 },
       );
     }
     const schoolYear = body.schoolYear || "2025-2026";
-    const minimum = searchCurriculum({
+    const matches = searchCurriculum({
       query: body.goal,
       schoolYear,
-      source: "minimumdoel",
-      limit: 3,
-    });
-    const curriculum = searchCurriculum({
-      query: body.goal,
-      schoolYear,
-      source: "leerplandoel",
+      source: body.source,
       network: body.network,
       limit: 3,
     });
-    const minimumMatch =
-      minimum[0]?.score >= MATCH_THRESHOLD ? minimum[0] : null;
-    const curriculumMatch =
-      curriculum[0]?.score >= MATCH_THRESHOLD ? curriculum[0] : null;
+    const match =
+      matches[0]?.score >= MATCH_THRESHOLD ? matches[0] : null;
 
     return NextResponse.json({
       data: {
-        minimumGoal: minimumMatch
-          ? { ...minimumMatch.goal, score: minimumMatch.score }
+        goal: match
+          ? { ...match.goal, score: match.score }
           : "niet gevonden",
-        curriculumGoal: curriculumMatch
-          ? { ...curriculumMatch.goal, score: curriculumMatch.score }
-          : "niet gevonden",
-        alternatives: {
-          minimum: minimum.slice(1),
-          curriculum: curriculum.slice(1),
-        },
-        futurePlans: futureCurriculum(body.network).map((goal) => ({
+        alternatives: matches.slice(1),
+        futurePlans: futureCurriculum({
+          source: body.source,
+          network: body.network,
+        }).map((goal) => ({
           code: goal.code,
           version: goal.version,
           approvalStatus: goal.approvalStatus,
           sourceUrl: goal.sourceUrl,
         })),
-        mode: "lokale vectorindex",
         corpusNotice:
-          body.network === "OVSG"
+          body.source === "minimumdoel"
+            ? "Vlaamse overheidsdoelen uit de lokale bronseed. Controleer de officiële bron en geldigheid voor indiening."
+            : body.network === "OVSG"
             ? "De OVSG-seed bevat alleen publiek verifieerbare inhoud. Importeer een toegestane LeerLokaal-export voor volledige doelcodes."
-            : "Lokale bronseed; controleer officiële bron en versie voor indiening.",
+            : "Leerplandoelen van het gekozen onderwijsnet uit de lokale bronseed. Controleer de officiële bron en versie voor indiening.",
       },
       provider: "local",
       fallbackErrors: [],
@@ -84,7 +87,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Leerplandoelenzoekopdracht mislukt.",
+            : "Doelenzoekopdracht mislukt.",
       },
       { status: 400 },
     );
