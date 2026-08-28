@@ -34,6 +34,7 @@ type MatchedGoal = (CurriculumGoal & { score: number }) | "niet gevonden";
 
 interface MatcherResult {
   goal: MatchedGoal;
+  alternatives: Array<CurriculumGoal & { score: number }>;
   futurePlans: Array<{
     code: string;
     version: string;
@@ -60,7 +61,7 @@ const sourceCopy: Record<
     resultTitle: "Leerplandoel",
     action: "Zoek leerplandoel",
     empty:
-      "Een leerplandoel van het gekozen onderwijsnet verschijnt hier met bron en matchscore.",
+      "De beste match en alternatieven met score verschijnen hier.",
   },
   minimumdoel: {
     title: "Minimumdoelen matcher",
@@ -69,16 +70,18 @@ const sourceCopy: Record<
     resultTitle: "Minimumdoel Vlaamse overheid",
     action: "Zoek minimumdoel",
     empty:
-      "Een minimumdoel van de Vlaamse overheid verschijnt hier met bron en matchscore.",
+      "De beste match en alternatieven met score verschijnen hier.",
   },
 };
 
 function GoalCard({
   title,
   match,
+  subdued = false,
 }: {
   title: string;
   match: MatchedGoal;
+  subdued?: boolean;
 }) {
   if (match === "niet gevonden") {
     return (
@@ -94,11 +97,13 @@ function GoalCard({
   }
 
   return (
-    <Card>
+    <Card className={subdued ? "border-neutral-800/80" : undefined}>
       <CardHeader className="space-y-2">
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="text-sm">{title}</CardTitle>
-          <Badge variant="secondary">{Math.round(match.score * 100)}%</Badge>
+          <Badge variant={subdued ? "outline" : "secondary"}>
+            {Math.round(match.score * 100)}%
+          </Badge>
         </div>
         <p className="font-mono text-xs text-neutral-500">{match.code}</p>
       </CardHeader>
@@ -216,11 +221,26 @@ function GoalMatcher({ source }: { source: GoalSource }) {
             <GoalCard
               title={
                 source === "leerplandoel"
-                  ? `${copy.resultTitle} · ${lesson.educationNetwork}`
-                  : copy.resultTitle
+                  ? `Beste match · ${lesson.educationNetwork}`
+                  : "Beste match · Vlaamse overheid"
               }
               match={result.data.goal}
             />
+            {result.data.alternatives.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+                  Alternatieven
+                </p>
+                {result.data.alternatives.map((alternative, index) => (
+                  <GoalCard
+                    key={alternative.id}
+                    title={`Alternatief ${index + 2}`}
+                    match={alternative}
+                    subdued
+                  />
+                ))}
+              </div>
+            ) : null}
             <p className="rounded-md border border-neutral-800 bg-neutral-950 p-3 text-xs leading-5 text-neutral-500">
               {result.data.corpusNotice}
             </p>

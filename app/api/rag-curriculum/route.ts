@@ -55,13 +55,17 @@ export async function POST(request: Request) {
     });
     const match =
       matches[0]?.score >= MATCH_THRESHOLD ? matches[0] : null;
+    const alternatives = matches
+      .slice(1)
+      .filter((item) => item.score >= MATCH_THRESHOLD)
+      .map((item) => ({ ...item.goal, score: item.score }));
 
     return NextResponse.json({
       data: {
         goal: match
           ? { ...match.goal, score: match.score }
           : "niet gevonden",
-        alternatives: matches.slice(1),
+        alternatives,
         futurePlans: futureCurriculum({
           source: body.source,
           network: body.network,
