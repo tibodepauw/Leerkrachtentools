@@ -6,7 +6,7 @@ export function ModuleShell({
   description,
   input,
   output,
-  scrollMode = "panel",
+  scrollMode = "page",
 }: {
   title: string;
   description: string;

@@ -76,12 +76,10 @@ export function SpellcheckView() {
 
   return (
     <ModuleShell
-      scrollMode="page"
       title="Didactische taalfoutencheck"
       description="Controleert dt-fouten, formele instructietaal, didactische terminologie en professionele stijl."
       input={
         <ModuleInputLayout
-          flow
           fields={
             <LessonPreparationInput
               id="spell-content"

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export function ModuleInputLayout({
   fields,
   actions,
-  flow = false,
+  flow = true,
 }: {
   fields: ReactNode;
   actions: ReactNode;
