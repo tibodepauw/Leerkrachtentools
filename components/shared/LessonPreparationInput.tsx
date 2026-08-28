@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
+import { ActiveLessonPrepHint } from "@/components/shared/ActiveLessonPrepHint";
 
 interface LessonPreparationInputProps {
   id: string;
@@ -60,6 +61,7 @@ export function LessonPreparationInput({
   return (
     <div className="space-y-3">
       <Label htmlFor={id}>{label}</Label>
+      <ActiveLessonPrepHint />
       <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-5 text-center transition-colors hover:border-neutral-500">
         {uploading ? (
           <Loader2 className="mb-2 size-6 animate-spin text-neutral-400" />

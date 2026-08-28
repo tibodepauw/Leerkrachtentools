@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
+import { shouldSyncScannerSourceToPreparation } from "@/lib/lesson/preparationText";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { ManualExtraction } from "@/types";
 
@@ -44,6 +45,35 @@ export function ManualScannerView() {
   const syncFromExtraction = useLessonStore(
     (state) => state.syncFromExtraction,
   );
+  const syncPreparation = useLessonStore((state) => state.syncPreparation);
+  const lesson = useLessonStore((state) => state.lesson);
+
+  async function syncSourceTextToPreparation(sourceText: string) {
+    const trimmed = sourceText.trim();
+    if (!trimmed) return;
+
+    const currentLesson = useLessonStore.getState().lesson;
+    if (!shouldSyncScannerSourceToPreparation(currentLesson)) return;
+
+    syncPreparation(trimmed);
+  }
+
+  async function importDocumentText(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("/api/import-lesson-document", {
+      method: "POST",
+      body: formData,
+    });
+    const payload = (await response.json()) as {
+      error?: string;
+      text?: string;
+    };
+
+    if (!response.ok || !payload.text?.trim()) return;
+    await syncSourceTextToPreparation(payload.text);
+  }
 
   async function submit(overrides?: {
     content?: string;
@@ -78,6 +108,9 @@ export function ManualScannerView() {
 
     if (response?.data) {
       syncFromExtraction(response.data);
+      await syncSourceTextToPreparation(
+        overrides?.content ?? content,
+      );
     }
 
     return response;
@@ -106,12 +139,15 @@ export function ManualScannerView() {
       setFileData(base64);
       if (file.type.startsWith("text/")) setContent(nextContent);
 
-      await extractAndSync({
-        content: nextContent,
-        fileName: file.name,
-        fileData: base64,
-        mediaType: nextMediaType,
-      });
+      await Promise.all([
+        extractAndSync({
+          content: nextContent,
+          fileName: file.name,
+          fileData: base64,
+          mediaType: nextMediaType,
+        }),
+        importDocumentText(file).catch(() => undefined),
+      ]);
     } catch {
       setUploadError("Bestand kon niet worden gelezen.");
     }
@@ -234,8 +270,16 @@ export function ManualScannerView() {
             ) : null}
             <p className="text-xs text-neutral-500">
               Doelen zijn automatisch naar Actieve les gesynchroniseerd.
+              {lesson.lessonPreparation.trim()
+                ? " De brontekst staat in je lesvoorbereiding."
+                : " Plak tekst of upload een leesbaar document om ook de lesvoorbereiding te vullen."}
             </p>
-            <Button onClick={() => syncFromExtraction(result.data)}>
+            <Button
+              onClick={() => {
+                syncFromExtraction(result.data);
+                void syncSourceTextToPreparation(content);
+              }}
+            >
               Opnieuw synchroniseren
             </Button>
           </div>
