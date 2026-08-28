@@ -7,11 +7,11 @@ import {
   randomUUID,
   timingSafeEqual,
 } from "node:crypto";
-import { Resend } from "resend";
 import {
   cleanExpiredAuthRecords,
   getDatabase,
 } from "@/lib/auth/database";
+import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
 
 export const SESSION_COOKIE = "leerkrachtentools_session";
 const CODE_TTL = 10 * 60 * 1000;
@@ -50,16 +50,12 @@ function hashCode(email: string, code: string) {
 }
 
 async function sendVerificationEmail(email: string, code: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL;
-  if (!apiKey || !from) {
+  if (!isBrevoConfigured()) {
     if (process.env.NODE_ENV !== "production") return;
-    throw new Error("Resend is nog niet geconfigureerd.");
+    throw new Error("Brevo is nog niet geconfigureerd.");
   }
 
-  const resend = new Resend(apiKey);
-  const { error } = await resend.emails.send({
-    from,
+  await sendBrevoEmail({
     to: email,
     subject: `${code} is je verificatiecode`,
     text: `Je verificatiecode voor Leerkrachtentools is ${code}. De code vervalt over 10 minuten. Heb je dit niet aangevraagd? Negeer dan deze e-mail.`,
@@ -70,7 +66,6 @@ async function sendVerificationEmail(email: string, code: string) {
       <p>De code vervalt over 10 minuten. Heb je dit niet aangevraagd? Negeer dan deze e-mail.</p>
     </div>`,
   });
-  if (error) throw new Error(`Resend: ${error.message}`);
 }
 
 interface CountRow {
@@ -152,7 +147,7 @@ export async function requestLoginCode({
     email,
     expiresInSeconds: CODE_TTL / 1000,
     devCode:
-      process.env.NODE_ENV !== "production" && !process.env.RESEND_API_KEY
+      process.env.NODE_ENV !== "production" && !isBrevoConfigured()
         ? code
         : undefined,
   };

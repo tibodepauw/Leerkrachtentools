@@ -27,6 +27,10 @@ export default function PrivacyPage() {
             <p>Het e-mailadres is nodig om toegang te beveiligen en misbruik van betaalde AI-functies te beperken. Projectupdates worden uitsluitend gestuurd wanneer je daar afzonderlijk toestemming voor geeft.</p>
           </section>
           <section>
+            <h2 className="mb-2 font-semibold text-white">E-mailverzending</h2>
+            <p>Verificatiecodes worden verstuurd via Brevo (transactionele e-mail). Daarvoor gebruiken we alleen je e-mailadres en de verificatie-inhoud. Brevo verwerkt deze gegevens als onderaannemer.</p>
+          </section>
+          <section>
             <h2 className="mb-2 font-semibold text-white">Lesgegevens en AI-providers</h2>
             <p>De accountdatabase bewaart geen lesvoorbereidingen. De actieve lescontext staat lokaal in je browser. Wanneer je een AI-analyse uitvoert, wordt de noodzakelijke inhoud wel naar de geconfigureerde AI-provider gestuurd en geldt ook diens privacybeleid.</p>
           </section>

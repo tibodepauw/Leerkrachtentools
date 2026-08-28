@@ -15,9 +15,24 @@ npm run dev -- --hostname 0.0.0.0 --port 43127
 AI-keys zijn optioneel. Zonder keys gebruikt de applicatie lokale,
 deterministische demo-antwoorden en de ingebouwde curriculumseed.
 
-E-mailauthenticatie werkt lokaal zonder Resend-key met een zichtbare
-ontwikkelcode. Voor productie zijn `AUTH_SECRET`, `RESEND_API_KEY` en een
-`RESEND_FROM_EMAIL` op een geverifieerd domein verplicht.
+E-mailauthenticatie werkt lokaal zonder Brevo-key met een zichtbare
+ontwikkelcode. Voor productie zijn `AUTH_SECRET`, `BREVO_API_KEY` en een
+`BREVO_FROM_EMAIL` op een geverifieerd Brevo-afzenderadres verplicht.
+
+### Brevo instellen
+
+1. Maak in Brevo een geverifieerd afzenderadres aan onder **Senders, domains, IPs**.
+2. Zet in `.env.local`:
+
+```bash
+BREVO_API_KEY=jouw-api-key
+BREVO_FROM_EMAIL=Leerkrachtentools <login@jouwdomein.be>
+AUTH_SECRET=eentje-lange-willekeurige-string-minstens-32-tekens
+```
+
+3. Als **Block unauthorized IP addresses** actief is voor API-keys, voeg het publieke IP van je Oracle VM toe onder **Security → Authorized IPs**. Zonder die whitelist weigert Brevo verzending.
+
+Verificatiecodes gaan via `POST https://api.brevo.com/v3/smtp/email` (transactionele API, geen SMTP-client nodig in de app).
 
 ## Kwaliteitscontrole
 
