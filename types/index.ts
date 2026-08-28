@@ -3,6 +3,7 @@ export type GoalTaxonomy = "MC" | "DAS" | "SPM";
 export type ModuleId =
   | "manual-scanner"
   | "goal-optimizer"
+  | "goal-taxonomy"
   | "curriculum-rag"
   | "dialogue-formatter"
   | "spellcheck"

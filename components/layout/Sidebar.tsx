@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   AudioLines,
   BookOpenCheck,
+  Brain,
   Braces,
   ClipboardCheck,
   Clock3,
@@ -38,6 +39,7 @@ const sections = [
     label: "Doelen & curriculum",
     items: [
       { id: "goal-optimizer", label: "Doelverbeteraar", icon: Target },
+      { id: "goal-taxonomy", label: "MC–DAS–SPM herkenner", icon: Brain },
       { id: "curriculum-rag", label: "Curriculum RAG", icon: BookOpenCheck },
     ],
   },

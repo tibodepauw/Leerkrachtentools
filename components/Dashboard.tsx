@@ -9,6 +9,7 @@ import { DialogueFormatterView } from "@/components/modules/DialogueFormatterVie
 import { EngagementView } from "@/components/modules/EngagementView";
 import { FullAuditView } from "@/components/modules/FullAuditView";
 import { GoalOptimizerView } from "@/components/modules/GoalOptimizerView";
+import { GoalTaxonomyView } from "@/components/modules/GoalTaxonomyView";
 import { ManualScannerView } from "@/components/modules/ManualScannerView";
 import { SpellcheckView } from "@/components/modules/SpellcheckView";
 import { TimingCheckView } from "@/components/modules/TimingCheckView";
@@ -19,6 +20,7 @@ import { useLessonStore } from "@/stores/useLessonStore";
 const modules = {
   "manual-scanner": ManualScannerView,
   "goal-optimizer": GoalOptimizerView,
+  "goal-taxonomy": GoalTaxonomyView,
   "curriculum-rag": CurriculumRagView,
   "dialogue-formatter": DialogueFormatterView,
   spellcheck: SpellcheckView,
