@@ -1,7 +1,7 @@
 "use client";
 
 import { ActiveLessonBar } from "@/components/layout/ActiveLessonBar";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AppShell } from "@/components/layout/AppShell";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { AlignmentAuditView } from "@/components/modules/AlignmentAuditView";
 import { CurriculumRagView } from "@/components/modules/CurriculumRagView";
@@ -49,20 +49,15 @@ export function Dashboard({
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      <Sidebar
-        account={{
-          email: userEmail,
-          displayName,
-          tier,
-        }}
-      />
-      <div className="lg:pl-64">
-        <ActiveLessonBar userEmail={userEmail} />
-        <main>
-          <ActiveModule />
-        </main>
-      </div>
-    </div>
+    <AppShell
+      account={{
+        email: userEmail,
+        displayName,
+        tier,
+      }}
+    >
+      <ActiveLessonBar userEmail={userEmail} />
+      <ActiveModule />
+    </AppShell>
   );
 }

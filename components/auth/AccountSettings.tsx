@@ -1,16 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Check,
   Loader2,
   LogOut,
   ShieldCheck,
   Trash2,
 } from "lucide-react";
+import { AppShell } from "@/components/layout/AppShell";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -118,12 +117,14 @@ export function AccountSettings({
   }
 
   return (
-    <main className="min-h-screen bg-black">
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-        <Button variant="ghost" asChild className="mb-6">
-          <Link href="/"><ArrowLeft className="size-4" />Terug naar tools</Link>
-        </Button>
-
+    <AppShell
+      account={{
+        email,
+        displayName,
+        tier,
+      }}
+    >
+      <div className="w-full p-4 lg:p-6">
         <div className="mb-8 flex items-center gap-4">
           <Avatar className="size-14 border border-neutral-700">
             <AvatarFallback className="bg-neutral-800 text-lg font-semibold">
@@ -132,11 +133,13 @@ export function AccountSettings({
           </Avatar>
           <div>
             <h1 className="text-2xl font-black tracking-tight">Instellingen</h1>
-            <p className="text-sm text-neutral-500">Beheer je profiel, plan en privacy.</p>
+            <p className="text-sm text-neutral-500">
+              Beheer je profiel, status, API-keys en privacy.
+            </p>
           </div>
         </div>
 
-        <div className="space-y-5">
+        <div className="grid gap-5 xl:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>Profiel</CardTitle>
@@ -184,7 +187,9 @@ export function AccountSettings({
             </CardContent>
           </Card>
 
-          <ApiKeysSettings />
+          <div className="xl:col-span-2">
+            <ApiKeysSettings />
+          </div>
 
           <Card>
             <CardHeader>
@@ -240,6 +245,6 @@ export function AccountSettings({
           </Card>
         </div>
       </div>
-    </main>
+    </AppShell>
   );
 }
