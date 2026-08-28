@@ -37,11 +37,11 @@ const sections = [
     ],
   },
   {
-    label: "Doelen & curriculum",
+    label: "Doelen & leerplandoelen",
     items: [
       { id: "goal-optimizer", label: "Doelverbeteraar", icon: Target },
       { id: "goal-taxonomy", label: "MC–DAS–SPM herkenner", icon: Brain },
-      { id: "curriculum-rag", label: "Curriculum RAG", icon: BookOpenCheck },
+      { id: "curriculum-rag", label: "Leerplandoelen", icon: BookOpenCheck },
     ],
   },
   {

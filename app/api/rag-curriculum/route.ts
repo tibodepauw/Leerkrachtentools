@@ -84,7 +84,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Curriculumzoekopdracht mislukt.",
+            : "Leerplandoelenzoekopdracht mislukt.",
       },
       { status: 400 },
     );

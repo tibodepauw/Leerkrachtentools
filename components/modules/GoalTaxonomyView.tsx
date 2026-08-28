@@ -35,7 +35,7 @@ export function GoalTaxonomyView() {
 
   return (
     <ModuleShell
-      eyebrow="Doelen & curriculum"
+      eyebrow="Doelen & leerplandoelen"
       title="MC–DAS–SPM herkenner"
       description="Classificeert één lesdoel via Gemini als MC, DAS of SPM zonder het doel te herschrijven."
       input={

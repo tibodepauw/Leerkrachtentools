@@ -32,7 +32,7 @@ describe("Thomas More dialoog", () => {
   });
 });
 
-describe("lokale curriculum RAG", () => {
+describe("lokale leerplandoelenindex", () => {
   it("vindt het tijdlijndoel in minimumdoelen en ZILL", () => {
     const query = "De leerlingen situeren de Romeinen op een tijdlijn";
     const minimum = searchCurriculum({

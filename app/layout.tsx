@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Leerkrachtentools",
   description:
-    "AI-tools voor lesvoorbereiding, curriculumkoppeling en reflectie.",
+    "AI-tools voor lesvoorbereiding, leerplandoelenkoppeling en reflectie.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -1,7 +1,7 @@
 # Leerkrachtentools
 
 Een modulaire Next.js-app voor Thomas More BALO-studenten. De app ondersteunt
-lesdoelextractie en -verbetering, curriculum-RAG, Thomas More-formattering,
+lesdoelextractie en -verbetering, leerplandoelenkoppeling, Thomas More-formattering,
 didactische controles en reflectie na de les.
 
 ## Lokaal starten
@@ -69,7 +69,7 @@ gehashte sessies. Lesvoorbereidingen worden niet in deze database opgeslagen.
 
 ## Gegevens en bronnen
 
-Curriculumresultaten tonen bron, versie en schooljaar. Toekomstige leerplannen
+Leerplandoelresultaten tonen bron, versie en schooljaar. Toekomstige leerplannen
 staan los van de actieve index. Voeg nooit accountwachtwoorden of API-keys toe
 aan de repository; gebruik uitsluitend `.env.local`.
 

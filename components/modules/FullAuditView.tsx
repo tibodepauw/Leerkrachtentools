@@ -33,7 +33,7 @@ export function FullAuditView() {
     <ModuleShell
       eyebrow="Kwaliteitscontrole"
       title="Totale lesvoorbereiding audit"
-      description="Een stoplichtscore op doelen, curriculum, taal, timing, alignering en betrokkenheid."
+      description="Een stoplichtscore op doelen, leerplandoelen, taal, timing, alignering en betrokkenheid."
       input={
         <div className="space-y-4">
           <Textarea rows={22} value={content} onChange={(event) => setContent(event.target.value)} placeholder="Plak de volledige concept-lesvoorbereiding..." />

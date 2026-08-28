@@ -79,9 +79,9 @@ export function CurriculumRagView() {
 
   return (
     <ModuleShell
-      eyebrow="Doelen & curriculum"
-      title="Curriculum RAG Matcher"
-      description="Zoekt eerst in een lokale, gebronde vectorindex. Toekomstige plannen zijn fysiek gescheiden en worden nooit als huidige match gebruikt."
+      eyebrow="Doelen & leerplandoelen"
+      title="Leerplandoelen matcher"
+      description="Zoekt officiële minimumdoelen en leerplandoelen in een lokale, gebrande index. Toekomstige plannen zijn fysiek gescheiden en worden nooit als huidige match gebruikt."
       input={
         <div className="space-y-5">
           <div className="space-y-2">
@@ -99,9 +99,9 @@ export function CurriculumRagView() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="rag-goal">Actief lesdoel</Label>
+            <Label htmlFor="leerplandoel-goal">Actief lesdoel</Label>
             <Textarea
-              id="rag-goal"
+              id="leerplandoel-goal"
               value={goal}
               onChange={(event) => setGoal(event.target.value)}
               rows={8}
