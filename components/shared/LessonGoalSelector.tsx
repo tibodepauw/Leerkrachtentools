@@ -42,7 +42,11 @@ export function LessonGoalSelector({
               onClick={() => onSelect(goal.id)}
             >
               {goal.id}
-              {goal.text.trim() ? "" : " · leeg"}
+              {goal.taxonomy
+                ? ` · ${goal.taxonomy}`
+                : goal.text.trim()
+                  ? ""
+                  : " · leeg"}
             </Button>
           ))}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 export interface AnalysisResponse<T> {
   data: T;
@@ -9,12 +9,27 @@ export interface AnalysisResponse<T> {
 }
 
 export function useAnalysis<T>(scopeKey?: string) {
-  const [result, setResult] = useState<AnalysisResponse<T> | null>(null);
-  const [activeScopeKey, setActiveScopeKey] = useState<string | null>(null);
+  const [latestResult, setLatestResult] = useState<AnalysisResponse<T> | null>(
+    null,
+  );
+  const [resultCache, setResultCache] = useState<
+    Record<string, AnalysisResponse<T>>
+  >({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const setResult = useCallback(
+    (payload: AnalysisResponse<T> | null) => {
+      setLatestResult(payload);
+      if (scopeKey && payload) {
+        setResultCache((cache) => ({ ...cache, [scopeKey]: payload }));
+      }
+    },
+    [scopeKey],
+  );
+
   async function analyze(url: string, body: Record<string, unknown>) {
+    const cacheKey = scopeKey;
     setLoading(true);
     setError("");
     try {
@@ -37,8 +52,10 @@ export function useAnalysis<T>(scopeKey?: string) {
             : "De analyse is mislukt.",
         );
       }
-      setResult(payload);
-      setActiveScopeKey(scopeKey ?? null);
+      setLatestResult(payload);
+      if (cacheKey) {
+        setResultCache((cache) => ({ ...cache, [cacheKey]: payload }));
+      }
       return payload;
     } catch (caught) {
       setError(
@@ -50,8 +67,8 @@ export function useAnalysis<T>(scopeKey?: string) {
     }
   }
 
-  const scopedResult =
-    scopeKey !== undefined && activeScopeKey !== scopeKey ? null : result;
+  const result =
+    scopeKey !== undefined ? (resultCache[scopeKey] ?? null) : latestResult;
 
-  return { analyze, result: scopedResult, setResult, loading, error };
+  return { analyze, result, setResult, loading, error };
 }

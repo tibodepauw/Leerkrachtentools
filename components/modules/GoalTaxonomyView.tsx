@@ -54,7 +54,17 @@ export function GoalTaxonomyView() {
           />
           {error && <p className="text-sm text-red-400">{error}</p>}
           <ModuleActionButton
-            onClick={() => analyze("/api/classify-goal-taxonomy", { goal: text })}
+            onClick={async () => {
+              const payload = await analyze("/api/classify-goal-taxonomy", {
+                goal: text,
+              });
+              if (!payload) return;
+
+              const index = goals.findIndex((goal) => goal.id === selectedId);
+              if (index >= 0) {
+                setGoal(index, { taxonomy: payload.data.taxonomy });
+              }
+            }}
             disabled={actionDisabled}
             disabledReason="Kies een doel met tekst of vul er eerst één in."
           >
