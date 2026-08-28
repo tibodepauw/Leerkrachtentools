@@ -18,6 +18,7 @@ interface ProfileAvatarProps {
   sizeClassName?: string;
   fallbackClassName?: string;
   editable?: boolean;
+  layout?: "inline" | "stacked";
   onProfileImageChange?: (profileImageUrl: string | null) => void;
 }
 
@@ -37,6 +38,7 @@ export function ProfileAvatar({
   sizeClassName = "size-14",
   fallbackClassName,
   editable = false,
+  layout = "inline",
   onProfileImageChange,
 }: ProfileAvatarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -120,7 +122,13 @@ export function ProfileAvatar({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div
+      className={cn(
+        layout === "stacked"
+          ? "flex flex-col items-start gap-3"
+          : "flex flex-wrap items-center gap-4",
+      )}
+    >
       <div className="relative">
         {avatar}
         <button

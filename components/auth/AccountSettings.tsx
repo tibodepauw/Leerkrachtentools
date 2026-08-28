@@ -126,20 +126,11 @@ export function AccountSettings({
       }}
     >
       <div className="w-full p-4 lg:p-6">
-        <div className="mb-8 flex items-center gap-4">
-          <ProfileAvatar
-            email={email}
-            displayName={displayName}
-            profileImageUrl={profileImageUrl}
-            editable
-            onProfileImageChange={setProfileImageUrl}
-          />
-          <div>
-            <h1 className="text-2xl font-black tracking-tight">Instellingen</h1>
-            <p className="text-sm text-neutral-500">
-              Beheer je profiel, status, API-keys en privacy.
-            </p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-2xl font-black tracking-tight">Instellingen</h1>
+          <p className="mt-2 text-sm text-neutral-500">
+            Beheer je profiel, status, API-keys en privacy.
+          </p>
         </div>
 
         <div className="grid gap-5 xl:grid-cols-2">
@@ -151,7 +142,18 @@ export function AccountSettings({
                 accountmenu links onderaan.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label>Profielfoto</Label>
+                <ProfileAvatar
+                  email={email}
+                  displayName={displayName}
+                  profileImageUrl={profileImageUrl}
+                  editable
+                  layout="stacked"
+                  onProfileImageChange={setProfileImageUrl}
+                />
+              </div>
               <form onSubmit={saveProfile} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="display-name">Naam</Label>
