@@ -72,7 +72,9 @@ export function LessonPreparationInput({
             : fileName || "Upload lesvoorbereiding"}
         </span>
         <span className="mt-1 text-xs text-neutral-500">
-          PDF, DOC, DOCX, ODT, RTF, TXT · max. 15 MB
+          {fileName
+            ? "Geïmporteerd — pas de tekst hieronder gerust nog aan"
+            : "PDF, DOC, DOCX, ODT, RTF, TXT · max. 15 MB"}
         </span>
         <Input
           id={`${id}-upload`}
@@ -87,11 +89,6 @@ export function LessonPreparationInput({
         />
       </label>
       {uploadError ? <p className="text-sm text-red-400">{uploadError}</p> : null}
-      {fileName && !uploadError ? (
-        <p className="text-xs text-neutral-500">
-          Geïmporteerd uit {fileName}. Je kunt de tekst hieronder nog aanpassen.
-        </p>
-      ) : null}
       <Textarea
         id={id}
         rows={rows}

@@ -97,11 +97,17 @@ export function ManualScannerView() {
     }
   }
 
-  const helperText = loading && fileName
-    ? "Gegevens worden geëxtraheerd…"
-    : fileName && fileSize
-      ? `${fileName} · ${formatFileSize(fileSize)}`
-      : "PDF, afbeelding of tekst · max. 15 MB";
+  const primaryText =
+    loading && fileName
+      ? "Gegevens worden geëxtraheerd…"
+      : fileName || "PDF of afbeelding kiezen";
+
+  const helperText =
+    fileName && fileSize && !loading
+      ? formatFileSize(fileSize)
+      : !fileName
+        ? "PDF, afbeelding of tekst · max. 15 MB"
+        : null;
 
   return (
     <ModuleShell
@@ -117,10 +123,10 @@ export function ManualScannerView() {
               ) : (
                 <FileUp className="mb-3 size-6 text-neutral-400" />
               )}
-              <span className="text-sm">
-                {fileName || "PDF of afbeelding kiezen"}
-              </span>
-              <span className="mt-1 text-xs text-neutral-500">{helperText}</span>
+              <span className="text-sm">{primaryText}</span>
+              {helperText ? (
+                <span className="mt-1 text-xs text-neutral-500">{helperText}</span>
+              ) : null}
               <Input
                 id="manual-file"
                 type="file"
