@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   AudioLines,
   BookOpenCheck,
@@ -104,8 +105,17 @@ function SidebarContent({
   account: AccountSummary;
   onNavigate?: () => void;
 }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const isSettings = pathname === "/settings";
   const activeModule = useLessonStore((state) => state.activeModule);
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
+
+  function openModule(moduleId: ModuleId) {
+    setActiveModule(moduleId);
+    if (isSettings) router.push("/");
+    onNavigate?.();
+  }
 
   return (
     <div className="flex h-full flex-col bg-neutral-950">
@@ -130,13 +140,10 @@ function SidebarContent({
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => {
-                      setActiveModule(item.id);
-                      onNavigate?.();
-                    }}
+                    onClick={() => openModule(item.id)}
                     className={cn(
                       "flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm transition-colors",
-                      activeModule === item.id
+                      !isSettings && activeModule === item.id
                         ? "bg-neutral-800 text-white"
                         : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100",
                     )}
@@ -154,7 +161,10 @@ function SidebarContent({
         <Link
           href="/settings"
           onClick={onNavigate}
-          className="group flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-neutral-900"
+          className={cn(
+            "group flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-neutral-900",
+            isSettings && "bg-neutral-800",
+          )}
         >
           <Avatar
             key={accountLabel(account)}
