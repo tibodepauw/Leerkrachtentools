@@ -20,6 +20,7 @@ function sampleLesson(overrides: Partial<ActiveLesson> = {}): ActiveLesson {
     educationNetwork: "ZILL",
     referenceSchoolYear: "",
     lessonPreparation: "",
+    preparationDocument: null,
     phases: [
       { name: "Instap", text: "" },
       { name: "Instructie", text: "" },

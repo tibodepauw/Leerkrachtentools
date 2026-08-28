@@ -52,6 +52,13 @@ export interface LessonPhase {
   text: string;
 }
 
+export interface LessonPreparationDocument {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  uploadedAt: string;
+}
+
 export interface ActiveLesson {
   topic: string;
   learningArea: string;
@@ -64,6 +71,7 @@ export interface ActiveLesson {
   educationNetwork: EducationNetwork;
   referenceSchoolYear: string;
   lessonPreparation: string;
+  preparationDocument: LessonPreparationDocument | null;
   phases: LessonPhase[];
   engagementFactors: string[];
 }

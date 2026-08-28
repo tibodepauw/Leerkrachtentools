@@ -1,15 +1,15 @@
 "use client";
 
-import { Download, FileText, FileUp, Loader2 } from "lucide-react";
+import { Download, FileUp, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { LessonDocumentPreview } from "@/components/shared/LessonDocumentPreview";
+import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { useLessonStore } from "@/stores/useLessonStore";
-import { useState } from "react";
 import type { LessonExportPayload } from "@/types";
 
 function downloadName(topic: string) {
@@ -24,21 +24,28 @@ function downloadName(topic: string) {
 export function ActiveLessonView() {
   const lesson = useLessonStore((state) => state.lesson);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
   const [uploadError, setUploadError] = useState("");
   const activeGoals = lesson.goals.filter((goal) => goal.text.trim());
+  const preparationDocument = lesson.preparationDocument ?? null;
+
+  function openUploadDialog() {
+    uploadInputRef.current?.click();
+  }
 
   async function uploadLesson(file?: File) {
     if (!file) return;
     setUploading(true);
     setUploadError("");
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
+      await syncPreparationDocumentFromFile(file);
+
+      const formData = new FormData();
+      formData.append("file", file);
       const response = await fetch("/api/import-lesson-document", {
         method: "POST",
         body: formData,
@@ -112,12 +119,13 @@ export function ActiveLessonView() {
         <div>
           <h1 className="text-2xl font-black tracking-tight">Actieve les</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
-            Dit is de actuele versie van je les. Verbeteringen die je bewaart in
-            andere modules verschijnen hier en worden meegenomen in de download.
+            Bekijk je originele lesvoorbereiding als document. Verbeterde doelen
+            en metadata worden meegenomen in de Word-download.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Input
+            ref={uploadInputRef}
             id="active-lesson-upload"
             type="file"
             accept={LESSON_DOCUMENT_ACCEPT}
@@ -135,9 +143,7 @@ export function ActiveLessonView() {
             disabled={uploading}
             aria-label="Lesvoorbereiding uploaden"
             title="Lesvoorbereiding uploaden"
-            onClick={() =>
-              document.getElementById("active-lesson-upload")?.click()
-            }
+            onClick={openUploadDialog}
           >
             {uploading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -170,10 +176,7 @@ export function ActiveLessonView() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <FileText className="size-4" />
-                Lescontext
-              </CardTitle>
+              <CardTitle className="text-sm">Lescontext</CardTitle>
             </CardHeader>
             <CardContent>
               <dl className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
@@ -244,20 +247,15 @@ export function ActiveLessonView() {
           <CardHeader>
             <CardTitle className="text-sm">Actuele lesvoorbereiding</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col gap-2">
-            <Label htmlFor="active-lesson-document" className="sr-only">
-              Actuele lesvoorbereiding
-            </Label>
-            <Textarea
-              id="active-lesson-document"
-              value={lesson.lessonPreparation}
-              onChange={(event) => syncPreparation(event.target.value)}
-              placeholder="Upload je lesvoorbereiding in een module. De actuele versie verschijnt hier en blijft bewerkbaar."
-              className="min-h-[32rem] flex-1 resize-y leading-7"
+          <CardContent className="flex flex-1 flex-col gap-3">
+            <LessonDocumentPreview
+              document={preparationDocument}
+              fallbackText={lesson.lessonPreparation}
+              onUpload={openUploadDialog}
             />
             <p className="text-xs text-neutral-500">
-              Wijzigingen worden direct bewaard in je actieve les. Verbeterde
-              doelen worden hierboven weergegeven en in de Word-download gezet.
+              Je ziet hier het originele Word- of PDF-bestand. Analysemodules
+              werken op de achtergrond nog steeds met geëxtraheerde tekst.
             </p>
           </CardContent>
         </Card>

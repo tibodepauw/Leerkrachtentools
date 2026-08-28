@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { buildGoalsFromPublisher, createEmptyGoals } from "@/lib/goals/lessonGoals";
+import { deleteLessonDocument } from "@/lib/documents/documentStorage";
 import type {
   ActiveLesson,
   EducationNetwork,
@@ -23,6 +24,7 @@ const initialLesson: ActiveLesson = {
   educationNetwork: "ZILL",
   referenceSchoolYear: "",
   lessonPreparation: "",
+  preparationDocument: null,
   phases: [
     { name: "Instap", text: "" },
     { name: "Instructie", text: "" },
@@ -47,6 +49,10 @@ interface LessonStore {
   setActiveGoal: (text: string, taxonomy?: LessonGoal["taxonomy"]) => void;
   syncFromExtraction: (data: ManualExtraction) => void;
   syncPreparation: (text: string) => void;
+  setPreparationDocument: (
+    document: ActiveLesson["preparationDocument"],
+    previousDocumentId?: string,
+  ) => void;
   setNetwork: (network: EducationNetwork) => void;
   clearSession: () => void;
 }
@@ -128,11 +134,27 @@ export const useLessonStore = create<LessonStore>()(
         set((state) => ({
           lesson: { ...state.lesson, lessonPreparation },
         })),
+      setPreparationDocument: (preparationDocument, previousDocumentId) => {
+        if (previousDocumentId && previousDocumentId !== preparationDocument?.id) {
+          void deleteLessonDocument(previousDocumentId).catch(() => undefined);
+        }
+
+        set((state) => ({
+          lesson: { ...state.lesson, preparationDocument },
+        }));
+      },
       setNetwork: (educationNetwork) =>
         set((state) => ({
           lesson: { ...state.lesson, educationNetwork },
         })),
-      clearSession: () => set({ lesson: initialLesson }),
+      clearSession: () => {
+        const previousDocumentId =
+          useLessonStore.getState().lesson.preparationDocument?.id;
+        if (previousDocumentId) {
+          void deleteLessonDocument(previousDocumentId).catch(() => undefined);
+        }
+        set({ lesson: initialLesson });
+      },
     }),
     {
       name: "leerkrachtentools-active-lesson",
@@ -140,6 +162,20 @@ export const useLessonStore = create<LessonStore>()(
         lesson: state.lesson,
         activeModule: state.activeModule,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<typeof currentState> | undefined;
+
+        return {
+          ...currentState,
+          ...persisted,
+          lesson: {
+            ...currentState.lesson,
+            ...persisted?.lesson,
+            preparationDocument:
+              persisted?.lesson?.preparationDocument ?? null,
+          },
+        };
+      },
       onRehydrateStorage: () => (state) => state?.setHydrated(true),
     },
   ),

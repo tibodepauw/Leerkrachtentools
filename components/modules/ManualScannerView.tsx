@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { shouldSyncScannerSourceToPreparation } from "@/lib/lesson/preparationText";
+import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { ManualExtraction } from "@/types";
 
@@ -72,6 +73,8 @@ export function ManualScannerView() {
     };
 
     if (!response.ok || !payload.text?.trim()) return;
+
+    await syncPreparationDocumentFromFile(file);
     await syncSourceTextToPreparation(payload.text);
   }
 

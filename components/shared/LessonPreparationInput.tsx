@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
+import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { ActiveLessonPrepHint } from "@/components/shared/ActiveLessonPrepHint";
 
 interface LessonPreparationInputProps {
@@ -55,6 +56,7 @@ export function LessonPreparationInput({
     }
 
     setFileName(payload.fileName ?? file.name);
+    await syncPreparationDocumentFromFile(file).catch(() => undefined);
     onChange(payload.text);
   }
 
