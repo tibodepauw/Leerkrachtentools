@@ -6,7 +6,6 @@ import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
-import { ScrollFrame } from "@/components/shared/ScrollFrame";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,10 +76,12 @@ export function SpellcheckView() {
 
   return (
     <ModuleShell
+      scrollMode="page"
       title="Didactische taalfoutencheck"
       description="Controleert dt-fouten, formele instructietaal, didactische terminologie en professionele stijl."
       input={
         <ModuleInputLayout
+          flow
           fields={
             <LessonPreparationInput
               id="spell-content"
@@ -112,12 +113,10 @@ export function SpellcheckView() {
                 <CardTitle className="text-sm">Verbeterde tekst</CardTitle>
                 <CopyButton value={result.data.improved} />
               </CardHeader>
-              <CardContent className="p-0">
-                <ScrollFrame heightClassName="h-64">
-                  <p className="whitespace-pre-wrap px-4 py-3 text-sm leading-7">
-                    {result.data.improved}
-                  </p>
-                </ScrollFrame>
+              <CardContent className="px-4 py-3">
+                <p className="whitespace-pre-wrap text-sm leading-7">
+                  {result.data.improved}
+                </p>
               </CardContent>
             </Card>
 
