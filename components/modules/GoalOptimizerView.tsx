@@ -92,13 +92,6 @@ export function GoalOptimizerView() {
                     Toegevoegd: {result.data.addedTerms.join(", ")}
                   </p>
                 )}
-                <div className="flex flex-wrap gap-2">
-                  {result.data.criteria.map((criterion) => (
-                    <Badge key={criterion} variant="secondary">
-                      {criterion}
-                    </Badge>
-                  ))}
-                </div>
               </CardContent>
             </Card>
             <Button
