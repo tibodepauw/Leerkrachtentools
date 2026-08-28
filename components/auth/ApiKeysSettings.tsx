@@ -258,9 +258,9 @@ export function ApiKeysSettings() {
                 />
               </div>
 
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="min-w-[220px] flex-1 space-y-2">
-                  <Label htmlFor="ai-model">Model</Label>
+              <div className="space-y-2">
+                <Label htmlFor="ai-model">Model</Label>
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <Select
                     value={settings.model || undefined}
                     onValueChange={(value) =>
@@ -284,20 +284,21 @@ export function ApiKeysSettings() {
                       ) : null}
                     </SelectContent>
                   </Select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 w-full sm:w-auto"
+                    disabled={detecting}
+                    onClick={() => void detectModels()}
+                  >
+                    {detecting ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-4" />
+                    )}
+                    Modellen detecteren
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={detecting}
-                  onClick={() => void detectModels()}
-                >
-                  {detecting ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="size-4" />
-                  )}
-                  Modellen detecteren
-                </Button>
               </div>
             </>
           ) : null}
