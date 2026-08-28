@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonPreparationText } from "@/hooks/useLessonText";
+import { trafficLightLabel } from "@/lib/ui/trafficLight";
 
 interface FullAuditResult {
   score: number;
@@ -73,7 +74,7 @@ export function FullAuditView() {
               <Card key={criterion.label}>
                 <CardHeader className="flex-row items-center justify-between">
                   <CardTitle className="text-sm">{criterion.label}</CardTitle>
-                  <Badge className={criterion.status === "groen" ? "bg-emerald-700" : criterion.status === "oranje" ? "bg-orange-700" : "bg-red-700"}>{criterion.status}</Badge>
+                  <Badge className={criterion.status === "groen" ? "bg-emerald-700" : criterion.status === "oranje" ? "bg-orange-700" : "bg-red-700"}>{trafficLightLabel(criterion.status)}</Badge>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   <p className="text-neutral-500">{criterion.finding}</p>

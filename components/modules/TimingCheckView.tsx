@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { cn } from "@/lib/utils";
 import { parsePhaseMinutes, timingDeviation } from "@/lib/timing";
+import { trafficLightLabel } from "@/lib/ui/trafficLight";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useLessonPreparationText } from "@/hooks/useLessonText";
 import { useLessonStore } from "@/stores/useLessonStore";
@@ -115,7 +116,7 @@ export function TimingCheckView() {
                   status === "rood" && "bg-red-700",
                 )}
               >
-                {status}
+                {trafficLightLabel(status)}
               </Badge>
             </CardHeader>
             <CardContent className="space-y-2">
