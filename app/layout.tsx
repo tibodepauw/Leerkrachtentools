@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Leerkrachtentools · Thomas More",
+  title: "Leerkrachtentools",
   description:
     "AI-tools voor lesvoorbereiding, curriculumkoppeling en reflectie.",
 };

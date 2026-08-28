@@ -119,14 +119,8 @@ function SidebarContent({
 
   return (
     <div className="flex h-full flex-col bg-neutral-950">
-      <div className="flex h-16 items-center gap-3 border-b border-neutral-800 px-5">
-        <div className="grid size-8 place-items-center rounded-lg border border-neutral-700 bg-white text-black">
-          <Sparkles className="size-4" />
-        </div>
-        <div>
-          <p className="text-sm font-black tracking-tight">Leerkrachtentools</p>
-          <p className="text-xs text-neutral-500">Thomas More · BALO</p>
-        </div>
+      <div className="flex h-16 items-center border-b border-neutral-800 px-5">
+        <p className="text-sm font-black tracking-tight">Leerkrachtentools</p>
       </div>
       <ScrollArea className="flex-1">
         <nav className="space-y-6 p-3">
