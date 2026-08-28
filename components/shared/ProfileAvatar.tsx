@@ -3,11 +3,6 @@
 import { Camera, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +26,47 @@ function initials(name: string, email: string) {
     .join("");
 }
 
+function usePreloadedImage(url: string | null) {
+  const [displayUrl, setDisplayUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!url) {
+      setDisplayUrl(null);
+      setLoading(false);
+      return;
+    }
+
+    if (url === displayUrl) {
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    const image = new window.Image();
+    image.onload = () => {
+      if (!cancelled) {
+        setDisplayUrl(url);
+        setLoading(false);
+      }
+    };
+    image.onerror = () => {
+      if (!cancelled) {
+        if (!displayUrl) setDisplayUrl(null);
+        setLoading(false);
+      }
+    };
+    image.src = url;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [url, displayUrl]);
+
+  return { displayUrl, loading: loading && Boolean(url) && url !== displayUrl };
+}
+
 export function ProfileAvatar({
   email,
   displayName,
@@ -46,6 +82,7 @@ export function ProfileAvatar({
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const busy = uploading || removing;
+  const { displayUrl, loading: photoLoading } = usePreloadedImage(imageUrl);
 
   useEffect(() => {
     setImageUrl(profileImageUrl ?? null);
@@ -108,25 +145,30 @@ export function ProfileAvatar({
   }
 
   const avatar = (
-    <Avatar
+    <div
       className={cn(
-        "overflow-hidden border border-neutral-700 after:hidden",
+        "relative shrink-0 overflow-hidden rounded-full border border-neutral-700 bg-neutral-800",
         sizeClassName,
       )}
     >
-      {imageUrl ? (
-        <AvatarImage src={imageUrl} alt="Profielfoto" className="object-cover" />
-      ) : null}
-      <AvatarFallback
-        delayMs={0}
-        className={cn(
-          "bg-neutral-800 text-lg font-semibold transition-none",
-          fallbackClassName,
-        )}
-      >
-        {initials(displayName ?? "", email)}
-      </AvatarFallback>
-    </Avatar>
+      {displayUrl ? (
+        <img
+          src={displayUrl}
+          alt="Profielfoto"
+          className="size-full object-cover"
+          draggable={false}
+        />
+      ) : photoLoading ? null : (
+        <span
+          className={cn(
+            "flex size-full items-center justify-center text-lg font-semibold text-white",
+            fallbackClassName,
+          )}
+        >
+          {initials(displayName ?? "", email)}
+        </span>
+      )}
+    </div>
   );
 
   if (!editable) {
@@ -148,7 +190,7 @@ export function ProfileAvatar({
           onClick={() => inputRef.current?.click()}
           disabled={busy}
           className={cn(
-            "absolute inset-0 flex items-center justify-center rounded-full bg-black/50 transition-opacity duration-150",
+            "absolute inset-0 flex items-center justify-center rounded-full bg-black/50",
             busy ? "opacity-100" : "opacity-0 group-hover:opacity-100",
           )}
           aria-label="Profielfoto wijzigen"
