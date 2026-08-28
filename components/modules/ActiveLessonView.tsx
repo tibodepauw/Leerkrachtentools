@@ -1,11 +1,13 @@
 "use client";
 
-import { Download, FileText, Loader2 } from "lucide-react";
+import { Download, FileText, FileUp, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { useState } from "react";
 import type { LessonExportPayload } from "@/types";
@@ -23,8 +25,42 @@ export function ActiveLessonView() {
   const lesson = useLessonStore((state) => state.lesson);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const [downloading, setDownloading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
+  const [uploadError, setUploadError] = useState("");
   const activeGoals = lesson.goals.filter((goal) => goal.text.trim());
+
+  async function uploadLesson(file?: File) {
+    if (!file) return;
+    setUploading(true);
+    setUploadError("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("/api/import-lesson-document", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        text?: string;
+      };
+
+      if (!response.ok || !payload.text) {
+        throw new Error(payload.error ?? "Upload mislukt.");
+      }
+
+      syncPreparation(payload.text);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Upload mislukt.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function downloadLesson() {
     setDownloading(true);
@@ -80,23 +116,54 @@ export function ActiveLessonView() {
             andere modules verschijnen hier en worden meegenomen in de download.
           </p>
         </div>
-        <Button
-          type="button"
-          onClick={downloadLesson}
-          disabled={downloading}
-          className="shrink-0"
-        >
-          {downloading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Download className="size-4" />
-          )}
-          Download als Word
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Input
+            id="active-lesson-upload"
+            type="file"
+            accept={LESSON_DOCUMENT_ACCEPT}
+            className="sr-only"
+            disabled={uploading}
+            onChange={(event) => {
+              void uploadLesson(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={uploading}
+            aria-label="Lesvoorbereiding uploaden"
+            title="Lesvoorbereiding uploaden"
+            onClick={() =>
+              document.getElementById("active-lesson-upload")?.click()
+            }
+          >
+            {uploading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <FileUp className="size-4" />
+            )}
+          </Button>
+          <Button
+            type="button"
+            onClick={downloadLesson}
+            disabled={downloading}
+          >
+            {downloading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Download className="size-4" />
+            )}
+            Download als Word
+          </Button>
+        </div>
       </div>
 
-      {downloadError ? (
-        <p className="mb-4 text-sm text-red-400">{downloadError}</p>
+      {downloadError || uploadError ? (
+        <p className="mb-4 text-sm text-red-400">
+          {downloadError || uploadError}
+        </p>
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)]">
