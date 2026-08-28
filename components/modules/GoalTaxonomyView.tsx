@@ -85,7 +85,7 @@ export function GoalTaxonomyView() {
               </CardContent>
             </Card>
             <Card>
-              <CardContent className="space-y-3 pt-5 text-sm">
+              <CardContent className="space-y-3 text-sm">
                 <p>{result.data.rationale}</p>
                 <p className="text-neutral-400">{result.data.definition}</p>
                 {result.data.indicators.length > 0 && (
