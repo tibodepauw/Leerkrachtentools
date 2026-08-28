@@ -88,6 +88,8 @@ export function SpellcheckView() {
               label="Lesvoorbereidingstekst"
               value={content}
               onChange={setContent}
+              minHeightClassName="min-h-[calc(100vh-14rem)]"
+              maxHeightClassName="max-h-none"
             />
           }
           actions={

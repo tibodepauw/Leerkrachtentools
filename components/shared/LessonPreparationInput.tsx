@@ -29,8 +29,8 @@ export function LessonPreparationInput({
   value,
   onChange,
   placeholder = "Plak je lesvoorbereiding of upload een document…",
-  minHeightClassName = "min-h-96",
-  maxHeightClassName = "max-h-[36rem]",
+  minHeightClassName = "min-h-[36rem]",
+  maxHeightClassName = "max-h-[80vh]",
   className,
 }: LessonPreparationInputProps) {
   const preparationDocument = useLessonStore(
@@ -91,7 +91,12 @@ export function LessonPreparationInput({
     <div className={cn("space-y-3", className)}>
       <Label htmlFor={id}>{label}</Label>
       <ActiveLessonPrepHint />
-      <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-5 text-center transition-colors hover:border-neutral-500">
+      <label
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-5 text-center transition-colors hover:border-neutral-500",
+          showLinkedDocument ? "min-h-20 py-3" : "min-h-28",
+        )}
+      >
         {uploading || syncing ? (
           <Loader2 className="mb-2 size-6 animate-spin text-neutral-400" />
         ) : (
@@ -118,11 +123,12 @@ export function LessonPreparationInput({
       ) : null}
       <Textarea
         id={id}
+        rows={24}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         className={cn(
-          "w-full resize-y overflow-y-auto [field-sizing:fixed]",
+          "field-sizing-fixed w-full resize-y overflow-y-auto",
           minHeightClassName,
           maxHeightClassName,
         )}
