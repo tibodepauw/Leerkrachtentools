@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasActiveLessonContext,
   hasLessonPreparation,
+  needsPreparationTextSync,
   shouldSyncScannerSourceToPreparation,
 } from "@/lib/lesson/preparationText";
 import { createEmptyGoals } from "@/lib/goals/lessonGoals";
@@ -68,5 +69,36 @@ describe("preparationText", () => {
     expect(
       hasLessonPreparation(sampleLesson({ lessonPreparation: "  fase 1  " })),
     ).toBe(true);
+  });
+
+  it("detects when document text still needs syncing", () => {
+    expect(needsPreparationTextSync(sampleLesson())).toBe(false);
+    expect(
+      needsPreparationTextSync(
+        sampleLesson({
+          preparationDocument: {
+            id: "doc-1",
+            fileName: "les.docx",
+            mimeType:
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            uploadedAt: "2026-01-01T00:00:00.000Z",
+          },
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      needsPreparationTextSync(
+        sampleLesson({
+          lessonPreparation: "Fase 1",
+          preparationDocument: {
+            id: "doc-1",
+            fileName: "les.docx",
+            mimeType:
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            uploadedAt: "2026-01-01T00:00:00.000Z",
+          },
+        }),
+      ),
+    ).toBe(false);
   });
 });

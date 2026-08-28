@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { ActiveLessonPrepHint } from "@/components/shared/ActiveLessonPrepHint";
+import { useAutoSyncPreparationText } from "@/hooks/useAutoSyncPreparationText";
+import { useLessonStore } from "@/stores/useLessonStore";
 import { cn } from "@/lib/utils";
 
 interface LessonPreparationInputProps {
@@ -31,9 +33,29 @@ export function LessonPreparationInput({
   maxHeightClassName = "max-h-[36rem]",
   className,
 }: LessonPreparationInputProps) {
+  const preparationDocument = useLessonStore(
+    (state) => state.lesson.preparationDocument,
+  );
+  const { syncing, syncError } = useAutoSyncPreparationText();
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const linkedDocumentName = preparationDocument?.fileName ?? "";
+  const showLinkedDocument = Boolean(linkedDocumentName && !fileName);
+  const importStatusText = uploading
+    ? "Document wordt ingelezen…"
+    : syncing
+      ? "Tekst wordt geladen uit actieve les…"
+      : fileName || (showLinkedDocument ? linkedDocumentName : "Upload lesvoorbereiding");
+  const importHelperText = uploading
+    ? null
+    : syncing
+      ? "Je geüploade document uit Actieve les wordt omgezet naar tekst."
+      : fileName
+        ? "Geïmporteerd — pas de tekst hieronder gerust nog aan"
+        : showLinkedDocument
+          ? "Gekoppeld aan Actieve les — tekst staat hieronder klaar voor analyse"
+          : "PDF, DOC, DOCX, ODT, RTF, TXT · max. 15 MB";
 
   async function handleFile(file?: File) {
     if (!file) return;
@@ -70,34 +92,30 @@ export function LessonPreparationInput({
       <Label htmlFor={id}>{label}</Label>
       <ActiveLessonPrepHint />
       <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-5 text-center transition-colors hover:border-neutral-500">
-        {uploading ? (
+        {uploading || syncing ? (
           <Loader2 className="mb-2 size-6 animate-spin text-neutral-400" />
         ) : (
           <FileUp className="mb-2 size-6 text-neutral-400" />
         )}
-        <span className="text-sm">
-          {uploading
-            ? "Document wordt ingelezen…"
-            : fileName || "Upload lesvoorbereiding"}
-        </span>
-        <span className="mt-1 text-xs text-neutral-500">
-          {fileName
-            ? "Geïmporteerd — pas de tekst hieronder gerust nog aan"
-            : "PDF, DOC, DOCX, ODT, RTF, TXT · max. 15 MB"}
-        </span>
+        <span className="text-sm">{importStatusText}</span>
+        {importHelperText ? (
+          <span className="mt-1 text-xs text-neutral-500">{importHelperText}</span>
+        ) : null}
         <Input
           id={`${id}-upload`}
           type="file"
           accept={LESSON_DOCUMENT_ACCEPT}
           className="sr-only"
-          disabled={uploading}
+          disabled={uploading || syncing}
           onChange={(event) => {
             void handleFile(event.target.files?.[0]);
             event.target.value = "";
           }}
         />
       </label>
-      {uploadError ? <p className="text-sm text-red-400">{uploadError}</p> : null}
+      {uploadError || syncError ? (
+        <p className="text-sm text-red-400">{uploadError || syncError}</p>
+      ) : null}
       <Textarea
         id={id}
         value={value}

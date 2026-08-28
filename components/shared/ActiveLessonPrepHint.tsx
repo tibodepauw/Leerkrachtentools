@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   hasActiveLessonContext,
   hasLessonPreparation,
+  needsPreparationTextSync,
 } from "@/lib/lesson/preparationText";
 import { useLessonStore } from "@/stores/useLessonStore";
 
@@ -14,6 +15,19 @@ export function ActiveLessonPrepHint() {
 
   if (!hasActiveLessonContext(lesson) || hasLessonPreparation(lesson)) {
     return null;
+  }
+
+  if (needsPreparationTextSync(lesson)) {
+    const documentName = lesson.preparationDocument?.fileName ?? "je document";
+    return (
+      <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 text-sm text-sky-50">
+        <p>
+          Je lesvoorbereiding{" "}
+          <span className="font-medium">{documentName}</span> staat klaar in
+          Actieve les. De tekst wordt automatisch ingeladen voor analyse.
+        </p>
+      </div>
+    );
   }
 
   const title = lesson.topic.trim() || "zonder titel";

@@ -3,6 +3,7 @@
 import { ActiveLessonBar } from "@/components/layout/ActiveLessonBar";
 import { AppShell } from "@/components/layout/AppShell";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
+import { PreparationTextSync } from "@/components/shared/PreparationTextSync";
 import { ActiveLessonView } from "@/components/modules/ActiveLessonView";
 import { AlignmentAuditView } from "@/components/modules/AlignmentAuditView";
 import {
@@ -65,6 +66,7 @@ export function Dashboard({
         profileImageUrl,
       }}
     >
+      <PreparationTextSync />
       <ActiveLessonBar userEmail={userEmail} />
       <ActiveModule />
     </AppShell>

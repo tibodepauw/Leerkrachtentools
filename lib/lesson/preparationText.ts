@@ -12,6 +12,10 @@ export function hasLessonPreparation(lesson: ActiveLesson) {
   return Boolean(lesson.lessonPreparation.trim());
 }
 
+export function needsPreparationTextSync(lesson: ActiveLesson) {
+  return Boolean(lesson.preparationDocument && !lesson.lessonPreparation.trim());
+}
+
 export function shouldSyncScannerSourceToPreparation(lesson: ActiveLesson) {
   return !hasLessonPreparation(lesson);
 }
