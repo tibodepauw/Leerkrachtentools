@@ -45,6 +45,7 @@ export function ProfileAvatar({
   const [imageUrl, setImageUrl] = useState(profileImageUrl ?? null);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const busy = uploading || removing;
 
   useEffect(() => {
     setImageUrl(profileImageUrl ?? null);
@@ -107,10 +108,21 @@ export function ProfileAvatar({
   }
 
   const avatar = (
-    <Avatar className={cn("border border-neutral-700", sizeClassName)}>
-      {imageUrl ? <AvatarImage src={imageUrl} alt="Profielfoto" /> : null}
+    <Avatar
+      className={cn(
+        "overflow-hidden border border-neutral-700 after:hidden",
+        sizeClassName,
+      )}
+    >
+      {imageUrl ? (
+        <AvatarImage src={imageUrl} alt="Profielfoto" className="object-cover" />
+      ) : null}
       <AvatarFallback
-        className={cn("bg-neutral-800 text-lg font-semibold", fallbackClassName)}
+        delayMs={0}
+        className={cn(
+          "bg-neutral-800 text-lg font-semibold transition-none",
+          fallbackClassName,
+        )}
       >
         {initials(displayName ?? "", email)}
       </AvatarFallback>
@@ -129,13 +141,16 @@ export function ProfileAvatar({
           : "flex flex-wrap items-center gap-4",
       )}
     >
-      <div className="relative">
+      <div className="group relative shrink-0">
         {avatar}
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          disabled={uploading || removing}
-          className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45 opacity-0 transition-opacity hover:opacity-100"
+          disabled={busy}
+          className={cn(
+            "absolute inset-0 flex items-center justify-center rounded-full bg-black/50 transition-opacity duration-150",
+            busy ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          )}
           aria-label="Profielfoto wijzigen"
         >
           {uploading ? (
@@ -149,7 +164,7 @@ export function ProfileAvatar({
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
           className="sr-only"
-          disabled={uploading || removing}
+          disabled={busy}
           onChange={(event) => {
             void uploadPhoto(event.target.files?.[0]);
             event.target.value = "";
@@ -161,7 +176,7 @@ export function ProfileAvatar({
           type="button"
           variant="outline"
           size="sm"
-          disabled={uploading || removing}
+          disabled={busy}
           onClick={() => inputRef.current?.click()}
         >
           {uploading ? (
@@ -176,7 +191,7 @@ export function ProfileAvatar({
             type="button"
             variant="ghost"
             size="sm"
-            disabled={uploading || removing}
+            disabled={busy}
             onClick={() => void removePhoto()}
           >
             {removing ? (
