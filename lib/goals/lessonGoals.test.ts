@@ -2,12 +2,21 @@ import { describe, expect, it } from "vitest";
 import { buildGoalsFromPublisher, goalIdForIndex } from "@/lib/goals/lessonGoals";
 
 describe("lessonGoals", () => {
-  it("maakt minstens drie lege slots aan", () => {
+  it("maakt standaard drie lege slots aan zonder extractie", () => {
     expect(buildGoalsFromPublisher([])).toEqual([
       { id: "D1", text: "" },
       { id: "D2", text: "" },
       { id: "D3", text: "" },
     ]);
+  });
+
+  it("volgt het exacte aantal geëxtraheerde doelen", () => {
+    expect(buildGoalsFromPublisher(["Enkel doel"]).map((goal) => goal.id)).toEqual([
+      "D1",
+    ]);
+    expect(
+      buildGoalsFromPublisher(["Eén", "Twee"]).map((goal) => goal.id),
+    ).toEqual(["D1", "D2"]);
   });
 
   it("zet alle geëxtraheerde doelen om naar D-slots", () => {

@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { buildGoalsFromPublisher } from "@/lib/goals/lessonGoals";
+import { buildGoalsFromPublisher, createEmptyGoals } from "@/lib/goals/lessonGoals";
 import type {
   ActiveLesson,
   EducationNetwork,
@@ -18,11 +18,7 @@ const initialLesson: ActiveLesson = {
   targetGroup: "",
   materials: [],
   rawPublisherGoals: [],
-  goals: [
-    { id: "D1", text: "" },
-    { id: "D2", text: "" },
-    { id: "D3", text: "" },
-  ],
+  goals: createEmptyGoals(),
   totalMinutes: 50,
   educationNetwork: "ZILL",
   referenceSchoolYear: "",

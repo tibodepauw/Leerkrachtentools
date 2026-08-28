@@ -1,7 +1,8 @@
 import type { LessonGoal, LessonGoalId } from "@/types";
 
 export const MAX_LESSON_GOALS = 12;
-export const MIN_LESSON_GOALS = 3;
+/** Standaard lege slots vóór extractie (Thomas More D1–D3). */
+export const DEFAULT_LESSON_GOALS = 3;
 
 const GOAL_IDS = Array.from(
   { length: MAX_LESSON_GOALS },
@@ -16,15 +17,27 @@ export function goalIdForIndex(index: number): LessonGoalId {
   return id;
 }
 
+export function createEmptyGoals(count = DEFAULT_LESSON_GOALS): LessonGoal[] {
+  const slotCount = Math.max(1, Math.min(count, MAX_LESSON_GOALS));
+  return Array.from({ length: slotCount }, (_, index) => ({
+    id: goalIdForIndex(index),
+    text: "",
+  }));
+}
+
 export function buildGoalsFromPublisher(
   publisherGoals: string[],
   existingGoals: LessonGoal[] = [],
 ): LessonGoal[] {
   const trimmed = publisherGoals.map((goal) => goal.trim()).filter(Boolean);
-  const slotCount = Math.max(
-    MIN_LESSON_GOALS,
-    Math.min(trimmed.length || MIN_LESSON_GOALS, MAX_LESSON_GOALS),
-  );
+
+  if (trimmed.length === 0) {
+    return existingGoals.length > 0
+      ? existingGoals
+      : createEmptyGoals();
+  }
+
+  const slotCount = Math.min(trimmed.length, MAX_LESSON_GOALS);
 
   return Array.from({ length: slotCount }, (_, index) => {
     const existing = existingGoals[index];
