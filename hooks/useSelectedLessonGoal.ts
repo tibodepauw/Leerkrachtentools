@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { LessonGoal } from "@/types";
 
@@ -13,24 +13,21 @@ export function useSelectedLessonGoal() {
   const goals = useLessonStore((state) => state.lesson.goals);
   const setGoal = useLessonStore((state) => state.setGoal);
   const [selectedId, setSelectedId] = useState<LessonGoal["id"]>("D1");
-
-  useEffect(() => {
-    setSelectedId((current) => {
-      const currentGoal = goals.find((goal) => goal.id === current);
-      if (currentGoal?.text.trim()) return current;
-      return firstGoalWithText(goals);
-    });
-  }, [goals]);
+  const effectiveSelectedId = goals.some(
+    (goal) => goal.id === selectedId && goal.text.trim(),
+  )
+    ? selectedId
+    : firstGoalWithText(goals);
 
   const selectedIndex = Math.max(
     0,
-    goals.findIndex((goal) => goal.id === selectedId),
+    goals.findIndex((goal) => goal.id === effectiveSelectedId),
   );
   const text = goals[selectedIndex]?.text ?? "";
 
   return {
     goals,
-    selectedId,
+    selectedId: effectiveSelectedId,
     setSelectedId,
     text,
     setText: (value: string) => setGoal(selectedIndex, { text: value }),
