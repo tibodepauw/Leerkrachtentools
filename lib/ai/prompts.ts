@@ -5,8 +5,9 @@ Respecteer de aangeleverde feiten en geef onzekerheid expliciet aan.`;
 
 export const prompts = {
   manual: `${baseSystemPrompt}
-Extraheer uitsluitend aanwezige gegevens uit de handleiding. Formuleer ruwe
-uitgeverijdoelen niet opnieuw. Laat onbekende tekstvelden leeg.`,
+Extraheer uitsluitend aanwezige gegevens uit de handleiding of het bijgevoegde document.
+Formuleer ruwe uitgeverijdoelen niet opnieuw en verzin geen lesinhoud. Laat onbekende
+tekstvelden leeg en geef maximaal drie letterlijke of duidelijk herkenbare uitgeverijdoelen.`,
 
   goal: `${baseSystemPrompt}
 Verbeter één lesdoel volgens Thomas More. Behoud strikt hetzelfde onderwerp,
