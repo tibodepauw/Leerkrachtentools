@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -25,7 +25,6 @@ import {
   Avatar,
   AvatarFallback,
 } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useLessonStore } from "@/stores/useLessonStore";
@@ -113,6 +112,38 @@ function SidebarContent({
   const isSettings = pathname === "/settings";
   const activeModule = useLessonStore((state) => state.activeModule);
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showBottomFade, setShowBottomFade] = useState(false);
+
+  function updateBottomFade() {
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const hasOverflow = element.scrollHeight > element.clientHeight + 1;
+    const atBottom =
+      element.scrollTop + element.clientHeight >= element.scrollHeight - 1;
+    setShowBottomFade(hasOverflow && !atBottom);
+  }
+
+  useEffect(() => {
+    updateBottomFade();
+    window.addEventListener("resize", updateBottomFade);
+
+    const element = scrollRef.current;
+    if (!element) {
+      return () => window.removeEventListener("resize", updateBottomFade);
+    }
+
+    const observer = new ResizeObserver(updateBottomFade);
+    observer.observe(element);
+    const nav = element.firstElementChild;
+    if (nav) observer.observe(nav);
+
+    return () => {
+      window.removeEventListener("resize", updateBottomFade);
+      observer.disconnect();
+    };
+  }, []);
 
   function openModule(moduleId: ModuleId) {
     setActiveModule(moduleId);
@@ -121,12 +152,17 @@ function SidebarContent({
   }
 
   return (
-    <div className="flex h-full flex-col bg-neutral-950">
-      <div className="flex h-16 items-center border-b border-neutral-800 px-5">
+    <div className="flex h-full min-h-0 flex-col bg-neutral-950">
+      <div className="flex h-16 shrink-0 items-center border-b border-neutral-800 px-5">
         <p className="text-sm font-black tracking-tight">Leerkrachtentools</p>
       </div>
-      <ScrollArea className="flex-1">
-        <nav className="space-y-6 p-3">
+      <div className="relative min-h-0 flex-1">
+        <div
+          ref={scrollRef}
+          onScroll={updateBottomFade}
+          className="h-full overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-track]:bg-transparent"
+        >
+          <nav className="space-y-6 p-3 pb-4">
           <button
             type="button"
             onClick={() => openModule("active-lesson")}
@@ -165,9 +201,17 @@ function SidebarContent({
               </div>
             </section>
           ))}
-        </nav>
-      </ScrollArea>
-      <div className="border-t border-neutral-800 p-3">
+          </nav>
+        </div>
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-neutral-950 via-neutral-950/90 to-transparent transition-opacity duration-200",
+            showBottomFade ? "opacity-100" : "opacity-0",
+          )}
+        />
+      </div>
+      <div className="shrink-0 border-t border-neutral-800 bg-neutral-950 p-3">
         <Link
           href="/settings"
           onClick={onNavigate}
@@ -214,7 +258,7 @@ export function Sidebar({ account }: { account: AccountSummary }) {
               <Menu className="size-4" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 border-neutral-800 p-0">
+          <SheetContent side="left" className="h-full w-72 border-neutral-800 p-0">
             <SidebarContent
               account={account}
               onNavigate={() => setMobileOpen(false)}
