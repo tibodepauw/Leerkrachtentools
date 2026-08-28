@@ -267,7 +267,7 @@ export function AccountSettings({
           <Card>
             <CardHeader>
               <CardTitle>Beveiliging en privacy</CardTitle>
-              <CardDescription>Je sessie gebruikt een beveiligde HttpOnly-cookie.</CardDescription>
+              <CardDescription>Je sessie gebruikt een beveiligde cookie.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg border border-neutral-800 p-3 text-sm">
