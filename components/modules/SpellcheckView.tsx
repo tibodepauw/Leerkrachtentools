@@ -4,6 +4,7 @@ import { CheckCheck, Loader2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { ScrollFrame } from "@/components/shared/ScrollFrame";
 import { Badge } from "@/components/ui/badge";
@@ -79,23 +80,29 @@ export function SpellcheckView() {
       title="Didactische taalfoutencheck"
       description="Controleert dt-fouten, formele instructietaal, didactische terminologie en professionele stijl."
       input={
-        <div className="space-y-4">
-          <LessonPreparationInput
-            id="spell-content"
-            label="Lesvoorbereidingstekst"
-            value={content}
-            onChange={setContent}
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason="Upload of plak eerst je lesvoorbereiding."
-            onClick={() => analyze("/api/spellcheck", { content })}
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-4" />}
-            Controleer tekst
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <LessonPreparationInput
+              id="spell-content"
+              label="Lesvoorbereidingstekst"
+              value={content}
+              onChange={setContent}
+            />
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason="Upload of plak eerst je lesvoorbereiding."
+                onClick={() => analyze("/api/spellcheck", { content })}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-4" />}
+                Controleer tekst
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

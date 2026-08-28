@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Mic, Square, WandSparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,51 +101,65 @@ export function VoiceReflectionView() {
       title="Voice-to-reflectie coach"
       description="Fase A parseert je opname of krabbels. Fase B stelt maximaal twee gerichte vragen voordat Pagina 5 definitief verschijnt."
       input={
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="reflection-text">Tekstkrabbels na de les</Label>
-            <Textarea id="reflection-text" rows={12} value={content} onChange={(event) => setContent(event.target.value)} placeholder="De meeste leerlingen konden D1... Ik merkte dat..." />
-          </div>
-          <Card>
-            <CardContent className="flex items-center justify-between gap-3 pt-5">
-              <div>
-                <p className="text-sm font-medium">Microfoonopname</p>
-                <p className="text-xs text-neutral-500">{recorder.audio ? "Opname klaar" : recorder.recording ? `${recorder.duration}s opgenomen` : "Optioneel"}</p>
+        <ModuleInputLayout
+          fields={
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="reflection-text">Tekstkrabbels na de les</Label>
+                <Textarea
+                  id="reflection-text"
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  placeholder="De meeste leerlingen konden D1... Ik merkte dat..."
+                  className="min-h-96 max-h-[36rem] resize-y overflow-y-auto [field-sizing:fixed]"
+                />
               </div>
-              {recorder.recording ? (
-                <Button variant="destructive" size="icon" onClick={recorder.stop} aria-label="Stop opname"><Square className="size-4" /></Button>
-              ) : (
-                <Button variant="outline" size="icon" onClick={recorder.start} aria-label="Start opname"><Mic className="size-4" /></Button>
-              )}
-            </CardContent>
-          </Card>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason="Typ eerst je reflectie of maak een korte audio-opname."
-            onClick={() => submit()}
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <WandSparkles className="size-4" />}
-            Fase A · analyseer reflectie
-          </ModuleActionButton>
-          {questions.length > 0 && (
-            <Card className="border-orange-900/60">
-              <CardHeader>
-                <Badge variant="outline" className="w-fit">Fase B · aanvullen</Badge>
-                <CardTitle className="text-sm">Nog {questions.length} gerichte vraag{questions.length > 1 ? "en" : ""}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {questions.map((question, index) => (
-                  <div key={question} className="space-y-2">
-                    <Label htmlFor={`answer-${index}`}>{question}</Label>
-                    <Input id={`answer-${index}`} value={answers[index] ?? ""} onChange={(event) => setAnswers((current) => current.map((value, answerIndex) => answerIndex === index ? event.target.value : value).concat(current.length <= index ? [event.target.value] : []))} />
+              <Card>
+                <CardContent className="flex items-center justify-between gap-3 pt-5">
+                  <div>
+                    <p className="text-sm font-medium">Microfoonopname</p>
+                    <p className="text-xs text-neutral-500">{recorder.audio ? "Opname klaar" : recorder.recording ? `${recorder.duration}s opgenomen` : "Optioneel"}</p>
                   </div>
-                ))}
-                <Button onClick={complete} disabled={answers.filter(Boolean).length < questions.length}>Verwerk antwoorden</Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                  {recorder.recording ? (
+                    <Button variant="destructive" size="icon" onClick={recorder.stop} aria-label="Stop opname"><Square className="size-4" /></Button>
+                  ) : (
+                    <Button variant="outline" size="icon" onClick={recorder.start} aria-label="Start opname"><Mic className="size-4" /></Button>
+                  )}
+                </CardContent>
+              </Card>
+              {questions.length > 0 && (
+                <Card className="border-orange-900/60">
+                  <CardHeader>
+                    <Badge variant="outline" className="w-fit">Fase B · aanvullen</Badge>
+                    <CardTitle className="text-sm">Nog {questions.length} gerichte vraag{questions.length > 1 ? "en" : ""}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {questions.map((question, index) => (
+                      <div key={question} className="space-y-2">
+                        <Label htmlFor={`answer-${index}`}>{question}</Label>
+                        <Input id={`answer-${index}`} value={answers[index] ?? ""} onChange={(event) => setAnswers((current) => current.map((value, answerIndex) => answerIndex === index ? event.target.value : value).concat(current.length <= index ? [event.target.value] : []))} />
+                      </div>
+                    ))}
+                    <Button onClick={complete} disabled={answers.filter(Boolean).length < questions.length}>Verwerk antwoorden</Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason="Typ eerst je reflectie of maak een korte audio-opname."
+                onClick={() => submit()}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <WandSparkles className="size-4" />}
+                Fase A · analyseer reflectie
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         isFinal && result ? (

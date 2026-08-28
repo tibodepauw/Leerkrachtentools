@@ -162,7 +162,6 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                 label="Lesvoorbereiding"
                 value={lesson.lessonPreparation}
                 onChange={syncPreparation}
-                rows={10}
                 placeholder="Upload of plak je lesvoorbereiding. Deze tekst deelt elke module."
               />
               <Button variant="ghost" onClick={clearSession} className="self-start">

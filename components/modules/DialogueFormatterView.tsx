@@ -3,6 +3,7 @@
 import { Loader2, MessageSquareQuote } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,24 +29,29 @@ export function DialogueFormatterView() {
       title="Thomas More stijl"
       description="Zet ruwe instructies strikt om naar Lk/Lln-dialogen en cursieve bord- of organisatieacties."
       input={
-        <div className="space-y-4">
-          <LessonPreparationInput
-            id="dialogue"
-            label="Ruwe lesfase of instructie"
-            value={content}
-            onChange={setContent}
-            rows={16}
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason="Upload of plak eerst een lesfase of instructie."
-            onClick={() => analyze("/api/format-dialogue", { content })}
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <MessageSquareQuote className="size-4" />}
-            Format voor Thomas More
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <LessonPreparationInput
+              id="dialogue"
+              label="Ruwe lesfase of instructie"
+              value={content}
+              onChange={setContent}
+            />
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason="Upload of plak eerst een lesfase of instructie."
+                onClick={() => analyze("/api/format-dialogue", { content })}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <MessageSquareQuote className="size-4" />}
+                Format voor Thomas More
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

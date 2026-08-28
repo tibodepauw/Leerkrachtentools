@@ -2,9 +2,10 @@
 
 import { ArrowRight, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
-import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
+import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAnalysis } from "@/hooks/useAnalysis";
@@ -40,32 +41,37 @@ export function GoalOptimizerView() {
       title="Doelverbeteraar"
       description="Herschrijft lesdoelen via Gemini volgens de Thomas More-regels. Kies het doel dat je wilt verbeteren; doelen uit je handleiding staan automatisch in Actieve les."
       input={
-        <div className="space-y-4">
-          <LessonGoalSelector
-            id="goal"
-            label="Kies een lesdoel"
-            goals={goals}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            text={text}
-            onTextChange={setText}
-            rows={8}
-            placeholder="Leerling kan zoogdieren herkennen..."
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            onClick={() => analyze("/api/analyze-goals", { goal: text })}
-            disabled={actionDisabled}
-            disabledReason="Kies een doel met tekst of vul er eerst één in."
-          >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Sparkles className="size-4" />
-            )}
-            Verbeter {selectedId}
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <LessonGoalSelector
+              id="goal"
+              label="Kies een lesdoel"
+              goals={goals}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              text={text}
+              onTextChange={setText}
+              placeholder="Leerling kan zoogdieren herkennen..."
+            />
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                onClick={() => analyze("/api/analyze-goals", { goal: text })}
+                disabled={actionDisabled}
+                disabledReason="Kies een doel met tekst of vul er eerst één in."
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4" />
+                )}
+                Verbeter {selectedId}
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

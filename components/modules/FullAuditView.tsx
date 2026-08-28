@@ -3,6 +3,7 @@
 import { ClipboardCheck, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,24 +33,29 @@ export function FullAuditView() {
       title="Totale lesvoorbereiding audit"
       description="Een stoplichtscore op doelen, leerplandoelen, taal, timing, alignering en betrokkenheid."
       input={
-        <div className="space-y-4">
-          <LessonPreparationInput
-            id="full-audit-content"
-            value={content}
-            onChange={setContent}
-            rows={22}
-            placeholder="Upload of plak de volledige concept-lesvoorbereiding…"
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason="Upload of plak eerst je concept-lesvoorbereiding."
-            onClick={() => analyze("/api/full-audit", { content })}
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <ClipboardCheck className="size-4" />}
-            Start totale audit
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <LessonPreparationInput
+              id="full-audit-content"
+              value={content}
+              onChange={setContent}
+              placeholder="Upload of plak de volledige concept-lesvoorbereiding…"
+            />
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason="Upload of plak eerst je concept-lesvoorbereiding."
+                onClick={() => analyze("/api/full-audit", { content })}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <ClipboardCheck className="size-4" />}
+                Start totale audit
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

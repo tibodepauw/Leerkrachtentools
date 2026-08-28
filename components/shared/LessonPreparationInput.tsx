@@ -8,16 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { ActiveLessonPrepHint } from "@/components/shared/ActiveLessonPrepHint";
-import { ScrollFrame } from "@/components/shared/ScrollFrame";
+import { cn } from "@/lib/utils";
 
 interface LessonPreparationInputProps {
   id: string;
   label?: string;
   value: string;
   onChange: (value: string) => void;
-  rows?: number;
   placeholder?: string;
-  frameHeightClassName?: string;
+  minHeightClassName?: string;
+  maxHeightClassName?: string;
+  className?: string;
 }
 
 export function LessonPreparationInput({
@@ -26,7 +27,9 @@ export function LessonPreparationInput({
   value,
   onChange,
   placeholder = "Plak je lesvoorbereiding of upload een document…",
-  frameHeightClassName = "h-72",
+  minHeightClassName = "min-h-96",
+  maxHeightClassName = "max-h-[36rem]",
+  className,
 }: LessonPreparationInputProps) {
   const [uploading, setUploading] = useState(false);
   const [fileName, setFileName] = useState("");
@@ -63,7 +66,7 @@ export function LessonPreparationInput({
   }
 
   return (
-    <div className="space-y-3">
+    <div className={cn("space-y-3", className)}>
       <Label htmlFor={id}>{label}</Label>
       <ActiveLessonPrepHint />
       <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-5 text-center transition-colors hover:border-neutral-500">
@@ -95,15 +98,17 @@ export function LessonPreparationInput({
         />
       </label>
       {uploadError ? <p className="text-sm text-red-400">{uploadError}</p> : null}
-      <ScrollFrame heightClassName={frameHeightClassName} innerScroll={false}>
-        <Textarea
-          id={id}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          className="h-full min-h-0 resize-none overflow-y-auto rounded-none border-0 bg-transparent [field-sizing:fixed] focus-visible:ring-0"
-        />
-      </ScrollFrame>
+      <Textarea
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className={cn(
+          "w-full resize-y overflow-y-auto [field-sizing:fixed]",
+          minHeightClassName,
+          maxHeightClassName,
+        )}
+      />
     </div>
   );
 }

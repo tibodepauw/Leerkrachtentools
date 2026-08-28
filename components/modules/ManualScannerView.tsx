@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileUp, Loader2, RefreshCw } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -173,59 +174,67 @@ export function ManualScannerView() {
       title="Handleiding Scanner"
       description="Upload een PDF of afbeelding van een handleiding. Gemini leest het document en extraheert leergebied, doelgroep en uitgeverijdoelen."
       input={
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="manual-file">Handleiding</Label>
-            <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-6 text-center hover:border-neutral-500">
-              {loading && fileName ? (
-                <Loader2 className="mb-3 size-6 animate-spin text-neutral-400" />
-              ) : (
-                <FileUp className="mb-3 size-6 text-neutral-400" />
-              )}
-              <span className="text-sm">{primaryText}</span>
-              {helperText ? (
-                <span className="mt-1 text-xs text-neutral-500">{helperText}</span>
-              ) : null}
-              <Input
-                id="manual-file"
-                type="file"
-                accept=".pdf,image/*,.txt"
-                className="sr-only"
-                disabled={loading}
-                onChange={(event) => {
-                  void selectFile(event.target.files?.[0]);
-                  event.target.value = "";
-                }}
-              />
-            </label>
-            {uploadError ? (
-              <p className="text-sm text-red-400">{uploadError}</p>
-            ) : null}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="manual-content">Of plak relevante tekst</Label>
-            <Textarea
-              id="manual-content"
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
-              rows={10}
-              placeholder="Plak hier tekst uit de methode of handleiding..."
-            />
-          </div>
-          {error ? <p className="text-sm text-red-400">{error}</p> : null}
-          <ModuleActionButton
-            onClick={() => extractAndSync()}
-            disabled={loading || (!content && !fileName)}
-            disabledReason="Upload een handleiding of plak eerst tekst in het invoerveld."
-          >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RefreshCw className="size-4" />
-            )}
-            Gegevens extraheren
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="manual-file">Handleiding</Label>
+                <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-6 text-center hover:border-neutral-500">
+                  {loading && fileName ? (
+                    <Loader2 className="mb-3 size-6 animate-spin text-neutral-400" />
+                  ) : (
+                    <FileUp className="mb-3 size-6 text-neutral-400" />
+                  )}
+                  <span className="text-sm">{primaryText}</span>
+                  {helperText ? (
+                    <span className="mt-1 text-xs text-neutral-500">{helperText}</span>
+                  ) : null}
+                  <Input
+                    id="manual-file"
+                    type="file"
+                    accept=".pdf,image/*,.txt"
+                    className="sr-only"
+                    disabled={loading}
+                    onChange={(event) => {
+                      void selectFile(event.target.files?.[0]);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {uploadError ? (
+                  <p className="text-sm text-red-400">{uploadError}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="manual-content">Of plak relevante tekst</Label>
+                <Textarea
+                  id="manual-content"
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                  placeholder="Plak hier tekst uit de methode of handleiding..."
+                  className="min-h-96 max-h-[36rem] resize-y overflow-y-auto [field-sizing:fixed]"
+                />
+              </div>
+            </div>
+          }
+          actions={
+            <>
+              {error ? <p className="text-sm text-red-400">{error}</p> : null}
+              <ModuleActionButton
+                onClick={() => extractAndSync()}
+                disabled={loading || (!content && !fileName)}
+                disabledReason="Upload een handleiding of plak eerst tekst in het invoerveld."
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4" />
+                )}
+                Gegevens extraheren
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

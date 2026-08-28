@@ -4,6 +4,7 @@ import { Loader2, Target } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -49,27 +50,34 @@ export function AlignmentAuditView() {
       title="Doel-activiteit alignering"
       description="Controleert per D-doel uitleg, zelfstandige oefening en evaluatie."
       input={
-        <div className="space-y-4">
-          <div className="rounded-lg border border-neutral-800 p-4 text-sm">
-            {goals.map((goal) => <p key={goal} className="mb-2 last:mb-0">{goal}</p>)}
-          </div>
-          <LessonPreparationInput
-            id="alignment-content"
-            label="Lesopbouw"
-            value={content}
-            onChange={setContent}
-            rows={18}
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason="Upload of plak eerst je lesopbouw."
-            onClick={() => analyze("/api/audit-alignment", { goals: lesson.goals.map((goal) => goal.text), content })}
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Target className="size-4" />}
-            Controleer alignering
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <div className="space-y-4">
+              <div className="rounded-lg border border-neutral-800 p-4 text-sm">
+                {goals.map((goal) => <p key={goal} className="mb-2 last:mb-0">{goal}</p>)}
+              </div>
+              <LessonPreparationInput
+                id="alignment-content"
+                label="Lesopbouw"
+                value={content}
+                onChange={setContent}
+              />
+            </div>
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason="Upload of plak eerst je lesopbouw."
+                onClick={() => analyze("/api/audit-alignment", { goals: lesson.goals.map((goal) => goal.text), content })}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Target className="size-4" />}
+                Controleer alignering
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

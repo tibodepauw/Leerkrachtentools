@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import type { LessonGoal } from "@/types";
 
 export function LessonGoalSelector({
@@ -13,8 +14,9 @@ export function LessonGoalSelector({
   onSelect,
   text,
   onTextChange,
-  rows = 8,
   placeholder,
+  minHeightClassName = "min-h-96",
+  maxHeightClassName = "max-h-[36rem]",
 }: {
   id: string;
   label: string;
@@ -23,8 +25,9 @@ export function LessonGoalSelector({
   onSelect: (id: LessonGoal["id"]) => void;
   text: string;
   onTextChange: (value: string) => void;
-  rows?: number;
   placeholder?: string;
+  minHeightClassName?: string;
+  maxHeightClassName?: string;
 }) {
   const filledCount = goals.filter((goal) => goal.text.trim()).length;
 
@@ -65,8 +68,12 @@ export function LessonGoalSelector({
         id={id}
         value={text}
         onChange={(event) => onTextChange(event.target.value)}
-        rows={rows}
         placeholder={placeholder}
+        className={cn(
+          "w-full resize-y overflow-y-auto [field-sizing:fixed]",
+          minHeightClassName,
+          maxHeightClassName,
+        )}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Clock3, Loader2 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,56 +39,63 @@ export function TimingCheckView() {
       title="Timing"
       description="Tel de vier lesfasen op en vergelijk met je totale lestijd. Die duur hoef niet 50 minuten te zijn — pas hem aan via Actieve les of hieronder; de som moet wel kloppen."
       input={
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="total-time">Totale lestijd (minuten)</Label>
-            <Input
-              id="total-time"
-              type="number"
-              min={1}
-              max={240}
-              value={lesson.totalMinutes}
-              onChange={(event) =>
-                setField(
-                  "totalMinutes",
-                  Math.max(1, Number(event.target.value) || 1),
-                )
-              }
-            />
-            <p className="text-xs text-neutral-500">
-              Gedeeld met Actieve les. Veel scholen gebruiken 50 min, maar 45
-              of 60 min kan ook.
-            </p>
-          </div>
-          <LessonPreparationInput
-            id="timing-content"
-            label="Vier lesfasen met minuten in de headers"
-            value={content}
-            onChange={setContent}
-            rows={18}
-            placeholder={
-              "Instapfase — 5 min\n...\nInstructiefase — 15 minuten\n...\nVerwerking — 25 m\n...\nAfronding — 5 min"
-            }
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason='Upload of plak eerst minuten in je fase-headers, bv. "Instap — 5 min".'
-            onClick={() =>
-              analyze("/api/audit-timing", {
-                totalMinutes: String(lesson.totalMinutes),
-                content: `Gevonden fasetijden: ${minutes.join(", ")}. Som: ${sum}. Doel: ${lesson.totalMinutes} min. Afwijking: ${deviation}.`,
-              })
-            }
-          >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Clock3 className="size-4" />
-            )}
-            Vraag optimalisaties
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="total-time">Totale lestijd (minuten)</Label>
+                <Input
+                  id="total-time"
+                  type="number"
+                  min={1}
+                  max={240}
+                  value={lesson.totalMinutes}
+                  onChange={(event) =>
+                    setField(
+                      "totalMinutes",
+                      Math.max(1, Number(event.target.value) || 1),
+                    )
+                  }
+                />
+                <p className="text-xs text-neutral-500">
+                  Gedeeld met Actieve les. Veel scholen gebruiken 50 min, maar 45
+                  of 60 min kan ook.
+                </p>
+              </div>
+              <LessonPreparationInput
+                id="timing-content"
+                label="Vier lesfasen met minuten in de headers"
+                value={content}
+                onChange={setContent}
+                placeholder={
+                  "Instapfase — 5 min\n...\nInstructiefase — 15 minuten\n...\nVerwerking — 25 m\n...\nAfronding — 5 min"
+                }
+              />
+            </div>
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason='Upload of plak eerst minuten in je fase-headers, bv. "Instap — 5 min".'
+                onClick={() =>
+                  analyze("/api/audit-timing", {
+                    totalMinutes: String(lesson.totalMinutes),
+                    content: `Gevonden fasetijden: ${minutes.join(", ")}. Som: ${sum}. Doel: ${lesson.totalMinutes} min. Afwijking: ${deviation}.`,
+                  })
+                }
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Clock3 className="size-4" />
+                )}
+                Vraag optimalisaties
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         <div className="space-y-4">

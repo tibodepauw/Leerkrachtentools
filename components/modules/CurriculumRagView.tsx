@@ -7,9 +7,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
-import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
+import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,78 +139,85 @@ function GoalMatcher({ source }: { source: GoalSource }) {
       title={copy.title}
       description={copy.description}
       input={
-        <div className="space-y-5">
-          {source === "leerplandoel" ? (
-            <div className="space-y-2">
-              <Label>Onderwijsnet</Label>
-              <Select
-                value={lesson.educationNetwork}
-                onValueChange={(value) =>
-                  setNetwork(value as EducationNetwork)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ZILL">
-                    Katholiek Onderwijs · ZILL
-                  </SelectItem>
-                  <SelectItem value="OVSG">OVSG · LeerLokaal</SelectItem>
-                  <SelectItem value="GO">GO!</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-neutral-800 p-3 text-sm">
-              <p className="font-medium">Bronniveau: Vlaamse overheid</p>
-              <p className="mt-1 text-xs leading-5 text-neutral-500">
-                Minimumdoelen gelden over de onderwijsnetten heen. Daarom hoef
-                je hier geen onderwijsnet te kiezen.
+        <ModuleInputLayout
+          fields={
+            <div className="space-y-5">
+              {source === "leerplandoel" ? (
+                <div className="space-y-2">
+                  <Label>Onderwijsnet</Label>
+                  <Select
+                    value={lesson.educationNetwork}
+                    onValueChange={(value) =>
+                      setNetwork(value as EducationNetwork)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ZILL">
+                        Katholiek Onderwijs · ZILL
+                      </SelectItem>
+                      <SelectItem value="OVSG">OVSG · LeerLokaal</SelectItem>
+                      <SelectItem value="GO">GO!</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="rounded-lg border border-neutral-800 p-3 text-sm">
+                  <p className="font-medium">Bronniveau: Vlaamse overheid</p>
+                  <p className="mt-1 text-xs leading-5 text-neutral-500">
+                    Minimumdoelen gelden over de onderwijsnetten heen. Daarom hoef
+                    je hier geen onderwijsnet te kiezen.
+                  </p>
+                </div>
+              )}
+
+              <LessonGoalSelector
+                id={`${source}-goal`}
+                label="Kies een actief lesdoel"
+                goals={goals}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                text={text}
+                onTextChange={setText}
+              />
+
+              <p className="text-xs text-neutral-500">
+                {lesson.referenceSchoolYear
+                  ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via Actieve les.`
+                  : "Schooljaar optioneel instelbaar via Actieve les."}
               </p>
             </div>
-          )}
-
-          <LessonGoalSelector
-            id={`${source}-goal`}
-            label="Kies een actief lesdoel"
-            goals={goals}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            text={text}
-            onTextChange={setText}
-            rows={8}
-          />
-
-          <p className="text-xs text-neutral-500">
-            {lesson.referenceSchoolYear
-              ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via Actieve les.`
-              : "Schooljaar optioneel instelbaar via Actieve les."}
-          </p>
-          {error ? <p className="text-sm text-red-400">{error}</p> : null}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason="Kies eerst een actief lesdoel of vul er één in."
-            onClick={() =>
-              analyze("/api/rag-curriculum", {
-                goal: text,
-                source,
-                network:
-                  source === "leerplandoel"
-                    ? lesson.educationNetwork
-                    : undefined,
-                schoolYear: lesson.referenceSchoolYear,
-              })
-            }
-          >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Icon className="size-4" />
-            )}
-            {copy.action}
-          </ModuleActionButton>
-        </div>
+          }
+          actions={
+            <>
+              {error ? <p className="text-sm text-red-400">{error}</p> : null}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason="Kies eerst een actief lesdoel of vul er één in."
+                onClick={() =>
+                  analyze("/api/rag-curriculum", {
+                    goal: text,
+                    source,
+                    network:
+                      source === "leerplandoel"
+                        ? lesson.educationNetwork
+                        : undefined,
+                    schoolYear: lesson.referenceSchoolYear,
+                  })
+                }
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Icon className="size-4" />
+                )}
+                {copy.action}
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

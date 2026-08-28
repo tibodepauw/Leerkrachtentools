@@ -3,6 +3,7 @@
 import { Loader2, Sparkles } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,24 +43,29 @@ export function EngagementView() {
       title="Betrokkenheidsfactoren van Laevers"
       description="Zelfstandige analyse van Leeractiviteit, Werkelijkheidsnabijheid, Leerlingeninitiatief, Positief klasklimaat, Expressie en Samen leren."
       input={
-        <div className="space-y-4">
-          <LessonPreparationInput
-            id="engagement-content"
-            label="Volledige lesvoorbereiding"
-            value={content}
-            onChange={setContent}
-            rows={20}
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            disabled={actionDisabled}
-            disabledReason="Upload of plak eerst je lesvoorbereiding."
-            onClick={() => analyze("/api/audit-engagement", { content })}
-          >
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-            Analyseer zes factoren
-          </ModuleActionButton>
-        </div>
+        <ModuleInputLayout
+          fields={
+            <LessonPreparationInput
+              id="engagement-content"
+              label="Volledige lesvoorbereiding"
+              value={content}
+              onChange={setContent}
+            />
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                disabled={actionDisabled}
+                disabledReason="Upload of plak eerst je lesvoorbereiding."
+                onClick={() => analyze("/api/audit-engagement", { content })}
+              >
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                Analyseer zes factoren
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (

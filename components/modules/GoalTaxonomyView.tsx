@@ -1,9 +1,10 @@
 "use client";
 
 import { Brain, Loader2 } from "lucide-react";
-import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
+import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,42 +41,47 @@ export function GoalTaxonomyView() {
       title="MC–DAS–SPM herkenner"
       description="Classificeert lesdoelen via Gemini als MC, DAS of SPM zonder het doel te herschrijven."
       input={
-        <div className="space-y-4">
-          <LessonGoalSelector
-            id="taxonomy-goal"
-            label="Kies een lesdoel"
-            goals={goals}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            text={text}
-            onTextChange={setText}
-            rows={8}
-            placeholder="De leerlingen kunnen zoogdieren herkennen..."
-          />
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          <ModuleActionButton
-            onClick={async () => {
-              const payload = await analyze("/api/classify-goal-taxonomy", {
-                goal: text,
-              });
-              if (!payload) return;
+        <ModuleInputLayout
+          fields={
+            <LessonGoalSelector
+              id="taxonomy-goal"
+              label="Kies een lesdoel"
+              goals={goals}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              text={text}
+              onTextChange={setText}
+              placeholder="De leerlingen kunnen zoogdieren herkennen..."
+            />
+          }
+          actions={
+            <>
+              {error && <p className="text-sm text-red-400">{error}</p>}
+              <ModuleActionButton
+                onClick={async () => {
+                  const payload = await analyze("/api/classify-goal-taxonomy", {
+                    goal: text,
+                  });
+                  if (!payload) return;
 
-              const index = goals.findIndex((goal) => goal.id === selectedId);
-              if (index >= 0) {
-                setGoal(index, { taxonomy: payload.data.taxonomy });
-              }
-            }}
-            disabled={actionDisabled}
-            disabledReason="Kies een doel met tekst of vul er eerst één in."
-          >
-            {loading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Brain className="size-4" />
-            )}
-            Herken taxonomie voor {selectedId}
-          </ModuleActionButton>
-        </div>
+                  const index = goals.findIndex((goal) => goal.id === selectedId);
+                  if (index >= 0) {
+                    setGoal(index, { taxonomy: payload.data.taxonomy });
+                  }
+                }}
+                disabled={actionDisabled}
+                disabledReason="Kies een doel met tekst of vul er eerst één in."
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Brain className="size-4" />
+                )}
+                Herken taxonomie voor {selectedId}
+              </ModuleActionButton>
+            </>
+          }
+        />
       }
       output={
         result ? (
