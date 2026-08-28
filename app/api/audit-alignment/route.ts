@@ -15,4 +15,6 @@ export const POST = createAnalysisHandler({
   buildPrompt: (input) =>
     `Lesdoelen:\n${stringArray(input, "goals").join("\n")}\n\nLesopbouw:\n${text(input, "content")}`,
   buildMock: (input) => mockAlignment(stringArray(input, "goals")),
+  preferredProvider: "google",
+  requireAi: true,
 });

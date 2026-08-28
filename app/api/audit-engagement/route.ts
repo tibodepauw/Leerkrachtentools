@@ -10,4 +10,6 @@ export const POST = createAnalysisHandler({
   system: prompts.engagement,
   buildPrompt: (input) => `Volledige lesvoorbereiding:\n${text(input, "content")}`,
   buildMock: () => mockEngagement,
+  preferredProvider: "google",
+  requireAi: true,
 });

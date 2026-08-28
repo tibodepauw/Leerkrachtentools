@@ -10,4 +10,6 @@ export const POST = createAnalysisHandler({
   system: prompts.spellcheck,
   buildPrompt: (input) => `Lesvoorbereidingstekst:\n${text(input, "content")}`,
   buildMock: (input) => mockSpellcheck(text(input, "content")),
+  preferredProvider: "google",
+  requireAi: true,
 });

@@ -10,4 +10,6 @@ export const POST = createAnalysisHandler({
   system: prompts.fullAudit,
   buildPrompt: (input) => `Concept-lesvoorbereiding:\n${text(input, "content")}`,
   buildMock: () => mockFullAudit,
+  preferredProvider: "google",
+  requireAi: true,
 });

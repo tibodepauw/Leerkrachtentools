@@ -11,4 +11,6 @@ export const POST = createAnalysisHandler({
   buildPrompt: (input) =>
     `Totale lestijd: ${text(input, "totalMinutes")} minuten.\nDeterministisch berekende fase-informatie:\n${text(input, "content")}`,
   buildMock: () => mockTimingAdvice,
+  preferredProvider: "google",
+  requireAi: true,
 });
