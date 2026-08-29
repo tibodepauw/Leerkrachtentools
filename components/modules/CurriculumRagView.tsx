@@ -58,7 +58,7 @@ const NETWORK_OPTIONS: Array<{
   value: CurriculumNetworkFilter;
   label: string;
 }> = [
-  { value: "ALL", label: "Alle netwerken" },
+  { value: "ALL", label: "Alle leerplannen" },
   { value: "OPSTAP", label: "Op.stap · Katholiek onderwijs" },
   { value: "OVSG", label: "OVSG · LeerLokaal" },
   { value: "GO_NIEUW", label: "GO! · Nieuw leerplan" },

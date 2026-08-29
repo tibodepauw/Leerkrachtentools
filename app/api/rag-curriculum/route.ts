@@ -100,7 +100,7 @@ async function runCurriculumSearch(
   }
 
   const networkLabel =
-    network === "ALL" ? "alle netwerken" : networkBadgeLabel(network);
+    network === "ALL" ? "alle leerplannen" : networkBadgeLabel(network);
 
   let corpusNotice =
     merged.length > 0
