@@ -1,10 +1,33 @@
 # Leerkrachtentools
 
-Een modulaire Next.js-app voor Thomas More BALO-studenten. De app ondersteunt
-lesdoelextractie en -verbetering, leerplandoelenkoppeling, Thomas More-formattering,
-didactische controles en reflectie na de les.
+A modular Next.js lesson-preparation assistant for Thomas More BALO teacher-training students. One **active lesson** context flows through every tool: scan a publisher manual, refine goals, match official curriculum and minimum goals, format in Thomas More style, run didactic quality checks, and reflect after the lesson.
 
-## Lokaal starten
+**Repository:** [github.com/tibodepauw/Leerkrachtentools](https://github.com/tibodepauw/Leerkrachtentools)
+
+## Features
+
+### Input
+- **Manual scanner** — upload a PDF or image; AI extracts learning area, target group, materials, and publisher goals into the shared lesson state.
+- **Active lesson** — central hub for topic, structured target group (grade/age), D1–D12 goals, lesson phases, Word import/export, and preparation text.
+
+### Goals
+- **Goal optimizer** — rewrites lesson goals to Thomas More standards (Google Gemini required).
+- **MC–DAS–SPM classifier** — labels goals as mental-cognitive, dynamic-affective, or sensomotor/psychomotor without rewriting them.
+- **Curriculum goals** — hybrid search over official Flemish curriculum corpora (ZILL, OVSG, Op.stap, GO! Nieuw) with typo tolerance, domain bonuses, and optional Google Discovery Engine fallback.
+- **Minimum goals** — matches decreetal AHOVOKS minimum goals (4th grade checkpoint, 6th grade end goal, kindergarten K-codes) with numeric range ranking and soft target-group boosting.
+
+### Lesson preparation
+- **Thomas More dialogue formatter** — converts raw instructions into Lk/Lln dialogues with italic board/organisation actions.
+- **Language check** — didactic spellcheck: dt-errors, formal instruction language, terminology, professional tone.
+- **Timing check** — validates that minutes across the four lesson phases sum to the configured total lesson time.
+- **Goal–activity alignment** — checks per goal whether explanation, independent practice, and evaluation are present.
+- **Engagement analysis** — Laevers engagement factors (learning activity, reality proximity, initiative, climate, expression, collaborative learning).
+- **Full audit** — traffic-light score across goals, curriculum alignment, language, timing, alignment, and engagement.
+
+### After the lesson
+- **Voice reflection** — two-phase post-lesson reflection: transcribe recording/sketches, then coaching with follow-up questions before final output.
+
+## Quick start
 
 ```bash
 npm install
@@ -12,110 +35,127 @@ cp .env.example .env.local
 npm run dev -- --hostname 0.0.0.0 --port 43127
 ```
 
-AI-keys zijn optioneel voor de meeste modules. Zonder keys gebruikt de app lokale
-demo-antwoorden — behalve **Doelverbeteraar** en **MC–DAS–SPM herkenner**:
-daarvoor is een Google AI Studio-key verplicht.
+Open `http://127.0.0.1:43127`.
+
+AI keys are optional for most modules. Without keys the app uses deterministic local demo responses — except **Goal optimizer** and **MC–DAS–SPM classifier**, which require a Google AI Studio key:
 
 ```bash
-GOOGLE_GENERATIVE_AI_API_KEY=jouw-key-van-aistudio.google.com
+GOOGLE_GENERATIVE_AI_API_KEY=your-key-from-aistudio.google.com
 GOOGLE_MODEL=gemini-2.5-flash-lite
 ```
 
-Overige providers (Groq, Cerebras, …) blijven optioneel als fallback.
+Other providers (Groq, Cerebras, …) remain optional fallbacks. Users can also add their own API keys in **Settings**.
 
-E-mailauthenticatie werkt lokaal zonder Brevo-key met een zichtbare
-ontwikkelcode. Voor productie zijn `AUTH_SECRET`, `BREVO_API_KEY` en een
-`BREVO_FROM_EMAIL` op een geverifieerd Brevo-afzenderadres verplicht.
+### Email authentication (Brevo)
 
-### Brevo instellen
-
-1. Maak in Brevo een geverifieerd afzenderadres aan onder **Senders, domains, IPs**.
-2. Zet in `.env.local`:
+Local development works without Brevo using a visible dev code. For production set:
 
 ```bash
-BREVO_API_KEY=jouw-api-key
-BREVO_FROM_EMAIL=Leerkrachtentools <login@jouwdomein.be>
-AUTH_SECRET=eentje-lange-willekeurige-string-minstens-32-tekens
+BREVO_API_KEY=your-api-key
+BREVO_FROM_EMAIL=Leerkrachtentools <login@yourdomain.be>
+AUTH_SECRET=a-long-random-string-at-least-32-characters
 ```
 
-3. Als **Block unauthorized IP addresses** actief is voor API-keys, voeg het publieke IP van je Oracle VM toe onder **Security → Authorized IPs**. Zonder die whitelist weigert Brevo verzending.
+Verification codes are sent via `POST https://api.brevo.com/v3/smtp/email` (transactional API).
 
-Verificatiecodes gaan via `POST https://api.brevo.com/v3/smtp/email` (transactionele API, geen SMTP-client nodig in de app).
+If **Block unauthorized IP addresses** is enabled for your Brevo API key, add your server’s public IP under **Security → Authorized IPs**.
 
-## Kwaliteitscontrole
+## Quality checks
 
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
-## Oracle VM
+## Production deployment
 
-De productiebuild gebruikt Next.js `output: "standalone"`:
+The production build uses Next.js `output: "standalone"`:
 
 ```bash
 npm run build
 PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js
 ```
 
-Kopieer voor een losse deployment ook `.next/static` en `public` naar de
-overeenkomstige locaties onder `.next/standalone`.
+For a standalone deployment also copy `.next/static` and `public` into the matching paths under `.next/standalone`.
 
-Maak `data/` persistent en neem regelmatig een back-up van
-`data/leerkrachtentools.db`. Deze SQLite-database bevat geverifieerde
-e-mailadressen, optionele marketingtoestemming, gehashte login-codes en
-gehashte sessies. Lesvoorbereidingen worden niet in deze database opgeslagen.
+Keep `data/` persistent and back up `data/leerkrachtentools.db` regularly. This SQLite database stores verified email addresses, optional marketing consent, hashed login codes, and hashed sessions. Lesson preparation content is **not** stored in the database.
 
-## Gegevens en bronnen
+## Curriculum data (RAG)
 
-Leerplandoelresultaten tonen bron, versie en schooljaar. Toekomstige leerplannen
-staan los van de actieve index. Voeg nooit accountwachtwoorden of API-keys toe
-aan de repository; gebruik uitsluitend `.env.local`.
-
-### Officiële leerplan- en minimumdoelencorpus (RAG / GCS)
+Official curriculum JSONL corpora power local search. Optional scripts fetch or scrape fresh data:
 
 ```bash
 pip install -r scripts/requirements-curriculum.txt
 python3 scripts/fetch_curriculum_data.py
 ```
 
-Downloads landen in `data/{zill,go,ovsg,minimumdoelen}/` met JSON-sidecar-metadata.
-Zie `docs/curriculum-bronnen-urls.md` voor alle officiële bron-URL's.
-Optioneel: zet `ONDERWIJSDOELEN_API_KEY` voor JSON-export via de Onderwijsdoelen-API.
+Downloads land in `data/{zill,go,ovsg,minimumdoelen}/`. See `docs/curriculum-bronnen-urls.md` for source URLs. Set `ONDERWIJSDOELEN_API_KEY` optionally for JSON export via the Onderwijsdoelen API.
 
-Voor de volledige ZILL-selector (leerlijnen én geneste inhouden):
+**Full ZILL selector** (learning lines + nested content):
 
 ```bash
 python3 -m playwright install chromium
 python3 scripts/scrape_zill_full.py
 ```
 
-Dit schrijft `data/zill/zill_volledig.jsonl`, een metadata-sidecar en
-`zill_scrape_report.json`. De scraper onderschept primair het officiële JSON-model
-en gebruikt route-per-route DOM-traversal als fallback.
+Output: `data/zill/zill_volledig.jsonl`, metadata sidecar, and `zill_scrape_report.json`.
 
-Voor de volledige OVSG Leer Lokaal-leerlijn (Basis/Ondersteuning/Verdieping per fase):
+**OVSG Leer Lokaal** (Basic / Support / Extension per phase):
 
 ```bash
-export OVSG_LEERLOKAAL_USER=jouw-gebruikersnaam
-export OVSG_LEERLOKAAL_PASSWORD=jouw-wachtwoord
+export OVSG_LEERLOKAAL_USER=your-username
+export OVSG_LEERLOKAAL_PASSWORD=your-password
 python3 scripts/scrape_ovsg_full.py
 ```
 
-Dit schrijft `data/ovsg/ovsg_volledig.jsonl`, een metadata-sidecar en
-`ovsg_scrape_report.json`. Credentials horen in `.env.local` of als omgevingsvariabelen,
-nooit in de repository.
+Output: `data/ovsg/ovsg_volledig.jsonl`. Never commit credentials.
 
-Voor Op.stap (Katholiek Onderwijs) en het GO! nieuw leerplan:
+**Op.stap** and **GO! Nieuw**:
 
 ```bash
 python3 scripts/scrape_opstap_full.py
 python3 scripts/fetch_go_nieuw.py
 ```
 
-Output: `data/opstap/opstap_volledig.jsonl` en `data/go_nieuw/go_nieuw_volledig.jsonl`.
+Output: `data/opstap/opstap_volledig.jsonl` and `data/go_nieuw/go_nieuw_volledig.jsonl`.
 
-De marketingtoestemming staat standaard uit en kan na inloggen worden
-ingetrokken. Controleer vóór publieke lancering ook het privacybeleid,
-bewaartermijnen en de afmeldlink van toekomstige mailings.
+### Optional: Google Discovery Engine
+
+For semantic fallback when local token matching finds no results, configure in `.env.local`:
+
+```bash
+GOOGLE_PROJECT_ID=
+GOOGLE_LOCATION=global
+GOOGLE_DATA_STORE_ID=
+GOOGLE_CLIENT_EMAIL=
+GOOGLE_PRIVATE_KEY=
+```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CHANGELOG.md](./CHANGELOG.md) | Version history and release notes |
+| [docs/AI-en-RAG-overzicht.md](./docs/AI-en-RAG-overzicht.md) | AI and RAG architecture overview (Dutch) |
+| [docs/curriculum-bronnen-urls.md](./docs/curriculum-bronnen-urls.md) | Official curriculum source URLs |
+
+## Privacy & security
+
+- Marketing consent is off by default and can be withdrawn after login.
+- Never commit account passwords or API keys; use `.env.local` only.
+- Review privacy policy, retention periods, and mailing unsubscribe links before public launch.
+
+## Tech stack
+
+- **Next.js 16** (App Router, standalone output)
+- **React 19**, **TypeScript**, **Tailwind CSS 4**, **shadcn/ui**
+- **Zustand** (persisted active lesson state)
+- **better-sqlite3** (auth/session storage)
+- **Vercel AI SDK** (multi-provider AI)
+- **Vitest** (108 tests)
+
+## Releases
+
+See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).
