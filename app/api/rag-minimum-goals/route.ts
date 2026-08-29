@@ -5,12 +5,15 @@ import {
 } from "@/lib/auth/guard";
 import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
 import {
-  dedupeByMinimumGoalCode,
   enrichHitFromCorpus,
   isStructuredResult,
   sanitizeStructuredResult,
   searchMinimumGoals,
 } from "@/lib/rag/curriculumCorpus";
+import {
+  MINIMUM_GOALS_TOP_N,
+  rankMinimumGoalResults,
+} from "@/lib/rag/minimumGoalRanking";
 import type { CurriculumSearchResult } from "@/types";
 
 function hasMinimumGoal(
@@ -53,12 +56,10 @@ export async function POST(request: Request) {
         ? enrichedFromDiscovery
         : searchMinimumGoals({ query, limit: 12 });
 
-    const merged = dedupeByMinimumGoalCode(
-      [...ranked]
-        .filter(hasMinimumGoal)
-        .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
-        .map(sanitizeStructuredResult),
-      6,
+    const merged = rankMinimumGoalResults(
+      query,
+      [...ranked].filter(hasMinimumGoal).map(sanitizeStructuredResult),
+      MINIMUM_GOALS_TOP_N,
     );
 
     const goal = merged[0] ?? null;
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
         alternatives,
         corpusNotice:
           merged.length > 0
-            ? `${merged.length} bestpassende Vlaamse minimumdoel${merged.length === 1 ? "" : "en"} gevonden op basis van je lesdoel.`
+            ? `Top ${merged.length} bestpassende Vlaamse minimumdoel${merged.length === 1 ? "" : "en"} — hoogste match bovenaan.`
             : "Geen passend minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
         retrievalMode: "minimum-goals",
       },

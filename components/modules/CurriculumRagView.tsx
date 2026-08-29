@@ -165,9 +165,9 @@ function GoalCard({
         ) : null}
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <CopyButton value={goalCopy} label="📋 Doel kopiëren" />
+          <CopyButton value={goalCopy} label="Doel kopiëren" />
           {minimumCopy ? (
-            <CopyButton value={minimumCopy} label="📋 Minimumdoel kopiëren" />
+            <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
           ) : null}
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
             <Plus className="size-4" />
@@ -182,9 +182,13 @@ function GoalCard({
 function MinimumGoalCard({
   result,
   onAddToLesson,
+  rank,
+  isBestMatch = false,
 }: {
   result: CurriculumSearchResult;
   onAddToLesson: (text: string) => void;
+  rank: number;
+  isBestMatch?: boolean;
 }) {
   const minimum = result.gelinktMinimumdoel;
   if (!minimum?.tekst) {
@@ -199,8 +203,26 @@ function MinimumGoalCard({
   }
 
   return (
-    <Card className="border-emerald-900/40 bg-emerald-950/5">
+    <Card
+      className={
+        isBestMatch
+          ? "border-emerald-700/60 bg-emerald-950/10 ring-1 ring-emerald-900/40"
+          : "border-emerald-900/40 bg-emerald-950/5"
+      }
+    >
       <CardHeader className="space-y-2 pb-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {isBestMatch ? (
+            <Badge className="bg-emerald-700 text-white hover:bg-emerald-700">
+              Beste match
+            </Badge>
+          ) : (
+            <Badge variant="outline">#{rank}</Badge>
+          )}
+          {result.leerjaarRoute ? (
+            <span className="text-xs text-neutral-500">{result.leerjaarRoute}</span>
+          ) : null}
+        </div>
         {minimum.code ? (
           <p className="font-mono text-sm font-bold tracking-tight text-emerald-200">
             {minimum.code}
@@ -234,7 +256,7 @@ function MinimumGoalCard({
         </Accordion>
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <CopyButton value={minimumCopy} label="📋 Minimumdoel kopiëren" />
+          <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
             <Plus className="size-4" />
             Toevoegen aan Actieve les
@@ -266,11 +288,13 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     ? [
         ...(result.data.goal !== "niet gevonden" ? [result.data.goal] : []),
         ...result.data.alternatives,
-      ].filter(
-        (item) =>
-          item.verrijking !== "fragment" &&
-          (variant === "minimumdoel" ? item.gelinktMinimumdoel?.tekst : true),
-      )
+      ]
+        .filter(
+          (item) =>
+            item.verrijking !== "fragment" &&
+            (variant === "minimumdoel" ? item.gelinktMinimumdoel?.tekst : true),
+        )
+        .slice(0, variant === "minimumdoel" ? 3 : undefined)
     : [];
 
   return (
@@ -363,12 +387,19 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
           <div className="space-y-4">
             {results.length > 0 ? (
               <div className="space-y-3">
+                {variant === "minimumdoel" ? (
+                  <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+                    Top {results.length} minimumdoel{results.length === 1 ? "" : "en"}
+                  </p>
+                ) : null}
                 {results.map((goalResult, index) =>
                   variant === "minimumdoel" ? (
                     <MinimumGoalCard
                       key={`${goalResult.gelinktMinimumdoel?.code}-${index}`}
                       result={goalResult}
                       onAddToLesson={setText}
+                      rank={index + 1}
+                      isBestMatch={index === 0}
                     />
                   ) : (
                     <GoalCard
