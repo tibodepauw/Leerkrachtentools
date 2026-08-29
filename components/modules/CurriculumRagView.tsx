@@ -51,9 +51,10 @@ interface MatcherResult {
 }
 
 const NETWORK_OPTIONS: Array<{
-  value: Exclude<CurriculumNetworkFilter, "ALL">;
+  value: CurriculumNetworkFilter;
   label: string;
 }> = [
+  { value: "ALL", label: "Alle netwerken" },
   { value: "OPSTAP", label: "Op.stap · Katholiek onderwijs" },
   { value: "OVSG", label: "OVSG · LeerLokaal" },
   { value: "GO_NIEUW", label: "GO! · Nieuw leerplan" },
@@ -166,13 +167,12 @@ function GoalCard({
         ) : null}
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <CopyButton value={goalCopy} label="Doel kopiëren" />
+          <CopyButton value={goalCopy} label="📋 Doel kopiëren" />
           {minimumCopy ? (
             <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
           ) : null}
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
-            <Plus className="size-4" />
-            Toevoegen aan Actieve les
+            ➕ Toevoegen aan Actieve les
           </Button>
         </div>
       </CardContent>
@@ -256,8 +256,8 @@ function MinimumGoalCard({
 function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const copy = variantCopy[variant];
   const lesson = useLessonStore((state) => state.lesson);
-  const [network, setNetwork] = useState<Exclude<CurriculumNetworkFilter, "ALL">>(
-    () => mapEducationNetwork(lesson.educationNetwork),
+  const [network, setNetwork] = useState<CurriculumNetworkFilter>(() =>
+    mapEducationNetwork(lesson.educationNetwork),
   );
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
@@ -280,7 +280,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
             item.verrijking !== "fragment" &&
             (variant === "minimumdoel" ? item.gelinktMinimumdoel?.tekst : true),
         )
-        .slice(0, variant === "minimumdoel" ? 3 : undefined)
+        .slice(0, variant === "minimumdoel" ? 3 : 5)
     : [];
 
   return (
@@ -297,10 +297,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                   <Select
                     value={network}
                     onValueChange={(value) =>
-                      setNetwork(
-                        value as Exclude<CurriculumNetworkFilter, "ALL">,
-                      )
-                    }
+                    setNetwork(value as CurriculumNetworkFilter)
+                  }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -373,6 +371,12 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
           <div className="space-y-4">
             {results.length > 0 ? (
               <div className="space-y-3">
+                {variant === "leerplandoel" ? (
+                  <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+                    Top {Math.min(results.length, 5)} leerplandoel
+                    {Math.min(results.length, 5) === 1 ? "" : "en"}
+                  </p>
+                ) : null}
                 {variant === "minimumdoel" ? (
                   <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
                     Top {Math.min(results.length, 3)} minimumdoel
@@ -428,7 +432,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 
 function mapEducationNetwork(
   network: "ZILL" | "OVSG" | "GO",
-): Exclude<CurriculumNetworkFilter, "ALL"> {
+): CurriculumNetworkFilter {
   if (network === "GO") {
     return "GO_NIEUW";
   }

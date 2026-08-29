@@ -3,44 +3,25 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
 import {
-  searchDiscoveryEngine,
-} from "@/lib/rag/discoveryEngine";
-import {
+  CURRICULUM_TOP_N,
   enrichHitFromCorpus,
   isStructuredResult,
+  mergeCurriculumResults,
   sanitizeStructuredResult,
   searchLocalCorpus,
 } from "@/lib/rag/curriculumCorpus";
 import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
 
-const NETWORKS = new Set<Exclude<CurriculumNetworkFilter, "ALL">>([
+const NETWORKS = new Set<CurriculumNetworkFilter>([
+  "ALL",
   "OPSTAP",
   "OVSG",
   "GO_NIEUW",
   "ZILL",
   "GO",
 ]);
-
-function dedupeResults(
-  results: Array<CurriculumSearchResult & { score?: number }>,
-): Array<CurriculumSearchResult & { score?: number }> {
-  const seen = new Map<string, CurriculumSearchResult & { score?: number }>();
-  for (const result of results) {
-    const key = [
-      result.code,
-      result.titel,
-      result.netwerk,
-      result.bronTitel,
-      result.sourceUri,
-    ].join("|");
-    const existing = seen.get(key);
-    if (!existing || (result.score ?? 0) > (existing.score ?? 0)) {
-      seen.set(key, result);
-    }
-  }
-  return [...seen.values()];
-}
 
 export async function POST(request: Request) {
   if (!sessionFromRequest(request)) return unauthorizedResponse();
@@ -59,42 +40,44 @@ export async function POST(request: Request) {
       );
     }
 
-    const network = body.network;
-    if (!network || network === "ALL" || !NETWORKS.has(network)) {
+    const network = body.network ?? "ALL";
+    if (!NETWORKS.has(network)) {
       return NextResponse.json(
         { error: "Selecteer een geldig onderwijsnet." },
         { status: 400 },
       );
     }
 
-    const discovery = await searchDiscoveryEngine({
+    const localCandidates = searchLocalCorpus({
       query,
       network,
-      pageSize: 12,
+      limit: CURRICULUM_TOP_N,
     });
 
-    const enrichedFromDiscovery = discovery.hits
-      .map((hit) => enrichHitFromCorpus(hit, query, network))
-      .filter(
-        (item): item is CurriculumSearchResult & { score: number } =>
-          item !== null && isStructuredResult(item),
-      );
+    let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
+      [];
+    try {
+      const discovery = await searchDiscoveryEngine({
+        query,
+        network,
+        pageSize: 16,
+      });
 
-    const ranked =
-      enrichedFromDiscovery.length > 0
-        ? enrichedFromDiscovery
-        : searchLocalCorpus({
-            query,
-            network,
-            limit: 6,
-          });
+      discoveryCandidates = discovery.hits
+        .map((hit) => enrichHitFromCorpus(hit, query, network))
+        .filter(
+          (item): item is CurriculumSearchResult & { score: number } =>
+            item !== null && isStructuredResult(item),
+        );
+    } catch {
+      discoveryCandidates = [];
+    }
 
-    const merged = dedupeResults(
-      [...ranked]
-        .filter(isStructuredResult)
-        .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
-        .slice(0, 6)
-        .map(sanitizeStructuredResult),
+    const merged = mergeCurriculumResults(
+      [localCandidates, discoveryCandidates].map((pool) =>
+        pool.filter(isStructuredResult).map(sanitizeStructuredResult),
+      ),
+      CURRICULUM_TOP_N,
     );
 
     const goal = merged[0] ?? null;
@@ -106,11 +89,11 @@ export async function POST(request: Request) {
         alternatives,
         corpusNotice:
           merged.length > 0
-            ? `${merged.length} officiële doel${merged.length === 1 ? "" : "en"} uit de gestructureerde corpus.`
-            : "Geen match in de officiële doelencorpus. Probeer een andere formulering of een ander netwerk.",
-        retrievalMode: "discovery-engine",
+            ? `${merged.length} officiële leerplandoel${merged.length === 1 ? "" : "en"} uit ${network === "ALL" ? "alle netwerken" : network}.`
+            : "Geen match in de officiële doelencorpus. Probeer een andere formulering of selecteer een ander netwerk.",
+        retrievalMode: "curriculum-hybrid",
       },
-      provider: "google-discovery-engine",
+      provider: "jsonl-corpus+discovery-engine",
       fallbackErrors: [],
     });
   } catch (error) {

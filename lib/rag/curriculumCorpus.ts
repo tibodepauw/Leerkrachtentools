@@ -8,6 +8,11 @@ import type {
 import type { DiscoveryHit } from "@/lib/rag/discoveryEngine";
 import { titleFromLink } from "@/lib/rag/discoveryEngine";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
+import {
+  countCurriculumTokenMatches,
+  scoreCurriculumCandidate,
+  tokenizeCurriculumQuery,
+} from "@/lib/rag/curriculumQueryTokens";
 
 type RawRecord = Record<string, unknown>;
 
@@ -23,7 +28,11 @@ const CORPUS_FILES: Record<
 };
 
 const MIN_CORPUS_MATCH_SCORE = 0.32;
+const MIN_LOCAL_SEARCH_SCORE = 0.1;
 const MIN_TOKEN_MATCHES = 2;
+const MIN_LOCAL_TOKEN_MATCHES = 1;
+export const CURRICULUM_CANDIDATE_LIMIT = 50;
+export const CURRICULUM_TOP_N = 5;
 const STOPWORDS = new Set([
   "tot",
   "een",
@@ -261,11 +270,11 @@ export function findBestCorpusMatch({
   title?: string;
   network: CurriculumNetworkFilter;
 }): (CurriculumSearchResult & { score: number }) | null {
-  const queryTokens = tokenize(query);
+  const queryTokens = tokenizeCurriculumQuery(query);
   const tokens = new Set([
     ...queryTokens,
-    ...tokenize(snippet),
-    ...tokenize(title ?? ""),
+    ...tokenizeCurriculumQuery(snippet),
+    ...tokenizeCurriculumQuery(title ?? ""),
   ]);
   if (tokens.size === 0) {
     return null;
@@ -290,12 +299,18 @@ export function findBestCorpusMatch({
 
     const haystack = recordHaystack(raw);
     const tokenMatches = countTokenMatches(haystack, tokens);
-    const queryTokenMatches = countTokenMatches(haystack, queryTokens);
-    if (tokenMatches < MIN_TOKEN_MATCHES || queryTokenMatches < 1) {
+    const queryTokenMatches = countCurriculumTokenMatches(haystack, queryTokens);
+    if (tokenMatches < MIN_LOCAL_TOKEN_MATCHES || queryTokenMatches < 1) {
       continue;
     }
 
-    let score = scoreTextOverlap(haystack, tokens);
+    const scored = scoreCurriculumCandidate({
+      query,
+      haystack,
+      discipline: record.discipline,
+      titel: record.titel,
+    });
+    let score = Math.max(scored.score, scoreTextOverlap(haystack, tokens));
     const titel = record.titel.toLocaleLowerCase("nl-BE");
     const snippetLower = snippet.toLocaleLowerCase("nl-BE");
     if (
@@ -318,7 +333,7 @@ export function findBestCorpusMatch({
     }
   }
 
-  if (!best || best.score < MIN_CORPUS_MATCH_SCORE) {
+  if (!best || best.score < MIN_LOCAL_SEARCH_SCORE) {
     return null;
   }
 
@@ -328,53 +343,78 @@ export function findBestCorpusMatch({
 export function searchLocalCorpus({
   query,
   network,
-  limit = 6,
+  limit = CURRICULUM_TOP_N,
+  candidateLimit = CURRICULUM_CANDIDATE_LIMIT,
 }: {
   query: string;
   network?: CurriculumNetworkFilter;
   limit?: number;
+  candidateLimit?: number;
 }): Array<CurriculumSearchResult & { score: number }> {
   const scopedNetwork = network ?? "ALL";
-  const queryTokens = tokenize(query);
+  const queryTokens = tokenizeCurriculumQuery(query);
   if (queryTokens.size === 0) {
     return [];
   }
 
-  return recordsForNetwork(scopedNetwork)
-    .map((raw) => {
-      if (!recordMatchesNetwork(raw, scopedNetwork)) {
-        return null;
-      }
-      const record = normalizeRecord(raw, networkFromRaw(raw));
-      if (!record) {
-        return null;
-      }
-      const tokenMatches = countTokenMatches(recordHaystack(raw), queryTokens);
-      const queryTokenMatches = tokenMatches;
-      if (queryTokenMatches < MIN_TOKEN_MATCHES) {
-        return null;
-      }
-      return {
-        record,
-        score: scoreTextOverlap(recordHaystack(raw), queryTokens),
-        tokenMatches,
-      };
-    })
-    .filter(
-      (
-        entry,
-      ): entry is {
-        record: CurriculumSearchResult;
-        score: number;
-        tokenMatches: number;
-      } => entry !== null && entry.score >= MIN_CORPUS_MATCH_SCORE,
-    )
+  const candidates: Array<{
+    record: CurriculumSearchResult;
+    score: number;
+    tokenMatches: number;
+  }> = [];
+
+  for (const raw of recordsForNetwork(scopedNetwork)) {
+    if (!recordMatchesNetwork(raw, scopedNetwork)) {
+      continue;
+    }
+    const record = normalizeRecord(raw, networkFromRaw(raw));
+    if (!record) {
+      continue;
+    }
+
+    const haystack = recordHaystack(raw);
+    const { score, tokenMatches } = scoreCurriculumCandidate({
+      query,
+      haystack,
+      discipline: record.discipline,
+      titel: record.titel,
+    });
+
+    if (tokenMatches < MIN_LOCAL_TOKEN_MATCHES && score < MIN_LOCAL_SEARCH_SCORE) {
+      continue;
+    }
+
+    candidates.push({ record, score, tokenMatches });
+  }
+
+  return candidates
     .sort(
       (left, right) =>
         right.score - left.score || right.tokenMatches - left.tokenMatches,
     )
+    .slice(0, candidateLimit)
+    .filter((entry) => entry.score >= MIN_LOCAL_SEARCH_SCORE || entry.tokenMatches >= 1)
     .slice(0, limit)
     .map((entry) => ({ ...entry.record, score: entry.score }));
+}
+
+export function mergeCurriculumResults(
+  pools: Array<Array<CurriculumSearchResult & { score?: number }>>,
+  limit = CURRICULUM_TOP_N,
+): Array<CurriculumSearchResult & { score?: number }> {
+  const seen = new Map<string, CurriculumSearchResult & { score?: number }>();
+
+  for (const result of pools.flat().sort((left, right) => (right.score ?? 0) - (left.score ?? 0))) {
+    const key = [result.code, result.titel, result.netwerk].join("|");
+    const existing = seen.get(key);
+    if (!existing || (result.score ?? 0) > (existing.score ?? 0)) {
+      seen.set(key, result);
+    }
+  }
+
+  return [...seen.values()]
+    .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
+    .slice(0, limit);
 }
 
 export function searchMinimumGoals({

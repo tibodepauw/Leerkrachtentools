@@ -72,16 +72,16 @@ describe("curriculumCorpus matching", () => {
 
   it("geeft lege lokale fallback bij te weinig overlap", () => {
     expect(
-      searchLocalCorpus({ query: "meteoriet inslag dinosaurussen", network: "ALL" }),
+      searchLocalCorpus({ query: "xyzqwerty onzin foobar", network: "ALL" }),
     ).toEqual([]);
     expect(
       findBestCorpusMatch({
         snippet: "totaal irrelevant stuk tekst over dinosaurussen",
-        query: "meteoriet inslag dinosaurussen",
+        query: "xyzqwerty onzin foobar",
         network: "ALL",
       }),
     ).toBeNull();
-    expect(searchMinimumGoals({ query: "meteoriet inslag dinosaurussen" })).toEqual(
+    expect(searchMinimumGoals({ query: "xyzqwerty onzin foobar" })).toEqual(
       [],
     );
   });
