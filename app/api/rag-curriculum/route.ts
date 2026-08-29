@@ -3,12 +3,13 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { networkBadgeLabel } from "@/lib/rag/curriculumDisplay";
 import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
 import {
   CURRICULUM_TOP_N,
-  enrichHitFromCorpus,
   isStructuredResult,
   mergeCurriculumResults,
+  resolveDiscoveryCandidates,
   sanitizeStructuredResult,
   searchLocalCorpus,
 } from "@/lib/rag/curriculumCorpus";
@@ -22,6 +23,86 @@ const NETWORKS = new Set<CurriculumNetworkFilter>([
   "ZILL",
   "GO",
 ]);
+
+type CurriculumSearchPayload = {
+  merged: Array<CurriculumSearchResult & { score?: number }>;
+  retrievalMode: "curriculum-hybrid" | "semantic-fallback" | "network-fallback";
+  corpusNotice: string;
+  networkFallbackNotice?: string;
+};
+
+async function runCurriculumSearch(
+  query: string,
+  network: CurriculumNetworkFilter,
+  options?: { excludeNetwork?: CurriculumNetworkFilter },
+): Promise<CurriculumSearchPayload> {
+  const localCandidates = searchLocalCorpus({
+    query,
+    network,
+    limit: CURRICULUM_TOP_N,
+  });
+
+  const semanticFallback = localCandidates.length === 0;
+  let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
+    [];
+
+  try {
+    const discovery = await searchDiscoveryEngine({
+      query,
+      network,
+      pageSize: semanticFallback ? 20 : 16,
+    });
+
+    discoveryCandidates = resolveDiscoveryCandidates({
+      hits: discovery.hits,
+      query,
+      network,
+      semanticFallback,
+    }).filter(
+      (item) => semanticFallback || isStructuredResult(item),
+    );
+  } catch {
+    discoveryCandidates = [];
+  }
+
+  let merged = mergeCurriculumResults(
+    [localCandidates, discoveryCandidates].map((pool) =>
+      pool
+        .filter(
+          (item) =>
+            semanticFallback ||
+            isStructuredResult(item) ||
+            item.verrijking === "corpus",
+        )
+        .map(sanitizeStructuredResult),
+    ),
+    CURRICULUM_TOP_N,
+  );
+
+  if (options?.excludeNetwork) {
+    merged = merged.filter(
+      (item) => item.netwerk !== options.excludeNetwork,
+    );
+  }
+
+  const networkLabel =
+    network === "ALL" ? "alle netwerken" : networkBadgeLabel(network);
+
+  let corpusNotice =
+    merged.length > 0
+      ? `${merged.length} officiële leerplandoel${merged.length === 1 ? "" : "en"} uit ${networkLabel}.`
+      : "Geen match in de officiële doelencorpus. Probeer een andere formulering of selecteer een ander netwerk.";
+
+  if (semanticFallback && merged.length > 0) {
+    corpusNotice = `${merged.length} semantisch passende leerplandoel${merged.length === 1 ? "" : "en"} via Discovery Engine (geen exacte token-match).`;
+  }
+
+  return {
+    merged,
+    retrievalMode: semanticFallback ? "semantic-fallback" : "curriculum-hybrid",
+    corpusNotice,
+  };
+}
 
 export async function POST(request: Request) {
   if (!sessionFromRequest(request)) return unauthorizedResponse();
@@ -48,50 +129,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const localCandidates = searchLocalCorpus({
-      query,
-      network,
-      limit: CURRICULUM_TOP_N,
-    });
+    let searchResult = await runCurriculumSearch(query, network);
+    let networkFallbackNotice: string | undefined;
 
-    let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
-      [];
-    try {
-      const discovery = await searchDiscoveryEngine({
-        query,
-        network,
-        pageSize: 16,
+    if (searchResult.merged.length === 0 && network !== "ALL") {
+      const fallback = await runCurriculumSearch(query, "ALL", {
+        excludeNetwork: network,
       });
 
-      discoveryCandidates = discovery.hits
-        .map((hit) => enrichHitFromCorpus(hit, query, network))
-        .filter(
-          (item): item is CurriculumSearchResult & { score: number } =>
-            item !== null && isStructuredResult(item),
-        );
-    } catch {
-      discoveryCandidates = [];
+      if (fallback.merged.length > 0) {
+        searchResult = {
+          ...fallback,
+          retrievalMode: "network-fallback",
+          networkFallbackNotice: undefined,
+        };
+        networkFallbackNotice = `Geen exacte match binnen ${networkBadgeLabel(network)}, hier zijn de beste doelen uit andere netwerken (bv. Op.stap / OVSG):`;
+        searchResult.corpusNotice = `${fallback.merged.length} leerplandoel${fallback.merged.length === 1 ? "" : "en"} uit andere netwerken.`;
+      }
     }
 
-    const merged = mergeCurriculumResults(
-      [localCandidates, discoveryCandidates].map((pool) =>
-        pool.filter(isStructuredResult).map(sanitizeStructuredResult),
-      ),
-      CURRICULUM_TOP_N,
-    );
-
-    const goal = merged[0] ?? null;
-    const alternatives = merged.slice(1);
+    const goal = searchResult.merged[0] ?? null;
+    const alternatives = searchResult.merged.slice(1);
 
     return NextResponse.json({
       data: {
         goal: goal ?? "niet gevonden",
         alternatives,
-        corpusNotice:
-          merged.length > 0
-            ? `${merged.length} officiële leerplandoel${merged.length === 1 ? "" : "en"} uit ${network === "ALL" ? "alle netwerken" : network}.`
-            : "Geen match in de officiële doelencorpus. Probeer een andere formulering of selecteer een ander netwerk.",
-        retrievalMode: "curriculum-hybrid",
+        corpusNotice: searchResult.corpusNotice,
+        networkFallbackNotice,
+        retrievalMode: searchResult.retrievalMode,
       },
       provider: "jsonl-corpus+discovery-engine",
       fallbackErrors: [],

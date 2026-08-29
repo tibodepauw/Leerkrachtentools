@@ -47,6 +47,7 @@ interface MatcherResult {
   goal: CurriculumSearchResult | "niet gevonden";
   alternatives: CurriculumSearchResult[];
   corpusNotice: string;
+  networkFallbackNotice?: string;
   retrievalMode: string;
 }
 
@@ -277,7 +278,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
       ]
         .filter(
           (item) =>
-            item.verrijking !== "fragment" &&
+            (item.verrijking !== "fragment" ||
+              result.data.retrievalMode === "semantic-fallback") &&
             (variant === "minimumdoel" ? item.gelinktMinimumdoel?.tekst : true),
         )
         .slice(0, variant === "minimumdoel" ? 3 : 5)
@@ -371,6 +373,13 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
           <div className="space-y-4">
             {results.length > 0 ? (
               <div className="space-y-3">
+                {variant === "leerplandoel" && result.data.networkFallbackNotice ? (
+                  <Card className="border-amber-900/50 bg-amber-950/20">
+                    <CardContent className="py-4 text-sm leading-6 text-amber-100/90">
+                      {result.data.networkFallbackNotice}
+                    </CardContent>
+                  </Card>
+                ) : null}
                 {variant === "leerplandoel" ? (
                   <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
                     Top {Math.min(results.length, 5)} leerplandoel

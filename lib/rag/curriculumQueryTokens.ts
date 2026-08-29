@@ -1,20 +1,24 @@
 import { tokenize } from "@/lib/rag/curriculumCorpus";
+import {
+  fuzzySimilarity,
+  isFuzzySimilar,
+} from "@/lib/rag/fuzzyMatch";
 
 const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   {
-    pattern: /vermenigvuld/i,
+    pattern: /vermenigvuld|vermeningvuld|maaltafel|maal[^a-z]|tafel/i,
     stems: ["vermenigvuld", "maal", "maaltafel", "tafel", "product", "keer"],
   },
   {
-    pattern: /\bdel(?:en|ing)\b/i,
+    pattern: /\bdel(?:en|ing)\b|deeltafel|verdel|quot/i,
     stems: ["deel", "deeltafel", "verdel", "quotient"],
   },
   {
-    pattern: /optell/i,
+    pattern: /optell|optel[^a-z]|som|plus/i,
     stems: ["optell", "som", "plus", "brug"],
   },
   {
-    pattern: /aftrek/i,
+    pattern: /aftrek|aftreken|verschil|min[^a-z]/i,
     stems: ["aftrek", "verschil", "min", "brug"],
   },
   {
@@ -25,17 +29,61 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
     pattern: /komma|decim/i,
     stems: ["komma", "decim"],
   },
+  {
+    pattern: /splitz|splits/i,
+    stems: ["split", "splits"],
+  },
+];
+
+/** Canonical terms used to recover from typos via fuzzy matching. */
+const CANONICAL_QUERY_TERMS: Array<{
+  canonical: string;
+  stems: string[];
+}> = [
+  {
+    canonical: "vermenigvuldigen",
+    stems: ["vermenigvuld", "maal", "maaltafel", "tafel", "product", "keer"],
+  },
+  {
+    canonical: "vermenigvuldiging",
+    stems: ["vermenigvuld", "maal", "maaltafel", "product", "keer"],
+  },
+  {
+    canonical: "optellen",
+    stems: ["optell", "som", "plus", "brug"],
+  },
+  {
+    canonical: "aftrekken",
+    stems: ["aftrek", "verschil", "min", "brug"],
+  },
+  {
+    canonical: "delen",
+    stems: ["deel", "deeltafel", "verdel", "quotient"],
+  },
+  {
+    canonical: "splitsen",
+    stems: ["split", "splits"],
+  },
 ];
 
 const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
-  { pattern: /vermenigvuld|optell|aftrek|deel|breuk|wiskunde|getal|tafel|reken/i, discipline: "Wiskunde" },
+  {
+    pattern:
+      /vermenigvuld|vermeningvuld|optell|optel|aftrek|deel|breuk|wiskunde|getal|tafel|reken|maaltafel|splitz/i,
+    discipline: "Wiskunde",
+  },
   { pattern: /nederlands|lezen|spell|schrijf|taal/i, discipline: "Nederlands" },
   { pattern: /frans/i, discipline: "Frans" },
   { pattern: /geschiedenis|tijdlijn|histor/i, discipline: "Geschiedenis" },
-  { pattern: /wetenschap|techniek|natuur/i, discipline: "Wetenschap en techniek" },
+  {
+    pattern: /wetenschap|techniek|natuur/i,
+    discipline: "Wetenschap en techniek",
+  },
   { pattern: /muziek|muzisch|zang/i, discipline: "Muzische vorming" },
   { pattern: /godsdienst/i, discipline: "Godsdienst" },
 ];
+
+const FUZZY_MATCH_THRESHOLD = 0.72;
 
 function normalizeQueryText(text: string): string {
   return text
@@ -43,6 +91,29 @@ function normalizeQueryText(text: string): string {
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2");
+}
+
+function queryWords(value: string): string[] {
+  return normalizeQueryText(value)
+    .replace(/[^\p{Letter}\p{Number}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2);
+}
+
+function expandFuzzyCanonicalStems(tokens: Set<string>, normalized: string): void {
+  for (const word of queryWords(normalized)) {
+    for (const { canonical, stems } of CANONICAL_QUERY_TERMS) {
+      if (
+        isFuzzySimilar(word, canonical, FUZZY_MATCH_THRESHOLD) ||
+        fuzzySimilarity(word, canonical) >= 0.68
+      ) {
+        for (const stem of stems) {
+          tokens.add(stem);
+        }
+        tokens.add(canonical.slice(0, Math.min(canonical.length, 12)));
+      }
+    }
+  }
 }
 
 export function tokenizeCurriculumQuery(value: string): Set<string> {
@@ -61,6 +132,8 @@ export function tokenizeCurriculumQuery(value: string): Set<string> {
     }
   }
 
+  expandFuzzyCanonicalStems(tokens, normalized);
+
   return tokens;
 }
 
@@ -70,11 +143,13 @@ export function countCurriculumTokenMatches(
 ): number {
   const normalizedHaystack = normalizeQueryText(haystack);
   let matches = 0;
+
   for (const token of tokens) {
     if (normalizedHaystack.includes(token)) {
       matches += 1;
     }
   }
+
   return matches;
 }
 
@@ -98,12 +173,17 @@ export function inferDisciplineFromQuery(query: string): string | null {
   return null;
 }
 
+export function isZillMathThinkingCode(code: string): boolean {
+  return /^WD(?:gk|lw|mm|rv|mk)\d/i.test(code.trim());
+}
+
 export function scoreDisciplineBonus(
   query: string,
   discipline: string,
+  code = "",
 ): number {
   const hint = inferDisciplineFromQuery(query);
-  if (!hint || !discipline.trim()) {
+  if (!hint) {
     return 0;
   }
 
@@ -112,12 +192,18 @@ export function scoreDisciplineBonus(
 
   if (
     normalizedDiscipline.includes(normalizedHint) ||
-    normalizedHint.includes(normalizedDiscipline)
+    normalizedHint.includes(normalizedDiscipline) ||
+    normalizedDiscipline.includes("wiskundig denken") ||
+    (isZillMathThinkingCode(code) && hint === "Wiskunde")
   ) {
     return 0.22;
   }
 
-  return -0.08;
+  if (discipline.trim()) {
+    return -0.08;
+  }
+
+  return 0;
 }
 
 export function scoreCurriculumCandidate({
@@ -125,11 +211,13 @@ export function scoreCurriculumCandidate({
   haystack,
   discipline,
   titel,
+  code = "",
 }: {
   query: string;
   haystack: string;
   discipline: string;
   titel: string;
+  code?: string;
 }): { score: number; tokenMatches: number } {
   const tokens = tokenizeCurriculumQuery(query);
   const tokenMatches = countCurriculumTokenMatches(haystack, tokens);
@@ -138,13 +226,19 @@ export function scoreCurriculumCandidate({
 
   let score = Math.min(
     1,
-    titelScore * 0.55 + contextScore * 0.45 + scoreDisciplineBonus(query, discipline),
+    titelScore * 0.55 +
+      contextScore * 0.45 +
+      scoreDisciplineBonus(query, discipline, code),
   );
 
   const queryLower = normalizeQueryText(query);
   const titelLower = normalizeQueryText(titel);
 
-  if (queryLower.includes("vermenigvuld") && titelLower.includes("vermenigvuld")) {
+  if (
+    (queryLower.includes("vermenigvuld") ||
+      isFuzzySimilar(queryLower, "vermenigvuldigen", 0.68)) &&
+    titelLower.includes("vermenigvuld")
+  ) {
     score += 0.12;
   }
   if (queryLower.includes("optell") && titelLower.includes("optell")) {

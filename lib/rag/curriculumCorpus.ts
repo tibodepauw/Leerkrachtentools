@@ -10,6 +10,7 @@ import { titleFromLink } from "@/lib/rag/discoveryEngine";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
 import {
   countCurriculumTokenMatches,
+  isZillMathThinkingCode,
   scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
@@ -29,6 +30,7 @@ const CORPUS_FILES: Record<
 
 const MIN_CORPUS_MATCH_SCORE = 0.32;
 const MIN_LOCAL_SEARCH_SCORE = 0.1;
+const MIN_RELAXED_SEARCH_SCORE = 0.06;
 const MIN_TOKEN_MATCHES = 2;
 const MIN_LOCAL_TOKEN_MATCHES = 1;
 export const CURRICULUM_CANDIDATE_LIMIT = 50;
@@ -89,11 +91,20 @@ export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[]
   if (network === "ALL") {
     return (
       Object.keys(CORPUS_FILES) as Array<Exclude<CurriculumNetworkFilter, "ALL">>
-    ).flatMap((key) =>
-      CORPUS_FILES[key].flatMap((file) => loadJsonl(file)),
-    );
+    ).flatMap((key) => loadNetworkRecords(key));
   }
-  return CORPUS_FILES[network].flatMap((file) => loadJsonl(file));
+  return loadNetworkRecords(network);
+}
+
+function loadNetworkRecords(
+  network: Exclude<CurriculumNetworkFilter, "ALL">,
+): RawRecord[] {
+  return CORPUS_FILES[network].flatMap((file) =>
+    loadJsonl(file).map((raw) => ({
+      ...raw,
+      netwerk: asString(raw.netwerk ?? raw.network) || network,
+    })),
+  );
 }
 
 function asString(value: unknown): string {
@@ -148,6 +159,47 @@ function recordMatchesNetwork(
   return networkFromRaw(raw) === network;
 }
 
+function collectNestedStrings(value: unknown, parts: string[]): void {
+  if (typeof value === "string") {
+    parts.push(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      collectNestedStrings(item, parts);
+    }
+    return;
+  }
+  if (value && typeof value === "object") {
+    for (const nested of Object.values(value as Record<string, unknown>)) {
+      collectNestedStrings(nested, parts);
+    }
+  }
+}
+
+function extractNestedRecordText(raw: RawRecord): string {
+  const parts: string[] = [];
+  collectNestedStrings(raw.leerlijn, parts);
+  collectNestedStrings(raw.inhouden, parts);
+  const joined = parts.join(" ");
+  return joined.length > 8000 ? joined.slice(0, 8000) : joined;
+}
+
+function normalizeDiscipline(
+  code: string,
+  discipline: string,
+  subdomein: string,
+): string {
+  const normalized = discipline.toLocaleLowerCase("nl-BE");
+  if (
+    isZillMathThinkingCode(code) ||
+    normalized.includes("wiskundig denken")
+  ) {
+    return subdomein ? `Wiskunde · ${subdomein}` : "Wiskunde";
+  }
+  return discipline;
+}
+
 function normalizeRecord(
   raw: RawRecord,
   network: CurriculumNetworkFilter | null,
@@ -158,10 +210,12 @@ function normalizeRecord(
     return null;
   }
 
-  const discipline = asString(
-    raw.discipline ?? raw.leergebied ?? raw.ontwikkelveld,
-  );
   const subdomein = asString(raw.subdomein ?? raw.domain ?? raw.subject);
+  const discipline = normalizeDiscipline(
+    code,
+    asString(raw.discipline ?? raw.leergebied ?? raw.ontwikkelveld),
+    subdomein,
+  );
   const toelichting = asString(raw.toelichting ?? raw.description);
   const leerjaren = raw.leerjaren;
   const leerjaarRoute = asString(
@@ -229,8 +283,10 @@ function recordHaystack(raw: RawRecord): string {
     raw.text,
     raw.discipline,
     raw.leergebied,
+    raw.ontwikkelveld,
     raw.subdomein,
     raw.toelichting,
+    extractNestedRecordText(raw),
   ]
     .filter(Boolean)
     .join(" ");
@@ -264,11 +320,13 @@ export function findBestCorpusMatch({
   query,
   title,
   network,
+  relaxed = false,
 }: {
   snippet: string;
   query: string;
   title?: string;
   network: CurriculumNetworkFilter;
+  relaxed?: boolean;
 }): (CurriculumSearchResult & { score: number }) | null {
   const queryTokens = tokenizeCurriculumQuery(query);
   const tokens = new Set([
@@ -279,6 +337,8 @@ export function findBestCorpusMatch({
   if (tokens.size === 0) {
     return null;
   }
+
+  const minScore = relaxed ? MIN_RELAXED_SEARCH_SCORE : MIN_LOCAL_SEARCH_SCORE;
 
   let best:
     | {
@@ -298,9 +358,12 @@ export function findBestCorpusMatch({
     }
 
     const haystack = recordHaystack(raw);
-    const tokenMatches = countTokenMatches(haystack, tokens);
+    const tokenMatches = countCurriculumTokenMatches(haystack, tokens);
     const queryTokenMatches = countCurriculumTokenMatches(haystack, queryTokens);
-    if (tokenMatches < MIN_LOCAL_TOKEN_MATCHES || queryTokenMatches < 1) {
+    if (
+      queryTokenMatches < 1 &&
+      (!relaxed || tokenMatches < MIN_LOCAL_TOKEN_MATCHES)
+    ) {
       continue;
     }
 
@@ -309,6 +372,7 @@ export function findBestCorpusMatch({
       haystack,
       discipline: record.discipline,
       titel: record.titel,
+      code: record.code,
     });
     let score = Math.max(scored.score, scoreTextOverlap(haystack, tokens));
     const titel = record.titel.toLocaleLowerCase("nl-BE");
@@ -333,7 +397,7 @@ export function findBestCorpusMatch({
     }
   }
 
-  if (!best || best.score < MIN_LOCAL_SEARCH_SCORE) {
+  if (!best || best.score < minScore) {
     return null;
   }
 
@@ -378,6 +442,7 @@ export function searchLocalCorpus({
       haystack,
       discipline: record.discipline,
       titel: record.titel,
+      code: record.code,
     });
 
     if (tokenMatches < MIN_LOCAL_TOKEN_MATCHES && score < MIN_LOCAL_SEARCH_SCORE) {
@@ -628,6 +693,59 @@ export function enrichHitFromCorpus(
   }
 
   return null;
+}
+
+export function resolveDiscoveryCandidates({
+  hits,
+  query,
+  network,
+  semanticFallback = false,
+}: {
+  hits: DiscoveryHit[];
+  query: string;
+  network: CurriculumNetworkFilter;
+  semanticFallback?: boolean;
+}): Array<CurriculumSearchResult & { score: number }> {
+  const resolved: Array<CurriculumSearchResult & { score: number }> = [];
+
+  for (const hit of hits) {
+    const enriched = enrichHitFromCorpus(hit, query, network);
+    if (enriched) {
+      resolved.push(enriched);
+      continue;
+    }
+
+    if (!semanticFallback) {
+      continue;
+    }
+
+    const relaxedMatch = findBestCorpusMatch({
+      snippet: hit.snippet,
+      query,
+      title: hit.title,
+      network,
+      relaxed: true,
+    });
+    if (relaxedMatch) {
+      resolved.push({
+        ...relaxedMatch,
+        snippet: hit.snippet || relaxedMatch.snippet,
+        sourceUri: hit.link,
+        bronTitel: hit.title || undefined,
+        score: blendScore(hit.relevanceScore, relaxedMatch.score),
+        verrijking: "corpus",
+      });
+      continue;
+    }
+
+    const fragment = buildFragmentResult(hit);
+    resolved.push({
+      ...fragment,
+      score: Math.max(fragment.score, hit.relevanceScore * 0.82),
+    });
+  }
+
+  return resolved.sort((left, right) => right.score - left.score);
 }
 
 export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[] {
