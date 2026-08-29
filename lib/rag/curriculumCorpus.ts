@@ -177,12 +177,63 @@ function collectNestedStrings(value: unknown, parts: string[]): void {
   }
 }
 
-function extractNestedRecordText(raw: RawRecord): string {
+function extractLeerlijnSteps(leerlijn: unknown): string[] {
+  if (!Array.isArray(leerlijn)) {
+    return [];
+  }
+
+  const steps: string[] = [];
+  for (const entry of leerlijn) {
+    if (!entry || typeof entry !== "object") {
+      continue;
+    }
+    const ontwikkelstappen = (entry as Record<string, unknown>).ontwikkelstappen;
+    if (!Array.isArray(ontwikkelstappen)) {
+      continue;
+    }
+    for (const step of ontwikkelstappen) {
+      if (typeof step === "string" && step.trim()) {
+        steps.push(step.trim());
+      }
+    }
+  }
+  return steps;
+}
+
+function extractInhoudenText(inhouden: unknown): string[] {
   const parts: string[] = [];
-  collectNestedStrings(raw.leerlijn, parts);
-  collectNestedStrings(raw.inhouden, parts);
-  const joined = parts.join(" ");
-  return joined.length > 8000 ? joined.slice(0, 8000) : joined;
+  collectNestedStrings(inhouden, parts);
+  return parts;
+}
+
+function extractNestedRecordText(raw: RawRecord): string {
+  const leerlijnSteps = extractLeerlijnSteps(raw.leerlijn);
+  const inhoudenParts = extractInhoudenText(raw.inhouden);
+  return [...leerlijnSteps, ...inhoudenParts].join(" ");
+}
+
+export function buildRecordHaystack(raw: RawRecord): string {
+  const leerlijnSteps = extractLeerlijnSteps(raw.leerlijn);
+  const inhoudenParts = extractInhoudenText(raw.inhouden);
+
+  return [
+    raw.code,
+    raw.titel,
+    raw.text,
+    raw.discipline,
+    raw.leergebied,
+    raw.ontwikkelveld,
+    raw.subdomein,
+    raw.toelichting,
+    ...leerlijnSteps,
+    ...inhoudenParts,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function recordHaystack(raw: RawRecord): string {
+  return buildRecordHaystack(raw);
 }
 
 function normalizeDiscipline(
@@ -276,22 +327,6 @@ export function scoreTextOverlap(haystack: string, tokens: Set<string>): number 
   return countTokenMatches(haystack, tokens) / tokens.size;
 }
 
-function recordHaystack(raw: RawRecord): string {
-  return [
-    raw.code,
-    raw.titel,
-    raw.text,
-    raw.discipline,
-    raw.leergebied,
-    raw.ontwikkelveld,
-    raw.subdomein,
-    raw.toelichting,
-    extractNestedRecordText(raw),
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
-
 function blendScore(discoveryScore: number, corpusScore: number): number {
   return Math.max(0, Math.min(1, discoveryScore * 0.55 + corpusScore * 0.45));
 }
@@ -373,6 +408,7 @@ export function findBestCorpusMatch({
       discipline: record.discipline,
       titel: record.titel,
       code: record.code,
+      subdomein: record.subdomein,
     });
     let score = Math.max(scored.score, scoreTextOverlap(haystack, tokens));
     const titel = record.titel.toLocaleLowerCase("nl-BE");
@@ -443,6 +479,7 @@ export function searchLocalCorpus({
       discipline: record.discipline,
       titel: record.titel,
       code: record.code,
+      subdomein: record.subdomein,
     });
 
     if (tokenMatches < MIN_LOCAL_TOKEN_MATCHES && score < MIN_LOCAL_SEARCH_SCORE) {

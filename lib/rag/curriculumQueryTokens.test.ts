@@ -100,4 +100,26 @@ describe("searchLocalCorpus curriculum", () => {
       ),
     ).toBe(true);
   });
+
+  it("vindt OWna-doelen voor zoogdieren via geneste ontwikkelstappen", () => {
+    const results = searchLocalCorpus({
+      query: "zoogdieren",
+      network: "ZILL",
+      limit: 5,
+    });
+
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results.some((item) => item.code.startsWith("OWna"))).toBe(true);
+  });
+
+  it("rangschikt TOsn boven Frans/godsdienst bij sleutelwoorden en tekst", () => {
+    const results = searchLocalCorpus({
+      query: "sleutelwoorden uit een tekst",
+      network: "ZILL",
+      limit: 5,
+    });
+
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results[0]?.code.startsWith("TOsn")).toBe(true);
+  });
 });

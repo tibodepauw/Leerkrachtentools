@@ -33,6 +33,14 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
     pattern: /splitz|splits/i,
     stems: ["split", "splits"],
   },
+  {
+    pattern: /zoogdier|zoogdieren|\bdieren\b|\bdier\b|planten|plant|\bbomen\b|\bboom\b|natuur|organismen|organisme|biotoop|leefwereld/i,
+    stems: ["dier", "organism", "natuur", "plant", "boom", "biotoop", "leefwereld"],
+  },
+  {
+    pattern: /sleutelwoord|sleutelwoorden|tekst|alinea|lezen|begrijpend|woordbetekenis|woordkennis/i,
+    stems: ["sleutelwoord", "tekst", "alinea", "lees", "begrip", "woord"],
+  },
 ];
 
 /** Canonical terms used to recover from typos via fuzzy matching. */
@@ -64,6 +72,14 @@ const CANONICAL_QUERY_TERMS: Array<{
     canonical: "splitsen",
     stems: ["split", "splits"],
   },
+  {
+    canonical: "zoogdieren",
+    stems: ["dier", "organism", "natuur", "zoogdier"],
+  },
+  {
+    canonical: "sleutelwoorden",
+    stems: ["sleutelwoord", "tekst", "lees", "woord"],
+  },
 ];
 
 const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
@@ -72,11 +88,22 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
       /vermenigvuld|vermeningvuld|optell|optel|aftrek|deel|breuk|wiskunde|getal|tafel|reken|maaltafel|splitz/i,
     discipline: "Wiskunde",
   },
-  { pattern: /nederlands|lezen|spell|schrijf|taal/i, discipline: "Nederlands" },
+  {
+    pattern: /sleutelwoord|begrijpend|alinea|woordbetekenis/i,
+    discipline: "Schriftelijke taalvaardigheid",
+  },
+  {
+    pattern: /nederlands|lezen|spell|schrijf|taal|tekst/i,
+    discipline: "Nederlands",
+  },
   { pattern: /frans/i, discipline: "Frans" },
   { pattern: /geschiedenis|tijdlijn|histor/i, discipline: "Geschiedenis" },
   {
-    pattern: /wetenschap|techniek|natuur/i,
+    pattern: /zoogdier|zoogdieren|\bdieren\b|planten|bomen|natuur|organismen|biotoop|leefwereld/i,
+    discipline: "Oriëntatie op natuur",
+  },
+  {
+    pattern: /wetenschap|techniek/i,
     discipline: "Wetenschap en techniek",
   },
   { pattern: /muziek|muzisch|zang/i, discipline: "Muzische vorming" },
@@ -177,33 +204,90 @@ export function isZillMathThinkingCode(code: string): boolean {
   return /^WD(?:gk|lw|mm|rv|mk)\d/i.test(code.trim());
 }
 
+export function isZillNatureCode(code: string): boolean {
+  return /^OWna\d/i.test(code.trim());
+}
+
+export function isZillDutchWritingCode(code: string): boolean {
+  return /^TOsn\d/i.test(code.trim());
+}
+
+function queryMatchesNatureTopic(query: string): boolean {
+  return /zoogdier|zoogdieren|\bdieren\b|\bdier\b|planten|plant|\bbomen\b|\bboom\b|natuur|organismen|organisme|biotoop|leefwereld/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+function queryMatchesReadingTopic(query: string): boolean {
+  return /sleutelwoord|tekst|alinea|lezen|begrijpend|woordbetekenis|woordkennis/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+export function scoreCodePrefixBonus(query: string, code: string): number {
+  const trimmedCode = code.trim();
+  if (!trimmedCode) {
+    return 0;
+  }
+
+  if (queryMatchesNatureTopic(query)) {
+    if (isZillNatureCode(trimmedCode)) {
+      return 0.28;
+    }
+    if (/^OW/i.test(trimmedCode)) {
+      return 0.08;
+    }
+  }
+
+  if (queryMatchesReadingTopic(query)) {
+    if (isZillDutchWritingCode(trimmedCode)) {
+      return 0.28;
+    }
+    if (/^TOmf/i.test(trimmedCode)) {
+      return -0.18;
+    }
+    if (/^RK/i.test(trimmedCode)) {
+      return -0.12;
+    }
+  }
+
+  return 0;
+}
+
 export function scoreDisciplineBonus(
   query: string,
   discipline: string,
   code = "",
+  subdomein = "",
 ): number {
   const hint = inferDisciplineFromQuery(query);
+  const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+  let bonus = scoreCodePrefixBonus(query, code);
+
   if (!hint) {
-    return 0;
+    return bonus;
   }
 
-  const normalizedDiscipline = discipline.toLocaleLowerCase("nl-BE");
   const normalizedHint = hint.toLocaleLowerCase("nl-BE");
 
   if (
-    normalizedDiscipline.includes(normalizedHint) ||
-    normalizedHint.includes(normalizedDiscipline) ||
-    normalizedDiscipline.includes("wiskundig denken") ||
-    (isZillMathThinkingCode(code) && hint === "Wiskunde")
+    combined.includes(normalizedHint) ||
+    normalizedHint.includes(combined) ||
+    combined.includes("wiskundig denken") ||
+    (isZillMathThinkingCode(code) && hint === "Wiskunde") ||
+    (hint === "Oriëntatie op natuur" && combined.includes("natuur")) ||
+    (hint === "Schriftelijke taalvaardigheid" &&
+      combined.includes("schriftelijke taalvaardigheid")) ||
+    (hint === "Nederlands" &&
+      (combined.includes("nederlands") || combined.includes("taalontwikkeling"))) ||
+    (hint === "Wetenschap en techniek" && combined.includes("natuur"))
   ) {
-    return 0.22;
+    bonus += 0.22;
+  } else if (discipline.trim() && bonus <= 0) {
+    bonus -= 0.08;
   }
 
-  if (discipline.trim()) {
-    return -0.08;
-  }
-
-  return 0;
+  return bonus;
 }
 
 export function scoreCurriculumCandidate({
@@ -212,12 +296,14 @@ export function scoreCurriculumCandidate({
   discipline,
   titel,
   code = "",
+  subdomein = "",
 }: {
   query: string;
   haystack: string;
   discipline: string;
   titel: string;
   code?: string;
+  subdomein?: string;
 }): { score: number; tokenMatches: number } {
   const tokens = tokenizeCurriculumQuery(query);
   const tokenMatches = countCurriculumTokenMatches(haystack, tokens);
@@ -225,10 +311,10 @@ export function scoreCurriculumCandidate({
   const contextScore = scoreCurriculumOverlap(haystack, tokens);
 
   let score = Math.min(
-    1,
+    1.2,
     titelScore * 0.55 +
       contextScore * 0.45 +
-      scoreDisciplineBonus(query, discipline, code),
+      scoreDisciplineBonus(query, discipline, code, subdomein),
   );
 
   const queryLower = normalizeQueryText(query);

@@ -129,11 +129,15 @@ function GoalCard({
       <CardContent className="space-y-4">
         <p className="text-sm leading-6 text-neutral-100">
           {result.code ? (
-            <span className="mr-1.5 font-mono text-xs font-semibold text-white">
-              {result.code}
-            </span>
-          ) : null}
-          {result.titel}
+            <>
+              <span className="mr-2 font-bold font-mono text-xs text-white">
+                {result.code}
+              </span>
+              {result.titel}
+            </>
+          ) : (
+            result.titel
+          )}
         </p>
 
         {result.toelichting ? (
