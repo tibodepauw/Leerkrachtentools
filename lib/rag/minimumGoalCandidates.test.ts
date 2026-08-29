@@ -36,7 +36,7 @@ describe("minimumGoalCandidates", () => {
 
     expect(record?.gelinktMinimumdoel?.code).toBe("2.2.16");
     expect(record?.gelinktMinimumdoel?.rawCode).toBe("4-2.2.16");
-    expect(record?.leerjaarRoute).toBe("4de leerjaar (ijkpunt)");
+    expect(record?.leerjaarRoute).toBe("4de leerjaar");
   });
 
   it("haalt brede kandidaten op voor optellen tot 20", () => {

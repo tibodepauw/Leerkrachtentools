@@ -12,7 +12,7 @@ describe("ahovoksMinimumGoals", () => {
       rawCode: "4-2.2.16",
       displayCode: "2.2.16",
       ijkpunt: "4de",
-      ijkpuntLabel: "4de leerjaar (ijkpunt)",
+      ijkpuntLabel: "4de leerjaar",
       ijkpuntShort: "4de leerjaar",
     });
     expect(parseAhovoksCode("6-2.2.6")).toEqual({
@@ -70,7 +70,7 @@ describe("ahovoksMinimumGoals", () => {
     });
 
     expect(normalized?.gelinktMinimumdoel?.code).toBe("2.2.16");
-    expect(normalized?.leerjaarRoute).toBe("4de leerjaar (ijkpunt)");
+    expect(normalized?.leerjaarRoute).toBe("4de leerjaar");
     expect(normalized?.titel).toBe("");
     expect(normalized?.leerjaarRoute).not.toContain("1ste leerjaar");
   });

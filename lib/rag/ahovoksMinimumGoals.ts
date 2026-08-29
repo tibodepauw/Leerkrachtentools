@@ -16,7 +16,7 @@ const IJKPUNT_META: Record<
   { label: string; short: string }
 > = {
   "4de": {
-    label: "4de leerjaar (ijkpunt)",
+    label: "4de leerjaar",
     short: "4de leerjaar",
   },
   "6de": {
