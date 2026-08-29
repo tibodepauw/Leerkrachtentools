@@ -6,8 +6,6 @@ The app bundles lesson-prep tasks into one **active lesson** context so you can 
 
 Built for Thomas More BALO teacher training, but the modules apply to any teacher preparing structured lessons in Flanders.
 
-**Repository:** [github.com/tibodepauw/Leerkrachtentools](https://github.com/tibodepauw/Leerkrachtentools)
-
 ## Research goal
 
 Teachers lose time on repetitive, low-value prep steps: copying goals from manuals, checking wording against institute rules, searching curriculum documents, aligning activities with goals, and writing reflections. Leerkrachtentools tests whether AI can take over those steps **without** replacing professional judgment.
