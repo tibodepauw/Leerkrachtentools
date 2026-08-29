@@ -300,8 +300,11 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
         .slice(0, variant === "minimumdoel" ? 3 : 5)
     : [];
 
+  const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
+
   return (
     <ModuleShell
+      moduleId={moduleId}
       title={copy.title}
       description={copy.description}
       input={

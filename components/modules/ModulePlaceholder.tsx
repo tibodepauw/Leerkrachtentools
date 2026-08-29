@@ -1,15 +1,19 @@
 import { Construction } from "lucide-react";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
+import type { ModuleId } from "@/types";
 
 export function ModulePlaceholder({
+  moduleId,
   title,
   description,
 }: {
+  moduleId: ModuleId;
   title: string;
   description: string;
 }) {
   return (
     <ModuleShell
+      moduleId={moduleId}
       title={title}
       description={description}
       input={

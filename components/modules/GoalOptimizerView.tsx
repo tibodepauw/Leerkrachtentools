@@ -38,6 +38,7 @@ export function GoalOptimizerView() {
 
   return (
     <ModuleShell
+      moduleId="goal-optimizer"
       title="Doelverbeteraar"
       description="Herschrijft lesdoelen volgens de Thomas More-regels. Kies het doel dat je wilt verbeteren; doelen uit je handleiding staan automatisch in Actieve les."
       input={

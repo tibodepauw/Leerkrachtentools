@@ -1,19 +1,54 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { Lock } from "lucide-react";
+import { useAccountTier } from "@/components/auth/ModuleAccessProvider";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  hasModuleAccess,
+  moduleAccessDeniedMessage,
+  type ModuleConfigKey,
+} from "@/lib/auth/moduleAccess";
 import { cn } from "@/lib/utils";
 
+export function ModuleAccessDeniedCard({ tier }: { tier: string }) {
+  return (
+    <div className="mx-auto w-full max-w-[720px] p-4 lg:p-6">
+      <Card className="border-neutral-800 bg-neutral-950">
+        <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center">
+          <div className="grid size-12 place-items-center rounded-full border border-neutral-800 bg-neutral-900">
+            <Lock className="size-5 text-neutral-400" />
+          </div>
+          <p className="max-w-lg text-sm leading-6 text-neutral-300">
+            {moduleAccessDeniedMessage(tier)}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export function ModuleShell({
+  moduleId,
   title,
   description,
   input,
   output,
   scrollMode = "page",
 }: {
+  moduleId: ModuleConfigKey;
   title: string;
   description: string;
   input: ReactNode;
   output: ReactNode;
   scrollMode?: "panel" | "page";
 }) {
+  const tier = useAccountTier();
+
+  if (!hasModuleAccess(tier, moduleId)) {
+    return <ModuleAccessDeniedCard tier={tier} />;
+  }
+
   const pageScroll = scrollMode === "page";
 
   return (

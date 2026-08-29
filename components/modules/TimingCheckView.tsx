@@ -37,6 +37,7 @@ export function TimingCheckView() {
 
   return (
     <ModuleShell
+      moduleId="timing-check"
       title="Timing"
       description="Controleer of de minuten in je vier lesfasen samen kloppen met je totale lestijd."
       input={

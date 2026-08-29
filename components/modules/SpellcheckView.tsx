@@ -77,6 +77,7 @@ export function SpellcheckView() {
 
   return (
     <ModuleShell
+      moduleId="spellcheck"
       title="Didactische taalfoutencheck"
       description="Controleert dt-fouten, formele instructietaal, didactische terminologie en professionele stijl."
       input={

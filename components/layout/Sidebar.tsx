@@ -32,6 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { hasModuleAccess } from "@/lib/auth/moduleAccess";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { SidebarFeedback } from "@/components/layout/SidebarFeedback";
 import type { ModuleId } from "@/types";
@@ -193,7 +194,17 @@ function SidebarContent({
   const [showBottomFade, setShowBottomFade] = useState(false);
   const pinnedItems = pinnedModules
     .map((id) => moduleById(id))
-    .filter((item): item is SidebarModule => item !== undefined);
+    .filter(
+      (item): item is SidebarModule =>
+        item !== undefined && hasModuleAccess(account.tier, item.id),
+    );
+  const visibleSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => hasModuleAccess(account.tier, item.id)),
+    }))
+    .filter((section) => section.items.length > 0);
+  const showActiveLesson = hasModuleAccess(account.tier, "active-lesson");
 
   function updateBottomFade() {
     const element = scrollRef.current;
@@ -244,6 +255,7 @@ function SidebarContent({
           className="h-full overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-track]:bg-transparent"
         >
           <nav className="space-y-6 p-3 pb-4">
+          {showActiveLesson ? (
           <button
             type="button"
             onClick={() => openModule("active-lesson")}
@@ -257,6 +269,7 @@ function SidebarContent({
             <FileText className="size-4 shrink-0" />
             <span>Actieve les</span>
           </button>
+          ) : null}
           {pinnedItems.length > 0 ? (
             <section>
               <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-600">
@@ -276,7 +289,7 @@ function SidebarContent({
               </div>
             </section>
           ) : null}
-          {sections.map((section) => (
+          {visibleSections.map((section) => (
             <section key={section.label}>
               <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-600">
                 {section.label}

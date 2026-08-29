@@ -40,6 +40,7 @@ export function EngagementView() {
 
   return (
     <ModuleShell
+      moduleId="engagement"
       title="Betrokkenheidsfactoren van Laevers"
       description="Zelfstandige analyse van Leeractiviteit, Werkelijkheidsnabijheid, Leerlingeninitiatief, Positief klasklimaat, Expressie en Samen leren."
       input={

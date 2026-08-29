@@ -26,6 +26,7 @@ export function DialogueFormatterView() {
 
   return (
     <ModuleShell
+      moduleId="dialogue-formatter"
       title="Thomas More stijl"
       description="Zet ruwe instructies strikt om naar Lk/Lln-dialogen en cursieve bord- of organisatieacties."
       input={

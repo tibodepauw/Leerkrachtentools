@@ -30,6 +30,7 @@ export function FullAuditView() {
 
   return (
     <ModuleShell
+      moduleId="full-audit"
       title="Totale lesvoorbereiding audit"
       description="Een stoplichtscore op doelen, leerplandoelen, taal, timing, alignering en betrokkenheid."
       input={

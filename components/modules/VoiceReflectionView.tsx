@@ -98,6 +98,7 @@ export function VoiceReflectionView() {
 
   return (
     <ModuleShell
+      moduleId="voice-reflection"
       title="Voice-to-reflectie coach"
       description="Fase A parseert je opname of krabbels. Fase B stelt maximaal twee gerichte vragen voordat Pagina 5 definitief verschijnt."
       input={

@@ -162,6 +162,7 @@ function ManualScannerContent() {
 
   return (
     <ModuleShell
+      moduleId="manual-scanner"
       title="Handleiding Scanner"
       description="Upload een PDF of afbeelding van een handleiding. Gemini leest het document en extraheert leergebied, doelgroep en uitgeverijdoelen."
       input={

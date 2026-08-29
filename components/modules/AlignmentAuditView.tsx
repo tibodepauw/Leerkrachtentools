@@ -47,6 +47,7 @@ export function AlignmentAuditView() {
 
   return (
     <ModuleShell
+      moduleId="alignment"
       title="Doel-activiteit alignering"
       description="Controleert per D-doel uitleg, zelfstandige oefening en evaluatie."
       input={
