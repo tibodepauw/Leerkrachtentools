@@ -15,8 +15,8 @@ export function LessonGoalSelector({
   text,
   onTextChange,
   placeholder,
-  minHeightClassName = "min-h-96",
-  maxHeightClassName = "max-h-[36rem]",
+  minHeightClassName = "min-h-[3.5rem]",
+  maxHeightClassName = "max-h-48",
 }: {
   id: string;
   label: string;
@@ -66,11 +66,12 @@ export function LessonGoalSelector({
       </div>
       <Textarea
         id={id}
+        rows={2}
         value={text}
         onChange={(event) => onTextChange(event.target.value)}
         placeholder={placeholder}
         className={cn(
-          "w-full resize-y overflow-y-auto [field-sizing:fixed]",
+          "field-sizing-fixed w-full resize-y overflow-y-auto",
           minHeightClassName,
           maxHeightClassName,
         )}
