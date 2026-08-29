@@ -84,6 +84,17 @@ Downloads landen in `data/{zill,go,ovsg,minimumdoelen}/` met JSON-sidecar-metada
 Zie `docs/curriculum-bronnen-urls.md` voor alle officiële bron-URL's.
 Optioneel: zet `ONDERWIJSDOELEN_API_KEY` voor JSON-export via de Onderwijsdoelen-API.
 
+Voor de volledige ZILL-selector (leerlijnen én geneste inhouden):
+
+```bash
+python3 -m playwright install chromium
+python3 scripts/scrape_zill_full.py
+```
+
+Dit schrijft `data/zill/zill_volledig.jsonl`, een metadata-sidecar en
+`zill_scrape_report.json`. De scraper onderschept primair het officiële JSON-model
+en gebruikt route-per-route DOM-traversal als fallback.
+
 De marketingtoestemming staat standaard uit en kan na inloggen worden
 ingetrokken. Controleer vóór publieke lancering ook het privacybeleid,
 bewaartermijnen en de afmeldlink van toekomstige mailings.
