@@ -23,6 +23,10 @@
 /data/*.db-shm
 /data/*.db-wal
 /data/avatars/
+/data/zill/
+/data/go/
+/data/ovsg/
+/data/minimumdoelen/
 
 # misc
 .DS_Store

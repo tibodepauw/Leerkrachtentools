@@ -73,6 +73,17 @@ Leerplandoelresultaten tonen bron, versie en schooljaar. Toekomstige leerplannen
 staan los van de actieve index. Voeg nooit accountwachtwoorden of API-keys toe
 aan de repository; gebruik uitsluitend `.env.local`.
 
+### Officiële leerplan- en minimumdoelencorpus (RAG / GCS)
+
+```bash
+pip install -r scripts/requirements-curriculum.txt
+python3 scripts/fetch_curriculum_data.py
+```
+
+Downloads landen in `data/{zill,go,ovsg,minimumdoelen}/` met JSON-sidecar-metadata.
+Zie `docs/curriculum-bronnen-urls.md` voor alle officiële bron-URL's.
+Optioneel: zet `ONDERWIJSDOELEN_API_KEY` voor JSON-export via de Onderwijsdoelen-API.
+
 De marketingtoestemming staat standaard uit en kan na inloggen worden
 ingetrokken. Controleer vóór publieke lancering ook het privacybeleid,
 bewaartermijnen en de afmeldlink van toekomstige mailings.
