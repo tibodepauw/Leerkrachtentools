@@ -1,10 +1,29 @@
 "use client";
 
+import {
+  useLayoutEffect,
+  useRef,
+  type ChangeEvent,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { LessonGoal } from "@/types";
+
+const GOAL_TEXTAREA_MIN_HEIGHT_PX = 56;
+const GOAL_TEXTAREA_MAX_HEIGHT_PX = 256;
+
+function syncGoalTextareaHeight(element: HTMLTextAreaElement) {
+  element.style.height = `${GOAL_TEXTAREA_MIN_HEIGHT_PX}px`;
+  const nextHeight = Math.min(
+    GOAL_TEXTAREA_MAX_HEIGHT_PX,
+    Math.max(GOAL_TEXTAREA_MIN_HEIGHT_PX, element.scrollHeight),
+  );
+  if (nextHeight > element.clientHeight) {
+    element.style.height = `${nextHeight}px`;
+  }
+}
 
 export function LessonGoalSelector({
   id,
@@ -15,8 +34,8 @@ export function LessonGoalSelector({
   text,
   onTextChange,
   placeholder,
-  minHeightClassName = "min-h-[3.5rem]",
-  maxHeightClassName = "max-h-48",
+  minHeightClassName = "min-h-[56px]",
+  maxHeightClassName = "max-h-64",
 }: {
   id: string;
   label: string;
@@ -29,7 +48,20 @@ export function LessonGoalSelector({
   minHeightClassName?: string;
   maxHeightClassName?: string;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const filledCount = goals.filter((goal) => goal.text.trim()).length;
+
+  useLayoutEffect(() => {
+    const element = textareaRef.current;
+    if (element) {
+      syncGoalTextareaHeight(element);
+    }
+  }, [text, selectedId]);
+
+  function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    onTextChange(event.target.value);
+    syncGoalTextareaHeight(event.target);
+  }
 
   return (
     <div className="space-y-3">
@@ -64,18 +96,25 @@ export function LessonGoalSelector({
           </p>
         )}
       </div>
-      <Textarea
-        id={id}
-        rows={2}
-        value={text}
-        onChange={(event) => onTextChange(event.target.value)}
-        placeholder={placeholder}
-        className={cn(
-          "field-sizing-fixed w-full resize-y overflow-y-auto",
-          minHeightClassName,
-          maxHeightClassName,
-        )}
-      />
+      <div className="overflow-visible">
+        <Textarea
+          ref={textareaRef}
+          id={id}
+          rows={2}
+          value={text}
+          onChange={handleChange}
+          placeholder={placeholder}
+          className={cn(
+            "field-sizing-fixed min-h-[56px] w-full resize-y overflow-y-auto px-2.5 py-1.5 text-sm leading-5",
+            minHeightClassName,
+            maxHeightClassName,
+          )}
+          style={{
+            minHeight: GOAL_TEXTAREA_MIN_HEIGHT_PX,
+            maxHeight: GOAL_TEXTAREA_MAX_HEIGHT_PX,
+          }}
+        />
+      </div>
     </div>
   );
 }
