@@ -124,15 +124,17 @@ function GoalCard({
             <span className="text-xs text-neutral-500">· {result.subdomein}</span>
           ) : null}
         </div>
-        {result.code ? (
-          <p className="font-mono text-sm font-bold tracking-tight text-neutral-50">
-            {result.code}
-          </p>
-        ) : null}
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-sm leading-6 text-neutral-100">{result.titel}</p>
+        <p className="text-sm leading-6 text-neutral-100">
+          {result.code ? (
+            <span className="mr-1.5 font-mono text-xs font-semibold text-white">
+              {result.code}
+            </span>
+          ) : null}
+          {result.titel}
+        </p>
 
         {result.toelichting ? (
           <Accordion type="single" collapsible>
@@ -168,12 +170,13 @@ function GoalCard({
         ) : null}
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <CopyButton value={goalCopy} label="📋 Doel kopiëren" />
+          <CopyButton value={goalCopy} label="Doel kopiëren" />
           {minimumCopy ? (
             <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
           ) : null}
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
-            ➕ Toevoegen aan Actieve les
+            <Plus className="size-4" />
+            Toevoegen aan Actieve les
           </Button>
         </div>
       </CardContent>
