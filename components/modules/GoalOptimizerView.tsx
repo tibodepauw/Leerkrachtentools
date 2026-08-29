@@ -62,7 +62,6 @@ export function GoalOptimizerView() {
               <ModuleActionButton
                 onClick={() => analyze("/api/analyze-goals", { goal: text })}
                 disabled={actionDisabled}
-                disabledReason="Kies een doel met tekst of vul er eerst één in."
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" />

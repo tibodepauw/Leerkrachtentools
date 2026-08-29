@@ -97,7 +97,6 @@ export function SpellcheckView() {
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason="Upload of plak eerst je lesvoorbereiding."
                 onClick={() => analyze("/api/spellcheck", { content })}
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-4" />}

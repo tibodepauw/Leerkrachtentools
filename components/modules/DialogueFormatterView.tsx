@@ -44,7 +44,6 @@ export function DialogueFormatterView() {
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason="Upload of plak eerst een lesfase of instructie."
                 onClick={() => analyze("/api/format-dialogue", { content })}
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <MessageSquareQuote className="size-4" />}

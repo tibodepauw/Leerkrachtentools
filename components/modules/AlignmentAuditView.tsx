@@ -70,7 +70,6 @@ export function AlignmentAuditView() {
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason="Upload of plak eerst je lesopbouw."
                 onClick={() => analyze("/api/audit-alignment", { goals: lesson.goals.map((goal) => goal.text), content })}
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Target className="size-4" />}

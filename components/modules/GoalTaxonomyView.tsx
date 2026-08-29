@@ -72,7 +72,6 @@ export function GoalTaxonomyView() {
                   }
                 }}
                 disabled={actionDisabled}
-                disabledReason={null}
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" />

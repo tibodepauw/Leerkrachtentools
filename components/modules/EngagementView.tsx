@@ -58,7 +58,6 @@ export function EngagementView() {
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason="Upload of plak eerst je lesvoorbereiding."
                 onClick={() => analyze("/api/audit-engagement", { content })}
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}

@@ -377,7 +377,6 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               {error ? <p className="text-sm text-red-400">{error}</p> : null}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason="Kies eerst een actief lesdoel of vul er één in."
                 onClick={() =>
                   analyze(
                     variant === "minimumdoel"

@@ -215,7 +215,6 @@ function ManualScannerContent() {
               <ModuleActionButton
                 onClick={() => extractAndSync()}
                 disabled={loading || (!content && !fileName)}
-                disabledReason="Upload een handleiding of plak eerst tekst in het invoerveld."
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" />

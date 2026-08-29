@@ -79,7 +79,6 @@ export function TimingCheckView() {
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason='Upload of plak eerst minuten in je fase-headers, bv. "Instap - 5 min".'
                 onClick={() =>
                   analyze("/api/audit-timing", {
                     totalMinutes: String(lesson.totalMinutes),

@@ -157,7 +157,6 @@ export function VoiceReflectionView() {
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason="Typ eerst je reflectie of maak een korte audio-opname."
                 onClick={() => submit()}
               >
                 {loading ? <Loader2 className="size-4 animate-spin" /> : <WandSparkles className="size-4" />}
