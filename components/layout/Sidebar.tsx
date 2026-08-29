@@ -15,6 +15,7 @@ import {
   Landmark,
   Menu,
   MessageSquareQuote,
+  Pin,
   ScanText,
   Settings,
   Sparkles,
@@ -23,6 +24,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/shared/ProfileAvatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { ModuleId } from "@/types";
@@ -78,6 +85,83 @@ const sections = [
   }>;
 }>;
 
+type SidebarModule = {
+  id: ModuleId;
+  label: string;
+  icon: typeof FileScan;
+};
+
+const moduleCatalog: SidebarModule[] = sections.flatMap((section) =>
+  section.items.map((item) => item as SidebarModule),
+);
+
+function moduleById(id: ModuleId): SidebarModule | undefined {
+  return moduleCatalog.find((item) => item.id === id);
+}
+
+function ModuleNavButton({
+  item,
+  active,
+  pinned,
+  pinnable = true,
+  onOpen,
+  onTogglePin,
+}: {
+  item: SidebarModule;
+  active: boolean;
+  pinned: boolean;
+  pinnable?: boolean;
+  onOpen: () => void;
+  onTogglePin: () => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "group/nav flex w-full items-center gap-1 rounded-full pr-1 transition-colors",
+        active ? "bg-neutral-800" : "hover:bg-neutral-900",
+      )}
+    >
+      <button
+        type="button"
+        onClick={onOpen}
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-3 rounded-full px-3 py-2 text-left text-sm transition-colors",
+          active ? "text-white" : "text-neutral-400 group-hover/nav:text-neutral-100",
+        )}
+      >
+        <item.icon className="size-4 shrink-0" />
+        <span className="truncate">{item.label}</span>
+      </button>
+      {pinnable ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={pinned ? "Losmaken uit zijbalk" : "Pin in zijbalk"}
+              aria-pressed={pinned}
+              onClick={(event) => {
+                event.stopPropagation();
+                onTogglePin();
+              }}
+              className={cn(
+                "mr-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors",
+                pinned
+                  ? "text-amber-400 hover:bg-neutral-800 hover:text-amber-300"
+                  : "text-neutral-600 opacity-70 hover:bg-neutral-800 hover:text-neutral-300 lg:opacity-0 lg:group-hover/nav:opacity-100 lg:focus-visible:opacity-100",
+              )}
+            >
+              <Pin className={cn("size-3.5", pinned && "fill-current")} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {pinned ? "Losmaken" : "Pin bovenaan"}
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
+    </div>
+  );
+}
+
 interface AccountSummary {
   email: string;
   displayName: string | null;
@@ -100,9 +184,14 @@ function SidebarContent({
   const router = useRouter();
   const isSettings = pathname === "/settings";
   const activeModule = useLessonStore((state) => state.activeModule);
+  const pinnedModules = useLessonStore((state) => state.pinnedModules);
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
+  const togglePinnedModule = useLessonStore((state) => state.togglePinnedModule);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showBottomFade, setShowBottomFade] = useState(false);
+  const pinnedItems = pinnedModules
+    .map((id) => moduleById(id))
+    .filter((item): item is SidebarModule => item !== undefined);
 
   function updateBottomFade() {
     const element = scrollRef.current;
@@ -141,7 +230,8 @@ function SidebarContent({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-neutral-950">
+    <TooltipProvider delayDuration={300}>
+      <div className="flex h-full min-h-0 flex-col bg-neutral-950">
       <div className="flex h-16 shrink-0 items-center border-b border-neutral-800 px-5">
         <p className="text-sm font-black tracking-tight">Leerkrachtentools</p>
       </div>
@@ -165,6 +255,25 @@ function SidebarContent({
             <FileText className="size-4 shrink-0" />
             <span>Actieve les</span>
           </button>
+          {pinnedItems.length > 0 ? (
+            <section>
+              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-600">
+                Gepind
+              </p>
+              <div className="space-y-1">
+                {pinnedItems.map((item) => (
+                  <ModuleNavButton
+                    key={`pinned-${item.id}`}
+                    item={item}
+                    active={!isSettings && activeModule === item.id}
+                    pinned
+                    onOpen={() => openModule(item.id)}
+                    onTogglePin={() => togglePinnedModule(item.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
           {sections.map((section) => (
             <section key={section.label}>
               <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-600">
@@ -172,20 +281,14 @@ function SidebarContent({
               </p>
               <div className="space-y-1">
                 {section.items.map((item) => (
-                  <button
+                  <ModuleNavButton
                     key={item.id}
-                    type="button"
-                    onClick={() => openModule(item.id)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm transition-colors",
-                      !isSettings && activeModule === item.id
-                        ? "bg-neutral-800 text-white"
-                        : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100",
-                    )}
-                  >
-                    <item.icon className="size-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </button>
+                    item={item}
+                    active={!isSettings && activeModule === item.id}
+                    pinned={pinnedModules.includes(item.id)}
+                    onOpen={() => openModule(item.id)}
+                    onTogglePin={() => togglePinnedModule(item.id)}
+                  />
                 ))}
               </div>
             </section>
@@ -227,7 +330,8 @@ function SidebarContent({
           <Settings className="size-4 text-neutral-600 transition-colors group-hover:text-neutral-300" />
         </Link>
       </div>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
 

@@ -37,9 +37,11 @@ const initialLesson: ActiveLesson = {
 interface LessonStore {
   lesson: ActiveLesson;
   activeModule: ModuleId;
+  pinnedModules: ModuleId[];
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
   setActiveModule: (module: ModuleId) => void;
+  togglePinnedModule: (module: ModuleId) => void;
   setField: <K extends keyof ActiveLesson>(
     key: K,
     value: ActiveLesson[K],
@@ -62,9 +64,16 @@ export const useLessonStore = create<LessonStore>()(
     (set) => ({
       lesson: initialLesson,
       activeModule: "manual-scanner",
+      pinnedModules: [],
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
       setActiveModule: (activeModule) => set({ activeModule }),
+      togglePinnedModule: (moduleId) =>
+        set((state) => ({
+          pinnedModules: state.pinnedModules.includes(moduleId)
+            ? state.pinnedModules.filter((id) => id !== moduleId)
+            : [...state.pinnedModules, moduleId],
+        })),
       setField: (key, value) =>
         set((state) => ({ lesson: { ...state.lesson, [key]: value } })),
       setGoal: (index, patch) =>
@@ -161,6 +170,7 @@ export const useLessonStore = create<LessonStore>()(
       partialize: (state) => ({
         lesson: state.lesson,
         activeModule: state.activeModule,
+        pinnedModules: state.pinnedModules,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<typeof currentState> | undefined;
@@ -174,6 +184,7 @@ export const useLessonStore = create<LessonStore>()(
             preparationDocument:
               persisted?.lesson?.preparationDocument ?? null,
           },
+          pinnedModules: persisted?.pinnedModules ?? currentState.pinnedModules,
         };
       },
       onRehydrateStorage: () => (state) => state?.setHydrated(true),
