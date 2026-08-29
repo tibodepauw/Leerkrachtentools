@@ -11,65 +11,66 @@ export default function PrivacyPage() {
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-12 sm:py-20">
       <Button variant="ghost" asChild className="mb-6">
-        <Link href="/"><ArrowLeft className="size-4" />Terug</Link>
+        <Link href="/">
+          <ArrowLeft className="size-4 mr-2" />
+          Terug
+        </Link>
       </Button>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Privacy en gegevensgebruik</CardTitle>
+          <CardTitle className="text-2xl">Privacy- en Gegevensbeleid</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6 text-sm leading-7 text-neutral-300">
           <section>
-            <h2 className="mb-2 font-semibold text-white">Wat we bewaren</h2>
-            <p>We bewaren je geverifieerde e-mailadres, het tijdstip van verificatie, je optionele toestemming voor projectupdates en gehashte sessiegegevens. Verificatiecodes en IP-adressen worden uitsluitend gehasht opgeslagen. Codes worden uiterlijk na 24 uur verwijderd.</p>
-          </section>
-          <section>
-            <h2 className="mb-2 font-semibold text-white">Waarom</h2>
-            <p>Het e-mailadres is nodig om toegang te beveiligen en misbruik van betaalde AI-functies te beperken. Projectupdates worden uitsluitend gestuurd wanneer je daar afzonderlijk toestemming voor geeft.</p>
-          </section>
-          <section>
-            <h2 className="mb-2 font-semibold text-white">E-mailverzending</h2>
-            <p>Verificatiecodes worden verstuurd via Brevo (transactionele e-mail). Daarvoor gebruiken we alleen je e-mailadres en de verificatie-inhoud. Brevo verwerkt deze gegevens als onderaannemer.</p>
-          </section>
-          <section>
-            <h2 className="mb-2 font-semibold text-white">Lesgegevens en AI-providers</h2>
+            <h2 className="mb-2 font-semibold text-white">1. Verwerkingsverantwoordelijke</h2>
             <p>
-              De accountdatabase bewaart geen lesvoorbereidingen. De actieve
-              lescontext staat lokaal in je browser. Wanneer je een AI-analyse
-              uitvoert, sturen we alleen de inhoud mee die voor die analyse
-              nodig is - bijvoorbeeld een lesdoel, lesvoorbereidingstekst of
-              transcript - naar de geconfigureerde AI-provider. Dat kan Google
-              (Gemini), Groq, Cerebras, SambaNova of Cloudflare Workers AI
-              zijn, afhankelijk van wat de beheerder of jij in de instellingen
-              hebt ingesteld.
-            </p>
-            <p className="mt-3">
-              Leerkrachtentools traint geen eigen AI-modellen op jouw
-              lesinhoud. We slaan ingediende teksten niet op in de
-              accountdatabase en gebruiken ze niet om modellen te verbeteren.
+              Dit platform, Leerkrachtentools, wordt beheerd door Generative Labs (Tibo De Pauw). Voor vragen over de verwerking van je persoonsgegevens of het uitoefenen van je privacyrechten kun je contact opnemen via{" "}
+              <a href="mailto:r1058655@student.thomasmore.be" className="underline hover:text-white">
+                r1058655@student.thomasmore.be
+              </a>.
             </p>
           </section>
+
           <section>
-            <h2 className="mb-2 font-semibold text-white">Google Cloud</h2>
+            <h2 className="mb-2 font-semibold text-white">2. Wat we bewaren en waarom</h2>
             <p>
-              Voor curriculumzoeken (leerplandoelen en minimumdoelen) gebruiken
-              we Google Cloud Discovery Engine. Je zoekopdracht wordt daarvoor
-              verwerkt binnen onze Google Cloud-omgeving om relevante
-              leerplandoelen uit de geïndexeerde corpus op te halen. Discovery
-              Engine genereert ook een AI-samenvatting op basis van die
-              zoekresultaten.
+              We bewaren uitsluitend je geverifieerde e-mailadres, het tijdstip van verificatie, je optionele toestemming voor projectupdates en gehashte sessiegegevens.
             </p>
-            <p className="mt-3">
-              Voor andere AI-functies - zoals doelverbetering, spellingcontrole,
-              timinganalyse en audits - kan Google Gemini via de Google AI API
-              worden ingezet, naast eventuele andere providers hierboven.
+            <p className="mt-2">
+              Verificatiecodes en IP-adressen worden uitsluitend gehasht opgeslagen. E-mailverificatiecodes zijn eenmalig, maximaal 10 minuten geldig en worden na uiterlijk 24 uur automatisch uit de database gewist.
             </p>
-            <p className="mt-3">
-              Deze Google-diensten verwerken je gegevens uitsluitend om de
-              gevraagde functionaliteit te leveren. Volgens de voorwaarden van
-              Google Cloud en de Google Generative AI API (betaalde /
-              enterprise-API&apos;s) worden ingediende prompts en zoekopdrachten
-              niet gebruikt om Google&apos;s algemene modellen te trainen. Raadpleeg
-              het actuele{" "}
+            <p className="mt-2">
+              Verwerking van je e-mailadres is noodzakelijk voor de uitvoering van de dienst (beveiligen van toegang en voorkomen van misbruik). Projectupdates worden uitsluitend verzonden op basis van je expliciete voorafgaande toestemming.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 font-semibold text-white">3. E-mailverzending</h2>
+            <p>
+              Verificatiecodes worden verstuurd via Brevo (transactionele e-maildienst). Brevo verwerkt je e-mailadres en de verificatiecode uitsluitend als verwerker in opdracht van Leerkrachtentools om de inlogmail af te leveren.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 font-semibold text-white">4. Lesgegevens, lokale opslag en AI-providers</h2>
+            <p>
+              Onze centrale accountdatabase bewaart <strong>geen</strong> lesvoorbereidingen, klasgegevens of ingediende teksten. De actieve lescontext staat uitsluitend lokaal opgeslagen in je eigen browser (via IndexedDB en lokale opslag).
+            </p>
+            <p className="mt-2">
+              Wanneer je expliciet een AI-analyse uitvoert (bv. Doelverbeteraar, Taalfoutencheck of Audits), wordt uitsluitend de voor die specifieke actie benodigde tekst naar de geconfigureerde AI-provider verstuurd. Dit kan Google (Gemini), Groq, Cerebras, SambaNova of Cloudflare Workers AI zijn, afhankelijk van de instellingen.
+            </p>
+            <p className="mt-2">
+              <strong>Geen AI-training:</strong> Ingediende teksten en lesvoorbereidingen worden door Leerkrachtentools noch door onze API-providers gebruikt om AI-modellen te trainen of te verbeteren.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="mb-2 font-semibold text-white">5. Google Cloud Discovery Engine</h2>
+            <p>
+              Voor het zoeken in curriculumdoelen (leerplandoelen en Vlaamse minimumdoelen) verwerken we je zoekopdracht via Google Cloud Discovery Engine binnen onze afgeschermde Google Cloud-omgeving.
+            </p>
+            <p className="mt-2">
+              Conform de enterprise-voorwaarden van Google Cloud worden je zoekopdrachten en prompts niet gebruikt voor algemene AI-model-training. Raadpleeg de{" "}
               <a
                 href="https://cloud.google.com/terms/cloud-privacy-notice"
                 target="_blank"
@@ -78,26 +79,50 @@ export default function PrivacyPage() {
               >
                 Google Cloud Privacy Notice
               </a>{" "}
-              en het privacybeleid van de desbetreffende AI-provider voor
-              details.
+              voor aanvullende details.
             </p>
           </section>
+
           <section>
-            <h2 className="mb-2 font-semibold text-white">Toestemming</h2>
+            <h2 className="mb-2 font-semibold text-white">6. Jouw rechten volgens de AVG (GDPR)</h2>
             <p>
-              Bij je eerste login of bij een nieuwe code-aanvraag vragen we
-              expliciet akkoord met dit privacybeleid. We slaan het tijdstip van
-              die toestemming op bij je account. Optionele projectupdates
-              verlopen via een apart vinkje en kunnen later worden ingetrokken.
+              Als gebruiker heb je volgens de Europese Algemene Verordening Gegevensbescherming (AVG/GDPR) het recht op:
+            </p>
+            <ul className="mt-2 list-disc pl-5 space-y-1">
+              <li>Inzage en correctie van je persoonsgegevens;</li>
+              <li>Volledige wisting van je gegevens (recht op vergetelheid);</li>
+              <li>Het intrekken van je toestemming voor updates;</li>
+              <li>Overdraagbaarheid van je gegevens.</li>
+            </ul>
+            <p className="mt-2">
+              Je kunt je account en alle geassocieerde serversessies op elk moment onmiddellijk wissen via de knop <strong>Account verwijderen</strong> in de instellingen van de applicatie.
             </p>
           </section>
+
           <section>
-            <h2 className="mb-2 font-semibold text-white">Jouw keuzes</h2>
-            <p>In “Actieve les” kun je marketingtoestemming altijd intrekken en je account volledig verwijderen. Bij accountverwijdering wissen we het e-mailadres, de toestemming en alle serversessies onmiddellijk.</p>
+            <h2 className="mb-2 font-semibold text-white">7. Klachtrecht</h2>
+            <p>
+              Mocht je van mening zijn dat je gegevens niet correct worden verwerkt, dan heb je het recht om een klacht in te dienen bij de Belgische toezichthoudende autoriteit:
+            </p>
+            <p className="mt-1">
+              <strong>Gegevensbeschermingsautoriteit (GBA)</strong><br />
+              Drukpersstraat 35, 1000 Brussel<br />
+              <a
+                href="https://www.gegevensbeschermingsautoriteit.be"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-white"
+              >
+                www.gegevensbeschermingsautoriteit.be
+              </a>
+            </p>
           </section>
+
           <section>
-            <h2 className="mb-2 font-semibold text-white">Beveiliging</h2>
-            <p>Codes zijn eenmalig, tien minuten geldig en beperkt in aantal. Sessiecookies zijn HttpOnly en worden maximaal dertig dagen bewaard. Deel nooit leerlingnamen of andere persoonsgegevens wanneer dat niet nodig is.</p>
+            <h2 className="mb-2 font-semibold text-white">8. Beveiliging en advies</h2>
+            <p>
+              Sessiecookies zijn beveiligd via HttpOnly en SameSite-vlaggen. We adviseren leerkrachten en studenten om bij het voorbereiden van lessen nooit rechtstreeks namen van individuele leerlingen of gevoelige persoonsgegevens in te voeren.
+            </p>
           </section>
         </CardContent>
       </Card>
