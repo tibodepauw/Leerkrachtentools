@@ -1,12 +1,8 @@
 import "server-only";
 
 import JSZip from "jszip";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import type { LessonExportPayload } from "@/types";
 import { lessonDocumentExtension } from "@/lib/documents/supportedFormats";
-
-const TEMPLATE_FILE = "lesvoorbereidingsformulier_2526DEF-1.docx";
 
 function escapeXml(value: string) {
   return value
@@ -23,6 +19,21 @@ function paragraphText(paragraphXml: string) {
 
 function replaceParagraphValue(paragraphXml: string, label: string, value: string) {
   const runs = [...paragraphXml.matchAll(/<w:r[\s\S]*?<\/w:r>/g)];
+  if (runs.length === 0) return paragraphXml;
+
+  const fullText = paragraphText(paragraphXml);
+  if (!fullText.startsWith(label.trimEnd()) && !fullText.startsWith(label)) {
+    return paragraphXml;
+  }
+
+  if (runs.length === 1) {
+    const nextText = `${label}${value.trim() || " "}`;
+    return paragraphXml.replace(
+      /<w:t[^>]*>[\s\S]*?<\/w:t>/,
+      `<w:t xml:space="preserve">${escapeXml(nextText)}</w:t>`,
+    );
+  }
+
   if (runs.length < 2) return paragraphXml;
 
   let labelSeen = false;
@@ -176,14 +187,6 @@ function patchDocumentXml(documentXml: string, lesson: LessonExportPayload) {
   return xml;
 }
 
-export function templatePath() {
-  return path.join(process.cwd(), "data", "templates", TEMPLATE_FILE);
-}
-
-export function loadLessonTemplateBuffer() {
-  return readFileSync(templatePath());
-}
-
 export async function patchLessonDocx(
   sourceBuffer: Buffer,
   lesson: LessonExportPayload,
@@ -204,35 +207,27 @@ export async function exportLessonDocument(
   sourceBuffer?: Buffer,
   sourceFileName?: string,
 ) {
-  const extension = sourceFileName
-    ? lessonDocumentExtension(sourceFileName)
-    : "docx";
-
-  if (sourceBuffer && (extension === "docx" || extension === "doc")) {
-    if (extension === "doc") {
-      throw new Error(
-        "Oude .doc-bestanden worden niet ondersteund voor export. Upload het formulier als .docx.",
-      );
-    }
-    return {
-      buffer: await patchLessonDocx(sourceBuffer, lesson),
-      fileName: sourceFileName ?? "lesvoorbereiding.docx",
-      usedTemplate: false,
-    };
+  if (!sourceBuffer || !sourceFileName) {
+    throw new Error(
+      "Upload eerst je lesvoorbereidingsformulier (.docx) om het bij te werken.",
+    );
   }
 
-  const templateBuffer = loadLessonTemplateBuffer();
-  const buffer = await patchLessonDocx(templateBuffer, lesson);
-  const safeTopic = lesson.topic
-    .trim()
-    .toLocaleLowerCase("nl-BE")
-    .replace(/[^a-z0-9à-ÿ]+/giu, "-")
-    .replace(/^-|-$/gu, "");
+  const extension = lessonDocumentExtension(sourceFileName);
+  if (extension === "doc") {
+    throw new Error(
+      "Oude .doc-bestanden worden niet ondersteund voor export. Upload het formulier als .docx.",
+    );
+  }
+  if (extension !== "docx") {
+    throw new Error(
+      "Alleen een geüpload .docx-formulier kan worden bijgewerkt. PDF-bestanden worden niet geëxporteerd.",
+    );
+  }
 
   return {
-    buffer,
-    fileName: `lesvoorbereiding-${safeTopic || "formulier"}.docx`,
-    usedTemplate: true,
+    buffer: await patchLessonDocx(sourceBuffer, lesson),
+    fileName: sourceFileName,
   };
 }
 

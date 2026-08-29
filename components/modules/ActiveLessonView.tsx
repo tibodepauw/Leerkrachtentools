@@ -43,6 +43,9 @@ export function ActiveLessonView() {
   const [uploadError, setUploadError] = useState("");
   const activeGoals = lesson.goals.filter((goal) => goal.text.trim());
   const preparationDocument = lesson.preparationDocument ?? null;
+  const canExportDocx = preparationDocument?.fileName
+    ?.toLowerCase()
+    .endsWith(".docx");
 
   function openUploadDialog() {
     uploadInputRef.current?.click();
@@ -82,6 +85,13 @@ export function ActiveLessonView() {
   }
 
   async function downloadLesson() {
+    if (!canExportDocx) {
+      setDownloadError(
+        "Upload eerst je lesvoorbereidingsformulier als .docx om het bij te werken.",
+      );
+      return;
+    }
+
     setDownloading(true);
     setDownloadError("");
 
@@ -184,7 +194,12 @@ export function ActiveLessonView() {
           <Button
             type="button"
             onClick={downloadLesson}
-            disabled={downloading}
+            disabled={downloading || !canExportDocx}
+            title={
+              canExportDocx
+                ? "Download bijgewerkt Word-formulier"
+                : "Upload eerst een .docx-formulier"
+            }
           >
             {downloading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -285,9 +300,9 @@ export function ActiveLessonView() {
             />
             <p className="text-xs text-neutral-500">
               Je ziet hier het originele Word- of PDF-bestand. Bij downloaden
-              wordt je .docx-formulier bijgewerkt met je actuele doelen. Heb je
-              enkel een PDF geüpload, dan vullen we het officiële Word-sjabloon
-              in.
+              wordt je geüploade .docx-formulier bijgewerkt met je actuele
+              doelen. Het Thomas More-formulier staat niet in deze repo: gebruik
+              het sjabloon van je opleiding en upload het hier lokaal.
             </p>
           </CardContent>
         </Card>

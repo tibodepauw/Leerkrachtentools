@@ -20,7 +20,6 @@
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "docx": "^9.7.1",
     "docx-preview": "^0.4.0",
     "jszip": "^3.10.1",
     "lucide-react": "^1.34.0",

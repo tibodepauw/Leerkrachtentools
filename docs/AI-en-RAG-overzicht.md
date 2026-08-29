@@ -98,7 +98,7 @@ Zo blijft de UI voorspelbaar en kan je resultaten kopiëren of terug naar Actiev
 
 | Module | Techniek |
 |--------|----------|
-| **Actieve les** | Documentpreview (IndexedDB), Word-export (sjabloon patchen) |
+| **Actieve les** | Documentpreview (IndexedDB), Word-export (geüpload .docx patchen) |
 | **Leerplandoelen / Minimumdoelen** | Lokale RAG-retrieval (zie §4) |
 | **Import lesdocument** | Lokale tekstextractie (PDF, Word, …) |
 
@@ -192,7 +192,7 @@ Route: `/api/extract-manual`
 
 Route: `/api/export-lesson-document`
 
-- Past het **geüploade .docx-formulier** aan (LESDOEL 1/2/3, situering) of vult het officiële sjabloon in.
+- Past het **geüploade .docx-formulier** aan (LESDOEL 1/2/3, situering). Het Thomas More-sjabloon zit niet in de repo; upload je eigen formulier lokaal.
 - Geen taalmodel betrokken.
 
 ---
@@ -258,7 +258,7 @@ Prompts instrueren expliciet: **verzin geen officiële leerplandoelcodes**; bij 
 
 1. **RAG-corpus is demo-seed** - geen volledige leerplanindex.  
 2. **Alle analyse vereist AI-keys** - zonder provider geen analyse.  
-3. **PDF-export** kan het formulier niet inline bewerken; alleen .docx wordt gepatcht.  
+3. **Word-export** vereist een geüpload .docx-formulier; PDF-bestanden worden niet geëxporteerd.  
 4. **Voice-reflectie** gebruikt het LLM voor “transcriptie” van audio, geen aparte Whisper-service.  
 5. **Geen fine-tuning** - alles via prompting + structured output op commerciële modellen.
 

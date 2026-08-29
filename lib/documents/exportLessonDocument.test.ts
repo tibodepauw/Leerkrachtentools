@@ -1,18 +1,10 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
+import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import {
   __testables,
   exportLessonDocument,
   patchLessonDocx,
 } from "@/lib/documents/exportLessonDocument";
-
-const sampleDocx = readFileSync(
-  path.join(
-    process.cwd(),
-    "test/fixtures/lesvoorbereiding-creatief-schrijven.docx",
-  ),
-);
 
 const sampleLesson = {
   topic: "creatief schrijven",
@@ -42,22 +34,73 @@ const sampleLesson = {
   lessonPreparation: "Volledige lesvoorbereidingstekst",
 };
 
+async function createMinimalLessonDocx(
+  paragraphs: Array<string | { label: string; value: string }>,
+) {
+  const body = paragraphs
+    .map((paragraph) => {
+      if (typeof paragraph === "string") {
+        return `<w:p><w:r><w:t xml:space="preserve">${paragraph}</w:t></w:r></w:p>`;
+      }
+
+      return `<w:p><w:r><w:t xml:space="preserve">${paragraph.label}</w:t></w:r><w:r><w:t xml:space="preserve">${paragraph.value}</w:t></w:r></w:p>`;
+    })
+    .join("");
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>${body}<w:sectPr/></w:body>
+</w:document>`;
+  const zip = new JSZip();
+  zip.file(
+    "[Content_Types].xml",
+    `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`,
+  );
+  zip.folder("_rels")!.file(
+    ".rels",
+    `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`,
+  );
+  zip.folder("word")!.file("document.xml", documentXml);
+  return Buffer.from(await zip.generateAsync({ type: "nodebuffer" }));
+}
+
 describe("exportLessonDocument", () => {
   it("updates LESDOEL-teksten in een geüpload formulier", async () => {
+    const sampleDocx = await createMinimalLessonDocx([
+      "Leergebied: Oud",
+      "Onderdeel: oud",
+      "Lesonderwerp: oud",
+      "D1: oud doel 1",
+      "D2: oud doel 2",
+      "D3: oud doel 3",
+      "LESDOEL 1 (MC): oud doel Gekoppeld aan minimumdoel: 1.2.12",
+    ]);
     const exported = await patchLessonDocx(sampleDocx, sampleLesson);
     const xml = exported.toString("utf8");
 
     expect(xml).toContain("De leerlingen kunnen een nieuw doel uit de app schrijven.");
     expect(xml).toContain("De leerlingen gebruiken beeldende bijvoeglijke naamwoorden.");
     expect(xml).toContain("De leerlingen schrijven vanuit het perspectief van een dier.");
-    expect(xml).not.toContain("Lescontext");
+    expect(xml).toContain("Leergebied: Nederlands");
   });
 
-  it("gebruikt het officiële sjabloon als er geen bronbestand is", async () => {
-    const exported = await exportLessonDocument(sampleLesson);
-    expect(exported.usedTemplate).toBe(true);
-    expect(exported.fileName).toContain("creatief-schrijven");
-    expect(exported.buffer.byteLength).toBeGreaterThan(0);
+  it("weigert export zonder geüpload bronbestand", async () => {
+    await expect(exportLessonDocument(sampleLesson)).rejects.toThrow(
+      /Upload eerst je lesvoorbereidingsformulier/i,
+    );
+  });
+
+  it("weigert export voor niet-docx bronbestanden", async () => {
+    await expect(
+      exportLessonDocument(sampleLesson, Buffer.from("pdf"), "les.pdf"),
+    ).rejects.toThrow(/Alleen een geüpload .docx-formulier/i);
   });
 });
 

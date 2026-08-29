@@ -29,6 +29,8 @@
 /data/minimumdoelen/
 /data/opstap/
 /data/go_nieuw/
+/data/templates/
+/test/fixtures/
 
 # misc
 .DS_Store
