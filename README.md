@@ -107,6 +107,15 @@ Dit schrijft `data/ovsg/ovsg_volledig.jsonl`, een metadata-sidecar en
 `ovsg_scrape_report.json`. Credentials horen in `.env.local` of als omgevingsvariabelen,
 nooit in de repository.
 
+Voor Op.stap (Katholiek Onderwijs) en het GO! nieuw leerplan:
+
+```bash
+python3 scripts/scrape_opstap_full.py
+python3 scripts/fetch_go_nieuw.py
+```
+
+Output: `data/opstap/opstap_volledig.jsonl` en `data/go_nieuw/go_nieuw_volledig.jsonl`.
+
 De marketingtoestemming staat standaard uit en kan na inloggen worden
 ingetrokken. Controleer vóór publieke lancering ook het privacybeleid,
 bewaartermijnen en de afmeldlink van toekomstige mailings.

@@ -27,6 +27,8 @@
 /data/go/
 /data/ovsg/
 /data/minimumdoelen/
+/data/opstap/
+/data/go_nieuw/
 
 # misc
 .DS_Store
