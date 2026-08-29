@@ -5,7 +5,7 @@ import {
 } from "@/lib/rag/fuzzyMatch";
 
 const CONTENT_TOKEN_WEIGHT = 3;
-const STOPWORD_TOKEN_WEIGHT = 0.12;
+const STOPWORD_TOKEN_WEIGHT = 0.1;
 const DEFAULT_TOKEN_WEIGHT = 1;
 
 const DIDACTIC_STOPWORDS = new Set([
@@ -43,6 +43,9 @@ const DIDACTIC_STOPWORDS = new Set([
   "om",
   "der",
   "des",
+  "maken",
+  "doen",
+  "gebruiken",
 ]);
 
 const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
@@ -97,6 +100,51 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
       "vulkaan",
     ],
   },
+  {
+    pattern:
+      /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|turn/i,
+    stems: [
+      "koprol",
+      "tuimel",
+      "roll",
+      "spring",
+      "klim",
+      "klauter",
+      "zwaai",
+      "turn",
+      "gymnast",
+      "balvaardig",
+      "werp",
+      "vang",
+      "loop",
+      "evenwicht",
+      "balanc",
+      "motor",
+      "beweg",
+      "grootmotor",
+      "lichaam",
+    ],
+  },
+  {
+    pattern:
+      /powerpoint|presentatie|presntatie|presenteren|spreekbeurt|slides|canva|digitaal|digitale media|computer|tablet|software|\bapp\b|voordragen|mondeling|toelichten|media/i,
+    stems: [
+      "powerpoint",
+      "present",
+      "presntat",
+      "spreekbeurt",
+      "slide",
+      "canva",
+      "digitaal",
+      "media",
+      "computer",
+      "tablet",
+      "software",
+      "voordrag",
+      "mondel",
+      "toelicht",
+    ],
+  },
 ];
 
 /** Canonical terms used to recover from typos via fuzzy matching. */
@@ -140,6 +188,44 @@ const CANONICAL_QUERY_TERMS: Array<{
     canonical: "kastelen",
     stems: ["kasteel", "burcht", "ridder", "middeleeuw", "erfgoed", "monument"],
   },
+  {
+    canonical: "koprol",
+    stems: ["koprol", "roll", "tuimel", "turn", "gymnast", "beweg", "balanc"],
+  },
+  {
+    canonical: "springen",
+    stems: ["spring", "klim", "klauter", "loop", "beweg", "grootmotor"],
+  },
+  {
+    canonical: "presentatie",
+    stems: [
+      "present",
+      "presntat",
+      "spreekbeurt",
+      "slide",
+      "powerpoint",
+      "canva",
+      "digitaal",
+      "media",
+      "voordrag",
+      "mondel",
+    ],
+  },
+  {
+    canonical: "presenteren",
+    stems: [
+      "present",
+      "presntat",
+      "spreekbeurt",
+      "slide",
+      "powerpoint",
+      "canva",
+      "digitaal",
+      "media",
+      "voordrag",
+      "mondel",
+    ],
+  },
 ];
 
 const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
@@ -177,6 +263,16 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
   },
   { pattern: /muziek|muzisch|zang/i, discipline: "Muzische vorming" },
   { pattern: /godsdienst/i, discipline: "Godsdienst" },
+  {
+    pattern:
+      /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|turn|lo\b/i,
+    discipline: "Lichamelijke opvoeding",
+  },
+  {
+    pattern:
+      /powerpoint|presentatie|presntatie|presenteren|spreekbeurt|slides|canva|digitaal|digitale media|computer|tablet|software|\bapp\b|voordragen|mondeling|toelichten|\bict\b/i,
+    discipline: "ICT",
+  },
 ];
 
 const FUZZY_MATCH_THRESHOLD = 0.72;
@@ -355,6 +451,27 @@ export function isZillDutchWritingCode(code: string): boolean {
   return /^TOsn\d/i.test(code.trim());
 }
 
+export function isZillMotorGrossCode(code: string): boolean {
+  return /^MZgm\d/i.test(code.trim());
+}
+
+export function isZillMotorBodyCode(code: string): boolean {
+  return /^MZlb\d/i.test(code.trim());
+}
+
+export function isZillMotorCode(code: string): boolean {
+  const trimmed = code.trim();
+  return /^MZ(?:gm|lb)\d/i.test(trimmed);
+}
+
+export function isZillMediaCode(code: string): boolean {
+  return /^ME(?:mw|ge|va|cr)\d/i.test(code.trim());
+}
+
+export function isZillDutchSpeakingCode(code: string): boolean {
+  return /^TOmn\d/i.test(code.trim());
+}
+
 function queryMatchesNatureTopic(query: string): boolean {
   return /zoogdier|zoogdieren|\bdieren\b|\bdier\b|planten|plant|\bbomen\b|\bboom\b|natuur|organismen|organisme|biotoop|leefwereld/i.test(
     normalizeQueryText(query),
@@ -369,6 +486,18 @@ function queryMatchesReadingTopic(query: string): boolean {
 
 function queryMatchesHistoryTopic(query: string): boolean {
   return /kasteel|kastelen|burcht|ridder|ridders|middeleeuw|vroeger|erfgoed|monument|historisch|tijdlijn|tijdvak|heerser|geschiedenis|vulkaan/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+function queryMatchesMotorTopic(query: string): boolean {
+  return /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|turn|\blo\b/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+function queryMatchesMediaTopic(query: string): boolean {
+  return /powerpoint|presentatie|presntatie|presenteren|spreekbeurt|slides|canva|digitaal|digitale media|computer|tablet|software|\bapp\b|voordragen|mondeling|toelichten|\bict\b|media/i.test(
     normalizeQueryText(query),
   );
 }
@@ -415,6 +544,36 @@ export function scoreCodePrefixBonus(query: string, code: string): number {
     }
   }
 
+  if (queryMatchesMotorTopic(query)) {
+    if (isZillMotorGrossCode(trimmedCode)) {
+      return 0.3;
+    }
+    if (isZillMotorBodyCode(trimmedCode)) {
+      return 0.3;
+    }
+    if (/^MZ/i.test(trimmedCode)) {
+      return 0.1;
+    }
+    if (/^RK/i.test(trimmedCode)) {
+      return -0.1;
+    }
+  }
+
+  if (queryMatchesMediaTopic(query)) {
+    if (isZillMediaCode(trimmedCode)) {
+      return 0.3;
+    }
+    if (isZillDutchSpeakingCode(trimmedCode)) {
+      return 0.28;
+    }
+    if (/^TOmf/i.test(trimmedCode)) {
+      return 0.08;
+    }
+    if (/^RK/i.test(trimmedCode)) {
+      return -0.1;
+    }
+  }
+
   return 0;
 }
 
@@ -450,7 +609,19 @@ export function scoreDisciplineBonus(
       combined.includes("schriftelijke taalvaardigheid")) ||
     (hint === "Nederlands" &&
       (combined.includes("nederlands") || combined.includes("taalontwikkeling"))) ||
-    (hint === "Wetenschap en techniek" && combined.includes("natuur"))
+    (hint === "Wetenschap en techniek" && combined.includes("natuur")) ||
+    (hint === "Lichamelijke opvoeding" &&
+      (combined.includes("lichamelijk") ||
+        combined.includes("motor") ||
+        combined.includes("beweg") ||
+        combined.includes("gym") ||
+        combined.includes("turn"))) ||
+    (hint === "ICT" &&
+      (combined.includes("ict") ||
+        combined.includes("media") ||
+        combined.includes("mediakundig") ||
+        combined.includes("digitaal") ||
+        combined.includes("computer")))
   ) {
     bonus += 0.22;
   } else if (discipline.trim() && bonus <= 0) {

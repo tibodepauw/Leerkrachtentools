@@ -11,6 +11,8 @@ import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
 import {
   countCurriculumTokenMatches,
   isZillMathThinkingCode,
+  isZillMediaCode,
+  isZillMotorCode,
   scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
@@ -71,6 +73,9 @@ const STOPWORDS = new Set([
   "er",
   "als",
   "om",
+  "maken",
+  "doen",
+  "gebruiken",
 ]);
 
 const loaded = new Map<string, RawRecord[]>();
@@ -257,6 +262,17 @@ function normalizeDiscipline(
     normalized.includes("wiskundig denken")
   ) {
     return subdomein ? `Wiskunde · ${subdomein}` : "Wiskunde";
+  }
+  if (
+    isZillMotorCode(code) ||
+    normalized.includes("motorische en zintuiglijke")
+  ) {
+    return subdomein
+      ? `Lichamelijke opvoeding · ${subdomein}`
+      : "Lichamelijke opvoeding";
+  }
+  if (isZillMediaCode(code) || normalized.includes("mediakundige")) {
+    return subdomein ? `ICT · ${subdomein}` : "ICT";
   }
   return discipline;
 }
