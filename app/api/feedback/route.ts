@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       message?: string;
       kind?: string;
       activeModule?: string;
+      anonymous?: boolean;
     };
 
     await sendFeedbackEmail({
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
       kind: body.kind,
       message: body.message ?? "",
       activeModule: body.activeModule,
+      anonymous: body.anonymous === true,
     });
 
     return NextResponse.json({

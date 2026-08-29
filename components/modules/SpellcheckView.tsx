@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCheck, Loader2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
@@ -60,11 +60,12 @@ export function SpellcheckView() {
   const [content, setContent] = useLessonPreparationText();
   const { analyze, result, loading, error } = useAnalysis<SpellcheckResult>();
   const [dismissedKeys, setDismissedKeys] = useState<Set<string>>(new Set());
+  const [trackedResult, setTrackedResult] = useState<typeof result>(null);
   const actionDisabled = loading || !content.trim();
-
-  useEffect(() => {
+  if (result !== trackedResult) {
+    setTrackedResult(result);
     setDismissedKeys(new Set());
-  }, [result]);
+  }
 
   const visibleIssues = useMemo(() => {
     if (!result) return [];

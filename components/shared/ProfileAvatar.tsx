@@ -1,7 +1,7 @@
 "use client";
 
 import { Camera, Loader2, Trash2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,47 +26,6 @@ function initials(name: string, email: string) {
     .join("");
 }
 
-function usePreloadedImage(url: string | null) {
-  const [displayUrl, setDisplayUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!url) {
-      setDisplayUrl(null);
-      setLoading(false);
-      return;
-    }
-
-    if (url === displayUrl) {
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    const image = new window.Image();
-    image.onload = () => {
-      if (!cancelled) {
-        setDisplayUrl(url);
-        setLoading(false);
-      }
-    };
-    image.onerror = () => {
-      if (!cancelled) {
-        if (!displayUrl) setDisplayUrl(null);
-        setLoading(false);
-      }
-    };
-    image.src = url;
-
-    return () => {
-      cancelled = true;
-    };
-  }, [url, displayUrl]);
-
-  return { displayUrl, loading: loading && Boolean(url) && url !== displayUrl };
-}
-
 export function ProfileAvatar({
   email,
   displayName,
@@ -78,15 +37,19 @@ export function ProfileAvatar({
   onProfileImageChange,
 }: ProfileAvatarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [imageUrl, setImageUrl] = useState(profileImageUrl ?? null);
+  const [localImageUrl, setLocalImageUrl] = useState<string | null | undefined>(
+    undefined,
+  );
+  const [trackedProfileImageUrl, setTrackedProfileImageUrl] =
+    useState(profileImageUrl);
+  if (profileImageUrl !== trackedProfileImageUrl) {
+    setTrackedProfileImageUrl(profileImageUrl);
+    setLocalImageUrl(undefined);
+  }
+  const imageUrl = localImageUrl !== undefined ? localImageUrl : (profileImageUrl ?? null);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const busy = uploading || removing;
-  const { displayUrl, loading: photoLoading } = usePreloadedImage(imageUrl);
-
-  useEffect(() => {
-    setImageUrl(profileImageUrl ?? null);
-  }, [profileImageUrl]);
 
   async function uploadPhoto(file?: File) {
     if (!file) return;
@@ -109,7 +72,7 @@ export function ProfileAvatar({
         throw new Error(payload.error ?? "Upload mislukt.");
       }
 
-      setImageUrl(payload.profileImageUrl);
+      setLocalImageUrl(payload.profileImageUrl);
       onProfileImageChange?.(payload.profileImageUrl);
       toast.success("Profielfoto opgeslagen.");
     } catch (error) {
@@ -132,7 +95,7 @@ export function ProfileAvatar({
         throw new Error(payload.error ?? "Verwijderen mislukt.");
       }
 
-      setImageUrl(null);
+      setLocalImageUrl(null);
       onProfileImageChange?.(null);
       toast.success("Profielfoto verwijderd.");
     } catch (error) {
@@ -151,14 +114,14 @@ export function ProfileAvatar({
         sizeClassName,
       )}
     >
-      {displayUrl ? (
+      {imageUrl ? (
         <img
-          src={displayUrl}
+          src={imageUrl}
           alt="Profielfoto"
           className="size-full object-cover"
           draggable={false}
         />
-      ) : photoLoading ? null : (
+      ) : (
         <span
           className={cn(
             "flex size-full items-center justify-center text-lg font-semibold text-white",

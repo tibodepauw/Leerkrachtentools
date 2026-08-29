@@ -30,12 +30,15 @@ export function SidebarFeedback({ userEmail }: { userEmail: string }) {
   const [kind, setKind] = useState<FeedbackKind>("idea");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submittingMode, setSubmittingMode] = useState<"named" | "anonymous" | null>(
+    null,
+  );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function submitFeedback(sendAnonymous: boolean) {
     setLoading(true);
+    setSubmittingMode(sendAnonymous ? "anonymous" : "named");
     setError("");
     setSuccess("");
 
@@ -47,6 +50,7 @@ export function SidebarFeedback({ userEmail }: { userEmail: string }) {
           kind,
           message,
           activeModule,
+          anonymous: sendAnonymous,
         }),
       });
       const payload = (await response.json()) as {
@@ -69,7 +73,13 @@ export function SidebarFeedback({ userEmail }: { userEmail: string }) {
       );
     } finally {
       setLoading(false);
+      setSubmittingMode(null);
     }
+  }
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    await submitFeedback(false);
   }
 
   return (
@@ -93,15 +103,15 @@ export function SidebarFeedback({ userEmail }: { userEmail: string }) {
             <span>Idee of feedback</span>
           </button>
         </DialogTrigger>
-        <DialogContent className="border-neutral-800 bg-neutral-950 sm:max-w-md">
+        <DialogContent className="border-neutral-800 bg-neutral-950 p-6 sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Idee of feedback</DialogTitle>
+            <DialogTitle className="text-lg">Idee of feedback</DialogTitle>
             <DialogDescription>
-              Deel een idee, bug of algemene feedback. We sturen dit door met
-              je ingelogde e-mailadres zodat we kunnen antwoorden.
+              Deel een idee, bug of algemene feedback. Kies zelf of je e-mailadres
+              meegestuurd wordt.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="feedback-kind">Type</Label>
               <Select
@@ -125,21 +135,37 @@ export function SidebarFeedback({ userEmail }: { userEmail: string }) {
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder="Beschrijf je idee, wat je mist, of wat niet goed werkt…"
-                rows={5}
+                rows={8}
                 maxLength={4000}
                 required
-                className="field-sizing-fixed min-h-[7rem] resize-y"
+                className="field-sizing-fixed min-h-[12rem] resize-y"
               />
               <p className="text-xs text-neutral-500">
-                Verstuurd als {userEmail}. Minstens 10 tekens.
+                Minstens 10 tekens. Kies hieronder of je anoniem verstuurt.
               </p>
             </div>
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
             {success ? <p className="text-sm text-emerald-400">{success}</p> : null}
-            <DialogFooter>
-              <Button type="submit" disabled={loading || message.trim().length < 10}>
-                {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-                Versturen
+            <DialogFooter className="gap-2 sm:justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || message.trim().length < 10}
+                onClick={() => void submitFeedback(true)}
+              >
+                {loading && submittingMode === "anonymous" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
+                Anoniem versturen
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading || message.trim().length < 10}
+              >
+                {loading && submittingMode === "named" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
+                Versturen als {userEmail.split("@")[0]}
               </Button>
             </DialogFooter>
           </form>

@@ -14,11 +14,13 @@ export async function sendFeedbackEmail({
   kind,
   message,
   activeModule,
+  anonymous = false,
 }: {
-  fromEmail: string;
+  fromEmail?: string;
   kind?: unknown;
   message: string;
   activeModule?: string;
+  anonymous?: boolean;
 }) {
   if (!isBrevoConfigured()) {
     throw new Error(
@@ -30,6 +32,9 @@ export async function sendFeedbackEmail({
   const normalizedKind = normalizeFeedbackKind(kind);
   const recipient = feedbackRecipientEmail();
   const kindLabel = feedbackKindLabel(normalizedKind);
+  const senderLine = anonymous
+    ? "Van: Anoniem"
+    : `Van: ${fromEmail?.trim() || "Onbekend"}`;
   const moduleLine = activeModule?.trim()
     ? `Actieve module: ${activeModule.trim()}`
     : "Actieve module: onbekend";
@@ -37,7 +42,7 @@ export async function sendFeedbackEmail({
   const text = [
     `Nieuwe ${kindLabel.toLowerCase()} via Leerkrachtentools`,
     "",
-    `Van: ${fromEmail}`,
+    senderLine,
     moduleLine,
     "",
     normalizedMessage,
@@ -45,14 +50,18 @@ export async function sendFeedbackEmail({
 
   const html = `<div style="font-family:Arial,sans-serif;max-width:640px;line-height:1.5">
     <h1 style="font-size:18px;margin:0 0 12px">Nieuwe ${escapeHtml(kindLabel.toLowerCase())}</h1>
-    <p style="margin:0 0 8px"><strong>Van:</strong> ${escapeHtml(fromEmail)}</p>
+    <p style="margin:0 0 8px"><strong>${escapeHtml(senderLine)}</strong></p>
     <p style="margin:0 0 16px"><strong>${escapeHtml(moduleLine)}</strong></p>
     <div style="white-space:pre-wrap;border:1px solid #ddd;border-radius:8px;padding:12px">${escapeHtml(normalizedMessage)}</div>
   </div>`;
 
+  const subjectSender = anonymous
+    ? "Anoniem"
+    : fromEmail?.trim() || "Onbekend";
+
   await sendBrevoEmail({
     to: recipient,
-    subject: `[Leerkrachtentools] ${kindLabel} van ${fromEmail}`,
+    subject: `[Leerkrachtentools] ${kindLabel}${anonymous ? " (anoniem)" : ""} van ${subjectSender}`,
     text,
     html,
   });
