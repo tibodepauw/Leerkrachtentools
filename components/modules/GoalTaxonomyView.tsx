@@ -71,7 +71,7 @@ export function GoalTaxonomyView() {
                   }
                 }}
                 disabled={actionDisabled}
-                disabledReason="Kies een doel met tekst of vul er eerst één in."
+                disabledReason={null}
               >
                 {loading ? (
                   <Loader2 className="size-4 animate-spin" />
