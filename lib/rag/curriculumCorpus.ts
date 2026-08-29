@@ -44,6 +44,8 @@ const STOPWORDS = new Set([
   "met",
   "kan",
   "kunnen",
+  "weten",
+  "kennen",
   "leerling",
   "leerlingen",
   "kleuters",
@@ -61,6 +63,14 @@ const STOPWORDS = new Set([
   "dan",
   "der",
   "des",
+  "wat",
+  "hoe",
+  "in",
+  "op",
+  "uit",
+  "er",
+  "als",
+  "om",
 ]);
 
 const loaded = new Map<string, RawRecord[]>();
@@ -393,8 +403,12 @@ export function findBestCorpusMatch({
     }
 
     const haystack = recordHaystack(raw);
-    const tokenMatches = countCurriculumTokenMatches(haystack, tokens);
-    const queryTokenMatches = countCurriculumTokenMatches(haystack, queryTokens);
+    const tokenMatches = countCurriculumTokenMatches(haystack, tokens, query);
+    const queryTokenMatches = countCurriculumTokenMatches(
+      haystack,
+      queryTokens,
+      query,
+    );
     if (
       queryTokenMatches < 1 &&
       (!relaxed || tokenMatches < MIN_LOCAL_TOKEN_MATCHES)

@@ -4,6 +4,47 @@ import {
   isFuzzySimilar,
 } from "@/lib/rag/fuzzyMatch";
 
+const CONTENT_TOKEN_WEIGHT = 3;
+const STOPWORD_TOKEN_WEIGHT = 0.12;
+const DEFAULT_TOKEN_WEIGHT = 1;
+
+const DIDACTIC_STOPWORDS = new Set([
+  "de",
+  "het",
+  "een",
+  "leerling",
+  "leerlingen",
+  "kunnen",
+  "weten",
+  "kennen",
+  "zijn",
+  "wat",
+  "hoe",
+  "in",
+  "op",
+  "van",
+  "met",
+  "kan",
+  "kleuters",
+  "deze",
+  "dat",
+  "voor",
+  "bij",
+  "worden",
+  "door",
+  "naar",
+  "ook",
+  "nog",
+  "als",
+  "dan",
+  "tot",
+  "uit",
+  "er",
+  "om",
+  "der",
+  "des",
+]);
+
 const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   {
     pattern: /vermenigvuld|vermeningvuld|maaltafel|maal[^a-z]|tafel/i,
@@ -40,6 +81,21 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   {
     pattern: /sleutelwoord|sleutelwoorden|tekst|alinea|lezen|begrijpend|woordbetekenis|woordkennis/i,
     stems: ["sleutelwoord", "tekst", "alinea", "lees", "begrip", "woord"],
+  },
+  {
+    pattern:
+      /kasteel|kastelen|burcht|ridder|ridders|middeleeuw|vroeger|erfgoed|monument|historisch|tijdlijn|vulkaan|heerser|tijdvak/i,
+    stems: [
+      "kasteel",
+      "burcht",
+      "ridder",
+      "middeleeuw",
+      "erfgoed",
+      "monument",
+      "histor",
+      "tijd",
+      "vulkaan",
+    ],
   },
 ];
 
@@ -80,6 +136,10 @@ const CANONICAL_QUERY_TERMS: Array<{
     canonical: "sleutelwoorden",
     stems: ["sleutelwoord", "tekst", "lees", "woord"],
   },
+  {
+    canonical: "kastelen",
+    stems: ["kasteel", "burcht", "ridder", "middeleeuw", "erfgoed", "monument"],
+  },
 ];
 
 const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
@@ -97,13 +157,22 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
     discipline: "Nederlands",
   },
   { pattern: /frans/i, discipline: "Frans" },
-  { pattern: /geschiedenis|tijdlijn|histor/i, discipline: "Geschiedenis" },
+  {
+    pattern:
+      /geschiedenis|tijdlijn|histor|kasteel|kastelen|burcht|ridder|middeleeuw|vroeger|erfgoed|monument|tijdvak|heerser/i,
+    discipline: "Geschiedenis",
+  },
+  {
+    pattern:
+      /kasteel|kastelen|burcht|ridder|middeleeuw|vroeger|erfgoed|monument|historisch|tijdlijn|tijdvak|heerser/i,
+    discipline: "Oriëntatie op tijd",
+  },
   {
     pattern: /zoogdier|zoogdieren|\bdieren\b|planten|bomen|natuur|organismen|biotoop|leefwereld/i,
     discipline: "Oriëntatie op natuur",
   },
   {
-    pattern: /wetenschap|techniek/i,
+    pattern: /wetenschap|techniek|vulkaan/i,
     discipline: "Wetenschap en techniek",
   },
   { pattern: /muziek|muzisch|zang/i, discipline: "Muzische vorming" },
@@ -125,6 +194,51 @@ function queryWords(value: string): string[] {
     .replace(/[^\p{Letter}\p{Number}\s]/gu, " ")
     .split(/\s+/)
     .filter((word) => word.length > 2);
+}
+
+/** Inhoudelijke kernwoorden uit de originele zoekopdracht (zelfstandige naamwoorden). */
+export function extractContentTokens(query: string): Set<string> {
+  const normalized = normalizeQueryText(query);
+  const tokens = new Set<string>();
+
+  for (const word of queryWords(normalized)) {
+    if (!DIDACTIC_STOPWORDS.has(word)) {
+      tokens.add(word);
+    }
+  }
+
+  for (const match of normalized.matchAll(/\b\d{1,7}\b/g)) {
+    tokens.add(match[0]);
+  }
+
+  return tokens;
+}
+
+function isContentToken(token: string, contentTokens: Set<string>): boolean {
+  if (contentTokens.has(token)) {
+    return true;
+  }
+
+  for (const content of contentTokens) {
+    if (
+      content.length >= 4 &&
+      (token.includes(content) || content.includes(token))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function tokenWeight(token: string, contentTokens: Set<string>): number {
+  if (DIDACTIC_STOPWORDS.has(token)) {
+    return STOPWORD_TOKEN_WEIGHT;
+  }
+  if (isContentToken(token, contentTokens)) {
+    return CONTENT_TOKEN_WEIGHT;
+  }
+  return DEFAULT_TOKEN_WEIGHT;
 }
 
 function expandFuzzyCanonicalStems(tokens: Set<string>, normalized: string): void {
@@ -161,33 +275,58 @@ export function tokenizeCurriculumQuery(value: string): Set<string> {
 
   expandFuzzyCanonicalStems(tokens, normalized);
 
+  for (const stopword of DIDACTIC_STOPWORDS) {
+    tokens.delete(stopword);
+  }
+
   return tokens;
 }
 
 export function countCurriculumTokenMatches(
   haystack: string,
   tokens: Set<string>,
+  query = "",
 ): number {
   const normalizedHaystack = normalizeQueryText(haystack);
-  let matches = 0;
+  const contentTokens = query ? extractContentTokens(query) : new Set<string>();
+  let weightedMatches = 0;
 
   for (const token of tokens) {
-    if (normalizedHaystack.includes(token)) {
-      matches += 1;
+    if (!normalizedHaystack.includes(token)) {
+      continue;
     }
+
+    weightedMatches += query
+      ? tokenWeight(token, contentTokens)
+      : DEFAULT_TOKEN_WEIGHT;
   }
 
-  return matches;
+  return weightedMatches;
 }
 
 export function scoreCurriculumOverlap(
   haystack: string,
   tokens: Set<string>,
+  query = "",
 ): number {
   if (tokens.size === 0) {
     return 0;
   }
-  return countCurriculumTokenMatches(haystack, tokens) / tokens.size;
+
+  const normalizedHaystack = normalizeQueryText(haystack);
+  const contentTokens = query ? extractContentTokens(query) : new Set<string>();
+  let weightedMatches = 0;
+  let totalWeight = 0;
+
+  for (const token of tokens) {
+    const weight = query ? tokenWeight(token, contentTokens) : DEFAULT_TOKEN_WEIGHT;
+    totalWeight += weight;
+    if (normalizedHaystack.includes(token)) {
+      weightedMatches += weight;
+    }
+  }
+
+  return totalWeight === 0 ? 0 : weightedMatches / totalWeight;
 }
 
 export function inferDisciplineFromQuery(query: string): string | null {
@@ -208,6 +347,10 @@ export function isZillNatureCode(code: string): boolean {
   return /^OWna\d/i.test(code.trim());
 }
 
+export function isZillTimeCode(code: string): boolean {
+  return /^OWti\d/i.test(code.trim());
+}
+
 export function isZillDutchWritingCode(code: string): boolean {
   return /^TOsn\d/i.test(code.trim());
 }
@@ -220,6 +363,12 @@ function queryMatchesNatureTopic(query: string): boolean {
 
 function queryMatchesReadingTopic(query: string): boolean {
   return /sleutelwoord|tekst|alinea|lezen|begrijpend|woordbetekenis|woordkennis/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+function queryMatchesHistoryTopic(query: string): boolean {
+  return /kasteel|kastelen|burcht|ridder|ridders|middeleeuw|vroeger|erfgoed|monument|historisch|tijdlijn|tijdvak|heerser|geschiedenis|vulkaan/i.test(
     normalizeQueryText(query),
   );
 }
@@ -251,6 +400,21 @@ export function scoreCodePrefixBonus(query: string, code: string): number {
     }
   }
 
+  if (queryMatchesHistoryTopic(query)) {
+    if (isZillTimeCode(trimmedCode)) {
+      return 0.3;
+    }
+    if (/^OWti/i.test(trimmedCode)) {
+      return 0.3;
+    }
+    if (/^OWbc/i.test(trimmedCode)) {
+      return 0.1;
+    }
+    if (/^RK/i.test(trimmedCode)) {
+      return -0.1;
+    }
+  }
+
   return 0;
 }
 
@@ -276,6 +440,12 @@ export function scoreDisciplineBonus(
     combined.includes("wiskundig denken") ||
     (isZillMathThinkingCode(code) && hint === "Wiskunde") ||
     (hint === "Oriëntatie op natuur" && combined.includes("natuur")) ||
+    (hint === "Oriëntatie op tijd" &&
+      (combined.includes("tijd") || combined.includes("wereld"))) ||
+    (hint === "Geschiedenis" &&
+      (combined.includes("geschiedenis") ||
+        combined.includes("tijd") ||
+        combined.includes("wereld"))) ||
     (hint === "Schriftelijke taalvaardigheid" &&
       combined.includes("schriftelijke taalvaardigheid")) ||
     (hint === "Nederlands" &&
@@ -306,9 +476,9 @@ export function scoreCurriculumCandidate({
   subdomein?: string;
 }): { score: number; tokenMatches: number } {
   const tokens = tokenizeCurriculumQuery(query);
-  const tokenMatches = countCurriculumTokenMatches(haystack, tokens);
-  const titelScore = scoreCurriculumOverlap(titel, tokens);
-  const contextScore = scoreCurriculumOverlap(haystack, tokens);
+  const tokenMatches = countCurriculumTokenMatches(haystack, tokens, query);
+  const titelScore = scoreCurriculumOverlap(titel, tokens, query);
+  const contextScore = scoreCurriculumOverlap(haystack, tokens, query);
 
   let score = Math.min(
     1.2,

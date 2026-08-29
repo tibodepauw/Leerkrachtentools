@@ -3,6 +3,7 @@ import {
   countCurriculumTokenMatches,
   inferDisciplineFromQuery,
   isZillMathThinkingCode,
+  scoreCurriculumOverlap,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
@@ -28,6 +29,7 @@ describe("curriculumQueryTokens", () => {
       countCurriculumTokenMatches(
         "De leerlingen kennen de maaltafels van 2 paraat",
         tokens,
+        "vermenigvuldigen",
       ),
     ).toBeGreaterThan(0);
   });
@@ -38,8 +40,30 @@ describe("curriculumQueryTokens", () => {
       countCurriculumTokenMatches(
         "De leerlingen kennen de maaltafels van 2 paraat",
         tokens,
+        "vermeningvuldigen",
       ),
     ).toBeGreaterThan(0);
+  });
+
+  it("weegt inhoudelijke kernwoorden zwaarder dan stopwoorden", () => {
+    const contentScore = scoreCurriculumOverlap(
+      "De leerlingen kennen kastelen en burchten in de middeleeuwen",
+      tokenizeCurriculumQuery("de leerlingen kunnen kastelen benoemen"),
+      "de leerlingen kunnen kastelen benoemen",
+    );
+    const stopwordOnlyScore = scoreCurriculumOverlap(
+      "De leerlingen kennen kastelen en burchten in de middeleeuwen",
+      tokenizeCurriculumQuery("de leerlingen kunnen"),
+      "de leerlingen kunnen",
+    );
+
+    expect(contentScore).toBeGreaterThan(stopwordOnlyScore);
+  });
+
+  it("herkent geschiedenis uit kastelen-query", () => {
+    expect(inferDisciplineFromQuery("kastelen in de middeleeuwen")).toBe(
+      "Geschiedenis",
+    );
   });
 
   it("herkent wiskunde uit reken-query", () => {
@@ -121,5 +145,16 @@ describe("searchLocalCorpus curriculum", () => {
 
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0]?.code.startsWith("TOsn")).toBe(true);
+  });
+
+  it("vindt OWti-doelen voor kastelen", () => {
+    const results = searchLocalCorpus({
+      query: "kastelen middeleeuwen",
+      network: "ZILL",
+      limit: 5,
+    });
+
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    expect(results.some((item) => item.code.startsWith("OWti"))).toBe(true);
   });
 });
