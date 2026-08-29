@@ -3,6 +3,10 @@ import type {
   CurriculumSearchResult,
 } from "@/types";
 import {
+  isAhovoksMinimumGoalCode,
+  normalizeAhovoksMinimumGoalResult,
+} from "@/lib/rag/ahovoksMinimumGoals";
+import {
   dedupeByMinimumGoalCode,
   recordsForNetwork,
   tokenize,
@@ -14,8 +18,8 @@ type RawRecord = Record<string, unknown>;
 export const MINIMUM_GOAL_CANDIDATE_LIMIT = 50;
 
 const MINIMUM_GOAL_CORPUS_NETWORKS: Array<
-  Exclude<CurriculumNetworkFilter, "ALL" | "ZILL" | "GO">
-> = ["OPSTAP", "OVSG", "GO_NIEUW"];
+  Exclude<CurriculumNetworkFilter, "ALL" | "ZILL" | "GO" | "OVSG" | "GO_NIEUW">
+> = ["OPSTAP"];
 
 const MIN_CANDIDATE_TOKEN_MATCHES = 1;
 const MIN_CANDIDATE_SCORE = 0.12;
@@ -94,43 +98,23 @@ function networkFromRaw(raw: RawRecord): CurriculumNetworkFilter | null {
   return null;
 }
 
-function leerjaarRouteFromRaw(raw: RawRecord): string {
-  const leerjaren = raw.leerjaren;
-  return asString(
-    raw.leerjaar_route ??
-      raw.fase ??
-      (Array.isArray(leerjaren)
-        ? leerjaren.map((item) => String(item)).join(", ")
-        : ""),
-  );
-}
-
 function normalizeMinimumGoal(raw: RawRecord) {
   const linked = raw.gelinkt_minimumdoel;
-  if (linked && typeof linked === "object") {
-    const record = linked as Record<string, unknown>;
-    const code = asString(record.code);
-    const tekst = asString(record.tekst);
-    if (!code && !tekst) {
-      return null;
-    }
-    return {
-      code,
-      tekst,
-      type: asString(record.type),
-    };
+  if (!linked || typeof linked !== "object") {
+    return null;
   }
 
-  const code = asString(raw.code);
-  const tekst = asString(raw.titel ?? raw.text ?? raw.title);
-  if (!code || !tekst) {
+  const record = linked as Record<string, unknown>;
+  const code = asString(record.code);
+  const tekst = asString(record.tekst);
+  if (!code || !tekst || !isAhovoksMinimumGoalCode(code)) {
     return null;
   }
 
   return {
     code,
     tekst,
-    type: asString(raw.type),
+    type: asString(record.type),
   };
 }
 
@@ -156,20 +140,21 @@ export function normalizeMinimumGoalCandidate(
   const discipline = asString(
     raw.discipline ?? raw.leergebied ?? raw.ontwikkelveld,
   );
-  const leerjaarRoute = leerjaarRouteFromRaw(raw);
 
-  return {
-    code: hasLinkedMinimum ? asString(raw.code) : "",
+  const candidate: CurriculumSearchResult = {
+    code: "",
     discipline,
     subdomein: asString(raw.subdomein ?? raw.domain ?? raw.component),
     titel: hasLinkedMinimum ? asString(raw.titel ?? raw.text ?? raw.title) : "",
     toelichting: hasLinkedMinimum ? asString(raw.toelichting ?? raw.description) : "",
-    leerjaarRoute,
+    leerjaarRoute: "",
     gelinktMinimumdoel: minimum,
     netwerk: network,
     bronUrl: asString(raw.bron_url ?? raw.sourceUrl ?? raw.source_url),
     verrijking: "corpus",
   };
+
+  return normalizeAhovoksMinimumGoalResult(candidate);
 }
 
 function candidateHaystack(record: CurriculumSearchResult): string {
@@ -280,6 +265,11 @@ export function collectMinimumGoalCandidates({
 export function sanitizeMinimumGoalForResponse<
   T extends CurriculumSearchResult & { score?: number },
 >(result: T): T {
+  const normalized = normalizeAhovoksMinimumGoalResult(result);
+  if (!normalized) {
+    return result;
+  }
+
   const {
     snippet: _snippet,
     sourceUri: _sourceUri,
@@ -288,10 +278,11 @@ export function sanitizeMinimumGoalForResponse<
     code: _code,
     toelichting: _toelichting,
     ...rest
-  } = result;
+  } = normalized;
 
   return {
     ...rest,
+    score: result.score,
     titel: "",
     code: "",
     toelichting: "",

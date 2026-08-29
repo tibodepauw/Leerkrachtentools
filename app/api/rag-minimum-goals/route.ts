@@ -13,6 +13,7 @@ import {
   mergeMinimumGoalCandidatePools,
   sanitizeMinimumGoalForResponse,
 } from "@/lib/rag/minimumGoalCandidates";
+import { normalizeAhovoksMinimumGoalResult } from "@/lib/rag/ahovoksMinimumGoals";
 import {
   MINIMUM_GOALS_TOP_N,
   rankMinimumGoalResults,
@@ -25,6 +26,25 @@ function hasMinimumGoal(
   gelinktMinimumdoel: NonNullable<CurriculumSearchResult["gelinktMinimumdoel"]>;
 } {
   return Boolean(result.gelinktMinimumdoel?.tekst);
+}
+
+function toAhovoksCandidates(
+  results: Array<CurriculumSearchResult & { score?: number }>,
+): Array<CurriculumSearchResult & { score: number }> {
+  return results
+    .map((result) => {
+      const normalized = normalizeAhovoksMinimumGoalResult(result);
+      if (!normalized) {
+        return null;
+      }
+      return {
+        ...normalized,
+        score: result.score ?? 0,
+      };
+    })
+    .filter(
+      (item): item is CurriculumSearchResult & { score: number } => item !== null,
+    );
 }
 
 export async function POST(request: Request) {
@@ -52,12 +72,14 @@ export async function POST(request: Request) {
         pageSize: 16,
       });
 
-      discoveryCandidates = discovery.hits
-        .map((hit) => enrichHitFromCorpus(hit, query, "ALL"))
-        .filter(
-          (item): item is CurriculumSearchResult & { score: number } =>
-            item !== null && isStructuredResult(item) && hasMinimumGoal(item),
-        );
+      discoveryCandidates = toAhovoksCandidates(
+        discovery.hits
+          .map((hit) => enrichHitFromCorpus(hit, query, "ALL"))
+          .filter(
+            (item): item is CurriculumSearchResult & { score: number } =>
+              item !== null && isStructuredResult(item) && hasMinimumGoal(item),
+          ),
+      );
     } catch {
       discoveryCandidates = [];
     }
@@ -82,8 +104,8 @@ export async function POST(request: Request) {
         alternatives,
         corpusNotice:
           merged.length > 0
-            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} bestpassende Vlaamse minimumdoelen — hoogste match bovenaan.`
-            : "Geen passend minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
+            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} decretale minimumdoelen (AHOVOKS) — hoogste match bovenaan.`
+            : "Geen passend decretale minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
         retrievalMode: "minimum-goals-hybrid",
       },
       provider: "jsonl-corpus+discovery-engine",

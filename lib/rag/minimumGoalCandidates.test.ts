@@ -7,19 +7,36 @@ import {
 import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
 
 describe("minimumGoalCandidates", () => {
-  it("normaliseert OVSG-records als zelfstandige minimumdoelen", () => {
+  it("slaat interne OVSG-codes over", () => {
+    expect(
+      normalizeMinimumGoalCandidate({
+        code: "WISget7B.19",
+        leergebied: "Wiskunde",
+        fase: "Fase 2",
+        titel:
+          "Doelmatig uit het hoofd natuurlijke getallen optellen met een som kleiner of gelijk aan 20.",
+        netwerk: "OVSG",
+      }),
+    ).toBeNull();
+  });
+
+  it("normaliseert OPSTAP-records naar AHOVOKS-weergave", () => {
     const record = normalizeMinimumGoalCandidate({
-      code: "WISget7B.19",
-      leergebied: "Wiskunde",
-      fase: "Fase 2",
-      titel:
-        "Doelmatig uit het hoofd natuurlijke getallen optellen met een som kleiner of gelijk aan 20.",
-      netwerk: "OVSG",
+      code: "2.2.GL1.16",
+      discipline: "Wiskunde",
+      titel: "Leerplandoel",
+      leerjaar_route: "1ste leerjaar (G)",
+      gelinkt_minimumdoel: {
+        code: "4-2.2.16",
+        tekst: "De leerlingen kennen paraat de optellingen tot en met 20.",
+        type: "",
+      },
+      netwerk: "OPSTAP",
     });
 
-    expect(record?.gelinktMinimumdoel?.code).toBe("WISget7B.19");
-    expect(record?.gelinktMinimumdoel?.tekst).toContain("optellen");
-    expect(record?.titel).toBe("");
+    expect(record?.gelinktMinimumdoel?.code).toBe("2.2.16");
+    expect(record?.gelinktMinimumdoel?.rawCode).toBe("4-2.2.16");
+    expect(record?.leerjaarRoute).toBe("4de leerjaar (ijkpunt)");
   });
 
   it("haalt brede kandidaten op voor optellen tot 20", () => {
@@ -29,17 +46,16 @@ describe("minimumGoalCandidates", () => {
     });
 
     expect(candidates.length).toBeGreaterThanOrEqual(10);
+    expect(candidates.every((item) => item.gelinktMinimumdoel?.rawCode)).toBe(
+      true,
+    );
 
     const ranked = rankMinimumGoalResults("optellen tot 20", candidates, 3);
     expect(ranked.length).toBeGreaterThanOrEqual(3);
 
-    const topText = ranked
-      .map((item) => item.gelinktMinimumdoel?.tekst ?? "")
-      .join(" ")
-      .toLowerCase();
-
-    expect(topText).toMatch(/20/);
-    expect(topText).not.toMatch(/10 000|10000/);
+    const topCodes = ranked.map((item) => item.gelinktMinimumdoel?.code);
+    expect(topCodes[0]).toBe("2.2.16");
+    expect(topCodes.every((code) => code && !code.startsWith("WIS"))).toBe(true);
   });
 
   it("combineert meerdere pools zonder duplicaten op code", () => {

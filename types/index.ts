@@ -96,6 +96,9 @@ export interface LinkedMinimumGoal {
   code: string;
   tekst: string;
   type: string;
+  rawCode?: string;
+  ijkpuntLabel?: string;
+  ijkpuntShort?: string;
 }
 
 export interface CurriculumSearchResult {

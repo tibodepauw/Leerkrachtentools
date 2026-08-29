@@ -34,6 +34,7 @@ import {
   formatMinimumGoalCopyText,
   networkBadgeLabel,
 } from "@/lib/rag/curriculumDisplay";
+import { formatAhovoksMinimumGoalCopy } from "@/lib/rag/ahovoksMinimumGoals";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
@@ -79,10 +80,10 @@ const variantCopy: Record<
   minimumdoel: {
     title: "Minimumdoelen zoeken",
     description:
-      "Zoekt het bestpassende Vlaamse minimumdoel bij je ingegeven lesdoel — netwerk-onafhankelijk, over alle officiële bronnen.",
+      "Zoekt het bestpassende Vlaamse decretale minimumdoel (AHOVOKS) bij je ingegeven lesdoel — 4de ijkpunt, 6de einddoel of kleuter K-codes.",
     action: "Zoek minimumdoel",
     empty:
-      "Minimumdoelkaarten met code en officiële doelzin verschijnen hier na je zoekopdracht.",
+      "Decretale minimumdoelkaarten met code, ijkpunt en doelzin verschijnen hier na je zoekopdracht.",
   },
 };
 
@@ -184,20 +185,20 @@ function MinimumGoalCard({
   onAddToLesson,
   rank,
   isBestMatch = false,
-  isAlternative = false,
 }: {
   result: CurriculumSearchResult;
   onAddToLesson: (text: string) => void;
   rank: number;
   isBestMatch?: boolean;
-  isAlternative?: boolean;
 }) {
   const minimum = result.gelinktMinimumdoel;
   if (!minimum?.tekst) {
     return null;
   }
 
-  const minimumCopy = formatMinimumGoalCopyText(minimum);
+  const minimumCopy = formatAhovoksMinimumGoalCopy(minimum);
+  const ijkpuntLabel =
+    minimum.ijkpuntLabel ?? result.leerjaarRoute ?? "Decretaal minimumdoel";
 
   function handleAddToLesson() {
     onAddToLesson(minimumCopy);
@@ -212,28 +213,26 @@ function MinimumGoalCard({
           : "border-emerald-900/40 bg-emerald-950/5"
       }
     >
-      <CardHeader className="space-y-2 pb-3">
+      <CardHeader className="space-y-3 pb-3">
         <div className="flex flex-wrap items-center gap-2">
           {isBestMatch ? (
             <Badge className="bg-emerald-700 text-white hover:bg-emerald-700">
-              Beste match
+              Beste match #{rank}
             </Badge>
-          ) : isAlternative ? (
-            <Badge variant="outline">Alternatief</Badge>
           ) : (
-            <Badge variant="outline">#{rank}</Badge>
+            <Badge variant="outline">Alternatief #{rank}</Badge>
           )}
-          {result.leerjaarRoute ? (
-            <span className="text-xs text-neutral-500">{result.leerjaarRoute}</span>
+          <Badge variant="secondary">{ijkpuntLabel}</Badge>
+          {result.discipline ? (
+            <span className="text-xs font-medium text-neutral-300">
+              {result.discipline}
+            </span>
           ) : null}
         </div>
         {minimum.code ? (
-          <p className="font-mono text-sm font-bold tracking-tight text-emerald-200">
+          <p className="font-mono text-xl font-bold tracking-tight text-emerald-100">
             {minimum.code}
           </p>
-        ) : null}
-        {result.discipline ? (
-          <p className="text-xs font-medium text-neutral-400">{result.discipline}</p>
         ) : null}
       </CardHeader>
 
@@ -241,7 +240,7 @@ function MinimumGoalCard({
         <p className="text-sm leading-6 text-neutral-100">{minimum.tekst}</p>
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
+          <CopyButton value={minimumCopy} label="📋 Minimumdoel kopiëren" />
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
             <Plus className="size-4" />
             Toevoegen aan Actieve les
@@ -333,8 +332,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 </p>
               ) : (
                 <p className="text-xs text-neutral-500">
-                  Minimumdoelen zijn netwerk-onafhankelijk. We zoeken automatisch
-                  het bestpassende Vlaamse minimumdoel bij je ingegeven lesdoel.
+                  We tonen uitsluitend decretale minimumdoelen op vaste ijkpunten:
+                  4de leerjaar, 6de leerjaar of kleuter (K-codes).
                 </p>
               )}
             </div>
@@ -386,7 +385,6 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       onAddToLesson={setText}
                       rank={index + 1}
                       isBestMatch={index === 0}
-                      isAlternative={index > 0}
                     />
                   ) : (
                     <GoalCard

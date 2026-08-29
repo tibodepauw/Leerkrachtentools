@@ -1,4 +1,5 @@
 import type { CurriculumSearchResult } from "@/types";
+import { ahovoksMetaFromGoal } from "@/lib/rag/ahovoksMinimumGoals";
 import { dedupeByMinimumGoalCode } from "@/lib/rag/curriculumCorpus";
 
 export const MINIMUM_GOALS_TOP_N = 3;
@@ -87,21 +88,28 @@ function goalHaystack(result: CurriculumSearchResult): string {
     .join(" ");
 }
 
-function earlyGradeBonus(queryPrimary: number | null, route: string): number {
-  if (queryPrimary === null || queryPrimary > 100) {
+function ijkpuntBonus(
+  goal: CurriculumSearchResult["gelinktMinimumdoel"],
+  primary: number | null,
+): number {
+  const parsed = ahovoksMetaFromGoal(goal);
+  if (!parsed || primary === null) {
     return 0;
   }
-  const normalized = route.toLocaleLowerCase("nl-BE");
-  if (
-    /1ste leerjaar|2de leerjaar|kleuter|fase 1|fase 2|3de kleuter|jongste kleuter|2de kleuter/i.test(
-      normalized,
-    )
-  ) {
+
+  if (parsed.ijkpunt === "4de" && primary <= 100) {
     return 0.14;
   }
-  if (/4de leerjaar|5de leerjaar|6de leerjaar|10\s*000|10000/i.test(normalized)) {
-    return -0.18;
+  if (parsed.ijkpunt === "6de" && primary <= 100) {
+    return -0.22;
   }
+  if (parsed.ijkpunt === "kleuter" && primary <= 20) {
+    return 0.12;
+  }
+  if (parsed.ijkpunt === "6de" && primary >= 1000) {
+    return 0.1;
+  }
+
   return 0;
 }
 
@@ -225,7 +233,7 @@ export function applyMinimumGoalRangeBonus(
     }
 
     score += titelRangeBonus(query, result, primary);
-    score += earlyGradeBonus(primary, result.leerjaarRoute);
+    score += ijkpuntBonus(result.gelinktMinimumdoel, primary);
 
     if (
       queryLower.includes("optell") &&
@@ -233,14 +241,6 @@ export function applyMinimumGoalRangeBonus(
       textNumbers.includes(primary)
     ) {
       score += 0.2;
-    }
-
-    if (
-      !result.titel.trim() &&
-      minimumLower.includes("optell") &&
-      textNumbers.includes(primary)
-    ) {
-      score += 0.3;
     }
   } else if (signals.numbers.length > 0) {
     const sharedNumbers = signals.numbers.filter((value) =>
