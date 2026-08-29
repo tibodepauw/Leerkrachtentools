@@ -4,9 +4,9 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
-## [0.1.0] — 2026-08-29
+## [5.8.2] — 2026-08-29
 
-First tagged release. The app is a full lesson-preparation workflow for Thomas More BALO students with a shared active lesson, official curriculum RAG, and didactic quality tools.
+Current stable release. The app is a full lesson-preparation workflow for Thomas More BALO students with a shared active lesson, official curriculum RAG, and didactic quality tools.
 
 ### Added
 
