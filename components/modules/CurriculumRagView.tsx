@@ -5,12 +5,19 @@ import {
   ExternalLink,
   Landmark,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,116 +30,259 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAnalysis } from "@/hooks/useAnalysis";
-import { formatGoalMetadata } from "@/lib/rag/curriculumDisplay";
+import { formatSearchResultMetadata } from "@/lib/rag/curriculumDisplay";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
-import type {
-  CurriculumGoal,
-  EducationNetwork,
-} from "@/types";
+import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
+import { useState } from "react";
 
-type GoalSource = CurriculumGoal["source"];
-type MatchedGoal = (CurriculumGoal & { score: number }) | "niet gevonden";
+type SearchVariant = "leerplandoel" | "minimumdoel";
 
 interface MatcherResult {
-  goal: MatchedGoal;
-  alternatives: Array<CurriculumGoal & { score: number }>;
+  goal: CurriculumSearchResult | "niet gevonden";
+  alternatives: CurriculumSearchResult[];
+  summary: string;
+  citations: Array<{ title?: string; uri?: string; startIndex?: number }>;
+  totalSize: number;
   corpusNotice: string;
+  retrievalMode: string;
 }
 
-const sourceCopy: Record<
-  GoalSource,
+const NETWORK_OPTIONS: Array<{
+  value: CurriculumNetworkFilter;
+  label: string;
+}> = [
+  { value: "ALL", label: "Alle netwerken" },
+  { value: "OPSTAP", label: "Op.stap · Katholiek onderwijs" },
+  { value: "OVSG", label: "OVSG · LeerLokaal" },
+  { value: "GO_NIEUW", label: "GO! · Nieuw leerplan" },
+  { value: "ZILL", label: "ZILL · Katholiek onderwijs" },
+  { value: "GO", label: "GO! · Legacy leerplan" },
+];
+
+const variantCopy: Record<
+  SearchVariant,
   {
     title: string;
     description: string;
     resultTitle: string;
     action: string;
     empty: string;
+    defaultNetwork: CurriculumNetworkFilter;
   }
 > = {
   leerplandoel: {
-    title: "Leerplandoelen matcher",
+    title: "Leerplandoelen zoeken",
     description:
-      "Zoekt uitsluitend in geïndexeerde leerplandoelen van het gekozen onderwijsnet. Er wordt niets verzonnen: elk resultaat komt letterlijk uit de bronindex met code en officiële tekst.",
-    resultTitle: "Leerplandoel",
+      "Zoekt semantisch in de geïndexeerde leerplandoelen via Google Discovery Engine, verrijkt met officiële codes, disciplines en doelzinnen uit de corpus.",
+    resultTitle: "Beste match",
     action: "Zoek leerplandoel",
-    empty:
-      "De beste match en alternatieven met score verschijnen hier.",
+    empty: "Zoekresultaten met doelcode, discipline en doelzin verschijnen hier.",
+    defaultNetwork: "ALL",
   },
   minimumdoel: {
-    title: "Minimumdoelen matcher",
+    title: "Minimumdoelen zoeken",
     description:
-      "Zoekt uitsluitend in geïndexeerde minimumdoelen van de Vlaamse overheid. Er wordt niets verzonnen: elk resultaat komt letterlijk uit de bronindex met code, leerjaar en officiële tekst.",
-    resultTitle: "Minimumdoel Vlaamse overheid",
+      "Zoekt in dezelfde curriculumindex met focus op gekoppelde Vlaamse minimumdoelen. Filter optioneel op onderwijsnet.",
+    resultTitle: "Beste match · minimumdoel",
     action: "Zoek minimumdoel",
     empty:
-      "De beste match en alternatieven met score verschijnen hier.",
+      "Gekoppelde minimumdoelen en alternatieven verschijnen hier na je zoekopdracht.",
+    defaultNetwork: "ALL",
   },
 };
 
-function GoalCard({
+function networkLabel(value: string): string {
+  return NETWORK_OPTIONS.find((option) => option.value === value)?.label ?? value;
+}
+
+function ResultCard({
   title,
-  match,
+  result,
   subdued = false,
+  emphasizeMinimum = false,
 }: {
   title: string;
-  match: MatchedGoal;
+  result: CurriculumSearchResult;
   subdued?: boolean;
+  emphasizeMinimum?: boolean;
 }) {
-  if (match === "niet gevonden") {
-    return (
-      <Card className="border-orange-900/60">
-        <CardHeader>
-          <CardTitle className="text-sm">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Badge variant="outline">Niet gevonden</Badge>
-        </CardContent>
-      </Card>
-    );
-  }
+  const copyValue = [
+    result.code,
+    result.titel,
+    result.gelinktMinimumdoel
+      ? `${result.gelinktMinimumdoel.code} — ${result.gelinktMinimumdoel.tekst}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return (
     <Card className={subdued ? "border-neutral-800/80" : undefined}>
-      <CardHeader className="space-y-2">
+      <CardHeader className="space-y-3">
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="text-sm">{title}</CardTitle>
-          <Badge variant={subdued ? "outline" : "secondary"}>
-            {Math.round(match.score * 100)}%
-          </Badge>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {result.netwerk && result.netwerk !== "ALL" ? (
+              <Badge variant="outline">{networkLabel(result.netwerk)}</Badge>
+            ) : null}
+            {typeof result.score === "number" ? (
+              <Badge variant={subdued ? "outline" : "secondary"}>
+                {Math.round(result.score * 100)}%
+              </Badge>
+            ) : null}
+          </div>
         </div>
-        <p className="font-mono text-xs text-neutral-500">{match.code}</p>
+        {result.code ? (
+          <p className="font-mono text-xs text-neutral-500">{result.code}</p>
+        ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm leading-6">{match.text}</p>
-        <p className="text-xs text-neutral-500">{formatGoalMetadata(match)}</p>
-        <p className="text-xs text-neutral-600">
-          Thema: {match.subject} · {match.approvalStatus}
+        {result.discipline ? (
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">
+            {result.discipline}
+            {result.subdomein ? ` · ${result.subdomein}` : ""}
+          </p>
+        ) : null}
+
+        <p className="text-sm leading-6">{result.titel}</p>
+
+        {result.toelichting ? (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="toelichting" className="border-neutral-800">
+              <AccordionTrigger className="py-2 text-xs text-neutral-400">
+                Toelichting
+              </AccordionTrigger>
+              <AccordionContent className="text-sm leading-6 text-neutral-300">
+                {result.toelichting}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        ) : null}
+
+        {result.gelinktMinimumdoel ? (
+          <div
+            className={
+              emphasizeMinimum
+                ? "rounded-lg border border-emerald-900/50 bg-emerald-950/20 p-3"
+                : "rounded-lg border border-neutral-800 bg-neutral-950/60 p-3"
+            }
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Gekoppeld minimumdoel
+            </p>
+            {result.gelinktMinimumdoel.code ? (
+              <p className="mt-1 font-mono text-xs text-neutral-500">
+                {result.gelinktMinimumdoel.code}
+              </p>
+            ) : null}
+            <p className="mt-2 text-sm leading-6">
+              {result.gelinktMinimumdoel.tekst}
+            </p>
+          </div>
+        ) : null}
+
+        <p className="text-xs text-neutral-500">
+          {formatSearchResultMetadata(result)}
         </p>
+
         <div className="flex flex-wrap gap-2">
-          <CopyButton value={`${match.code} — ${match.text}`} />
-          <Button variant="outline" size="sm" asChild>
-            <a href={match.sourceUrl} target="_blank" rel="noreferrer">
-              Officiële bron <ExternalLink className="size-3" />
-            </a>
-          </Button>
+          <CopyButton value={copyValue} />
+          {result.bronUrl ? (
+            <Button variant="outline" size="sm" asChild>
+              <a href={result.bronUrl} target="_blank" rel="noreferrer">
+                Officiële bron <ExternalLink className="size-3" />
+              </a>
+            </Button>
+          ) : null}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function GoalMatcher({ source }: { source: GoalSource }) {
-  const copy = sourceCopy[source];
+function SummaryCard({
+  summary,
+  citations,
+  totalSize,
+}: {
+  summary: string;
+  citations: MatcherResult["citations"];
+  totalSize: number;
+}) {
+  if (!summary) {
+    return null;
+  }
+
+  return (
+    <Card className="border-violet-900/40 bg-violet-950/10">
+      <CardHeader className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4 text-violet-400" />
+          <CardTitle className="text-sm">AI-samenvatting</CardTitle>
+        </div>
+        <p className="text-xs text-neutral-500">
+          Gebaseerd op {totalSize} document{totalSize === 1 ? "" : "en"} in de
+          datastore
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm leading-6 text-neutral-200">{summary}</p>
+        {citations.length > 0 ? (
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              Bronverwijzingen
+            </p>
+            <ul className="space-y-1 text-xs text-neutral-400">
+              {citations.map((citation, index) => (
+                <li key={`${citation.uri ?? citation.title ?? index}`}>
+                  {citation.uri ? (
+                    <a
+                      href={citation.uri}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-2 hover:text-neutral-200"
+                    >
+                      {citation.title ?? citation.uri}
+                    </a>
+                  ) : (
+                    (citation.title ?? `Bron ${index + 1}`)
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CurriculumSearch({ variant }: { variant: SearchVariant }) {
+  const copy = variantCopy[variant];
   const lesson = useLessonStore((state) => state.lesson);
-  const setNetwork = useLessonStore((state) => state.setNetwork);
+  const [network, setNetwork] = useState<CurriculumNetworkFilter>(
+    variant === "leerplandoel"
+      ? mapEducationNetwork(lesson.educationNetwork)
+      : copy.defaultNetwork,
+  );
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
-  const analysisScope = `${source}:${selectedId}:${text.trim()}`;
+  const analysisScope = `${variant}:${network}:${selectedId}:${text.trim()}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
-  const Icon = source === "minimumdoel" ? Landmark : BookOpenCheck;
+  const Icon = variant === "minimumdoel" ? Landmark : BookOpenCheck;
+
+  const primaryGoal =
+    result?.data.goal === "niet gevonden" ? null : result?.data.goal ?? null;
+
+  const alternatives =
+    variant === "minimumdoel" && result
+      ? result.data.alternatives.filter(
+          (item) => item.gelinktMinimumdoel?.tekst,
+        )
+      : (result?.data.alternatives ?? []);
 
   return (
     <ModuleShell
@@ -142,39 +292,29 @@ function GoalMatcher({ source }: { source: GoalSource }) {
         <ModuleInputLayout
           fields={
             <div className="space-y-5">
-              {source === "leerplandoel" ? (
-                <div className="space-y-2">
-                  <Label>Onderwijsnet</Label>
-                  <Select
-                    value={lesson.educationNetwork}
-                    onValueChange={(value) =>
-                      setNetwork(value as EducationNetwork)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ZILL">
-                        Katholiek Onderwijs · ZILL
+              <div className="space-y-2">
+                <Label>Onderwijsnet</Label>
+                <Select
+                  value={network}
+                  onValueChange={(value) =>
+                    setNetwork(value as CurriculumNetworkFilter)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NETWORK_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
                       </SelectItem>
-                      <SelectItem value="OVSG">OVSG · LeerLokaal</SelectItem>
-                      <SelectItem value="GO">GO!</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-neutral-800 p-3 text-sm">
-                  <p className="font-medium">Bronniveau: Vlaamse overheid</p>
-                  <p className="mt-1 text-xs leading-5 text-neutral-500">
-                    Minimumdoelen gelden over de onderwijsnetten heen. Daarom hoef
-                    je hier geen onderwijsnet te kiezen.
-                  </p>
-                </div>
-              )}
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <LessonGoalSelector
-                id={`${source}-goal`}
+                id={`${variant}-goal`}
                 label="Kies een actief lesdoel"
                 goals={goals}
                 selectedId={selectedId}
@@ -199,12 +339,7 @@ function GoalMatcher({ source }: { source: GoalSource }) {
                 onClick={() =>
                   analyze("/api/rag-curriculum", {
                     goal: text,
-                    source,
-                    network:
-                      source === "leerplandoel"
-                        ? lesson.educationNetwork
-                        : undefined,
-                    schoolYear: lesson.referenceSchoolYear,
+                    network,
                   })
                 }
               >
@@ -222,29 +357,48 @@ function GoalMatcher({ source }: { source: GoalSource }) {
       output={
         result ? (
           <div className="space-y-4">
-            <GoalCard
-              title={
-                source === "leerplandoel"
-                  ? `Beste match · ${lesson.educationNetwork}`
-                  : "Beste match · Vlaamse overheid"
-              }
-              match={result.data.goal}
-            />
-            {result.data.alternatives.length > 0 ? (
+            {result.data.summary ? (
+              <SummaryCard
+                summary={result.data.summary}
+                citations={result.data.citations}
+                totalSize={result.data.totalSize}
+              />
+            ) : null}
+
+            {primaryGoal ? (
+              <ResultCard
+                title={copy.resultTitle}
+                result={primaryGoal}
+                emphasizeMinimum={variant === "minimumdoel"}
+              />
+            ) : (
+              <Card className="border-orange-900/60">
+                <CardHeader>
+                  <CardTitle className="text-sm">{copy.resultTitle}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Badge variant="outline">Niet gevonden</Badge>
+                </CardContent>
+              </Card>
+            )}
+
+            {alternatives.length > 0 ? (
               <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
                   Alternatieven
                 </p>
-                {result.data.alternatives.map((alternative, index) => (
-                  <GoalCard
-                    key={alternative.id}
+                {alternatives.map((alternative, index) => (
+                  <ResultCard
+                    key={`${alternative.code}-${alternative.titel}-${index}`}
                     title={`Alternatief ${index + 2}`}
-                    match={alternative}
+                    result={alternative}
                     subdued
+                    emphasizeMinimum={variant === "minimumdoel"}
                   />
                 ))}
               </div>
             ) : null}
+
             <p className="rounded-md border border-neutral-800 bg-neutral-950 p-3 text-xs leading-5 text-neutral-500">
               {result.data.corpusNotice}
             </p>
@@ -257,10 +411,19 @@ function GoalMatcher({ source }: { source: GoalSource }) {
   );
 }
 
+function mapEducationNetwork(
+  network: "ZILL" | "OVSG" | "GO",
+): CurriculumNetworkFilter {
+  if (network === "GO") {
+    return "GO_NIEUW";
+  }
+  return network;
+}
+
 export function CurriculumRagView() {
-  return <GoalMatcher source="leerplandoel" />;
+  return <CurriculumSearch variant="leerplandoel" />;
 }
 
 export function MinimumGoalsView() {
-  return <GoalMatcher source="minimumdoel" />;
+  return <CurriculumSearch variant="minimumdoel" />;
 }

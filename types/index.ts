@@ -1,4 +1,11 @@
 export type EducationNetwork = "ZILL" | "OVSG" | "GO";
+export type CurriculumNetworkFilter =
+  | "ALL"
+  | "OPSTAP"
+  | "OVSG"
+  | "GO_NIEUW"
+  | "ZILL"
+  | "GO";
 export type GoalTaxonomy = "MC" | "DAS" | "SPM";
 export type ModuleId =
   | "active-lesson"
@@ -83,6 +90,27 @@ export interface ManualExtraction {
   targetGroup: string;
   materials: string[];
   rawPublisherGoals: string[];
+}
+
+export interface LinkedMinimumGoal {
+  code: string;
+  tekst: string;
+  type: string;
+}
+
+export interface CurriculumSearchResult {
+  code: string;
+  discipline: string;
+  subdomein: string;
+  titel: string;
+  toelichting: string;
+  leerjaarRoute: string;
+  gelinktMinimumdoel: LinkedMinimumGoal | null;
+  netwerk: string;
+  bronUrl: string;
+  snippet?: string;
+  sourceUri?: string;
+  score?: number;
 }
 
 export interface CurriculumGoal {

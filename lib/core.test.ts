@@ -3,7 +3,10 @@ import {
   enforceThomasMoreDialogue,
   isStrictThomasMoreDialogue,
 } from "@/lib/ai/dialogue";
-import { searchCurriculum } from "@/lib/rag/vectorSearch";
+import {
+  extractCodeFromSnippet,
+  searchLocalCorpus,
+} from "@/lib/rag/curriculumCorpus";
 import { parsePhaseMinutes, sumPhaseMinutes } from "@/lib/timing";
 
 describe("deterministische timing", () => {
@@ -43,32 +46,14 @@ describe("Thomas More dialoog", () => {
   });
 });
 
-describe("lokale leerplandoelenindex", () => {
-  it("vindt het tijdlijndoel in minimumdoelen en ZILL", () => {
-    const query = "De leerlingen situeren de Romeinen op een tijdlijn";
-    const minimum = searchCurriculum({
-      query,
-      schoolYear: "2025-2026",
-      source: "minimumdoel",
-    });
-    const zill = searchCurriculum({
-      query,
-      schoolYear: "2025-2026",
-      source: "leerplandoel",
-      network: "ZILL",
-    });
-    expect(minimum[0].goal.code).toBe("MM 3.8");
-    expect(zill[0].goal.code).toBe("OWti3");
-    expect(zill[0].score).toBeGreaterThan(0.4);
+describe("lokale curriculumcorpus", () => {
+  it("haalt doelcodes uit Discovery-snippets", () => {
+    expect(extractCodeFromSnippet("Leerplandoel OWti3 over tijdlijnen")).toBe(
+      "OWti3",
+    );
   });
 
-  it("houdt toekomstplannen uit actieve resultaten", () => {
-    const results = searchCurriculum({
-      query: "nieuw kennisrijk leerplan",
-      schoolYear: "2025-2026",
-      source: "leerplandoel",
-      network: "GO",
-    });
-    expect(results.some((item) => item.goal.status === "future")).toBe(false);
+  it("geeft lege resultaten bij lege query", () => {
+    expect(searchLocalCorpus({ query: "  ", network: "ALL" })).toEqual([]);
   });
 });

@@ -4,76 +4,109 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import {
-  searchCurriculum,
-} from "@/lib/rag/vectorSearch";
-import type { CurriculumGoal, EducationNetwork } from "@/types";
+  searchDiscoveryEngine,
+} from "@/lib/rag/discoveryEngine";
+import {
+  enrichHitFromCorpus,
+  searchLocalCorpus,
+} from "@/lib/rag/curriculumCorpus";
+import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
 
-const networks = new Set(["ZILL", "OVSG", "GO"]);
-const MATCH_THRESHOLD = 0.08;
+const NETWORKS = new Set<CurriculumNetworkFilter>([
+  "ALL",
+  "OPSTAP",
+  "OVSG",
+  "GO_NIEUW",
+  "ZILL",
+  "GO",
+]);
+
+function dedupeResults(results: CurriculumSearchResult[]): CurriculumSearchResult[] {
+  const seen = new Set<string>();
+  const unique: CurriculumSearchResult[] = [];
+  for (const result of results) {
+    const key = [
+      result.code,
+      result.titel,
+      result.netwerk,
+      result.leerjaarRoute,
+    ].join("|");
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    unique.push(result);
+  }
+  return unique;
+}
 
 export async function POST(request: Request) {
   if (!sessionFromRequest(request)) return unauthorizedResponse();
+
   try {
     const body = (await request.json()) as {
       goal?: string;
-      network?: EducationNetwork;
-      schoolYear?: string;
-      source?: CurriculumGoal["source"];
+      network?: CurriculumNetworkFilter;
     };
-    if (!body.goal?.trim()) {
+
+    const query = body.goal?.trim();
+    if (!query) {
       return NextResponse.json(
         { error: "Vul eerst een lesdoel in." },
         { status: 400 },
       );
     }
-    if (
-      body.source !== "minimumdoel" &&
-      body.source !== "leerplandoel"
-    ) {
+
+    const network = body.network ?? "ALL";
+    if (!NETWORKS.has(network)) {
       return NextResponse.json(
-        { error: "Selecteer minimumdoelen of leerplandoelen." },
+        { error: "Selecteer een geldig netwerkfilter." },
         { status: 400 },
       );
     }
-    if (
-      body.source === "leerplandoel" &&
-      (!body.network || !networks.has(body.network))
-    ) {
-      return NextResponse.json(
-        { error: "Selecteer een geldig onderwijsnet." },
-        { status: 400 },
-      );
-    }
-    const schoolYear = body.schoolYear || "2025-2026";
-    const matches = searchCurriculum({
-      query: body.goal,
-      schoolYear,
-      source: body.source,
-      network: body.network,
-      limit: 3,
+
+    const discovery = await searchDiscoveryEngine({
+      query,
+      network,
+      pageSize: 12,
     });
-    const match =
-      matches[0]?.score >= MATCH_THRESHOLD ? matches[0] : null;
-    const alternatives = matches
-      .slice(1)
-      .filter((item) => item.score >= MATCH_THRESHOLD)
-      .map((item) => ({ ...item.goal, score: item.score }));
+
+    const enrichedFromDiscovery = discovery.hits
+      .map((hit) => enrichHitFromCorpus(hit, query))
+      .filter(
+        (item): item is CurriculumSearchResult & { score: number } =>
+          item !== null,
+      );
+
+    const localFallback = searchLocalCorpus({
+      query,
+      network,
+      limit: 6,
+    });
+
+    const merged = dedupeResults(
+      [...enrichedFromDiscovery, ...localFallback]
+        .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
+        .slice(0, 6),
+    );
+
+    const goal =
+      merged[0] ??
+      null;
+    const alternatives = merged.slice(1);
 
     return NextResponse.json({
       data: {
-        goal: match
-          ? { ...match.goal, score: match.score }
-          : "niet gevonden",
+        goal: goal ?? "niet gevonden",
         alternatives,
+        summary: discovery.summaryText,
+        citations: discovery.citations,
+        totalSize: discovery.totalSize,
         corpusNotice:
-          body.source === "minimumdoel"
-            ? "Alleen geïndexeerde minimumdoelen (retrieval). Geen AI-generatie. Controleer code, leerjaar en officiële bron vóór indiening."
-            : body.network === "OVSG"
-            ? "Alleen geïndexeerde leerplandoelen (retrieval). OVSG-seed bevat publiek verifieerbare inhoud; importeer LeerLokaal-export voor volledige codes."
-            : "Alleen geïndexeerde leerplandoelen (retrieval). Geen AI-generatie. Controleer code en officiële bron vóór indiening.",
-        retrievalMode: "indexed-only",
+          "Zoekresultaten komen uit de Google Cloud Discovery Engine-datastore, verrijkt met gestructureerde doelen uit de geïndexeerde corpus. Controleer code en officiële bron vóór indiening.",
+        retrievalMode: "discovery-engine",
       },
-      provider: "local",
+      provider: "google-discovery-engine",
       fallbackErrors: [],
     });
   } catch (error) {
@@ -84,7 +117,7 @@ export async function POST(request: Request) {
             ? error.message
             : "Doelenzoekopdracht mislukt.",
       },
-      { status: 400 },
+      { status: 500 },
     );
   }
 }
