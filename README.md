@@ -78,24 +78,6 @@ Curriculum search is **retrieval only** (no generative AI in the matcher itself)
 - In-app feedback form (idea, feedback, bug)
 - App version and build info with link to GitHub releases
 
-## AI providers
-
-Analysis modules use structured JSON output via the [Vercel AI SDK](https://sdk.vercel.ai/). Configure **one or more** providers through environment variables **or** per-user keys in Settings.
-
-Supported server-side providers today:
-
-| Provider | Typical use |
-|----------|-------------|
-| Groq | Fast Llama-class models |
-| Cerebras | Low-latency inference |
-| SambaNova | OpenAI-compatible chat API |
-| Cloudflare Workers AI | Edge-hosted open models |
-| Compatible multimodal APIs | Manual scanner (PDF/image), voice reflection (audio) |
-
-Users can detect available models from Settings after entering a key. Without any configured provider, AI modules return a clear configuration error (no silent fake results).
-
-The architecture is provider-agnostic: new OpenAI-compatible endpoints can be wired through existing SDK adapters. Choose the model that fits your latency, cost, and quality constraints.
-
 ## Curriculum data
 
 Local search indexes official goal corpora:
