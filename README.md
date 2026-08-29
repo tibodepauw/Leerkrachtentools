@@ -51,7 +51,7 @@ Curriculum search is **retrieval only** (no generative AI in the matcher itself)
 
 | Module | What it does |
 |--------|----------------|
-| **Thomas More stijl** | Converts raw instructions into Lk/Lln dialogues with italic board and organisation actions. |
+| **Schrijfstijl** | Rewrites lesson notes in a chosen style: Thomas More (Lk/Lln dialogues), normal, short, or expanded. |
 | **Taalfoutencheck** | Didactic language review: dt-errors, formal instruction tone, terminology, professional wording. |
 | **Timing** | Checks whether minutes across the four phases sum to the configured total lesson time; AI can suggest redistribution. |
 
@@ -72,8 +72,11 @@ Curriculum search is **retrieval only** (no generative AI in the matcher itself)
 ### Account and settings
 
 - Passwordless email login (one-time code)
-- Profile name and photo
+- Invite-only account tiers (student, tester, partner, admin) with per-tier module access
+- Daily server-side AI usage limits per tier (bypassed when you use your own API key)
+- Profile name and photo; account ID and **Niveau** shown in Settings
 - **Bring your own API key**: choose provider and model in Settings; when enabled, only your key is used
+- Per-account browser storage for active lesson data and document previews
 - Marketing email preference (opt-in, off by default)
 - In-app feedback form (idea, feedback, bug)
 - App version and build info with link to GitHub releases
@@ -147,7 +150,7 @@ npm test
 npm run build
 ```
 
-108 automated tests cover curriculum tokenization, minimum-goal ranking, fuzzy matching, and core utilities.
+128 automated tests cover curriculum tokenization, minimum-goal ranking, fuzzy matching, auth tiers, and core utilities.
 
 ## Production deployment
 
@@ -188,6 +191,6 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 
 ## Releases
 
-Current version: **5.8.3**
+Current version: **5.8.4**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).

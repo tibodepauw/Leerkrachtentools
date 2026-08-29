@@ -3,7 +3,7 @@ import { normalizeAccountTier } from "@/lib/auth/tierUtils";
 import { tierBadgeLabel } from "@/components/shared/TierBadge";
 import type { ModuleId } from "@/types";
 
-/** Thomas More stijl in de UI; module-id in code is `dialogue-formatter`. */
+/** Schrijfstijl in de UI; module-id in code is `dialogue-formatter`. */
 export const MODULE_ALIASES = {
   "thomas-more-style": "dialogue-formatter",
 } as const satisfies Record<string, ModuleId>;

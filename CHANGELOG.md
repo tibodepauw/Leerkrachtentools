@@ -4,6 +4,33 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.4] - 2026-08-29
+
+Account tiers, module access, and Schrijfstijl refresh.
+
+### Added
+- Invite-only account tiers (student, tester, partner, admin) with tier resolution from email and allowlists
+- Daily server-side AI usage limits per tier in SQLite (`user_ai_usage`); BYOK bypasses limits
+- Per-tier module access matrix; sidebar and modules hide or deny unavailable tools
+- Per-account client storage scope for active lesson state and document previews (localStorage + IndexedDB)
+- Account ID and **Niveau** in Settings status card
+- **Schrijfstijl** module with style selector: Thomas More, Normaal, Kort, Lang
+- Style-specific prompts in `/api/format-dialogue`; Thomas More Lk/Lln validation only for that style
+
+### Changed
+- Renamed **Thomas More stijl** to **Schrijfstijl** in sidebar and module UI
+- Tier label shown as plain gray text (sidebar + settings) instead of badge pill
+- Curriculum filter label **Alle netwerken** → **Alle leerplannen**
+- Shorter default lesson-prep textarea with auto-grow cap
+- Removed "via Gemini" from module descriptions and disabled-hint subtext under action buttons
+
+### Fixed
+- Voice reflection rejected browser `audio/webm;codecs=opus` recordings (MIME normalization)
+- Legacy `free` tier mapped to student for AI limits and module access
+- Admin tier for configured Thomas More and maintainer emails
+
+---
+
 ## [5.8.3] - 2026-08-29
 
 Maintenance, compliance, and security release after the audit of 2026-08-29.
