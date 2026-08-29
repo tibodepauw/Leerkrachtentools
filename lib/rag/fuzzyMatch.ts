@@ -1,4 +1,3 @@
-/** Levenshtein edit distance between two strings. */
 export function levenshteinDistance(left: string, right: string): number {
   if (left === right) {
     return 0;
@@ -37,7 +36,6 @@ export function levenshteinDistance(left: string, right: string): number {
   return matrix[left.length]![right.length]!;
 }
 
-/** Sørensen–Dice coefficient on character bigrams (0–1). */
 export function bigramOverlap(left: string, right: string): number {
   if (left === right) {
     return 1;
@@ -65,7 +63,6 @@ export function bigramOverlap(left: string, right: string): number {
   return (2 * overlap) / (left.length - 1 + (right.length - 1));
 }
 
-/** Combined fuzzy similarity score (0–1). */
 export function fuzzySimilarity(left: string, right: string): number {
   if (left === right) {
     return 1;
@@ -99,7 +96,6 @@ export function isFuzzySimilar(
   return fuzzySimilarity(left, right) >= threshold;
 }
 
-/** True when `needle` fuzzy-matches any word in `haystackWords`. */
 export function fuzzyMatchHaystackWords(
   haystackWords: string[],
   needle: string,
@@ -118,7 +114,6 @@ export function fuzzyMatchHaystackWords(
   return false;
 }
 
-/** Split normalized haystack text into matchable words (deduplicated). */
 export function haystackWordsFromText(haystack: string): string[] {
   const seen = new Set<string>();
   const words: string[] = [];

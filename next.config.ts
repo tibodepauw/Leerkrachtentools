@@ -33,9 +33,6 @@ function resolveGitHubRepo() {
   }
 }
 
-// Strict CSP only in production. In development Next/Turbopack needs eval +
-// websockets; a tight CSP previously left the SSR HTML visible while React
-// never hydrated — clicks did nothing.
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
@@ -56,7 +53,6 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_COMMIT: resolveGitCommit(),
     NEXT_PUBLIC_GITHUB_REPO: resolveGitHubRepo(),
   },
-  // Cursor previews / tunnels often hit the dev server from non-localhost hosts.
   allowedDevOrigins: [
     "127.0.0.1",
     "localhost",

@@ -49,7 +49,6 @@ export async function sendBrevoEmail({
       const payload = (await response.json()) as BrevoErrorResponse;
       if (payload.message) message = `Brevo: ${payload.message}`;
     } catch {
-      // Keep generic HTTP message when Brevo returns non-JSON.
     }
     throw new Error(message);
   }

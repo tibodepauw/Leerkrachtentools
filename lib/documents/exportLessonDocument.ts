@@ -236,7 +236,6 @@ export async function exportLessonDocument(
   };
 }
 
-// Exported for tests
 export const __testables = {
   escapeXml,
   patchDocumentXml,

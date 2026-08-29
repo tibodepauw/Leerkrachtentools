@@ -1,7 +1,6 @@
 import type { LessonGoal, LessonGoalId } from "@/types";
 
 export const MAX_LESSON_GOALS = 12;
-/** Geen vaste lege slots; doelen worden dynamisch toegevoegd. */
 export const DEFAULT_LESSON_GOALS = 0;
 
 const GOAL_IDS = Array.from(
@@ -25,7 +24,6 @@ export function createEmptyGoals(count = DEFAULT_LESSON_GOALS): LessonGoal[] {
   }));
 }
 
-/** Verwijdert lege doelen aan het einde van de lijst. */
 export function trimTrailingEmptyGoals(goals: LessonGoal[]): LessonGoal[] {
   let end = goals.length;
   while (end > 0 && !goals[end - 1]?.text.trim()) {

@@ -70,7 +70,6 @@ export function saveProfileImageFile(
     try {
       unlinkSync(candidate);
     } catch {
-      // Bestand bestaat niet — negeren.
     }
   }
 
@@ -84,7 +83,6 @@ export function deleteProfileImageFile(relativePath: string | null | undefined) 
   try {
     unlinkSync(profileImageAbsolutePath(relativePath));
   } catch {
-    // Bestand ontbreekt al — negeren.
   }
 }
 

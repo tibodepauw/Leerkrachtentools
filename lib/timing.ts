@@ -14,7 +14,6 @@ function isPhaseTimingLine(line: string) {
   );
 }
 
-/** Haalt minuten uit fase-headers, niet uit losse zinnen in de inhoud. */
 export function parsePhaseMinutes(content: string) {
   return content
     .split(/\r?\n/)
@@ -23,7 +22,7 @@ export function parsePhaseMinutes(content: string) {
     .filter((value) => value > 0);
 }
 
-/** @deprecated Gebruik parsePhaseMinutes voor lestiming. */
+/** @deprecated */
 export function parseMinutes(content: string) {
   return parsePhaseMinutes(content);
 }

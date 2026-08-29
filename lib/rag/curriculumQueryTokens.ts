@@ -147,7 +147,6 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   },
 ];
 
-/** Canonical terms used to recover from typos via fuzzy matching. */
 const CANONICAL_QUERY_TERMS: Array<{
   canonical: string;
   stems: string[];
@@ -292,7 +291,6 @@ function queryWords(value: string): string[] {
     .filter((word) => word.length > 2);
 }
 
-/** Inhoudelijke kernwoorden uit de originele zoekopdracht (zelfstandige naamwoorden). */
 export function extractContentTokens(query: string): Set<string> {
   const normalized = normalizeQueryText(query);
   const tokens = new Set<string>();
