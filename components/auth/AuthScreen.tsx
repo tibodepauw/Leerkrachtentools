@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, LockKeyhole, Mail } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,13 +81,6 @@ export function AuthScreen() {
 
         <Card className="border-neutral-800 bg-neutral-950/90 shadow-2xl">
           <CardHeader>
-            <div className="mb-3 grid size-9 place-items-center rounded-lg border border-neutral-800">
-              {step === "email" ? (
-                <Mail className="size-4" />
-              ) : (
-                <LockKeyhole className="size-4" />
-              )}
-            </div>
             <CardTitle className="text-xl font-extrabold">
               {step === "email"
                 ? "Log in met je e-mailadres"
