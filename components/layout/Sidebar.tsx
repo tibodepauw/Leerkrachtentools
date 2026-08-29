@@ -58,7 +58,7 @@ const sections = [
     items: [
       {
         id: "dialogue-formatter",
-        label: "Thomas More stijl",
+        label: "Schrijfstijl",
         icon: MessageSquareQuote,
       },
       { id: "spellcheck", label: "Taalfoutencheck", icon: ScanText },

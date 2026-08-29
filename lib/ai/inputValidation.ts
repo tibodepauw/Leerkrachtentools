@@ -3,6 +3,7 @@ import {
   normalizeAudioMediaType,
   REFLECTION_AUDIO_MEDIA_TYPES,
 } from "@/lib/ai/audioMediaType";
+import { WRITING_STYLES } from "@/lib/ai/writingStyle";
 
 export const MAX_AI_TEXT_CHARS = 500_000;
 export const MAX_BASE64_CHARS = 20_000_000;
@@ -97,3 +98,12 @@ export type ManualExtractionRequestInput = z.infer<
   typeof manualExtractionRequestSchema
 >;
 export type ReflectionRequestInput = z.infer<typeof reflectionRequestSchema>;
+
+export const formatDialogueRequestSchema = z.object({
+  content: z.string().min(1).max(MAX_AI_TEXT_CHARS),
+  style: z.enum(WRITING_STYLES).default("thomas-more"),
+});
+
+export type FormatDialogueRequestInput = z.infer<
+  typeof formatDialogueRequestSchema
+>;

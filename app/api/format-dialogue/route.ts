@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import {
   sessionFromRequest,
   unauthorizedResponse,
@@ -7,8 +8,8 @@ import {
   enforceThomasMoreDialogue,
   isStrictThomasMoreDialogue,
 } from "@/lib/ai/dialogue";
+import { formatDialogueRequestSchema } from "@/lib/ai/inputValidation";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
-import { prompts } from "@/lib/ai/prompts";
 import { runStructured } from "@/lib/ai/router";
 import { dialogueSchema } from "@/lib/ai/schemas";
 import {
@@ -17,6 +18,10 @@ import {
   trackServerAiUsageIfNeeded,
 } from "@/lib/ai/serverAccess";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
+import {
+  dialoguePromptForStyle,
+  formatDialogueInstruction,
+} from "@/lib/ai/writingStyle";
 
 export const runtime = "nodejs";
 
@@ -46,27 +51,30 @@ export async function POST(request: Request) {
   }
 
   try {
-    const input = (await request.json()) as { content?: string };
-    if (!input.content?.trim()) {
-      return NextResponse.json(
-        { error: "Plak eerst lesnotities of lesvoorbereidingstekst." },
-        { status: 400 },
-      );
-    }
+    const input = formatDialogueRequestSchema.parse(await request.json());
 
     const result = await runStructured({
       schema: dialogueSchema,
-      system: prompts.dialogue,
-      prompt: `Ruwe lesnotities:\n${input.content.trim()}`,
+      system: dialoguePromptForStyle(input.style),
+      prompt: formatDialogueInstruction(input.style, input.content),
       mock: { formatted: "", interventions: 0 },
       preferredProvider: "google",
       allowLocalMock: false,
       userAiConfig,
     });
-    const formatted = enforceThomasMoreDialogue(result.data.formatted);
-    if (!isStrictThomasMoreDialogue(formatted)) {
+
+    const formatted =
+      input.style === "thomas-more"
+        ? enforceThomasMoreDialogue(result.data.formatted)
+        : result.data.formatted.trim();
+
+    if (
+      input.style === "thomas-more" &&
+      !isStrictThomasMoreDialogue(formatted)
+    ) {
       throw new Error("De modeluitvoer kon niet strikt worden gevalideerd.");
     }
+
     trackServerAiUsageIfNeeded({
       userId: session.id,
       usesServerQuota: access.usesServerQuota,
@@ -80,9 +88,11 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Formattering is mislukt.",
+          error instanceof z.ZodError
+            ? error.issues[0]?.message ?? "Ongeldige invoer."
+            : error instanceof Error
+              ? error.message
+              : "Formattering is mislukt.",
       },
       { status: 400 },
     );
