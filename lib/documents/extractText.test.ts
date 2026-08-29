@@ -16,7 +16,7 @@ describe("lesson document formats", () => {
 
   it("leest platte tekstbestanden", async () => {
     const text = await extractDocumentText(
-      Buffer.from("Instap — 5 min\nInstructie — 15 min", "utf8"),
+      Buffer.from("Instap \u2014 5 min\nInstructie \u2014 15 min", "utf8"),
       "les.txt",
     );
     expect(text).toContain("Instap");

@@ -17,91 +17,91 @@ USER_AGENT = (
 OFFICIAL_OVERVIEW_URLS: dict[str, list[dict[str, str]]] = {
     "ZILL": [
         {
-            "titel": "ZILL — publieke startpagina",
+            "titel": "ZILL - publieke startpagina",
             "url": "https://zill.katholiekonderwijs.vlaanderen/",
             "opmerking": "Digitaal leerplan; aanvullende PDF's via Pro.",
         },
         {
-            "titel": "ZILL — ordeningskader & downloadhub",
+            "titel": "ZILL - ordeningskader & downloadhub",
             "url": "https://pro.katholiekonderwijs.vlaanderen/achtergrond-bij-ontwikkelvelden/het-ordeningskader",
             "opmerking": "Publieke PDF-bijlagen (ordeningskader, generieke doelen, leerplanpuzzel).",
         },
     ],
     "GO": [
         {
-            "titel": "GO! — Leerplan Basisonderwijs (overzicht)",
+            "titel": "GO! - Leerplan Basisonderwijs (overzicht)",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/",
             "opmerking": "Huidige vakgebieden; excludeert bewust het concept 'nieuw leerplan'.",
         },
         {
-            "titel": "GO! — Algemeen deel leerplan",
+            "titel": "GO! - Algemeen deel leerplan",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/algemeen/",
         },
         {
-            "titel": "GO! — Media",
+            "titel": "GO! - Media",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/media/",
         },
         {
-            "titel": "GO! — Lichamelijke opvoeding",
+            "titel": "GO! - Lichamelijke opvoeding",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/lichamelijke-opvoeding/",
         },
         {
-            "titel": "GO! — Nederlands",
+            "titel": "GO! - Nederlands",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/nederlands/",
         },
         {
-            "titel": "GO! — Wiskunde",
+            "titel": "GO! - Wiskunde",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/wiskunde/",
         },
         {
-            "titel": "GO! — Wereldoriëntatie",
+            "titel": "GO! - Wereldoriëntatie",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/wereldorientatie/",
         },
         {
-            "titel": "GO! — Muzische vorming",
+            "titel": "GO! - Muzische vorming",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/muzische-vorming/",
         },
         {
-            "titel": "GO! — Frans",
+            "titel": "GO! - Frans",
             "url": "https://pro.g-o.be/themas/leerplannen/basisonderwijs/frans/",
         },
     ],
     "OVSG": [
         {
-            "titel": "OVSG — Leer Lokaal (overzicht basisonderwijs)",
+            "titel": "OVSG - Leer Lokaal (overzicht basisonderwijs)",
             "url": "https://www.ovsg.be/onze-themas/leerplannen-didactiek/basisonderwijs/leer-lokaal/",
         },
         {
-            "titel": "OVSG — Leerplan Leer Lokaal",
+            "titel": "OVSG - Leerplan Leer Lokaal",
             "url": "https://www.ovsg.be/onze-themas/leerplannen-didactiek/basisonderwijs/leer-lokaal/leerplan-leer-lokaal",
             "opmerking": "Volledig leerplan vereist OVSG-login (leerlokaal.ovsg.be).",
         },
         {
-            "titel": "OVSG — Leergebieden, leerlijnen & visieteksten",
+            "titel": "OVSG - Leergebieden, leerlijnen & visieteksten",
             "url": "https://www.ovsg.be/onze-themas/leerplannen-didactiek/basisonderwijs/leer-lokaal/leergebieden-leerlijnen-leerlokaal",
             "opmerking": "Publieke visie-PDF's per leergebied.",
         },
         {
-            "titel": "OVSG — FAQ Leer Lokaal",
+            "titel": "OVSG - FAQ Leer Lokaal",
             "url": "https://www.ovsg.be/onze-themas/leerplannen-didactiek/basisonderwijs/leer-lokaal/faq-leer-lokaal",
         },
         {
-            "titel": "OVSG — Leer Lokaal (ledenportaal)",
+            "titel": "OVSG - Leer Lokaal (ledenportaal)",
             "url": "https://leerlokaal.ovsg.be/",
             "opmerking": "Login vereist; niet automatisch te scrapen.",
         },
     ],
     "MINIMUMDOELEN": [
         {
-            "titel": "Onderwijsdoelen.be — zoekportaal",
+            "titel": "Onderwijsdoelen.be - zoekportaal",
             "url": "https://www.onderwijsdoelen.be/",
         },
         {
-            "titel": "Vlaanderen.be — Onderwijsdoelen (professionals)",
+            "titel": "Vlaanderen.be - Onderwijsdoelen (professionals)",
             "url": "https://www.vlaanderen.be/onderwijsprofessionals/lesgeven-en-begeleiden/opleidingsinhouden/onderwijsdoelen",
         },
         {
-            "titel": "Vlaanderen.be — Nieuwe minimumdoelen basisonderwijs",
+            "titel": "Vlaanderen.be - Nieuwe minimumdoelen basisonderwijs",
             "url": "https://www.vlaanderen.be/onderwijsprofessionals/lesgeven-en-begeleiden/opleidingsinhouden/opleidingsinhouden-basisonderwijs/nieuwe-minimumdoelen-basisonderwijs",
             "opmerking": "Flyers, brochures en implementatiemateriaal.",
         },
@@ -115,7 +115,7 @@ OFFICIAL_OVERVIEW_URLS: dict[str, list[dict[str, str]]] = {
             "url": "https://onderwijs-api-portaal.vlaanderen.be/node/126",
         },
         {
-            "titel": "Data Onderwijs — documentencatalogus",
+            "titel": "Data Onderwijs - documentencatalogus",
             "url": "https://data-onderwijs.vlaanderen.be/documenten/default.aspx",
         },
     ],

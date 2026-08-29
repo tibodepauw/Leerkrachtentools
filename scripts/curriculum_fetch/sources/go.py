@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 OVERVIEW_URL = "https://pro.g-o.be/themas/leerplannen/basisonderwijs/"
 BASE = "https://pro.g-o.be"
 
-# Huidige vakgebieden — bewust zonder 'nieuw-leerplan-basisonderwijs'.
+# Huidige vakgebieden - bewust zonder 'nieuw-leerplan-basisonderwijs'.
 SUBJECT_PAGES: dict[str, str] = {
     "algemeen": "Algemeen deel leerplan",
     "media": "Leerplan media",
@@ -59,7 +59,7 @@ class GoFetcher(SourceFetcher):
                     continue
 
                 title_part = path.split("/")[-1] if "/" in path else path
-                brontitel = f"GO! — {label} — {title_part}"
+                brontitel = f"GO! - {label} - {title_part}"
                 url = join_base_url(BASE, path)
                 collected.append(
                     {"brontitel": brontitel, "source_url": url, "pagina": page_url}
@@ -81,7 +81,7 @@ class GoFetcher(SourceFetcher):
                 "overzicht_urls": OFFICIAL_OVERVIEW_URLS["GO"],
                 "downloads": collected,
             },
-            brontitel="GO! — overzicht huidige leerplan-PDF's",
+            brontitel="GO! - overzicht huidige leerplan-PDF's",
             filename="_overzicht_bronnen.json",
             source_url=OVERVIEW_URL,
         )

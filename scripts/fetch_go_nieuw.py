@@ -332,7 +332,7 @@ class GoNieuwFetcher:
         metadata = {
             "network": "GO_NIEUW",
             "onderwijsniveau": "basisonderwijs",
-            "brontitel": "GO! — Nieuw leerplan basisonderwijs (12 doelensets)",
+            "brontitel": "GO! - Nieuw leerplan basisonderwijs (12 doelensets)",
             "source_url": PAGE_URL,
             "record_count": len(records),
             "format": "application/x-ndjson",

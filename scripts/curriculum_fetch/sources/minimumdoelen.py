@@ -82,7 +82,7 @@ class MinimumdoelenFetcher(SourceFetcher):
                 self.downloader.download_json_export(
                     network=self.network,
                     payload=api_payload,
-                    brontitel="Onderwijsdoelen API — basisonderwijs lager onderwijs",
+                    brontitel="Onderwijsdoelen API - basisonderwijs lager onderwijs",
                     filename="onderwijsdoelen_basisonderwijs_lo.json",
                     source_url=DEFAULT_API_BASE + DEFAULT_API_PATH,
                     extra={"filter": "basisonderwijs / lager onderwijs"},
@@ -90,7 +90,7 @@ class MinimumdoelenFetcher(SourceFetcher):
                 success += 1
         else:
             logger.warning(
-                "ONDERWIJSDOELEN_API_KEY niet gezet — JSON-doelen overgeslagen. "
+                "ONDERWIJSDOELEN_API_KEY niet gezet - JSON-doelen overgeslagen. "
                 "Vraag een key aan via https://onderwijs-api-portaal.vlaanderen.be/apis"
             )
 
@@ -106,7 +106,7 @@ class MinimumdoelenFetcher(SourceFetcher):
                 "api_base": DEFAULT_API_BASE,
                 "api_path": DEFAULT_API_PATH,
             },
-            brontitel="Minimumdoelen — overzicht officiële bronpagina's",
+            brontitel="Minimumdoelen - overzicht officiële bronpagina's",
             filename="_overzicht_bronnen.json",
             source_url=PORTAL_URL,
         )
@@ -153,5 +153,5 @@ class MinimumdoelenFetcher(SourceFetcher):
             response.raise_for_status()
             return response.json()
         except requests.RequestException as exc:
-            logger.error("Onderwijsdoelen-API mislukt: %s — %s", url, exc)
+            logger.error("Onderwijsdoelen-API mislukt: %s - %s", url, exc)
             return None

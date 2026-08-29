@@ -829,7 +829,7 @@ class OvsgScraper:
         metadata = {
             "network": "OVSG",
             "onderwijsniveau": "basisonderwijs",
-            "brontitel": "OVSG Leer Lokaal — volledige leerlijn",
+            "brontitel": "OVSG Leer Lokaal - volledige leerlijn",
             "source_url": BASE_URL,
             "record_count": len(records),
             "format": "application/x-ndjson",

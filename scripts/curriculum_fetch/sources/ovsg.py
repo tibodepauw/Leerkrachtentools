@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 SCRAPE_PAGES = [
     (
         "https://www.ovsg.be/onze-themas/leerplannen-didactiek/basisonderwijs/leer-lokaal/",
-        "OVSG Leer Lokaal — overzicht",
+        "OVSG Leer Lokaal - overzicht",
     ),
     (
         "https://www.ovsg.be/onze-themas/leerplannen-didactiek/basisonderwijs/leer-lokaal/leerplan-leer-lokaal",
@@ -60,7 +60,7 @@ class OvsgFetcher(SourceFetcher):
 
         for url in sorted(pdf_urls):
             filename = url.split("/")[-1]
-            brontitel = f"OVSG Leer Lokaal — {filename.replace('-', ' ').replace('.pdf', '')}"
+            brontitel = f"OVSG Leer Lokaal - {filename.replace('-', ' ').replace('.pdf', '')}"
             if self.downloader.download_resource(
                 network=self.network,
                 url=url,
@@ -82,7 +82,7 @@ class OvsgFetcher(SourceFetcher):
                 "login_portals": LOGIN_GATED,
                 "publieke_pdfs": sorted(pdf_urls),
             },
-            brontitel="OVSG — overzicht officiële bronpagina's",
+            brontitel="OVSG - overzicht officiële bronpagina's",
             filename="_overzicht_bronnen.json",
             source_url=SCRAPE_PAGES[0][0],
         )

@@ -745,7 +745,7 @@ class ZillScraper:
         metadata = {
             "network": "ZILL",
             "onderwijsniveau": "lager onderwijs",
-            "brontitel": "ZILL-selector — volledig leerplan",
+            "brontitel": "ZILL-selector - volledig leerplan",
             "source_url": BASE_URL,
             "record_count": len(records),
             "format": "application/x-ndjson",

@@ -87,7 +87,7 @@ export function VoiceReflectionView() {
   const copyValue = result
     ? [
         ...result.data.goals.map(
-          (goal) => `${goal.id}: ${goal.reach} — ${goal.evidence}`,
+          (goal) => `${goal.id}: ${goal.reach} - ${goal.evidence}`,
         ),
         ...result.data.engagement.map(
           (factor) => `${factor.factor}: ${factor.evaluation}`,

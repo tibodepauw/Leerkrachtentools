@@ -44,7 +44,7 @@ Controleer specifiek werkwoordspelling en dt-fouten, formele instructietaal,
 didactische terminologie en een professionele schrijfstijl voor leerkrachten.
 Behoud de oorspronkelijke betekenis.
 Geef in issues elke afzonderlijke taalfout, stijlfout of onduidelijke formulering
-terug — niet alleen een voorbeeld. Beperk je niet tot drie items.
+terug - niet alleen een voorbeeld. Beperk je niet tot drie items.
 Sorteer issues in volgorde van voorkomen in de tekst.`,
 
   timing: `${baseSystemPrompt}

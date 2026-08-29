@@ -1,4 +1,4 @@
-# Officiële bron-URL's — Vlaams basisonderwijs
+# Officiële bron-URL's - Vlaams basisonderwijs
 
 Overzicht van de **huidige officiële overzichts- en downloadpagina's** voor de vier
 koepels. Dit document beschrijft bewust **niet** het GO!-concept *nieuw leerplan
@@ -9,7 +9,7 @@ terminal te tonen.
 
 ---
 
-## 1. Katholiek Onderwijs Vlaanderen — ZILL
+## 1. Katholiek Onderwijs Vlaanderen - ZILL
 
 | Pagina | URL | Opmerking |
 |--------|-----|-----------|
@@ -20,7 +20,7 @@ terminal te tonen.
 
 - Ordeningskader ZILL (PDF)
 - Generieke doelen (PDF)
-- Leerplanpuzzel — doelenkaarten en leeruitkomsten (PDF)
+- Leerplanpuzzel - doelenkaarten en leeruitkomsten (PDF)
 - Leerplanuitbreiding 0–2,5 jaar (PDF)
 - Overzichtsfoto's en veldnamen (PDF)
 
@@ -28,7 +28,7 @@ Het volledige ZILL-leerplan is **digitaal** en niet als één bulk-PDF beschikba
 
 ---
 
-## 2. GO! Onderwijs van de Vlaamse Gemeenschap — Leerplan Basisonderwijs
+## 2. GO! Onderwijs van de Vlaamse Gemeenschap - Leerplan Basisonderwijs
 
 | Pagina | URL |
 |--------|-----|
@@ -46,14 +46,14 @@ Het volledige ZILL-leerplan is **digitaal** en niet als één bulk-PDF beschikba
 
 | Pagina | URL | Reden |
 |--------|-----|-------|
-| Nieuw leerplan basisonderwijs (concept) | https://pro.g-o.be/themas/leerplannen/basisonderwijs/nieuw-leerplan-basisonderwijs/ | Concept in goedkeuring — geen huidig leerplan |
+| Nieuw leerplan basisonderwijs (concept) | https://pro.g-o.be/themas/leerplannen/basisonderwijs/nieuw-leerplan-basisonderwijs/ | Concept in goedkeuring - geen huidig leerplan |
 
 Per vakgebied staan op de pagina's directe downloadlinks (`/download/GOPRO-…`) naar
 de **huidige** leerplan-PDF's.
 
 ---
 
-## 3. OVSG — Leer Lokaal (Basisonderwijs)
+## 3. OVSG - Leer Lokaal (Basisonderwijs)
 
 | Pagina | URL | Opmerking |
 |--------|-----|-----------|
@@ -81,17 +81,17 @@ de **huidige** leerplan-PDF's.
 
 ---
 
-## 4. Vlaamse Overheid — Minimumdoelen / Ontwikkelingsdoelen
+## 4. Vlaamse Overheid - Minimumdoelen / Ontwikkelingsdoelen
 
 | Pagina | URL |
 |--------|-----|
 | Onderwijsdoelen.be (zoekportaal) | https://www.onderwijsdoelen.be/ |
-| Onderwijsdoelen — professionals | https://www.vlaanderen.be/onderwijsprofessionals/lesgeven-en-begeleiden/opleidingsinhouden/onderwijsdoelen |
+| Onderwijsdoelen - professionals | https://www.vlaanderen.be/onderwijsprofessionals/lesgeven-en-begeleiden/opleidingsinhouden/onderwijsdoelen |
 | Nieuwe minimumdoelen basisonderwijs | https://www.vlaanderen.be/onderwijsprofessionals/lesgeven-en-begeleiden/opleidingsinhouden/opleidingsinhouden-basisonderwijs/nieuwe-minimumdoelen-basisonderwijs |
 | Brochure minimumdoelen & visieteksten | https://www.vlaanderen.be/publicaties/minimumdoelen-en-visieteksten-voor-het-derde-jaar-kleuteronderwijs-het-vierde-jaar-lager-onderwijs-en-het-zesde-jaar-lager-onderwijs |
 | API-portaal | https://onderwijs-api-portaal.vlaanderen.be/apis |
 | API-documentatie K&C | https://onderwijs-api-portaal.vlaanderen.be/node/126 |
-| Data Onderwijs — documenten | https://data-onderwijs.vlaanderen.be/documenten/default.aspx |
+| Data Onderwijs - documenten | https://data-onderwijs.vlaanderen.be/documenten/default.aspx |
 
 **Structured data (JSON):** via de **Onderwijsdoelen 1.0**-API op het API-portaal.
 Een API-key vraag je aan via het formulier *toegang publieke API's*. Zet de key in

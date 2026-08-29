@@ -84,7 +84,7 @@ const variantCopy: Record<
   minimumdoel: {
     title: "Minimumdoelen zoeken",
     description:
-      "Zoekt het bestpassende Vlaamse decretale minimumdoel (AHOVOKS) bij je ingegeven lesdoel — 4de ijkpunt, 6de einddoel of kleuter K-codes.",
+      "Zoekt het bestpassende Vlaamse decretale minimumdoel (AHOVOKS) bij je ingegeven lesdoel - 4de ijkpunt, 6de einddoel of kleuter K-codes.",
     action: "Zoek minimumdoel",
     empty:
       "Decretale minimumdoelkaarten met code, ijkpunt en doelzin verschijnen hier na je zoekopdracht.",
@@ -359,7 +359,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               ) : (
                 <p className="text-xs text-neutral-500">
                   {lesson.displayTargetGroup
-                    ? `Doelgroep: ${lesson.displayTargetGroup} — leeftijdsspecifieke doelen krijgen een zachte bonus, maar blijven altijd zichtbaar.`
+                    ? `Doelgroep: ${lesson.displayTargetGroup} - leeftijdsspecifieke doelen krijgen een zachte bonus, maar blijven altijd zichtbaar.`
                     : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking."}
                   {" "}
                   We tonen uitsluitend decretale minimumdoelen op vaste ijkpunten:

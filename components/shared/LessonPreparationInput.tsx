@@ -52,9 +52,9 @@ export function LessonPreparationInput({
     : syncing
       ? "Je geüploade document uit Actieve les wordt omgezet naar tekst."
       : fileName
-        ? "Geïmporteerd — pas de tekst hieronder gerust nog aan"
+        ? "Geïmporteerd - pas de tekst hieronder gerust nog aan"
         : showLinkedDocument
-          ? "Gekoppeld aan Actieve les — tekst staat hieronder klaar voor analyse"
+          ? "Gekoppeld aan Actieve les - tekst staat hieronder klaar voor analyse"
           : "PDF, DOC, DOCX, ODT, RTF, TXT · max. 15 MB";
 
   async function handleFile(file?: File) {

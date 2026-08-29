@@ -42,7 +42,7 @@ class ZillFetcher(SourceFetcher):
 
         for path in sorted(paths):
             filename = path.split("/")[-1]
-            brontitel = f"ZILL — {filename}"
+            brontitel = f"ZILL - {filename}"
             url = join_base_url(BASE, path)
             if self.downloader.download_resource(
                 network=self.network,
@@ -68,7 +68,7 @@ class ZillFetcher(SourceFetcher):
                 "downloadhub_url": ORDENINGSKADER_URL,
                 "overzicht_urls": OFFICIAL_OVERVIEW_URLS["ZILL"],
             },
-            brontitel="ZILL — overzicht officiële bronpagina's",
+            brontitel="ZILL - overzicht officiële bronpagina's",
             filename="_overzicht_bronnen.json",
             source_url=ORDENINGSKADER_URL,
         )

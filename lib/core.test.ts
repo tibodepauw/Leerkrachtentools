@@ -21,14 +21,14 @@ describe("deterministische timing", () => {
   it("negeert minuten in losse zinnen binnen een fase", () => {
     expect(
       parsePhaseMinutes(
-        "Instap — 5 min\nLeerlingen krijgen 10 min om te tekenen.\nInstructie — 15 min",
+        "Instap \u2014 5 min\nLeerlingen krijgen 10 min om te tekenen.\nInstructie \u2014 15 min",
       ),
     ).toEqual([5, 15]);
   });
 
   it("berekent de som en afwijking t.o.v. totale lestijd", () => {
     const content =
-      "Instap — 5 min\nInstructie — 15 min\nVerwerking — 25 min\nAfronding — 5 min";
+      "Instap \u2014 5 min\nInstructie \u2014 15 min\nVerwerking \u2014 25 min\nAfronding \u2014 5 min";
     expect(sumPhaseMinutes(content)).toBe(50);
     expect(sumPhaseMinutes(content) - 45).toBe(5);
   });

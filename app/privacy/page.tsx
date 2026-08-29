@@ -36,8 +36,8 @@ export default function PrivacyPage() {
               De accountdatabase bewaart geen lesvoorbereidingen. De actieve
               lescontext staat lokaal in je browser. Wanneer je een AI-analyse
               uitvoert, sturen we alleen de inhoud mee die voor die analyse
-              nodig is — bijvoorbeeld een lesdoel, lesvoorbereidingstekst of
-              transcript — naar de geconfigureerde AI-provider. Dat kan Google
+              nodig is - bijvoorbeeld een lesdoel, lesvoorbereidingstekst of
+              transcript - naar de geconfigureerde AI-provider. Dat kan Google
               (Gemini), Groq, Cerebras, SambaNova of Cloudflare Workers AI
               zijn, afhankelijk van wat de beheerder of jij in de instellingen
               hebt ingesteld.
@@ -59,8 +59,8 @@ export default function PrivacyPage() {
               zoekresultaten.
             </p>
             <p className="mt-3">
-              Voor andere AI-functies — zoals doelverbetering, spellingcontrole,
-              timinganalyse en audits — kan Google Gemini via de Google AI API
+              Voor andere AI-functies - zoals doelverbetering, spellingcontrole,
+              timinganalyse en audits - kan Google Gemini via de Google AI API
               worden ingezet, naast eventuele andere providers hierboven.
             </p>
             <p className="mt-3">

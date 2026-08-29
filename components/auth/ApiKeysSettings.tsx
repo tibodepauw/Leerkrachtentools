@@ -169,7 +169,7 @@ export function ApiKeysSettings() {
           Eigen API-keys
         </CardTitle>
         <CardDescription>
-          Gebruik je eigen provider voor testen. Standaard uit — dan worden de
+          Gebruik je eigen provider voor testen. Standaard uit - dan worden de
           serverkeys gebruikt.
         </CardDescription>
       </CardHeader>
@@ -251,7 +251,7 @@ export function ApiKeysSettings() {
                   onChange={(event) => setApiKey(event.target.value)}
                   placeholder={
                     settings.hasApiKey && settings.apiKeyHint
-                      ? `Opgeslagen (${settings.apiKeyHint}) — laat leeg om te behouden`
+                      ? `Opgeslagen (${settings.apiKeyHint}) - laat leeg om te behouden`
                       : "Plak je API-key"
                   }
                   autoComplete="off"

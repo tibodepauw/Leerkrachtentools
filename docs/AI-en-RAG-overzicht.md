@@ -1,4 +1,4 @@
-# Leerkrachtentools — Overzicht AI & RAG
+# Leerkrachtentools - Overzicht AI & RAG
 
 Dit document beschrijft wat de app doet op vlak van kunstmatige intelligentie (AI) en retrieval-augmented generation (RAG). Het is bedoeld als leesbare uitleg voor gebruikers, docenten en ontwikkelaars.
 
@@ -8,14 +8,14 @@ Dit document beschrijft wat de app doet op vlak van kunstmatige intelligentie (A
 
 Leerkrachtentools is een webapp voor Thomas More BALO-studenten (lager onderwijs). De app helpt bij het voorbereiden, controleren en reflecteren op lesvoorbereidingen. Daarbij worden twee soorten “slimme” technologie ingezet:
 
-1. **AI (grote taalmodellen)** — voor analyse, herschrijven, classificatie, audit en reflectie.
-2. **RAG-achtige retrieval (lokaal)** — voor het matchen van lesdoelen aan leerplandoelen en minimumdoelen, **zonder** een taalmodel.
+1. **AI (grote taalmodellen)** - voor analyse, herschrijven, classificatie, audit en reflectie.
+2. **RAG-achtige retrieval (lokaal)** - voor het matchen van lesdoelen aan leerplandoelen en minimumdoelen, **zonder** een taalmodel.
 
 Alle persoonlijke lesdata (lesvoorbereiding, doelen, geüploade documenten) blijft grotendeels **lokaal in de browser** (Zustand + IndexedDB). Alleen de tekst die je expliciet naar een module stuurt, gaat naar de AI-API op de server.
 
 ---
 
-## 2. AI — architectuur
+## 2. AI - architectuur
 
 ### 2.1 Hoe een AI-aanroep werkt
 
@@ -38,7 +38,7 @@ De app kan werken met meerdere cloudproviders. Welke beschikbaar zijn, hangt af 
 | **SambaNova** | OpenAI-compatibel endpoint |
 | **Cloudflare Workers AI** | Fallback via raw REST-aanroep |
 
-**Eigen API-keys:** In Instellingen → API-keys kun je één provider kiezen, een model selecteren en je key opslaan (versleuteld in SQLite). Als eigen keys aan staan, gebruikt de app **alleen** die provider — geen automatische fallback naar serverkeys.
+**Eigen API-keys:** In Instellingen → API-keys kun je één provider kiezen, een model selecteren en je key opslaan (versleuteld in SQLite). Als eigen keys aan staan, gebruikt de app **alleen** die provider - geen automatische fallback naar serverkeys.
 
 **Multimodal:** PDF’s, afbeeldingen (Handleiding Scanner) en audio (Voice-reflectie) gaan bij voorkeur via Google Gemini.
 
@@ -47,7 +47,7 @@ De app kan werken met meerdere cloudproviders. Welke beschikbaar zijn, hangt af 
 - Meerdere providers kunnen na elkaar geprobeerd worden (serverkeys).
 - Timeout per poging: ca. 45 seconden.
 - Temperatuur: laag (0,2) voor consistente, feitelijke output.
-- Zonder geconfigureerde provider: analyse-modules geven een **503-fout** — er zijn geen “nep-demo-antwoorden” meer in productie.
+- Zonder geconfigureerde provider: analyse-modules geven een **503-fout** - er zijn geen “nep-demo-antwoorden” meer in productie.
 
 ### 2.4 Structured output
 
@@ -62,7 +62,7 @@ Zo blijft de UI voorspelbaar en kan je resultaten kopiëren of terug naar Actiev
 
 ---
 
-## 3. AI-modules — wat doet welke functie?
+## 3. AI-modules - wat doet welke functie?
 
 ### Input & doelen
 
@@ -70,7 +70,7 @@ Zo blijft de UI voorspelbaar en kan je resultaten kopiëren of terug naar Actiev
 |--------|-----|----------------|
 | **Handleiding Scanner** | `/api/extract-manual` | Leest PDF/afbeelding/tekst en extraheert leergebied, onderdeel, onderwerp, doelgroep, materialen en ruwe uitgeverijdoelen. |
 | **Doelverbeteraar** | `/api/analyze-goals` | Beoordeelt of een D-doel al voldoende is; zo niet, herschrijft volgens Thomas More-criteria (concreet, meetbaar, “De leerlingen kunnen…”). |
-| **MC–DAS–SPM herkenner** | `/api/classify-goal-taxonomy` | Classificeert een doel als MC, DAS of SPM met uitleg — zonder het doel te herschrijven. |
+| **MC–DAS–SPM herkenner** | `/api/classify-goal-taxonomy` | Classificeert een doel als MC, DAS of SPM met uitleg - zonder het doel te herschrijven. |
 
 ### Lesvoorbereiding
 
@@ -104,9 +104,9 @@ Zo blijft de UI voorspelbaar en kan je resultaten kopiëren of terug naar Actiev
 
 ---
 
-## 4. RAG — leerplandoelen en minimumdoelen
+## 4. RAG - leerplandoelen en minimumdoelen
 
-### 4.1 Wat “RAG” hier betekent — en wat niet
+### 4.1 Wat “RAG” hier betekent - en wat niet
 
 In deze app is **curriculum matching geen klassieke LLM-RAG**:
 
@@ -123,7 +123,7 @@ Wat wél gebeurt, is **retrieval**:
 
 Dit is RAG in de brede zin (“eerst ophalen, dan tonen”), maar **zonder generatieve laag**.
 
-### 4.2 Corpus — wat zit erin?
+### 4.2 Corpus - wat zit erin?
 
 Het bestand `lib/rag/curriculumData.ts` bevat momenteel **18 seed-records**:
 
@@ -151,7 +151,7 @@ Score:
 score = 0,75 × cosinus(embedding doel, embedding corpus) + 0,25 × keyword-overlap
 ```
 
-API: `POST /api/rag-curriculum` — response bevat o.a. `retrievalMode: "indexed-only"` en `provider: "local"`.
+API: `POST /api/rag-curriculum` - response bevat o.a. `retrievalMode: "indexed-only"` en `provider: "local"`.
 
 ### 4.4 UI-modules
 
@@ -256,11 +256,11 @@ Prompts instrueren expliciet: **verzin geen officiële leerplandoelcodes**; bij 
 
 ## 9. Roadmap-implicaties (huidige beperkingen)
 
-1. **RAG-corpus is demo-seed** — geen volledige leerplanindex.  
-2. **Alle analyse vereist AI-keys** — zonder provider geen analyse.  
+1. **RAG-corpus is demo-seed** - geen volledige leerplanindex.  
+2. **Alle analyse vereist AI-keys** - zonder provider geen analyse.  
 3. **PDF-export** kan het formulier niet inline bewerken; alleen .docx wordt gepatcht.  
 4. **Voice-reflectie** gebruikt het LLM voor “transcriptie” van audio, geen aparte Whisper-service.  
-5. **Geen fine-tuning** — alles via prompting + structured output op commerciële modellen.
+5. **Geen fine-tuning** - alles via prompting + structured output op commerciële modellen.
 
 ---
 

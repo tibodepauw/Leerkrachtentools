@@ -112,7 +112,7 @@ export async function POST(request: Request) {
         alternatives,
         corpusNotice:
           merged.length > 0
-            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} decretale minimumdoelen (AHOVOKS) — hoogste match bovenaan.`
+            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} decretale minimumdoelen (AHOVOKS) - hoogste match bovenaan.`
             : "Geen passend decretale minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
         retrievalMode: "minimum-goals-hybrid",
       },

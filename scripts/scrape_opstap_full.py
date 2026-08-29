@@ -423,7 +423,7 @@ class OpstapScraper:
         metadata = {
             "network": "OPSTAP",
             "onderwijsniveau": "basisonderwijs",
-            "brontitel": "Op.stap — leerroutes voor iedereen",
+            "brontitel": "Op.stap - leerroutes voor iedereen",
             "source_url": BASE_URL,
             "record_count": len(records),
             "format": "application/x-ndjson",

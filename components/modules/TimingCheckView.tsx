@@ -68,7 +68,7 @@ export function TimingCheckView() {
                 value={content}
                 onChange={setContent}
                 placeholder={
-                  "Instapfase — 5 min\n...\nInstructiefase — 15 minuten\n...\nVerwerking — 25 m\n...\nAfronding — 5 min"
+                  "Instapfase - 5 min\n...\nInstructiefase - 15 minuten\n...\nVerwerking - 25 m\n...\nAfronding - 5 min"
                 }
               />
             </div>
@@ -78,7 +78,7 @@ export function TimingCheckView() {
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}
-                disabledReason='Upload of plak eerst minuten in je fase-headers, bv. "Instap — 5 min".'
+                disabledReason='Upload of plak eerst minuten in je fase-headers, bv. "Instap - 5 min".'
                 onClick={() =>
                   analyze("/api/audit-timing", {
                     totalMinutes: String(lesson.totalMinutes),

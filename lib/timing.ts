@@ -1,7 +1,7 @@
 const timeUnitRegex = /(\d+)\s*(?:min|minuten|m)\b/i;
 const phaseKeywordRegex =
   /instap|instructie|verwerking|afronding|lesfase|fase\s*(?:1|2|3|4|één|twee|drie|vier)?\b/i;
-const dashHeaderRegex = /[-–—]\s*\d+\s*(?:min|minuten|m)\b/i;
+const dashHeaderRegex = /[-–\u2014]\s*\d+\s*(?:min|minuten|m)\b/i;
 
 function isPhaseTimingLine(line: string) {
   const trimmed = line.trim();

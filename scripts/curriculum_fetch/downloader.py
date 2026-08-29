@@ -78,7 +78,7 @@ class CurriculumDownloader:
             )
             response.raise_for_status()
         except requests.RequestException as exc:
-            logger.error("Download mislukt [%s] %s — %s", network, url, exc)
+            logger.error("Download mislukt [%s] %s - %s", network, url, exc)
             return None
 
         content_type = response.headers.get("Content-Type", "")
@@ -153,7 +153,7 @@ class CurriculumDownloader:
             response.raise_for_status()
             return response.text
         except requests.RequestException as exc:
-            logger.error("Pagina niet bereikbaar: %s — %s", url, exc)
+            logger.error("Pagina niet bereikbaar: %s - %s", url, exc)
             return None
 
     def absolute_url(self, base: str, href: str) -> str:
