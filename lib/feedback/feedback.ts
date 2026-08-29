@@ -1,7 +1,5 @@
 import "server-only";
 
-const DEFAULT_RECIPIENT = "tibo.depauw06@gmail.com";
-
 export type FeedbackKind = "idea" | "feedback" | "bug";
 
 const kindLabels: Record<FeedbackKind, string> = {
@@ -11,7 +9,14 @@ const kindLabels: Record<FeedbackKind, string> = {
 };
 
 export function feedbackRecipientEmail() {
-  return process.env.FEEDBACK_TO_EMAIL?.trim() || DEFAULT_RECIPIENT;
+  const configured = process.env.FEEDBACK_TO_EMAIL?.trim();
+  if (configured) {
+    return configured;
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("FEEDBACK_TO_EMAIL is not configured.");
+  }
+  return "feedback-not-configured@localhost";
 }
 
 export function normalizeFeedbackMessage(value: string) {

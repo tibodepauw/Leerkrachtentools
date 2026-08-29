@@ -35,6 +35,9 @@
 *.pem
 __pycache__/
 *.py[cod]
+*.zip
+tmp_*
+curriculum_*.zip
 
 # debug
 npm-debug.log*

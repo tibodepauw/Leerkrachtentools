@@ -18,7 +18,7 @@ describe("feedback", () => {
     expect(normalizeFeedbackKind(undefined)).toBe("feedback");
   });
 
-  it("gebruikt standaard ontvanger zonder env", () => {
-    expect(feedbackRecipientEmail()).toBe("tibo.depauw06@gmail.com");
+  it("gebruikt geconfigureerde ontvanger of dev fallback", () => {
+    expect(feedbackRecipientEmail()).toBe("feedback-not-configured@localhost");
   });
 });

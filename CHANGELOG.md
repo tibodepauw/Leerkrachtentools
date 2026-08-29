@@ -20,14 +20,14 @@ Current stable release. The app is a full lesson-preparation workflow for Thomas
 
 #### Input & goals
 - **Manual scanner** — AI extraction from publisher PDF/image
-- **Goal optimizer** — Thomas More goal rewriting (Gemini)
+- **Goal optimizer** — Thomas More goal rewriting (AI)
 - **MC–DAS–SPM classifier** — goal taxonomy labelling
 - Dynamic D1–D12 lesson goals (hide empty slots, add with +)
 - Structured **target group** selector (kindergarten → 6th grade, custom/grade class) with soft RAG ranking bonus (+0.15, never hard-filtered)
 
 #### Curriculum RAG
 - Local JSONL corpora: **ZILL**, **OVSG**, **Op.stap**, **GO! Nieuw**
-- Hybrid retrieval: local token scoring + optional **Google Discovery Engine** semantic fallback
+- Hybrid retrieval: local token scoring + optional semantic search fallback when local matching finds nothing
 - Network fallback when selected network has no matches
 - Typo-tolerant query expansion (Levenshtein / fuzzy matching)
 - Domain-specific token bonuses: maths, nature (OWna), reading (TOsn), history/time (OWti), PE/motor (MZgm/MZlb), ICT/media (ME/TOmn)
@@ -64,7 +64,7 @@ Current stable release. The app is a full lesson-preparation workflow for Thomas
 
 ### Security
 - Privacy policy consent required on login
-- Google Cloud / no-training notice in privacy policy
+- Third-party AI and cloud processing notice in privacy policy
 - No secrets in repository; `.env.example` documents all variables
 
 ---
