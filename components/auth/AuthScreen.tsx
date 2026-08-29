@@ -17,6 +17,7 @@ export function AuthScreen() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [marketingOptIn, setMarketingOptIn] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [devCode, setDevCode] = useState("");
@@ -29,7 +30,7 @@ export function AuthScreen() {
       const response = await fetch("/api/auth/request-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, marketingOptIn }),
+        body: JSON.stringify({ email, marketingOptIn, privacyAccepted }),
       });
       const payload = (await response.json()) as {
         error?: string;
@@ -110,6 +111,33 @@ export function AuthScreen() {
                 </div>
                 <div className="flex items-start gap-3 rounded-lg border border-neutral-800 bg-black/40 p-3">
                   <Checkbox
+                    id="privacy"
+                    checked={privacyAccepted}
+                    onCheckedChange={(checked) =>
+                      setPrivacyAccepted(checked === true)
+                    }
+                    className="mt-0.5"
+                    required
+                  />
+                  <div className="space-y-1">
+                    <Label htmlFor="privacy" className="font-normal leading-5">
+                      Ik ga akkoord met het{" "}
+                      <Link
+                        href="/privacy"
+                        className="underline hover:text-white"
+                        target="_blank"
+                      >
+                        privacybeleid
+                      </Link>
+                      .
+                    </Label>
+                    <p className="text-xs leading-4 text-neutral-500">
+                      Verplicht om een account aan te maken of in te loggen.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 rounded-lg border border-neutral-800 bg-black/40 p-3">
+                  <Checkbox
                     id="marketing"
                     checked={marketingOptIn}
                     onCheckedChange={(checked) =>
@@ -127,7 +155,11 @@ export function AuthScreen() {
                   </div>
                 </div>
                 {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || !privacyAccepted}
+                >
                   {loading && <Loader2 className="size-4 animate-spin" />}
                   Stuur verificatiecode
                 </Button>

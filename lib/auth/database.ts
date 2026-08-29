@@ -32,6 +32,7 @@ export function getDatabase() {
       email_verified_at INTEGER NOT NULL,
       marketing_opt_in INTEGER NOT NULL DEFAULT 0,
       marketing_consent_at INTEGER,
+      privacy_accepted_at INTEGER,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     );
@@ -42,6 +43,7 @@ export function getDatabase() {
       code_hash TEXT NOT NULL,
       ip_hash TEXT NOT NULL,
       marketing_opt_in INTEGER NOT NULL DEFAULT 0,
+      privacy_accepted INTEGER NOT NULL DEFAULT 0,
       expires_at INTEGER NOT NULL,
       attempts INTEGER NOT NULL DEFAULT 0,
       used_at INTEGER,
@@ -100,6 +102,21 @@ export function getDatabase() {
   }
   if (!userColumns.has("profile_image_path")) {
     database.exec("ALTER TABLE users ADD COLUMN profile_image_path TEXT");
+  }
+  if (!userColumns.has("privacy_accepted_at")) {
+    database.exec("ALTER TABLE users ADD COLUMN privacy_accepted_at INTEGER");
+  }
+  const loginCodeColumns = new Set(
+    (
+      database.prepare("PRAGMA table_info(login_codes)").all() as Array<{
+        name: string;
+      }>
+    ).map((column) => column.name),
+  );
+  if (!loginCodeColumns.has("privacy_accepted")) {
+    database.exec(
+      "ALTER TABLE login_codes ADD COLUMN privacy_accepted INTEGER NOT NULL DEFAULT 0",
+    );
   }
   return database;
 }

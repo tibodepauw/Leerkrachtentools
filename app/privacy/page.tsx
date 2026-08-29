@@ -83,6 +83,15 @@ export default function PrivacyPage() {
             </p>
           </section>
           <section>
+            <h2 className="mb-2 font-semibold text-white">Toestemming</h2>
+            <p>
+              Bij je eerste login of bij een nieuwe code-aanvraag vragen we
+              expliciet akkoord met dit privacybeleid. We slaan het tijdstip van
+              die toestemming op bij je account. Optionele projectupdates
+              verlopen via een apart vinkje en kunnen later worden ingetrokken.
+            </p>
+          </section>
+          <section>
             <h2 className="mb-2 font-semibold text-white">Jouw keuzes</h2>
             <p>In “Actieve les” kun je marketingtoestemming altijd intrekken en je account volledig verwijderen. Bij accountverwijdering wissen we het e-mailadres, de toestemming en alle serversessies onmiddellijk.</p>
           </section>

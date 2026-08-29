@@ -80,14 +80,19 @@ interface LatestRow {
 export async function requestLoginCode({
   email: rawEmail,
   marketingOptIn,
+  privacyAccepted,
   ipHash,
 }: {
   email: string;
   marketingOptIn: boolean;
+  privacyAccepted: boolean;
   ipHash: string;
 }) {
   const email = normalizeEmail(rawEmail);
   if (!isValidEmail(email)) throw new Error("Vul een geldig e-mailadres in.");
+  if (!privacyAccepted) {
+    throw new Error("Ga akkoord met het privacybeleid om verder te gaan.");
+  }
 
   const now = Date.now();
   const db = getDatabase();
@@ -123,14 +128,15 @@ export async function requestLoginCode({
   ).run(now, email);
   db.prepare(
     `INSERT INTO login_codes
-      (id, email, code_hash, ip_hash, marketing_opt_in, expires_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      (id, email, code_hash, ip_hash, marketing_opt_in, privacy_accepted, expires_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     randomUUID(),
     email,
     hashCode(email, code),
     ipHash,
     marketingOptIn ? 1 : 0,
+    1,
     now + CODE_TTL,
     now,
   );
@@ -159,6 +165,7 @@ interface CodeRow {
   code_hash: string;
   attempts: number;
   marketing_opt_in: number;
+  privacy_accepted: number;
 }
 
 interface UserRow {
@@ -180,7 +187,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
   cleanExpiredAuthRecords(now);
   const row = db
     .prepare(
-      `SELECT id, code_hash, attempts, marketing_opt_in
+      `SELECT id, code_hash, attempts, marketing_opt_in, privacy_accepted
        FROM login_codes
        WHERE email = ? AND used_at IS NULL AND expires_at >= ?
        ORDER BY created_at DESC LIMIT 1`,
@@ -204,6 +211,10 @@ export function verifyLoginCode(emailValue: string, code: string) {
     throw new Error("De verificatiecode is niet correct.");
   }
 
+  if (!row.privacy_accepted) {
+    throw new Error("Privacytoestemming ontbreekt. Vraag een nieuwe code aan.");
+  }
+
   const userId = randomUUID();
   const consentAt = row.marketing_opt_in ? now : null;
   const transaction = db.transaction(() => {
@@ -213,8 +224,8 @@ export function verifyLoginCode(emailValue: string, code: string) {
     );
     db.prepare(
       `INSERT INTO users
-        (id, email, email_verified_at, marketing_opt_in, marketing_consent_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+        (id, email, email_verified_at, marketing_opt_in, marketing_consent_at, privacy_accepted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(email) DO UPDATE SET
          email_verified_at = excluded.email_verified_at,
          marketing_opt_in = CASE
@@ -225,6 +236,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
            WHEN excluded.marketing_opt_in = 1 THEN excluded.marketing_consent_at
            ELSE users.marketing_consent_at
          END,
+         privacy_accepted_at = excluded.privacy_accepted_at,
          updated_at = excluded.updated_at`,
     ).run(
       userId,
@@ -232,6 +244,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
       now,
       row.marketing_opt_in,
       consentAt,
+      now,
       now,
       now,
     );

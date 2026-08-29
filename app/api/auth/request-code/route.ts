@@ -11,12 +11,14 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       email?: string;
       marketingOptIn?: boolean;
+      privacyAccepted?: boolean;
     };
     const forwarded = request.headers.get("x-forwarded-for");
     const ip = forwarded?.split(",")[0]?.trim() || "unknown";
     const result = await requestLoginCode({
       email: body.email ?? "",
       marketingOptIn: body.marketingOptIn === true,
+      privacyAccepted: body.privacyAccepted === true,
       ipHash: hashRequestIp(ip),
     });
     return NextResponse.json(result, {
