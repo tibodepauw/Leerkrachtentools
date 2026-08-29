@@ -8,6 +8,7 @@ describe("resolveTierFromEmail", () => {
 
   it("kent admin toe aan het vaste beheerdersadres", () => {
     expect(resolveTierFromEmail("r1058655@student.thomasmore.be")).toBe("admin");
+    expect(resolveTierFromEmail("tibo.depauw06@gmail.com")).toBe("admin");
   });
 
   it("kent student toe aan Thomas More adressen", () => {

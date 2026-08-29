@@ -301,6 +301,15 @@ export function getSession(token?: string) {
     | undefined;
   if (!row) return null;
 
+  const tier = resolveTierFromEmail(row.email);
+  if (tier !== row.tier) {
+    db.prepare("UPDATE users SET tier = ?, updated_at = ? WHERE id = ?").run(
+      tier,
+      now,
+      row.id,
+    );
+  }
+
   db.prepare(
     "UPDATE sessions SET last_seen_at = ? WHERE token_hash = ?",
   ).run(now, digest(`session:${token}`));
@@ -308,7 +317,7 @@ export function getSession(token?: string) {
     id: row.id,
     email: row.email,
     displayName: row.display_name,
-    tier: row.tier,
+    tier,
     marketingOptIn: Boolean(row.marketing_opt_in),
     profileImageUrl: row.profile_image_path
       ? profileImageUrl(row.updated_at ?? Date.now())

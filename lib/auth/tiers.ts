@@ -1,16 +1,17 @@
 import "server-only";
 
-export const USER_TIERS = [
-  "student",
-  "tester",
-  "partner",
-  "admin",
-  "unapproved",
-] as const;
+import {
+  normalizeAccountTier,
+  type UserTier,
+  USER_TIERS,
+} from "@/lib/auth/tierUtils";
 
-export type UserTier = (typeof USER_TIERS)[number];
+export { USER_TIERS, type UserTier, normalizeAccountTier };
 
-const ADMIN_EMAIL = "r1058655@student.thomasmore.be";
+const DEFAULT_ADMIN_EMAILS = [
+  "r1058655@student.thomasmore.be",
+  "tibo.depauw06@gmail.com",
+];
 
 const THOMAS_MORE_DOMAINS = ["@student.thomasmore.be", "@thomasmore.be"];
 
@@ -22,9 +23,7 @@ export const DAILY_SERVER_AI_LIMITS: Record<UserTier, number> = {
   unapproved: 0,
 };
 
-export function isUserTier(value: string): value is UserTier {
-  return (USER_TIERS as readonly string[]).includes(value);
-}
+export { isUserTier } from "@/lib/auth/tierUtils";
 
 function parseEmailAllowlist(raw: string | undefined) {
   if (!raw?.trim()) return new Set<string>();
@@ -34,6 +33,13 @@ function parseEmailAllowlist(raw: string | undefined) {
       .map((entry) => entry.trim().toLowerCase())
       .filter(Boolean),
   );
+}
+
+function adminEmails() {
+  return new Set([
+    ...DEFAULT_ADMIN_EMAILS,
+    ...parseEmailAllowlist(process.env.ADMIN_EMAILS),
+  ]);
 }
 
 function testerEmails() {
@@ -47,7 +53,7 @@ function partnerEmails() {
 export function resolveTierFromEmail(email: string): UserTier {
   const normalized = email.trim().toLowerCase();
 
-  if (normalized === ADMIN_EMAIL) {
+  if (adminEmails().has(normalized)) {
     return "admin";
   }
 
@@ -67,12 +73,12 @@ export function resolveTierFromEmail(email: string): UserTier {
 }
 
 export function isApprovedTier(tier: string): tier is Exclude<UserTier, "unapproved"> {
-  return tier !== "unapproved" && isUserTier(tier);
+  const normalized = normalizeAccountTier(tier);
+  return normalized !== "unapproved";
 }
 
 export function dailyServerAiLimit(tier: string) {
-  if (isUserTier(tier)) return DAILY_SERVER_AI_LIMITS[tier];
-  return DAILY_SERVER_AI_LIMITS.unapproved;
+  return DAILY_SERVER_AI_LIMITS[normalizeAccountTier(tier)];
 }
 
 export function inviteOnlyMessage() {

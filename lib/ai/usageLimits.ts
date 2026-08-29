@@ -6,6 +6,7 @@ import {
   dailyServerAiLimit,
   inviteOnlyMessage,
 } from "@/lib/auth/tiers";
+import { normalizeAccountTier } from "@/lib/auth/tierUtils";
 import {
   getUserAiConfig,
   userAiConfigHasCredentials,
@@ -76,7 +77,8 @@ export function evaluateServerAiAccess({
     return { allowed: true, usesServerQuota: false };
   }
 
-  const limit = dailyServerAiLimit(tier);
+  const normalizedTier = normalizeAccountTier(tier);
+  const limit = dailyServerAiLimit(normalizedTier);
   if (limit === 0) {
     return {
       allowed: false,

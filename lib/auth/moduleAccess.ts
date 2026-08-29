@@ -1,5 +1,5 @@
-import type { UserTier } from "@/lib/auth/tiers";
-import { isUserTier } from "@/lib/auth/tiers";
+import type { UserTier } from "@/lib/auth/tierUtils";
+import { isUserTier, normalizeAccountTier } from "@/lib/auth/tierUtils";
 import { tierBadgeLabel } from "@/components/shared/TierBadge";
 import type { ModuleId } from "@/types";
 
@@ -72,11 +72,7 @@ export function normalizeModuleKey(moduleKey: ModuleConfigKey): ModuleId {
   return moduleKey as ModuleId;
 }
 
-export function normalizeAccountTier(tier: string): UserTier {
-  if (isUserTier(tier)) return tier;
-  if (tier === "free") return "student";
-  return "unapproved";
-}
+export { normalizeAccountTier };
 
 export function hasModuleAccess(tier: string, moduleKey: ModuleConfigKey) {
   const moduleId = normalizeModuleKey(moduleKey);
