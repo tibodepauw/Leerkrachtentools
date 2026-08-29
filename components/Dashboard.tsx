@@ -2,6 +2,7 @@
 
 import { ActiveLessonBar } from "@/components/layout/ActiveLessonBar";
 import { AppShell } from "@/components/layout/AppShell";
+import { UserStorageScope } from "@/components/auth/UserStorageScope";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { PreparationTextSync } from "@/components/shared/PreparationTextSync";
 import { ActiveLessonView } from "@/components/modules/ActiveLessonView";
@@ -39,6 +40,31 @@ const modules = {
 };
 
 export function Dashboard({
+  userId,
+  userEmail,
+  displayName,
+  profileImageUrl,
+  tier,
+}: {
+  userId: string;
+  userEmail: string;
+  displayName: string | null;
+  profileImageUrl: string | null;
+  tier: string;
+}) {
+  return (
+    <UserStorageScope userId={userId}>
+      <DashboardContent
+        userEmail={userEmail}
+        displayName={displayName}
+        profileImageUrl={profileImageUrl}
+        tier={tier}
+      />
+    </UserStorageScope>
+  );
+}
+
+function DashboardContent({
   userEmail,
   displayName,
   profileImageUrl,

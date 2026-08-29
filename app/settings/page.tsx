@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AccountSettings } from "@/components/auth/AccountSettings";
+import { UserStorageScope } from "@/components/auth/UserStorageScope";
 import { getAppVersionInfo } from "@/lib/app/version";
 import {
   getSession,
@@ -20,8 +21,10 @@ export default async function SettingsPage() {
   const appVersion = getAppVersionInfo();
 
   return (
-    <AccountSettings
-      email={session.email}
+    <UserStorageScope userId={session.id}>
+      <AccountSettings
+        userId={session.id}
+        email={session.email}
       displayName={session.displayName}
       profileImageUrl={session.profileImageUrl}
       tier={session.tier}
@@ -29,6 +32,7 @@ export default async function SettingsPage() {
       appVersion={appVersion.version}
       appCommit={appVersion.commit}
       githubRepo={appVersion.githubRepo}
-    />
+      />
+    </UserStorageScope>
   );
 }

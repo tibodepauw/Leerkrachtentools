@@ -1,10 +1,26 @@
-const DB_NAME = "leerkrachtentools-documents";
+"use client";
+
+import {
+  documentDatabaseName,
+  getActiveUserId,
+} from "@/lib/storage/userStorageScope";
+
 const DB_VERSION = 1;
 const STORE_NAME = "documents";
 
+function requireActiveUserId() {
+  const userId = getActiveUserId();
+  if (!userId) {
+    throw new Error("Geen actief account gevonden voor documentopslag.");
+  }
+  return userId;
+}
+
 function openDatabase() {
+  const userId = requireActiveUserId();
+
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(documentDatabaseName(userId), DB_VERSION);
 
     request.onerror = () => reject(request.error ?? new Error("IndexedDB open failed."));
     request.onsuccess = () => resolve(request.result);

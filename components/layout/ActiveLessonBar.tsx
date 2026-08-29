@@ -24,6 +24,7 @@ import { LessonPreparationInput } from "@/components/shared/LessonPreparationInp
 import { TargetGroupSelect } from "@/components/shared/TargetGroupSelect";
 import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { targetGroupHeaderLabel } from "@/lib/lesson/targetGroup";
+import { detachClientUserStorage } from "@/lib/storage/clientUserSession";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { EducationNetwork } from "@/types";
 
@@ -45,6 +46,7 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    detachClientUserStorage();
     window.location.reload();
   }
 

@@ -14,6 +14,7 @@ export default async function Home() {
 
   return session ? (
     <Dashboard
+      userId={session.id}
       userEmail={session.email}
       displayName={session.displayName}
       profileImageUrl={session.profileImageUrl}

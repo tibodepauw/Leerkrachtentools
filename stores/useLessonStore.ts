@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { createUserScopedPersistStorage } from "@/lib/storage/userScopedPersistStorage";
 import {
   buildGoalsFromPublisher,
   createEmptyGoals,
@@ -52,8 +53,10 @@ interface LessonStore {
   lesson: ActiveLesson;
   activeModule: ModuleId;
   pinnedModules: ModuleId[];
+  storageUserId: string | null;
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
+  setStorageUserId: (userId: string | null) => void;
   setActiveModule: (module: ModuleId) => void;
   togglePinnedModule: (module: ModuleId) => void;
   setField: <K extends keyof ActiveLesson>(
@@ -79,14 +82,26 @@ interface LessonStore {
   clearSession: () => void;
 }
 
+export function resetLessonStoreState() {
+  useLessonStore.setState({
+    lesson: initialLesson,
+    activeModule: "manual-scanner",
+    pinnedModules: [],
+    storageUserId: null,
+    hydrated: false,
+  });
+}
+
 export const useLessonStore = create<LessonStore>()(
   persist(
     (set) => ({
       lesson: initialLesson,
       activeModule: "manual-scanner",
       pinnedModules: [],
+      storageUserId: null,
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
+      setStorageUserId: (storageUserId) => set({ storageUserId }),
       setActiveModule: (activeModule) => set({ activeModule }),
       togglePinnedModule: (moduleId) =>
         set((state) => ({
@@ -232,6 +247,8 @@ export const useLessonStore = create<LessonStore>()(
     }),
     {
       name: "leerkrachtentools-active-lesson",
+      skipHydration: true,
+      storage: createJSONStorage(() => createUserScopedPersistStorage()),
       partialize: (state) => ({
         lesson: state.lesson,
         activeModule: state.activeModule,

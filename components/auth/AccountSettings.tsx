@@ -31,9 +31,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { detachClientUserStorage } from "@/lib/storage/clientUserSession";
 import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
 
 interface AccountSettingsProps {
+  userId: string;
   email: string;
   displayName: string | null;
   profileImageUrl: string | null;
@@ -45,6 +47,7 @@ interface AccountSettingsProps {
 }
 
 export function AccountSettings({
+  userId,
   email,
   displayName: initialDisplayName,
   profileImageUrl: initialProfileImageUrl,
@@ -103,6 +106,7 @@ export function AccountSettings({
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    detachClientUserStorage();
     router.push("/");
     router.refresh();
   }
@@ -113,6 +117,7 @@ export function AccountSettings({
       toast.error("Account kon niet worden verwijderd.");
       return;
     }
+    detachClientUserStorage();
     router.push("/");
     router.refresh();
   }
@@ -172,6 +177,13 @@ export function AccountSettings({
                   <Label htmlFor="account-email">E-mailadres</Label>
                   <Input id="account-email" value={email} readOnly disabled />
                   <p className="text-xs text-neutral-500">Je geverifieerde loginadres kan momenteel niet worden gewijzigd.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="account-id">Account-ID</Label>
+                  <Input id="account-id" value={userId} readOnly disabled className="font-mono text-xs" />
+                  <p className="text-xs text-neutral-500">
+                    Unieke identifier voor je account. Lesgegevens in deze browser worden aan dit ID gekoppeld.
+                  </p>
                 </div>
                 <Button disabled={savingProfile}>
                   {savingProfile ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
