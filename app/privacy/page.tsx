@@ -32,7 +32,55 @@ export default function PrivacyPage() {
           </section>
           <section>
             <h2 className="mb-2 font-semibold text-white">Lesgegevens en AI-providers</h2>
-            <p>De accountdatabase bewaart geen lesvoorbereidingen. De actieve lescontext staat lokaal in je browser. Wanneer je een AI-analyse uitvoert, wordt de noodzakelijke inhoud wel naar de geconfigureerde AI-provider gestuurd en geldt ook diens privacybeleid.</p>
+            <p>
+              De accountdatabase bewaart geen lesvoorbereidingen. De actieve
+              lescontext staat lokaal in je browser. Wanneer je een AI-analyse
+              uitvoert, sturen we alleen de inhoud mee die voor die analyse
+              nodig is — bijvoorbeeld een lesdoel, lesvoorbereidingstekst of
+              transcript — naar de geconfigureerde AI-provider. Dat kan Google
+              (Gemini), Groq, Cerebras, SambaNova of Cloudflare Workers AI
+              zijn, afhankelijk van wat de beheerder of jij in de instellingen
+              hebt ingesteld.
+            </p>
+            <p className="mt-3">
+              Leerkrachtentools traint geen eigen AI-modellen op jouw
+              lesinhoud. We slaan ingediende teksten niet op in de
+              accountdatabase en gebruiken ze niet om modellen te verbeteren.
+            </p>
+          </section>
+          <section>
+            <h2 className="mb-2 font-semibold text-white">Google Cloud</h2>
+            <p>
+              Voor curriculumzoeken (leerplandoelen en minimumdoelen) gebruiken
+              we Google Cloud Discovery Engine. Je zoekopdracht wordt daarvoor
+              verwerkt binnen onze Google Cloud-omgeving om relevante
+              leerplandoelen uit de geïndexeerde corpus op te halen. Discovery
+              Engine genereert ook een AI-samenvatting op basis van die
+              zoekresultaten.
+            </p>
+            <p className="mt-3">
+              Voor andere AI-functies — zoals doelverbetering, spellingcontrole,
+              timinganalyse en audits — kan Google Gemini via de Google AI API
+              worden ingezet, naast eventuele andere providers hierboven.
+            </p>
+            <p className="mt-3">
+              Deze Google-diensten verwerken je gegevens uitsluitend om de
+              gevraagde functionaliteit te leveren. Volgens de voorwaarden van
+              Google Cloud en de Google Generative AI API (betaalde /
+              enterprise-API&apos;s) worden ingediende prompts en zoekopdrachten
+              niet gebruikt om Google&apos;s algemene modellen te trainen. Raadpleeg
+              het actuele{" "}
+              <a
+                href="https://cloud.google.com/terms/cloud-privacy-notice"
+                target="_blank"
+                rel="noreferrer"
+                className="underline hover:text-white"
+              >
+                Google Cloud Privacy Notice
+              </a>{" "}
+              en het privacybeleid van de desbetreffende AI-provider voor
+              details.
+            </p>
           </section>
           <section>
             <h2 className="mb-2 font-semibold text-white">Jouw keuzes</h2>
