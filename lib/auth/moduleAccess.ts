@@ -1,5 +1,5 @@
 import type { UserTier } from "@/lib/auth/tierUtils";
-import { isUserTier, normalizeAccountTier } from "@/lib/auth/tierUtils";
+import { normalizeAccountTier } from "@/lib/auth/tierUtils";
 import { tierBadgeLabel } from "@/components/shared/TierBadge";
 import type { ModuleId } from "@/types";
 

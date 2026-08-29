@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  normalizeAudioMediaType,
+  pickRecorderMimeType,
+} from "@/lib/ai/audioMediaType";
 
 export function useAudioRecorder() {
   const [recording, setRecording] = useState(false);
@@ -22,13 +26,19 @@ export function useAudioRecorder() {
     chunksRef.current = [];
     setDuration(0);
     setAudio(null);
-    const recorder = new MediaRecorder(stream);
+
+    const mimeType = pickRecorderMimeType();
+    const recorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
     recorderRef.current = recorder;
     recorder.ondataavailable = (event) => {
       if (event.data.size) chunksRef.current.push(event.data);
     };
     recorder.onstop = () => {
-      setAudio(new Blob(chunksRef.current, { type: recorder.mimeType }));
+      const rawType = recorder.mimeType || mimeType || "audio/webm";
+      const normalizedType = normalizeAudioMediaType(rawType) ?? "audio/webm";
+      setAudio(new Blob(chunksRef.current, { type: normalizedType }));
       stream.getTracks().forEach((track) => track.stop());
     };
     recorder.start();

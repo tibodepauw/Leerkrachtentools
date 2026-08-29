@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  normalizeAudioMediaType,
+  REFLECTION_AUDIO_MEDIA_TYPES,
+} from "@/lib/ai/audioMediaType";
 
 export const MAX_AI_TEXT_CHARS = 500_000;
 export const MAX_BASE64_CHARS = 20_000_000;
@@ -20,13 +24,7 @@ const manualMediaTypes = [
   "text/plain",
 ] as const;
 
-const reflectionMediaTypes = [
-  "audio/webm",
-  "audio/mp4",
-  "audio/mpeg",
-  "audio/wav",
-  "audio/ogg",
-] as const;
+const reflectionMediaTypes = REFLECTION_AUDIO_MEDIA_TYPES;
 
 export const analysisRequestSchema = z
   .object({
@@ -78,8 +76,18 @@ export const reflectionRequestSchema = z
     goals: z.array(z.string().max(10_000)).max(20).optional(),
     content: z.string().max(MAX_AI_TEXT_CHARS).optional(),
     audioData: z.string().max(MAX_BASE64_CHARS).optional(),
-    mediaType: z.enum(reflectionMediaTypes).optional(),
+    mediaType: z
+      .string()
+      .optional()
+      .transform((value) => normalizeAudioMediaType(value))
+      .pipe(z.enum(reflectionMediaTypes).optional()),
   })
+  .transform((value) => ({
+    ...value,
+    mediaType:
+      value.mediaType ??
+      (value.audioData?.trim() ? ("audio/webm" as const) : undefined),
+  }))
   .refine((value) => Boolean(value.content?.trim() || value.audioData?.trim()), {
     message: "Voeg tekst, antwoorden of een opname toe.",
   });

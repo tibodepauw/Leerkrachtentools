@@ -22,6 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useAnalysis } from "@/hooks/useAnalysis";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { resolveReflectionMediaType } from "@/lib/ai/audioMediaType";
 import type { ReflectionDraft } from "@/types";
 import { useLessonStore } from "@/stores/useLessonStore";
 
@@ -48,11 +49,15 @@ export function VoiceReflectionView() {
     const audioData = recorder.audio
       ? await blobToBase64(recorder.audio)
       : undefined;
+    const mediaType = resolveReflectionMediaType({
+      mediaType: recorder.audio?.type,
+      hasAudio: Boolean(audioData),
+    });
     return analyze("/api/transcribe-reflection", {
       goals: lesson.goals.map((goal) => goal.text),
       content: [content, extra].filter(Boolean).join("\n\nAanvullende antwoorden:\n"),
       audioData,
-      mediaType: recorder.audio?.type,
+      mediaType,
     });
   }
 
