@@ -110,6 +110,8 @@ export interface CurriculumSearchResult {
   bronUrl: string;
   snippet?: string;
   sourceUri?: string;
+  bronTitel?: string;
+  verrijking?: "corpus" | "fragment";
   score?: number;
 }
 

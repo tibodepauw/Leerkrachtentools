@@ -21,23 +21,24 @@ const NETWORKS = new Set<CurriculumNetworkFilter>([
   "GO",
 ]);
 
-function dedupeResults(results: CurriculumSearchResult[]): CurriculumSearchResult[] {
-  const seen = new Set<string>();
-  const unique: CurriculumSearchResult[] = [];
+function dedupeResults(
+  results: Array<CurriculumSearchResult & { score?: number }>,
+): Array<CurriculumSearchResult & { score?: number }> {
+  const seen = new Map<string, CurriculumSearchResult & { score?: number }>();
   for (const result of results) {
     const key = [
       result.code,
       result.titel,
       result.netwerk,
-      result.leerjaarRoute,
+      result.bronTitel,
+      result.sourceUri,
     ].join("|");
-    if (seen.has(key)) {
-      continue;
+    const existing = seen.get(key);
+    if (!existing || (result.score ?? 0) > (existing.score ?? 0)) {
+      seen.set(key, result);
     }
-    seen.add(key);
-    unique.push(result);
   }
-  return unique;
+  return [...seen.values()];
 }
 
 export async function POST(request: Request) {
@@ -72,27 +73,28 @@ export async function POST(request: Request) {
     });
 
     const enrichedFromDiscovery = discovery.hits
-      .map((hit) => enrichHitFromCorpus(hit, query))
+      .map((hit) => enrichHitFromCorpus(hit, query, network))
       .filter(
         (item): item is CurriculumSearchResult & { score: number } =>
           item !== null,
       );
 
-    const localFallback = searchLocalCorpus({
-      query,
-      network,
-      limit: 6,
-    });
+    const ranked =
+      enrichedFromDiscovery.length > 0
+        ? enrichedFromDiscovery
+        : searchLocalCorpus({
+            query,
+            network,
+            limit: 6,
+          });
 
     const merged = dedupeResults(
-      [...enrichedFromDiscovery, ...localFallback]
+      [...ranked]
         .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
         .slice(0, 6),
     );
 
-    const goal =
-      merged[0] ??
-      null;
+    const goal = merged[0] ?? null;
     const alternatives = merged.slice(1);
 
     return NextResponse.json({
@@ -103,7 +105,7 @@ export async function POST(request: Request) {
         citations: discovery.citations,
         totalSize: discovery.totalSize,
         corpusNotice:
-          "Zoekresultaten komen uit de Google Cloud Discovery Engine-datastore, verrijkt met gestructureerde doelen uit de geïndexeerde corpus. Controleer code en officiële bron vóór indiening.",
+          "Zoekresultaten komen uit Google Cloud Discovery Engine, verrijkt met gestructureerde doelen waar een betrouwbare match mogelijk is. Fragmentresultaten tonen de gevonden tekst rechtstreeks uit de bron.",
         retrievalMode: "discovery-engine",
       },
       provider: "google-discovery-engine",

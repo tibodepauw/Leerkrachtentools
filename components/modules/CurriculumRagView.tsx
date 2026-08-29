@@ -138,14 +138,20 @@ function ResultCard({
         ) : null}
       </CardHeader>
       <CardContent className="space-y-4">
-        {result.discipline ? (
+        {result.discipline || result.bronTitel ? (
           <p className="text-xs font-medium uppercase tracking-wide text-neutral-400">
-            {result.discipline}
+            {[result.discipline, result.bronTitel].filter(Boolean).join(" · ")}
             {result.subdomein ? ` · ${result.subdomein}` : ""}
           </p>
         ) : null}
 
         <p className="text-sm leading-6">{result.titel}</p>
+
+        {result.verrijking === "fragment" && result.snippet ? (
+          <p className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-3 text-xs leading-6 text-neutral-400">
+            Fragment uit Discovery Engine: {result.snippet}
+          </p>
+        ) : null}
 
         {result.toelichting ? (
           <Accordion type="single" collapsible>
