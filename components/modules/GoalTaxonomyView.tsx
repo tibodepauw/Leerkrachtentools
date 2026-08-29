@@ -39,7 +39,7 @@ export function GoalTaxonomyView() {
   return (
     <ModuleShell
       title="MC–DAS–SPM herkenner"
-      description="Classificeert lesdoelen via Gemini als MC, DAS of SPM zonder het doel te herschrijven."
+      description="Classificeert lesdoelen als MC, DAS of SPM zonder het doel te herschrijven."
       input={
         <ModuleInputLayout
           fields={
