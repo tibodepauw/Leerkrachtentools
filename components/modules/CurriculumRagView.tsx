@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
+import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
@@ -486,9 +487,17 @@ function mapEducationNetwork(
 }
 
 export function CurriculumRagView() {
-  return <CurriculumSearch variant="leerplandoel" />;
+  return (
+    <ModuleErrorBoundary moduleName="Leerplandoelen">
+      <CurriculumSearch variant="leerplandoel" />
+    </ModuleErrorBoundary>
+  );
 }
 
 export function MinimumGoalsView() {
-  return <CurriculumSearch variant="minimumdoel" />;
+  return (
+    <ModuleErrorBoundary moduleName="Minimumdoelen">
+      <CurriculumSearch variant="minimumdoel" />
+    </ModuleErrorBoundary>
+  );
 }

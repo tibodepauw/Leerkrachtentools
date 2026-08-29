@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileUp, Loader2, RefreshCw } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
 import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
@@ -36,6 +37,14 @@ function readFileAsDataUrl(file: File) {
 }
 
 export function ManualScannerView() {
+  return (
+    <ModuleErrorBoundary moduleName="Handleiding Scanner">
+      <ManualScannerContent />
+    </ModuleErrorBoundary>
+  );
+}
+
+function ManualScannerContent() {
   const [content, setContent] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileSize, setFileSize] = useState<number | null>(null);
