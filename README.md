@@ -83,11 +83,12 @@ Curriculum search is **retrieval only** (no generative AI in the matcher itself)
 Local search indexes official goal corpora:
 
 | Network | Source |
-|---------|--------|
+| ------- | ------ |
 | ZILL | Katholiek onderwijs ZILL selector (learning lines + nested content) |
-| OVSG | LeerLokaal |
+| OVSG | Leer Lokaal |
 | Op.stap | Katholiek onderwijs Op.stap |
-| GO! Nieuw | GO! basisonderwijs leerplan |
+| GO | GO! basisonderwijs vakleerplannen (9 subject books) |
+| GO! Nieuw | GO! basisonderwijs 12 doelensets |
 
 Maintenance scripts (optional, not required to run the app UI):
 
