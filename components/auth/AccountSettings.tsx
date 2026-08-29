@@ -224,7 +224,7 @@ export function AccountSettings({
                       Niveau
                     </dt>
                     <dd className="mt-1 space-y-1">
-                      <p className="text-sm font-normal text-neutral-200">
+                      <p className="text-sm font-normal text-neutral-400">
                         {tierBadgeLabel(tier)}
                       </p>
                       {tierInviteOnlyHint(tier) ? (

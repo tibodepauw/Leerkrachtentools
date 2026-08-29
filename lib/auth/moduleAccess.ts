@@ -92,5 +92,5 @@ export function getDefaultModuleForTier(tier: string): ModuleId | null {
 }
 
 export function moduleAccessDeniedMessage(tier: string) {
-  return `Deze module is niet ingeschakeld voor jouw accountniveau (${tierBadgeLabel(tier)}). Neem contact op met de beheerder voor extra module-toegang.`;
+  return `Deze module is niet beschikbaar voor jouw accountniveau (${tierBadgeLabel(tier)}).`;
 }
