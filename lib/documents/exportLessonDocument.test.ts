@@ -91,16 +91,25 @@ describe("exportLessonDocument", () => {
     expect(xml).toContain("Leergebied: Nederlands");
   });
 
-  it("weigert export zonder geüpload bronbestand", async () => {
-    await expect(exportLessonDocument(sampleLesson)).rejects.toThrow(
-      /Upload eerst je lesvoorbereidingsformulier/i,
-    );
+  it("genereert een generiek Word-document zonder upload of lokaal sjabloon", async () => {
+    const exported = await exportLessonDocument(sampleLesson);
+    expect(exported.exportMode).toBe("generated");
+    expect(exported.fileName).toContain("creatief-schrijven");
+    expect(exported.buffer.byteLength).toBeGreaterThan(0);
+
+    const xml = exported.buffer.toString("utf8");
+    expect(xml).toContain("Lesvoorbereiding export");
+    expect(xml).toContain("Leergebied: Nederlands");
+    expect(xml).toContain("De leerlingen kunnen een nieuw doel uit de app schrijven.");
   });
 
-  it("weigert export voor niet-docx bronbestanden", async () => {
-    await expect(
-      exportLessonDocument(sampleLesson, Buffer.from("pdf"), "les.pdf"),
-    ).rejects.toThrow(/Alleen een geüpload .docx-formulier/i);
+  it("valideert niet-docx uploads en valt terug op generieke export", async () => {
+    const exported = await exportLessonDocument(
+      sampleLesson,
+      Buffer.from("pdf"),
+      "les.pdf",
+    );
+    expect(exported.exportMode).toBe("generated");
   });
 });
 

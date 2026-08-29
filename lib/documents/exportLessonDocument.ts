@@ -1,8 +1,14 @@
 import "server-only";
 
 import JSZip from "jszip";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import type { LessonExportPayload } from "@/types";
 import { lessonDocumentExtension } from "@/lib/documents/supportedFormats";
+
+export const LOCAL_TEMPLATE_FILE = "lesvoorbereidingsformulier_2526DEF-1.docx";
+
+export type LessonExportMode = "patched-source" | "local-template" | "generated";
 
 function escapeXml(value: string) {
   return value
@@ -187,6 +193,85 @@ function patchDocumentXml(documentXml: string, lesson: LessonExportPayload) {
   return xml;
 }
 
+function templateDirectory() {
+  return path.join(process.cwd(), "data", "templates");
+}
+
+export function localTemplatePath(fileName = LOCAL_TEMPLATE_FILE) {
+  return path.join(templateDirectory(), fileName);
+}
+
+export function tryLoadLocalTemplateBuffer(fileName = LOCAL_TEMPLATE_FILE) {
+  const templatePath = localTemplatePath(fileName);
+  if (!existsSync(templatePath)) return undefined;
+
+  try {
+    return readFileSync(templatePath);
+  } catch {
+    return undefined;
+  }
+}
+
+function safeTopicFileName(topic: string) {
+  return topic
+    .trim()
+    .toLocaleLowerCase("nl-BE")
+    .replace(/[^a-z0-9à-ÿ]+/giu, "-")
+    .replace(/^-|-$/gu, "");
+}
+
+function paragraphXml(text: string) {
+  return `<w:p><w:r><w:t xml:space="preserve">${escapeXml(text)}</w:t></w:r></w:p>`;
+}
+
+export async function generateGenericLessonDocx(lesson: LessonExportPayload) {
+  const activeGoals = lesson.goals.filter((goal) => goal.text.trim());
+  const paragraphs = [
+    "Lesvoorbereiding export",
+    "Lescontext",
+    `Leergebied: ${lesson.learningArea.trim() || " "}`,
+    `Onderdeel: ${lesson.component.trim() || " "}`,
+    `Doelgroep: ${lesson.targetGroup.trim() || " "}`,
+    `Lesonderwerp: ${lesson.topic.trim() || " "}`,
+    `Onderwijsnet: ${lesson.educationNetwork}`,
+    `Totale lestijd: ${lesson.totalMinutes} min`,
+    "Lesdoelen",
+    ...activeGoals.map(
+      (goal) =>
+        `${goal.id}: ${goal.text.trim()}${goal.taxonomy ? ` (${goal.taxonomy})` : ""}`,
+    ),
+    "Materialen",
+    lesson.materials.length > 0 ? lesson.materials.join(", ") : " ",
+    "Lesvoorbereiding",
+    lesson.lessonPreparation.trim() || " ",
+  ];
+
+  const body = paragraphs.map((line) => paragraphXml(line)).join("");
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>${body}<w:sectPr/></w:body>
+</w:document>`;
+  const zip = new JSZip();
+  zip.file(
+    "[Content_Types].xml",
+    `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`,
+  );
+  zip.folder("_rels")!.file(
+    ".rels",
+    `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`,
+  );
+  zip.folder("word")!.file("document.xml", documentXml);
+  return Buffer.from(await zip.generateAsync({ type: "nodebuffer" }));
+}
+
 export async function patchLessonDocx(
   sourceBuffer: Buffer,
   lesson: LessonExportPayload,
@@ -202,32 +287,45 @@ export async function patchLessonDocx(
   return Buffer.from(await zip.generateAsync({ type: "nodebuffer" }));
 }
 
+function defaultExportFileName(topic: string) {
+  const safeTopic = safeTopicFileName(topic);
+  return `lesvoorbereiding-${safeTopic || "export"}.docx`;
+}
+
 export async function exportLessonDocument(
   lesson: LessonExportPayload,
   sourceBuffer?: Buffer,
   sourceFileName?: string,
 ) {
-  if (!sourceBuffer || !sourceFileName) {
-    throw new Error(
-      "Upload eerst je lesvoorbereidingsformulier (.docx) om het bij te werken.",
-    );
+  if (sourceBuffer && sourceFileName) {
+    const extension = lessonDocumentExtension(sourceFileName);
+    if (extension === "doc") {
+      throw new Error(
+        "Oude .doc-bestanden worden niet ondersteund voor export. Upload het formulier als .docx.",
+      );
+    }
+    if (extension === "docx") {
+      return {
+        buffer: await patchLessonDocx(sourceBuffer, lesson),
+        fileName: sourceFileName,
+        exportMode: "patched-source" as const,
+      };
+    }
   }
 
-  const extension = lessonDocumentExtension(sourceFileName);
-  if (extension === "doc") {
-    throw new Error(
-      "Oude .doc-bestanden worden niet ondersteund voor export. Upload het formulier als .docx.",
-    );
-  }
-  if (extension !== "docx") {
-    throw new Error(
-      "Alleen een geüpload .docx-formulier kan worden bijgewerkt. PDF-bestanden worden niet geëxporteerd.",
-    );
+  const localTemplate = tryLoadLocalTemplateBuffer();
+  if (localTemplate) {
+    return {
+      buffer: await patchLessonDocx(localTemplate, lesson),
+      fileName: defaultExportFileName(lesson.topic),
+      exportMode: "local-template" as const,
+    };
   }
 
   return {
-    buffer: await patchLessonDocx(sourceBuffer, lesson),
-    fileName: sourceFileName,
+    buffer: await generateGenericLessonDocx(lesson),
+    fileName: defaultExportFileName(lesson.topic),
+    exportMode: "generated" as const,
   };
 }
 

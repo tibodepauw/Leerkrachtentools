@@ -43,7 +43,7 @@ export function ActiveLessonView() {
   const [uploadError, setUploadError] = useState("");
   const activeGoals = lesson.goals.filter((goal) => goal.text.trim());
   const preparationDocument = lesson.preparationDocument ?? null;
-  const canExportDocx = preparationDocument?.fileName
+  const uploadedDocx = preparationDocument?.fileName
     ?.toLowerCase()
     .endsWith(".docx");
 
@@ -85,13 +85,6 @@ export function ActiveLessonView() {
   }
 
   async function downloadLesson() {
-    if (!canExportDocx) {
-      setDownloadError(
-        "Upload eerst je lesvoorbereidingsformulier als .docx om het bij te werken.",
-      );
-      return;
-    }
-
     setDownloading(true);
     setDownloadError("");
 
@@ -110,7 +103,7 @@ export function ActiveLessonView() {
       const formData = new FormData();
       formData.append("lesson", JSON.stringify(payload));
 
-      if (preparationDocument) {
+      if (preparationDocument && uploadedDocx) {
         const sourceBlob = await getLessonDocument(preparationDocument.id);
         if (sourceBlob) {
           formData.append(
@@ -194,12 +187,8 @@ export function ActiveLessonView() {
           <Button
             type="button"
             onClick={downloadLesson}
-            disabled={downloading || !canExportDocx}
-            title={
-              canExportDocx
-                ? "Download bijgewerkt Word-formulier"
-                : "Upload eerst een .docx-formulier"
-            }
+            disabled={downloading}
+            title="Download Word-export"
           >
             {downloading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -300,9 +289,11 @@ export function ActiveLessonView() {
             />
             <p className="text-xs text-neutral-500">
               Je ziet hier het originele Word- of PDF-bestand. Bij downloaden
-              wordt je geüploade .docx-formulier bijgewerkt met je actuele
-              doelen. Het Thomas More-formulier staat niet in deze repo: gebruik
-              het sjabloon van je opleiding en upload het hier lokaal.
+              past de app je geüploade .docx aan, een lokaal sjabloon in{" "}
+              <code className="text-neutral-400">data/templates/</code>, of maakt
+              een generiek Word-document. Plaats je officiële sjabloon lokaal in{" "}
+              <code className="text-neutral-400">data/templates/</code> of upload
+              het als .docx.
             </p>
           </CardContent>
         </Card>

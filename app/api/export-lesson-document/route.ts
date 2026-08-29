@@ -92,7 +92,7 @@ export async function POST(request: Request) {
           "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": `attachment; filename="${exported.fileName}"`,
         "Cache-Control": "no-store",
-        "X-Export-Mode": "patched-source",
+        "X-Export-Mode": exported.exportMode,
       },
     });
   } catch (error) {

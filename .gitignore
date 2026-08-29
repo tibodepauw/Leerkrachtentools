@@ -29,8 +29,14 @@
 /data/minimumdoelen/
 /data/opstap/
 /data/go_nieuw/
-/data/templates/
-/test/fixtures/
+
+# Sjablonen en documenten
+data/templates/*.docx
+data/templates/*.pdf
+!data/templates/.gitkeep
+test/fixtures/*.docx
+test/fixtures/*.pdf
+!test/fixtures/.gitkeep
 
 # misc
 .DS_Store
