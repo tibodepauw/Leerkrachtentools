@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,7 +24,6 @@ import { LessonPreparationInput } from "@/components/shared/LessonPreparationInp
 import { TargetGroupSelect } from "@/components/shared/TargetGroupSelect";
 import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { targetGroupHeaderLabel } from "@/lib/lesson/targetGroup";
-import { detachClientUserStorage } from "@/lib/storage/clientUserSession";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { EducationNetwork } from "@/types";
 
@@ -43,12 +42,6 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
   const activeGoalCount = filledGoals(lesson.goals).length;
   const editableGoals = lesson.goals;
   const canAddGoal = lesson.goals.length < MAX_LESSON_GOALS;
-
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    detachClientUserStorage();
-    window.location.reload();
-  }
 
   return (
     <header className="sticky top-0 z-20 border-b border-neutral-800 bg-black/90 backdrop-blur-xl">
@@ -191,15 +184,6 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
               </Button>
             </DialogContent>
           </Dialog>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={logout}
-            aria-label="Uitloggen"
-            title="Uitloggen"
-          >
-            <LogOut className="size-4" />
-          </Button>
         </div>
       </div>
     </header>
