@@ -4,6 +4,13 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.5] - 2026-08-29
+
+### Changed
+- Logout removed from the header bar; sign out is only available in **Instellingen**
+
+---
+
 ## [5.8.4] - 2026-08-29
 
 Account tiers, module access, and Schrijfstijl refresh.
