@@ -13,5 +13,9 @@ export default defineConfig({
   test: {
     environment: "node",
     exclude: ["**/node_modules/**", "**/.next/**"],
+    env: {
+      DATABASE_PATH: ":memory:",
+      AUTH_SECRET: "test-auth-secret-with-at-least-32-characters",
+    },
   },
 });

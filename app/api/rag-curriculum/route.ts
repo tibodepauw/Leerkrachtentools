@@ -3,6 +3,7 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { approvedTierResponse } from "@/lib/ai/serverAccess";
 import { networkBadgeLabel } from "@/lib/rag/curriculumDisplay";
 import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
 import {
@@ -118,7 +119,10 @@ async function runCurriculumSearch(
 }
 
 export async function POST(request: Request) {
-  if (!sessionFromRequest(request)) return unauthorizedResponse();
+  const session = sessionFromRequest(request);
+  if (!session) return unauthorizedResponse();
+  const tierDenied = approvedTierResponse(session.tier);
+  if (tierDenied) return tierDenied;
 
   try {
     const body = (await request.json()) as {

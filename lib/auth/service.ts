@@ -12,6 +12,7 @@ import {
   getDatabase,
 } from "@/lib/auth/database";
 import { profileImageUrl } from "@/lib/auth/profileImage";
+import { resolveTierFromEmail } from "@/lib/auth/tiers";
 import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
 
 export const SESSION_COOKIE = "leerkrachtentools_session";
@@ -217,6 +218,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
 
   const userId = randomUUID();
   const consentAt = row.marketing_opt_in ? now : null;
+  const tier = resolveTierFromEmail(email);
   const transaction = db.transaction(() => {
     db.prepare("UPDATE login_codes SET used_at = ? WHERE id = ?").run(
       now,
@@ -224,9 +226,10 @@ export function verifyLoginCode(emailValue: string, code: string) {
     );
     db.prepare(
       `INSERT INTO users
-        (id, email, email_verified_at, marketing_opt_in, marketing_consent_at, privacy_accepted_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (id, email, tier, email_verified_at, marketing_opt_in, marketing_consent_at, privacy_accepted_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(email) DO UPDATE SET
+         tier = excluded.tier,
          email_verified_at = excluded.email_verified_at,
          marketing_opt_in = CASE
            WHEN excluded.marketing_opt_in = 1 THEN 1
@@ -241,6 +244,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
     ).run(
       userId,
       email,
+      tier,
       now,
       row.marketing_opt_in,
       consentAt,

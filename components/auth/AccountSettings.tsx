@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { ProfileAvatar } from "@/components/shared/ProfileAvatar";
-import { Badge } from "@/components/ui/badge";
+import { TierBadge, tierInviteOnlyHint } from "@/components/shared/TierBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -223,10 +223,13 @@ export function AccountSettings({
                     <dt className="text-xs uppercase tracking-wide text-neutral-600">
                       Niveau
                     </dt>
-                    <dd className="mt-1">
-                      <Badge variant="secondary" className="capitalize">
-                        {tier === "free" ? "Gratis" : tier}
-                      </Badge>
+                    <dd className="mt-1 space-y-2">
+                      <TierBadge tier={tier} />
+                      {tierInviteOnlyHint(tier) ? (
+                        <p className="text-xs leading-5 text-neutral-500">
+                          {tierInviteOnlyHint(tier)}
+                        </p>
+                      ) : null}
                     </dd>
                   </div>
                   <div>

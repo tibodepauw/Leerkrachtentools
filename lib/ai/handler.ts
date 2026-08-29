@@ -8,6 +8,11 @@ import { analysisRequestSchema } from "@/lib/ai/inputValidation";
 import { runStructured } from "@/lib/ai/router";
 import type { ProviderName } from "@/lib/ai/providers";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
+import {
+  checkServerAiAccess,
+  serverAiAccessDeniedResponse,
+  trackServerAiUsageIfNeeded,
+} from "@/lib/ai/serverAccess";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
 
 type InputRecord = Record<string, unknown>;
@@ -45,6 +50,15 @@ export function createAnalysisHandler<T>({
     try {
       const input = inputSchema.parse(await request.json()) as InputRecord;
       const userAiConfig = getUserAiConfig(session.id);
+      const access = checkServerAiAccess({
+        userId: session.id,
+        tier: session.tier,
+        userAiConfig,
+      });
+      if (!access.allowed) {
+        return serverAiAccessDeniedResponse(access);
+      }
+
       const preferred =
         typeof input.provider === "string" &&
         providerNames.has(input.provider)
@@ -71,6 +85,11 @@ export function createAnalysisHandler<T>({
         allowLocalMock: !requireAi,
         userAiConfig,
         maxOutputTokens,
+      });
+      trackServerAiUsageIfNeeded({
+        userId: session.id,
+        usesServerQuota: access.usesServerQuota,
+        provider: result.provider,
       });
       return NextResponse.json(result);
     } catch (error) {

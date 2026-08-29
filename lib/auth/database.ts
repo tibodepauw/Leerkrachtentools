@@ -29,7 +29,7 @@ export function getDatabase() {
       id TEXT PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
       display_name TEXT,
-      tier TEXT NOT NULL DEFAULT 'free',
+      tier TEXT NOT NULL DEFAULT 'unapproved',
       email_verified_at INTEGER NOT NULL,
       marketing_opt_in INTEGER NOT NULL DEFAULT 0,
       marketing_consent_at INTEGER,
@@ -66,6 +66,15 @@ export function getDatabase() {
 
     CREATE INDEX IF NOT EXISTS sessions_user_id ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS sessions_expires_at ON sessions(expires_at);
+
+    CREATE TABLE IF NOT EXISTS user_ai_usage (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS user_ai_usage_user_created
+      ON user_ai_usage(user_id, created_at);
   `);
   const userColumns = new Set(
     (
@@ -79,7 +88,7 @@ export function getDatabase() {
   }
   if (!userColumns.has("tier")) {
     database.exec(
-      "ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'",
+      "ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'unapproved'",
     );
   }
   if (!userColumns.has("use_own_api_keys")) {

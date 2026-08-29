@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/shared/ProfileAvatar";
+import { TierBadge } from "@/components/shared/TierBadge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   Tooltip,
@@ -325,9 +326,9 @@ function SidebarContent({
             <p className="truncate text-sm font-medium text-white">
               {accountLabel(account)}
             </p>
-            <p className="text-xs capitalize text-neutral-500">
-              {account.tier === "free" ? "Gratis" : account.tier}
-            </p>
+            <div className="mt-0.5">
+              <TierBadge tier={account.tier} className="text-[10px] px-1.5 py-0" />
+            </div>
           </div>
           <Settings className="size-4 text-neutral-600 transition-colors group-hover:text-neutral-300" />
         </Link>
