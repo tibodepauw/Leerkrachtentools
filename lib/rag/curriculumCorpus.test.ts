@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   buildFragmentResult,
   countTokenMatches,
+  dedupeByMinimumGoalCode,
   enrichHitFromCorpus,
   extractCodeFromSnippet,
   findBestCorpusMatch,
   scoreTextOverlap,
   searchLocalCorpus,
+  searchMinimumGoals,
   tokenize,
 } from "@/lib/rag/curriculumCorpus";
 import type { DiscoveryHit } from "@/lib/rag/discoveryEngine";
@@ -79,5 +81,49 @@ describe("curriculumCorpus matching", () => {
         network: "ALL",
       }),
     ).toBeNull();
+    expect(searchMinimumGoals({ query: "meteoriet inslag dinosaurussen" })).toEqual(
+      [],
+    );
+  });
+
+  it("dedupliceert minimumdoelen op code", () => {
+    const results = dedupeByMinimumGoalCode([
+      {
+        code: "LP1",
+        discipline: "Wiskunde",
+        subdomein: "",
+        titel: "Leerplandoel A",
+        toelichting: "",
+        leerjaarRoute: "",
+        gelinktMinimumdoel: {
+          code: "MD1",
+          tekst: "Minimum A",
+          type: "",
+        },
+        netwerk: "ZILL",
+        bronUrl: "",
+        score: 0.5,
+      },
+      {
+        code: "LP2",
+        discipline: "Wiskunde",
+        subdomein: "",
+        titel: "Leerplandoel B",
+        toelichting: "",
+        leerjaarRoute: "",
+        gelinktMinimumdoel: {
+          code: "MD1",
+          tekst: "Minimum A",
+          type: "",
+        },
+        netwerk: "OVSG",
+        bronUrl: "",
+        score: 0.8,
+      },
+    ]);
+
+    expect(results).toHaveLength(1);
+    expect(results[0]?.score).toBe(0.8);
+    expect(results[0]?.netwerk).toBe("OVSG");
   });
 });

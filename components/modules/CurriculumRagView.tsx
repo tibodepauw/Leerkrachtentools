@@ -79,21 +79,19 @@ const variantCopy: Record<
   minimumdoel: {
     title: "Minimumdoelen zoeken",
     description:
-      "Zoekt leerplandoelen met gekoppelde Vlaamse minimumdoelen. Alleen gestructureerde records uit de officiële corpus.",
+      "Zoekt het bestpassende Vlaamse minimumdoel bij je ingegeven lesdoel — netwerk-onafhankelijk, over alle officiële bronnen.",
     action: "Zoek minimumdoel",
     empty:
-      "Doelkaarten met gekoppelde minimumdoelen verschijnen hier na je zoekopdracht.",
+      "Minimumdoelkaarten met code en officiële doelzin verschijnen hier na je zoekopdracht.",
   },
 };
 
 function GoalCard({
   result,
   onAddToLesson,
-  emphasizeMinimum = false,
 }: {
   result: CurriculumSearchResult;
   onAddToLesson: (text: string) => void;
-  emphasizeMinimum?: boolean;
 }) {
   const goalCopy = formatGoalCopyText(result);
   const minimumCopy = result.gelinktMinimumdoel
@@ -147,13 +145,7 @@ function GoalCard({
         ) : null}
 
         {result.gelinktMinimumdoel ? (
-          <div
-            className={
-              emphasizeMinimum
-                ? "rounded-lg border border-emerald-900/50 bg-emerald-950/20 p-4"
-                : "rounded-lg border border-neutral-800 bg-neutral-950/60 p-4"
-            }
-          >
+          <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
               Gekoppeld minimumdoel
             </p>
@@ -187,6 +179,72 @@ function GoalCard({
   );
 }
 
+function MinimumGoalCard({
+  result,
+  onAddToLesson,
+}: {
+  result: CurriculumSearchResult;
+  onAddToLesson: (text: string) => void;
+}) {
+  const minimum = result.gelinktMinimumdoel;
+  if (!minimum?.tekst) {
+    return null;
+  }
+
+  const minimumCopy = formatMinimumGoalCopyText(minimum);
+
+  function handleAddToLesson() {
+    onAddToLesson(minimumCopy);
+    toast.success("Minimumdoel toegevoegd aan actieve les");
+  }
+
+  return (
+    <Card className="border-emerald-900/40 bg-emerald-950/5">
+      <CardHeader className="space-y-2 pb-3">
+        {minimum.code ? (
+          <p className="font-mono text-sm font-bold tracking-tight text-emerald-200">
+            {minimum.code}
+          </p>
+        ) : null}
+        {result.discipline ? (
+          <p className="text-xs font-medium text-neutral-400">{result.discipline}</p>
+        ) : null}
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <p className="text-sm leading-6 text-neutral-100">{minimum.tekst}</p>
+
+        <Accordion type="single" collapsible>
+          <AccordionItem value="koppeling" className="border-neutral-800">
+            <AccordionTrigger className="py-2 text-xs text-neutral-400 hover:text-neutral-200">
+              Leerplandoel-koppeling
+            </AccordionTrigger>
+            <AccordionContent className="space-y-2 text-sm leading-6 text-neutral-300">
+              {result.netwerk && result.netwerk !== "ALL" ? (
+                <Badge variant="outline" className="mb-2">
+                  {networkBadgeLabel(result.netwerk)}
+                </Badge>
+              ) : null}
+              {result.code ? (
+                <p className="font-mono text-xs text-neutral-500">{result.code}</p>
+              ) : null}
+              <p>{result.titel}</p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          <CopyButton value={minimumCopy} label="📋 Minimumdoel kopiëren" />
+          <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
+            <Plus className="size-4" />
+            Toevoegen aan Actieve les
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const copy = variantCopy[variant];
   const lesson = useLessonStore((state) => state.lesson);
@@ -195,7 +253,10 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   );
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
-  const analysisScope = `${variant}:${network}:${selectedId}:${text.trim()}`;
+  const analysisScope =
+    variant === "minimumdoel"
+      ? `${variant}:${selectedId}:${text.trim()}`
+      : `${variant}:${network}:${selectedId}:${text.trim()}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -220,28 +281,30 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
         <ModuleInputLayout
           fields={
             <div className="space-y-5">
-              <div className="space-y-2">
-                <Label>Onderwijsnet</Label>
-                <Select
-                  value={network}
-                  onValueChange={(value) =>
-                    setNetwork(
-                      value as Exclude<CurriculumNetworkFilter, "ALL">,
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {NETWORK_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {variant === "leerplandoel" ? (
+                <div className="space-y-2">
+                  <Label>Onderwijsnet</Label>
+                  <Select
+                    value={network}
+                    onValueChange={(value) =>
+                      setNetwork(
+                        value as Exclude<CurriculumNetworkFilter, "ALL">,
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NETWORK_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
 
               <LessonGoalSelector
                 id={`${variant}-goal`}
@@ -253,11 +316,18 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 onTextChange={setText}
               />
 
-              <p className="text-xs text-neutral-500">
-                {lesson.referenceSchoolYear
-                  ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via Actieve les.`
-                  : "Schooljaar optioneel instelbaar via Actieve les."}
-              </p>
+              {variant === "leerplandoel" ? (
+                <p className="text-xs text-neutral-500">
+                  {lesson.referenceSchoolYear
+                    ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via Actieve les.`
+                    : "Schooljaar optioneel instelbaar via Actieve les."}
+                </p>
+              ) : (
+                <p className="text-xs text-neutral-500">
+                  Minimumdoelen zijn netwerk-onafhankelijk. We zoeken automatisch
+                  het bestpassende Vlaamse minimumdoel bij je ingegeven lesdoel.
+                </p>
+              )}
             </div>
           }
           actions={
@@ -267,10 +337,14 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 disabled={actionDisabled}
                 disabledReason="Kies eerst een actief lesdoel of vul er één in."
                 onClick={() =>
-                  analyze("/api/rag-curriculum", {
-                    goal: text,
-                    network,
-                  })
+                  analyze(
+                    variant === "minimumdoel"
+                      ? "/api/rag-minimum-goals"
+                      : "/api/rag-curriculum",
+                    variant === "minimumdoel"
+                      ? { goal: text }
+                      : { goal: text, network },
+                  )
                 }
               >
                 {loading ? (
@@ -289,22 +363,34 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
           <div className="space-y-4">
             {results.length > 0 ? (
               <div className="space-y-3">
-                {results.map((goalResult, index) => (
-                  <GoalCard
-                    key={`${goalResult.code}-${goalResult.titel}-${index}`}
-                    result={goalResult}
-                    onAddToLesson={setText}
-                    emphasizeMinimum={variant === "minimumdoel"}
-                  />
-                ))}
+                {results.map((goalResult, index) =>
+                  variant === "minimumdoel" ? (
+                    <MinimumGoalCard
+                      key={`${goalResult.gelinktMinimumdoel?.code}-${index}`}
+                      result={goalResult}
+                      onAddToLesson={setText}
+                    />
+                  ) : (
+                    <GoalCard
+                      key={`${goalResult.code}-${goalResult.titel}-${index}`}
+                      result={goalResult}
+                      onAddToLesson={setText}
+                    />
+                  ),
+                )}
               </div>
             ) : (
               <Card className="border-orange-900/60">
                 <CardContent className="py-6">
-                  <Badge variant="outline">Geen officiële doelen gevonden</Badge>
+                  <Badge variant="outline">
+                    {variant === "minimumdoel"
+                      ? "Geen minimumdoelen gevonden"
+                      : "Geen officiële doelen gevonden"}
+                  </Badge>
                   <p className="mt-3 text-sm text-neutral-400">
-                    Er is geen betrouwbare match in de gestructureerde corpus.
-                    Probeer een andere formulering of selecteer een ander netwerk.
+                    {variant === "minimumdoel"
+                      ? "Er is geen passend Vlaams minimumdoel gevonden. Probeer je lesdoel anders te formuleren."
+                      : "Er is geen betrouwbare match in de gestructureerde corpus. Probeer een andere formulering of selecteer een ander netwerk."}
                   </p>
                 </CardContent>
               </Card>

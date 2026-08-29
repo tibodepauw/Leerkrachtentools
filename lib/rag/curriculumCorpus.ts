@@ -377,6 +377,81 @@ export function searchLocalCorpus({
     .map((entry) => ({ ...entry.record, score: entry.score }));
 }
 
+export function searchMinimumGoals({
+  query,
+  limit = 6,
+}: {
+  query: string;
+  limit?: number;
+}): Array<CurriculumSearchResult & { score: number }> {
+  const queryTokens = tokenize(query);
+  if (queryTokens.size === 0) {
+    return [];
+  }
+
+  return recordsForNetwork("ALL")
+    .map((raw) => {
+      const record = normalizeRecord(raw, networkFromRaw(raw));
+      const minimum = record?.gelinktMinimumdoel;
+      if (!record || !minimum?.tekst) {
+        return null;
+      }
+
+      const minimumText = minimum.tekst;
+      const minimumScore = scoreTextOverlap(minimumText, queryTokens);
+      const leerplanScore = scoreTextOverlap(record.titel, queryTokens);
+      const tokenMatches =
+        countTokenMatches(minimumText, queryTokens) +
+        countTokenMatches(record.titel, queryTokens);
+
+      if (tokenMatches < MIN_TOKEN_MATCHES) {
+        return null;
+      }
+
+      const score = Math.min(1, minimumScore * 0.65 + leerplanScore * 0.35);
+      if (score < MIN_CORPUS_MATCH_SCORE) {
+        return null;
+      }
+
+      return { record, score, tokenMatches };
+    })
+    .filter(
+      (
+        entry,
+      ): entry is {
+        record: CurriculumSearchResult;
+        score: number;
+        tokenMatches: number;
+      } => entry !== null,
+    )
+    .sort(
+      (left, right) =>
+        right.score - left.score || right.tokenMatches - left.tokenMatches,
+    )
+    .slice(0, limit * 3)
+    .map((entry) => ({ ...entry.record, score: entry.score }));
+}
+
+export function dedupeByMinimumGoalCode(
+  results: Array<CurriculumSearchResult & { score?: number }>,
+  limit = 6,
+): Array<CurriculumSearchResult & { score?: number }> {
+  const seen = new Map<string, CurriculumSearchResult & { score?: number }>();
+
+  for (const result of results) {
+    const code = result.gelinktMinimumdoel?.code?.trim();
+    const key = code || result.gelinktMinimumdoel?.tekst || result.titel;
+    const existing = seen.get(key);
+    if (!existing || (result.score ?? 0) > (existing.score ?? 0)) {
+      seen.set(key, result);
+    }
+  }
+
+  return [...seen.values()]
+    .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
+    .slice(0, limit);
+}
+
 const CODE_PATTERNS = [
   /\b\d\.\d+\.[A-Z]{2}\d+(?:\.\d+)?\b/u,
   /\b[A-Z]{3}[a-z]{3}\d+[BOV]\.\d+\b/u,
