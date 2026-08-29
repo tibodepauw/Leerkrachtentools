@@ -4,9 +4,41 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.3] - 2026-08-29
+
+Maintenance, compliance, and security release after the audit of 2026-08-29.
+
+### Added
+- Open-source compliance files: `LICENSE` (MIT), `SECURITY.md`, `CONTRIBUTING.md`
+- GitHub Actions CI (lint, typecheck, test, build)
+- Committed curriculum test fixtures under `test/fixtures/` for reproducible tests without local JSONL corpora
+- Zod input validation and size limits on AI endpoints (`lib/ai/inputValidation.ts`)
+- Safe cookie parsing helper (`lib/auth/cookies.ts`)
+
+### Changed
+- Thomas More lesson preparation forms removed from the public repository; place templates locally in `data/templates/` (gitignored)
+- Word export uses uploaded `.docx`, a local template file, or a generic generated document
+- Removed em dashes from documentation and UI copy
+- OVSG SSR parser migrated to ESM (`ovsg_parse_ssr.mjs`) with `JSON.parse` instead of `eval`
+- Static Turbopack-safe corpus paths in `curriculumCorpus.ts`
+
+### Fixed
+- TypeScript errors in `ahovoksMinimumGoals.ts` and `curriculumCorpus.ts`
+- ESLint `set-state-in-effect` violations in settings, document preview, and hooks
+- UTF-8 text import in Manual Scanner (`file.text()` instead of `atob`)
+- Malformed session cookies no longer cause 500 errors on logout or auth guard
+- All quality gates green: lint, typecheck, 111 tests, production build
+
+### Security
+- No `eval` on external HTML in maintenance scripts
+- API request body length and media-type allowlists on extract-manual and reflection routes
+- Official document templates untracked via `.gitignore`
+
+---
+
 ## [5.8.2] - 2026-08-29
 
-Current stable release. The app is a full lesson-preparation workflow for Thomas More BALO students with a shared active lesson, official curriculum RAG, and didactic quality tools.
+Stable release. The app is a full lesson-preparation workflow for Thomas More BALO students with a shared active lesson, official curriculum RAG, and didactic quality tools.
 
 ### Added
 

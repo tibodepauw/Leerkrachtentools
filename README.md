@@ -161,18 +161,6 @@ Also copy `.next/static` and `public` into `.next/standalone` for a self-hosted 
 
 Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database.
 
-## Security and secrets
-
-**This repository must not contain private credentials.**
-
-- `.env.local` and all `.env*` files except `.env.example` are gitignored
-- Never commit API keys, service account JSON, private keys, passwords, or personal email addresses
-- Use `.env.example` as a template with empty values only
-- Rotate any key that was ever exposed outside your own machine
-- Review `git status` before pushing; large local corpus zips and temp scrape files should stay untracked
-
-If you deploy publicly, set `AUTH_SECRET`, verified Brevo sender, and `FEEDBACK_TO_EMAIL` in the server environment.
-
 ## Privacy
 
 - Privacy policy consent is required at login
@@ -199,6 +187,6 @@ If you deploy publicly, set `AUTH_SECRET`, verified Brevo sender, and `FEEDBACK_
 
 ## Releases
 
-Current version: **5.8.2**
+Current version: **5.8.3**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).
