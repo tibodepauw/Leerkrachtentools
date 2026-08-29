@@ -50,10 +50,9 @@ interface MatcherResult {
 }
 
 const NETWORK_OPTIONS: Array<{
-  value: CurriculumNetworkFilter;
+  value: Exclude<CurriculumNetworkFilter, "ALL">;
   label: string;
 }> = [
-  { value: "ALL", label: "Alle netwerken" },
   { value: "OPSTAP", label: "Op.stap · Katholiek onderwijs" },
   { value: "OVSG", label: "OVSG · LeerLokaal" },
   { value: "GO_NIEUW", label: "GO! · Nieuw leerplan" },
@@ -68,7 +67,6 @@ const variantCopy: Record<
     description: string;
     action: string;
     empty: string;
-    defaultNetwork: CurriculumNetworkFilter;
   }
 > = {
   leerplandoel: {
@@ -77,7 +75,6 @@ const variantCopy: Record<
       "Zoekt semantisch in de geïndexeerde leerplandoelen en toont uitsluitend officiële doelen uit de gestructureerde corpus.",
     action: "Zoek leerplandoel",
     empty: "Officiële doelkaarten met code, discipline en doelzin verschijnen hier.",
-    defaultNetwork: "ALL",
   },
   minimumdoel: {
     title: "Minimumdoelen zoeken",
@@ -86,7 +83,6 @@ const variantCopy: Record<
     action: "Zoek minimumdoel",
     empty:
       "Doelkaarten met gekoppelde minimumdoelen verschijnen hier na je zoekopdracht.",
-    defaultNetwork: "ALL",
   },
 };
 
@@ -194,10 +190,8 @@ function GoalCard({
 function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const copy = variantCopy[variant];
   const lesson = useLessonStore((state) => state.lesson);
-  const [network, setNetwork] = useState<CurriculumNetworkFilter>(
-    variant === "leerplandoel"
-      ? mapEducationNetwork(lesson.educationNetwork)
-      : copy.defaultNetwork,
+  const [network, setNetwork] = useState<Exclude<CurriculumNetworkFilter, "ALL">>(
+    () => mapEducationNetwork(lesson.educationNetwork),
   );
   const { goals, selectedId, setSelectedId, text, setText } =
     useSelectedLessonGoal();
@@ -231,7 +225,9 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 <Select
                   value={network}
                   onValueChange={(value) =>
-                    setNetwork(value as CurriculumNetworkFilter)
+                    setNetwork(
+                      value as Exclude<CurriculumNetworkFilter, "ALL">,
+                    )
                   }
                 >
                   <SelectTrigger>
@@ -328,7 +324,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 
 function mapEducationNetwork(
   network: "ZILL" | "OVSG" | "GO",
-): CurriculumNetworkFilter {
+): Exclude<CurriculumNetworkFilter, "ALL"> {
   if (network === "GO") {
     return "GO_NIEUW";
   }

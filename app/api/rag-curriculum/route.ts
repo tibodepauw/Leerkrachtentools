@@ -14,8 +14,7 @@ import {
 } from "@/lib/rag/curriculumCorpus";
 import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
 
-const NETWORKS = new Set<CurriculumNetworkFilter>([
-  "ALL",
+const NETWORKS = new Set<Exclude<CurriculumNetworkFilter, "ALL">>([
   "OPSTAP",
   "OVSG",
   "GO_NIEUW",
@@ -60,10 +59,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const network = body.network ?? "ALL";
-    if (!NETWORKS.has(network)) {
+    const network = body.network;
+    if (!network || network === "ALL" || !NETWORKS.has(network)) {
       return NextResponse.json(
-        { error: "Selecteer een geldig netwerkfilter." },
+        { error: "Selecteer een geldig onderwijsnet." },
         { status: 400 },
       );
     }
