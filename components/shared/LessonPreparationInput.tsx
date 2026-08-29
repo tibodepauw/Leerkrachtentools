@@ -29,8 +29,8 @@ export function LessonPreparationInput({
   value,
   onChange,
   placeholder = "Plak je lesvoorbereiding of upload een document…",
-  minHeightClassName = "min-h-[36rem]",
-  maxHeightClassName = "max-h-[80vh]",
+  minHeightClassName = "min-h-48",
+  maxHeightClassName = "max-h-[36rem]",
   className,
 }: LessonPreparationInputProps) {
   const preparationDocument = useLessonStore(
@@ -123,12 +123,12 @@ export function LessonPreparationInput({
       ) : null}
       <Textarea
         id={id}
-        rows={24}
+        rows={6}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         className={cn(
-          "field-sizing-fixed w-full resize-y overflow-y-auto",
+          "w-full resize-y overflow-y-auto",
           minHeightClassName,
           maxHeightClassName,
         )}
