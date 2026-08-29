@@ -31,8 +31,10 @@ import {
 import { useAnalysis } from "@/hooks/useAnalysis";
 import {
   formatGoalCopyText,
+  formatGoalTitleParts,
   formatMinimumGoalCopyText,
   networkBadgeLabel,
+  sanitizeCurriculumText,
 } from "@/lib/rag/curriculumDisplay";
 import { formatAhovoksMinimumGoalCopy } from "@/lib/rag/ahovoksMinimumGoals";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
@@ -97,6 +99,7 @@ function GoalCard({
   onAddToLesson: (text: string) => void;
 }) {
   const goalCopy = formatGoalCopyText(result);
+  const { code, titel } = formatGoalTitleParts(result);
   const minimumCopy = result.gelinktMinimumdoel
     ? formatMinimumGoalCopyText(result.gelinktMinimumdoel)
     : null;
@@ -128,13 +131,13 @@ function GoalCard({
 
       <CardContent className="space-y-4">
         <p className="text-sm leading-6 text-foreground">
-          {result.code ? (
+          {code ? (
             <>
-              <strong className="mr-1 font-bold font-mono">{result.code}</strong>
-              {result.titel}
+              <strong className="mr-2 inline font-bold font-mono">{code}</strong>
+              {titel}
             </>
           ) : (
-            result.titel
+            titel
           )}
         </p>
 
@@ -145,7 +148,7 @@ function GoalCard({
                 Toelichting
               </AccordionTrigger>
               <AccordionContent className="text-sm leading-6 text-neutral-300">
-                {result.toelichting}
+                {sanitizeCurriculumText(result.toelichting)}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -158,17 +161,19 @@ function GoalCard({
             </p>
             {result.gelinktMinimumdoel.code ? (
               <p className="mt-2 font-mono text-xs font-bold text-emerald-300/90">
-                {result.gelinktMinimumdoel.code}
+                {sanitizeCurriculumText(result.gelinktMinimumdoel.code)}
               </p>
             ) : null}
             <p className="mt-2 text-sm leading-6 text-neutral-100">
-              {result.gelinktMinimumdoel.tekst}
+              {sanitizeCurriculumText(result.gelinktMinimumdoel.tekst)}
             </p>
           </div>
         ) : null}
 
         {result.leerjaarRoute ? (
-          <p className="text-xs text-neutral-500">{result.leerjaarRoute}</p>
+          <p className="text-xs text-neutral-500">
+            {sanitizeCurriculumText(result.leerjaarRoute)}
+          </p>
         ) : null}
 
         <div className="flex flex-wrap gap-2 pt-1">
@@ -240,11 +245,15 @@ function MinimumGoalCard({
       <CardContent className="space-y-4">
         <p className="text-sm leading-6 text-neutral-100">
           {minimum.code ? (
-            <span className="mr-1.5 font-mono text-xs font-semibold text-white">
-              {minimum.code}
-            </span>
-          ) : null}
-          {minimum.tekst}
+            <>
+              <strong className="mr-2 inline font-bold font-mono">
+                {sanitizeCurriculumText(minimum.code)}
+              </strong>
+              {sanitizeCurriculumText(minimum.tekst)}
+            </>
+          ) : (
+            sanitizeCurriculumText(minimum.tekst)
+          )}
         </p>
 
         <div className="flex flex-wrap gap-2 pt-1">

@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   decodeHtmlEntities,
   formatGoalCopyText,
+  formatGoalTitleParts,
   formatMinimumGoalCopyText,
   formatSearchResultMetadata,
   networkBadgeLabel,
+  repairUtf8Mojibake,
+  splitGoalCodeAndTitle,
 } from "@/lib/rag/curriculumDisplay";
 import type { CurriculumSearchResult } from "@/types";
 
@@ -13,6 +16,48 @@ describe("curriculumDisplay", () => {
     expect(decodeHtmlEntities("De leerlingen &lt;20&gt; optellen")).toBe(
       "De leerlingen <20> optellen",
     );
+  });
+
+  it("herstelt dubbel gecodeerde UTF-8 tekens", () => {
+    expect(repairUtf8Mojibake("ideeÃ«n")).toBe("ideeën");
+    expect(repairUtf8Mojibake("creÃ«ren")).toBe("creëren");
+    expect(repairUtf8Mojibake("Ã©")).toBe("é");
+    expect(repairUtf8Mojibake("\u00C3\u00A0")).toBe("à");
+    expect(repairUtf8Mojibake("\u00E2\u0080\u00A6")).toBe("…");
+    expect(
+      repairUtf8Mojibake(
+        "Afbeeldingen of fotoâs bewerken om eigen ideeÃ«n creatief vorm te geven.",
+      ),
+    ).toBe(
+      "Afbeeldingen of foto’s bewerken om eigen ideeën creatief vorm te geven.",
+    );
+  });
+
+  it("splitst code en titel wanneer ze aan elkaar geplakt zitten", () => {
+    expect(
+      splitGoalCodeAndTitle("", "3.6.GL6.14De leerlingen kunnen ..."),
+    ).toEqual({
+      code: "3.6.GL6.14",
+      titel: "De leerlingen kunnen ...",
+    });
+    expect(
+      splitGoalCodeAndTitle("", "FR.034Vertalen beluisterde zinnen ..."),
+    ).toEqual({
+      code: "FR.034",
+      titel: "Vertalen beluisterde zinnen ...",
+    });
+  });
+
+  it("verwijdert dubbele code uit titel wanneer codeveld al gevuld is", () => {
+    expect(
+      formatGoalTitleParts({
+        code: "NL.001",
+        titel: "NL.001 Herkennen eenvoudige eindrijm.",
+      }),
+    ).toEqual({
+      code: "NL.001",
+      titel: "Herkennen eenvoudige eindrijm.",
+    });
   });
 
   it("formatteert netwerk-badges", () => {

@@ -7,7 +7,7 @@ import type {
 } from "@/types";
 import type { DiscoveryHit } from "@/lib/rag/discoveryEngine";
 import { titleFromLink } from "@/lib/rag/discoveryEngine";
-import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
+import { sanitizeCurriculumText } from "@/lib/rag/curriculumDisplay";
 import {
   countCurriculumTokenMatches,
   isZillMathThinkingCode,
@@ -123,7 +123,7 @@ function loadNetworkRecords(
 }
 
 function asString(value: unknown): string {
-  return typeof value === "string" ? decodeHtmlEntities(value.trim()) : "";
+  return typeof value === "string" ? sanitizeCurriculumText(value.trim()) : "";
 }
 
 export function isStructuredResult(
