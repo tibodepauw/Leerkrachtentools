@@ -44,7 +44,7 @@ BASE_URL = "https://leerlokaal.ovsg.be"
 OUTPUT_PATH = Path(__file__).resolve().parents[1] / "data/ovsg/ovsg_volledig.jsonl"
 REPORT_PATH = OUTPUT_PATH.with_name("ovsg_scrape_report.json")
 METADATA_PATH = OUTPUT_PATH.with_suffix(OUTPUT_PATH.suffix + ".meta.json")
-SSR_PARSER_SCRIPT = Path(__file__).resolve().parent / "ovsg_parse_ssr.js"
+SSR_PARSER_SCRIPT = Path(__file__).resolve().parent / "ovsg_parse_ssr.mjs"
 
 LEERGEBIED_CODES = ("DIG", "SRC", "LEE", "GEZ", "IDW", "FRA", "NED", "WIS", "KUC")
 

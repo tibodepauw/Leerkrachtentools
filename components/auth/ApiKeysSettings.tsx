@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { KeyRound, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -67,22 +67,28 @@ export function ApiKeysSettings() {
   const [cloudflareAccountId, setCloudflareAccountId] = useState("");
   const [models, setModels] = useState<ListedModel[]>([]);
 
-  const loadSettings = useCallback(async () => {
-    const response = await fetch("/api/account/api-keys");
-    if (!response.ok) {
-      toast.error("API-keyinstellingen konden niet worden geladen.");
-      setLoading(false);
-      return;
-    }
-    const payload = (await response.json()) as ApiSettings;
-    setSettings(payload);
-    setCloudflareAccountId(payload.cloudflareAccountId ?? "");
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    void loadSettings();
-  }, [loadSettings]);
+    let cancelled = false;
+
+    void (async () => {
+      const response = await fetch("/api/account/api-keys");
+      if (cancelled) return;
+      if (!response.ok) {
+        toast.error("API-keyinstellingen konden niet worden geladen.");
+        setLoading(false);
+        return;
+      }
+      const payload = (await response.json()) as ApiSettings;
+      if (cancelled) return;
+      setSettings(payload);
+      setCloudflareAccountId(payload.cloudflareAccountId ?? "");
+      setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function detectModels() {
     setDetecting(true);

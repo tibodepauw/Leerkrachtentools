@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import type { z } from "zod";
+import { z } from "zod";
 import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { analysisRequestSchema } from "@/lib/ai/inputValidation";
 import { runStructured } from "@/lib/ai/router";
 import type { ProviderName } from "@/lib/ai/providers";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
@@ -21,6 +22,7 @@ const providerNames = new Set([
 
 export function createAnalysisHandler<T>({
   schema,
+  inputSchema = analysisRequestSchema,
   system,
   buildPrompt,
   buildMock,
@@ -29,6 +31,7 @@ export function createAnalysisHandler<T>({
   maxOutputTokens,
 }: {
   schema: z.ZodType<T>;
+  inputSchema?: z.ZodType<InputRecord>;
   system: string;
   buildPrompt: (input: InputRecord) => string;
   buildMock: (input: InputRecord) => T;
@@ -40,7 +43,7 @@ export function createAnalysisHandler<T>({
     const session = sessionFromRequest(request);
     if (!session) return unauthorizedResponse();
     try {
-      const input = (await request.json()) as InputRecord;
+      const input = inputSchema.parse(await request.json()) as InputRecord;
       const userAiConfig = getUserAiConfig(session.id);
       const preferred =
         typeof input.provider === "string" &&
@@ -74,9 +77,11 @@ export function createAnalysisHandler<T>({
       return NextResponse.json(
         {
           error:
-            error instanceof Error
-              ? error.message
-              : "De analyse kon niet worden uitgevoerd.",
+            error instanceof z.ZodError
+              ? error.issues[0]?.message ?? "Ongeldige invoer."
+              : error instanceof Error
+                ? error.message
+                : "De analyse kon niet worden uitgevoerd.",
         },
         { status: 400 },
       );

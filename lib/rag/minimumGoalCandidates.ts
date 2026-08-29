@@ -270,22 +270,15 @@ export function sanitizeMinimumGoalForResponse<
     return result;
   }
 
-  const {
-    snippet: _snippet,
-    sourceUri: _sourceUri,
-    bronTitel: _bronTitel,
-    titel: _titel,
-    code: _code,
-    toelichting: _toelichting,
-    ...rest
-  } = normalized;
-
   return {
-    ...rest,
+    ...normalized,
     score: result.score,
     titel: "",
     code: "",
     toelichting: "",
+    snippet: undefined,
+    sourceUri: undefined,
+    bronTitel: undefined,
   } as T;
 }
 

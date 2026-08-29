@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
+import { reflectionRequestSchema } from "@/lib/ai/inputValidation";
 import { prompts } from "@/lib/ai/prompts";
 import { runStructured } from "@/lib/ai/router";
 import { reflectionSchema } from "@/lib/ai/schemas";
@@ -28,20 +30,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const input = (await request.json()) as {
-      goals?: string[];
-      content?: string;
-      audioData?: string;
-      mediaType?: string;
-    };
-    const goals = Array.isArray(input.goals) ? input.goals : [];
-
-    if (!input.content?.trim() && !input.audioData) {
-      return NextResponse.json(
-        { error: "Voeg tekst, antwoorden of een opname toe." },
-        { status: 400 },
-      );
-    }
+    const input = reflectionRequestSchema.parse(await request.json());
+    const goals = input.goals ?? [];
 
     const result = await runStructured({
       schema: reflectionSchema,
@@ -70,7 +60,11 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Reflectie is mislukt.",
+          error instanceof z.ZodError
+            ? error.issues[0]?.message ?? "Ongeldige invoer."
+            : error instanceof Error
+              ? error.message
+              : "Reflectie is mislukt.",
       },
       { status: 400 },
     );

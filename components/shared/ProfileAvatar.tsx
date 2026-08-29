@@ -115,6 +115,8 @@ export function ProfileAvatar({
       )}
     >
       {imageUrl ? (
+        // Blob/data URLs from profile upload are rendered with a native img tag.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={imageUrl}
           alt="Profielfoto"

@@ -13,7 +13,7 @@ export function PreparationTextSync() {
     if (!needsPreparationTextSync(lesson) || !document) return;
 
     void syncPreparationTextFromDocument(document);
-  }, [lesson.preparationDocument, lesson.lessonPreparation]);
+  }, [lesson]);
 
   return null;
 }

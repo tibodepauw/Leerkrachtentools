@@ -79,24 +79,6 @@ export function ManualScannerView() {
     await syncSourceTextToPreparation(payload.text);
   }
 
-  async function submit(overrides?: {
-    content?: string;
-    fileName?: string;
-    fileData?: string;
-    mediaType?: string;
-  }) {
-    const payload = {
-      content: overrides?.content ?? content,
-      fileName: overrides?.fileName ?? fileName,
-      fileData: overrides?.fileData ?? fileData,
-      mediaType: overrides?.mediaType ?? mediaType,
-    };
-
-    if (!payload.content && !payload.fileName) return;
-
-    await analyze("/api/extract-manual", payload);
-  }
-
   async function extractAndSync(overrides?: {
     content?: string;
     fileName?: string;
@@ -134,7 +116,7 @@ export function ManualScannerView() {
       const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
       const nextMediaType = file.type || "application/octet-stream";
       const nextContent = file.type.startsWith("text/")
-        ? atob(base64)
+        ? await file.text()
         : content;
 
       setFileName(file.name);

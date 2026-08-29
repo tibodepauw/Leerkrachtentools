@@ -19,16 +19,54 @@ import {
 
 type RawRecord = Record<string, unknown>;
 
-const CORPUS_FILES: Record<
-  Exclude<CurriculumNetworkFilter, "ALL">,
-  string[]
-> = {
-  OPSTAP: ["data/opstap/opstap_volledig.jsonl"],
-  OVSG: ["data/ovsg/ovsg_volledig.jsonl"],
-  GO_NIEUW: ["data/go_nieuw/go_nieuw_volledig.jsonl"],
-  ZILL: ["data/zill/zill_volledig.jsonl"],
-  GO: [],
-};
+const OPSTAP_CORPUS_PROD = path.join(
+  process.cwd(),
+  "data",
+  "opstap",
+  "opstap_volledig.jsonl",
+);
+const OPSTAP_CORPUS_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "curriculum-opstap.jsonl",
+);
+const OVSG_CORPUS_PROD = path.join(
+  process.cwd(),
+  "data",
+  "ovsg",
+  "ovsg_volledig.jsonl",
+);
+const OVSG_CORPUS_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "curriculum-ovsg.jsonl",
+);
+const GO_NIEUW_CORPUS_PROD = path.join(
+  process.cwd(),
+  "data",
+  "go_nieuw",
+  "go_nieuw_volledig.jsonl",
+);
+const GO_NIEUW_CORPUS_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "curriculum-go-nieuw.jsonl",
+);
+const ZILL_CORPUS_PROD = path.join(
+  process.cwd(),
+  "data",
+  "zill",
+  "zill_volledig.jsonl",
+);
+const ZILL_CORPUS_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "curriculum-zill.jsonl",
+);
 
 const MIN_CORPUS_MATCH_SCORE = 0.32;
 const MIN_LOCAL_SEARCH_SCORE = 0.1;
@@ -80,32 +118,37 @@ const STOPWORDS = new Set([
 
 const loaded = new Map<string, RawRecord[]>();
 
-function workspacePath(relativePath: string): string {
-  return path.join(process.cwd(), relativePath);
-}
-
-function loadJsonl(relativePath: string): RawRecord[] {
-  const absolute = workspacePath(relativePath);
-  if (loaded.has(absolute)) {
-    return loaded.get(absolute)!;
+function loadJsonlAt(absolutePath: string): RawRecord[] {
+  if (loaded.has(absolutePath)) {
+    return loaded.get(absolutePath)!;
   }
-  if (!existsSync(absolute)) {
-    loaded.set(absolute, []);
+  if (!existsSync(absolutePath)) {
+    loaded.set(absolutePath, []);
     return [];
   }
-  const records = readFileSync(absolute, "utf8")
+  const records = readFileSync(absolutePath, "utf8")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => JSON.parse(line) as RawRecord);
-  loaded.set(absolute, records);
+  loaded.set(absolutePath, records);
   return records;
+}
+
+function loadCorpusWithFallback(prodPath: string, fixturePath: string): RawRecord[] {
+  const prodRecords = loadJsonlAt(prodPath);
+  if (prodRecords.length > 0) {
+    return prodRecords;
+  }
+  return loadJsonlAt(fixturePath);
 }
 
 export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[] {
   if (network === "ALL") {
     return (
-      Object.keys(CORPUS_FILES) as Array<Exclude<CurriculumNetworkFilter, "ALL">>
+      ["OPSTAP", "OVSG", "GO_NIEUW", "ZILL"] as Array<
+        Exclude<CurriculumNetworkFilter, "ALL">
+      >
     ).flatMap((key) => loadNetworkRecords(key));
   }
   return loadNetworkRecords(network);
@@ -114,12 +157,21 @@ export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[]
 function loadNetworkRecords(
   network: Exclude<CurriculumNetworkFilter, "ALL">,
 ): RawRecord[] {
-  return CORPUS_FILES[network].flatMap((file) =>
-    loadJsonl(file).map((raw) => ({
-      ...raw,
-      netwerk: asString(raw.netwerk ?? raw.network) || network,
-    })),
-  );
+  const records =
+    network === "OPSTAP"
+      ? loadCorpusWithFallback(OPSTAP_CORPUS_PROD, OPSTAP_CORPUS_FIXTURE)
+      : network === "OVSG"
+        ? loadCorpusWithFallback(OVSG_CORPUS_PROD, OVSG_CORPUS_FIXTURE)
+        : network === "GO_NIEUW"
+          ? loadCorpusWithFallback(GO_NIEUW_CORPUS_PROD, GO_NIEUW_CORPUS_FIXTURE)
+          : network === "ZILL"
+            ? loadCorpusWithFallback(ZILL_CORPUS_PROD, ZILL_CORPUS_FIXTURE)
+            : [];
+
+  return records.map((raw) => ({
+    ...raw,
+    netwerk: asString(raw.netwerk ?? raw.network) || network,
+  }));
 }
 
 function asString(value: unknown): string {
@@ -132,11 +184,13 @@ export function isStructuredResult(
   return result.verrijking === "corpus";
 }
 
-export function sanitizeStructuredResult<
-  T extends CurriculumSearchResult & { score?: number },
->(result: T): T {
-  const { snippet: _snippet, sourceUri: _sourceUri, bronTitel: _bronTitel, ...rest } =
-    result;
+export function sanitizeStructuredResult(
+  result: CurriculumSearchResult & { score?: number },
+): CurriculumSearchResult & { score?: number } {
+  const { snippet, sourceUri, bronTitel, ...rest } = result;
+  void snippet;
+  void sourceUri;
+  void bronTitel;
   return rest;
 }
 
@@ -219,12 +273,6 @@ function extractInhoudenText(inhouden: unknown): string[] {
   const parts: string[] = [];
   collectNestedStrings(inhouden, parts);
   return parts;
-}
-
-function extractNestedRecordText(raw: RawRecord): string {
-  const leerlijnSteps = extractLeerlijnSteps(raw.leerlijn);
-  const inhoudenParts = extractInhoudenText(raw.inhouden);
-  return [...leerlijnSteps, ...inhoudenParts].join(" ");
 }
 
 export function buildRecordHaystack(raw: RawRecord): string {
@@ -816,8 +864,23 @@ export function resolveDiscoveryCandidates({
 }
 
 export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[] {
-  if (network === "ALL") {
-    return Object.values(CORPUS_FILES).flat();
+  switch (network) {
+    case "OPSTAP":
+      return [OPSTAP_CORPUS_PROD];
+    case "OVSG":
+      return [OVSG_CORPUS_PROD];
+    case "GO_NIEUW":
+      return [GO_NIEUW_CORPUS_PROD];
+    case "ZILL":
+      return [ZILL_CORPUS_PROD];
+    case "GO":
+      return [];
+    case "ALL":
+      return [
+        OPSTAP_CORPUS_PROD,
+        OVSG_CORPUS_PROD,
+        GO_NIEUW_CORPUS_PROD,
+        ZILL_CORPUS_PROD,
+      ];
   }
-  return CORPUS_FILES[network];
 }

@@ -7,20 +7,24 @@ import { useLessonStore } from "@/stores/useLessonStore";
 
 export function useAutoSyncPreparationText() {
   const lesson = useLessonStore((state) => state.lesson);
+  const shouldSync =
+    needsPreparationTextSync(lesson) && Boolean(lesson.preparationDocument);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
 
   useEffect(() => {
     const document = lesson.preparationDocument;
-    if (!needsPreparationTextSync(lesson) || !document) {
-      setSyncing(false);
-      setSyncError("");
+    if (!shouldSync || !document) {
       return;
     }
 
     let cancelled = false;
-    setSyncing(true);
-    setSyncError("");
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setSyncing(true);
+      setSyncError("");
+    });
 
     void syncPreparationTextFromDocument(document)
       .then((text) => {
@@ -45,7 +49,10 @@ export function useAutoSyncPreparationText() {
     return () => {
       cancelled = true;
     };
-  }, [lesson.preparationDocument, lesson.lessonPreparation]);
+  }, [lesson.preparationDocument, lesson.lessonPreparation, shouldSync]);
 
-  return { syncing, syncError };
+  return {
+    syncing: shouldSync ? syncing : false,
+    syncError: shouldSync ? syncError : "",
+  };
 }

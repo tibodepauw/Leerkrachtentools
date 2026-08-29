@@ -189,7 +189,6 @@ export function applyMinimumGoalRangeBonus(
   let score = baseScore;
 
   const queryLower = query.toLocaleLowerCase("nl-BE");
-  const haystackLower = haystack.toLocaleLowerCase("nl-BE");
   const minimumLower = (result.gelinktMinimumdoel?.tekst ?? "").toLocaleLowerCase(
     "nl-BE",
   );

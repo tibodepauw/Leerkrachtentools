@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, FileText, FileUp, Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getLessonDocument } from "@/lib/documents/documentStorage";
 import { previewModeFromFileName } from "@/lib/documents/preview";
@@ -22,28 +22,35 @@ function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-export function LessonDocumentPreview({
+function LoadedLessonDocumentPreview({
   document,
   fallbackText = "",
   onUpload,
-}: LessonDocumentPreviewProps) {
+}: {
+  document: LessonPreparationDocument;
+  fallbackText?: string;
+  onUpload?: () => void;
+}) {
   const docxContainerRef = useRef<HTMLDivElement>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
-  const [loading, setLoading] = useState(Boolean(document));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const previewMode = previewModeFromFileName(document.fileName);
+  const pdfUrl = useMemo(() => {
+    if (!blob || previewMode !== "pdf") {
+      return null;
+    }
+    return URL.createObjectURL(blob);
+  }, [blob, previewMode]);
 
   useEffect(() => {
-    if (!document) {
-      setBlob(null);
-      setLoading(false);
-      setError("");
-      return;
-    }
-
     let cancelled = false;
-    setLoading(true);
-    setError("");
+
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError("");
+    });
 
     void getLessonDocument(document.id)
       .then((storedBlob) => {
@@ -71,26 +78,18 @@ export function LessonDocumentPreview({
     return () => {
       cancelled = true;
     };
-  }, [document]);
+  }, [document.id]);
 
   useEffect(() => {
-    if (!blob || !document || previewModeFromFileName(document.fileName) !== "pdf") {
-      setPdfUrl(null);
-      return;
-    }
-
-    const url = URL.createObjectURL(blob);
-    setPdfUrl(url);
-
+    if (!pdfUrl) return;
     return () => {
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(pdfUrl);
     };
-  }, [blob, document]);
+  }, [pdfUrl]);
 
   useEffect(() => {
     const container = docxContainerRef.current;
-    if (!container || !blob || !document) return;
-    if (previewModeFromFileName(document.fileName) !== "docx") return;
+    if (!container || !blob || previewMode !== "docx") return;
 
     let cancelled = false;
     container.replaceChildren();
@@ -115,35 +114,7 @@ export function LessonDocumentPreview({
       cancelled = true;
       container.replaceChildren();
     };
-  }, [blob, document]);
-
-  if (!document) {
-    return (
-      <div className="flex min-h-[32rem] flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-950/40 p-8 text-center">
-        <FileText className="mb-4 size-10 text-neutral-500" />
-        <p className="text-sm font-medium">Nog geen lesvoorbereiding geüpload</p>
-        <p className="mt-2 max-w-md text-sm leading-6 text-neutral-400">
-          Upload een Word- of PDF-bestand om hier een echte documentpreview te
-          zien. Andere modules gebruiken intern nog steeds de geëxtraheerde tekst
-          voor analyse.
-        </p>
-        {fallbackText.trim() ? (
-          <p className="mt-3 text-xs text-neutral-500">
-            Er staat wel tekst klaar uit eerdere modules, maar zonder
-            origineel bestand is er geen opmaak-preview mogelijk.
-          </p>
-        ) : null}
-        {onUpload ? (
-          <Button type="button" variant="outline" className="mt-5" onClick={onUpload}>
-            <FileUp className="size-4" />
-            Document uploaden
-          </Button>
-        ) : null}
-      </div>
-    );
-  }
-
-  const previewMode = previewModeFromFileName(document.fileName);
+  }, [blob, previewMode]);
 
   return (
     <div className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
@@ -232,5 +203,46 @@ export function LessonDocumentPreview({
         </div>
       )}
     </div>
+  );
+}
+
+export function LessonDocumentPreview({
+  document,
+  fallbackText = "",
+  onUpload,
+}: LessonDocumentPreviewProps) {
+  if (!document) {
+    return (
+      <div className="flex min-h-[32rem] flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-950/40 p-8 text-center">
+        <FileText className="mb-4 size-10 text-neutral-500" />
+        <p className="text-sm font-medium">Nog geen lesvoorbereiding geüpload</p>
+        <p className="mt-2 max-w-md text-sm leading-6 text-neutral-400">
+          Upload een Word- of PDF-bestand om hier een echte documentpreview te
+          zien. Andere modules gebruiken intern nog steeds de geëxtraheerde tekst
+          voor analyse.
+        </p>
+        {fallbackText.trim() ? (
+          <p className="mt-3 text-xs text-neutral-500">
+            Er staat wel tekst klaar uit eerdere modules, maar zonder
+            origineel bestand is er geen opmaak-preview mogelijk.
+          </p>
+        ) : null}
+        {onUpload ? (
+          <Button type="button" variant="outline" className="mt-5" onClick={onUpload}>
+            <FileUp className="size-4" />
+            Document uploaden
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <LoadedLessonDocumentPreview
+      key={document.id}
+      document={document}
+      fallbackText={fallbackText}
+      onUpload={onUpload}
+    />
   );
 }

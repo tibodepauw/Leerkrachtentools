@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
+import { manualExtractionRequestSchema } from "@/lib/ai/inputValidation";
 import { prompts } from "@/lib/ai/prompts";
 import { runStructured } from "@/lib/ai/router";
 import { manualExtractionSchema } from "@/lib/ai/schemas";
@@ -29,19 +31,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const input = (await request.json()) as {
-      fileName?: string;
-      content?: string;
-      fileData?: string;
-      mediaType?: string;
-    };
-
-    if (!input.fileData && !input.content?.trim()) {
-      return NextResponse.json(
-        { error: "Upload een handleiding of plak eerst tekst." },
-        { status: 400 },
-      );
-    }
+    const input = manualExtractionRequestSchema.parse(await request.json());
 
     const prompt = input.fileData
       ? `Bestandsnaam: ${input.fileName ?? "handleiding"}
@@ -84,7 +74,11 @@ Laat velden leeg wanneer informatie ontbreekt. Formuleer ruwe uitgeverijdoelen n
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Extractie is mislukt.",
+          error instanceof z.ZodError
+            ? error.issues[0]?.message ?? "Ongeldige invoer."
+            : error instanceof Error
+              ? error.message
+              : "Extractie is mislukt.",
       },
       { status: 400 },
     );

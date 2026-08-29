@@ -6,7 +6,6 @@ import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
 import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";

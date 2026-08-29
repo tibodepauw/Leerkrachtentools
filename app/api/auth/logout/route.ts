@@ -3,15 +3,11 @@ import {
   revokeSession,
   SESSION_COOKIE,
 } from "@/lib/auth/service";
+import { readCookieValue } from "@/lib/auth/cookies";
 
 export async function POST(request: Request) {
   const cookieHeader = request.headers.get("cookie") ?? "";
-  const token = cookieHeader
-    .split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${SESSION_COOKIE}=`))
-    ?.slice(SESSION_COOKIE.length + 1);
-  revokeSession(token ? decodeURIComponent(token) : undefined);
+  revokeSession(readCookieValue(cookieHeader, SESSION_COOKIE));
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set(SESSION_COOKIE, "", {

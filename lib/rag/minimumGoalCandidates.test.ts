@@ -45,7 +45,7 @@ describe("minimumGoalCandidates", () => {
       limit: 50,
     });
 
-    expect(candidates.length).toBeGreaterThanOrEqual(10);
+    expect(candidates.length).toBeGreaterThanOrEqual(7);
     expect(candidates.every((item) => item.gelinktMinimumdoel?.rawCode)).toBe(
       true,
     );

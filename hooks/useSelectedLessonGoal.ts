@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { LessonGoal } from "@/types";
@@ -12,36 +12,27 @@ export function useSelectedLessonGoal() {
   const [selectedId, setSelectedId] = useState<LessonGoal["id"]>("D1");
 
   const visibleGoals = filledGoals(goals);
-  const selectedIndex = goals.findIndex((goal) => goal.id === selectedId);
+  const effectiveSelectedId = useMemo(() => {
+    if (goals.some((goal) => goal.id === selectedId)) {
+      return selectedId;
+    }
+    return visibleGoals[0]?.id ?? selectedId;
+  }, [goals, selectedId, visibleGoals]);
+
+  const selectedIndex = goals.findIndex((goal) => goal.id === effectiveSelectedId);
   const text = selectedIndex >= 0 ? (goals[selectedIndex]?.text ?? "") : "";
-
-  useEffect(() => {
-    if (selectedIndex >= 0) {
-      return;
-    }
-
-    if (visibleGoals[0]) {
-      setSelectedId(visibleGoals[0].id);
-      return;
-    }
-
-    if (goals.length >= MAX_LESSON_GOALS) {
-      return;
-    }
-
-    const draftId = addGoalSlot();
-    if (draftId) {
-      setSelectedId(draftId);
-    }
-  }, [selectedIndex, visibleGoals, goals.length, addGoalSlot]);
 
   function ensureSelectedIndex(): number {
     const currentIndex = useLessonStore
       .getState()
-      .lesson.goals.findIndex((goal) => goal.id === selectedId);
+      .lesson.goals.findIndex((goal) => goal.id === effectiveSelectedId);
 
     if (currentIndex >= 0) {
       return currentIndex;
+    }
+
+    if (goals.length >= MAX_LESSON_GOALS) {
+      return -1;
     }
 
     const draftId = addGoalSlot();
@@ -58,7 +49,7 @@ export function useSelectedLessonGoal() {
   return {
     goals,
     visibleGoals,
-    selectedId,
+    selectedId: effectiveSelectedId,
     setSelectedId,
     text,
     setText: (value: string) => {

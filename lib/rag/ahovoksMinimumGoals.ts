@@ -82,11 +82,9 @@ export function normalizeLinkedMinimumGoal(
 
   return {
     ...goal,
+    ...parsed,
     code: parsed.displayCode,
     tekst: decodeHtmlEntities(goal.tekst),
-    rawCode: parsed.rawCode,
-    ijkpuntLabel: parsed.ijkpuntLabel,
-    ijkpuntShort: parsed.ijkpuntShort,
     type: goal.type || parsed.ijkpuntLabel,
   };
 }
