@@ -21,13 +21,18 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
+import { TargetGroupSelect } from "@/components/shared/TargetGroupSelect";
 import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
+import { targetGroupHeaderLabel } from "@/lib/lesson/targetGroup";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { EducationNetwork } from "@/types";
 
 export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
   const lesson = useLessonStore((state) => state.lesson);
   const setField = useLessonStore((state) => state.setField);
+  const setTargetGroupSelection = useLessonStore(
+    (state) => state.setTargetGroupSelection,
+  );
   const setGoal = useLessonStore((state) => state.setGoal);
   const addGoalSlot = useLessonStore((state) => state.addGoalSlot);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
@@ -53,8 +58,8 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
             </p>
           </div>
           <p className="truncate text-xs text-neutral-500">
-            {lesson.targetGroup || "Doelgroep nog niet ingevuld"} ·{" "}
-            {activeGoalCount} doel{activeGoalCount === 1 ? "" : "en"} actief
+            {targetGroupHeaderLabel(lesson)} · {activeGoalCount} doel
+            {activeGoalCount === 1 ? "" : "en"} actief
           </p>
         </div>
 
@@ -85,14 +90,12 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                     onChange={(event) => setField("topic", event.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="target">Doelgroep</Label>
-                  <Input
-                    id="target"
-                    value={lesson.targetGroup}
-                    onChange={(event) =>
-                      setField("targetGroup", event.target.value)
-                    }
+                <div className="space-y-2 sm:col-span-2">
+                  <TargetGroupSelect
+                    grade={lesson.grade}
+                    ageRange={lesson.ageRange}
+                    displayTargetGroup={lesson.displayTargetGroup}
+                    onChange={setTargetGroupSelection}
                   />
                 </div>
                 <div className="space-y-2">

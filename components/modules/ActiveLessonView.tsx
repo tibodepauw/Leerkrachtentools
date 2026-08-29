@@ -212,7 +212,7 @@ export function ActiveLessonView() {
               <dl className="grid gap-4 text-sm sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                 {[
                   ["Onderwerp", lesson.topic],
-                  ["Doelgroep", lesson.targetGroup],
+                  ["Doelgroep", lesson.displayTargetGroup || lesson.targetGroup],
                   ["Leergebied", lesson.learningArea],
                   ["Onderdeel", lesson.component],
                   ["Onderwijsnet", lesson.educationNetwork],

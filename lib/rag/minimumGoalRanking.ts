@@ -1,6 +1,10 @@
 import type { CurriculumSearchResult } from "@/types";
 import { ahovoksMetaFromGoal } from "@/lib/rag/ahovoksMinimumGoals";
 import { dedupeByMinimumGoalCode } from "@/lib/rag/curriculumCorpus";
+import {
+  applyTargetGroupRanking,
+  type TargetGroupContext,
+} from "@/lib/rag/targetGroupBonus";
 
 export const MINIMUM_GOALS_TOP_N = 3;
 
@@ -258,11 +262,14 @@ export function rankMinimumGoalResults(
   query: string,
   results: Array<CurriculumSearchResult & { score?: number }>,
   limit = MINIMUM_GOALS_TOP_N,
+  targetGroup: TargetGroupContext = {},
 ): Array<CurriculumSearchResult & { score?: number }> {
   const adjusted = results.map((result) => ({
     ...result,
     score: applyMinimumGoalRangeBonus(query, result, result.score ?? 0),
   }));
 
-  return dedupeByMinimumGoalCode(adjusted, limit);
+  const ranked = applyTargetGroupRanking(adjusted, targetGroup);
+
+  return dedupeByMinimumGoalCode(ranked, limit);
 }

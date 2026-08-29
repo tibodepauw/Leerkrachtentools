@@ -269,8 +269,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     useSelectedLessonGoal();
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${selectedId}:${text.trim()}`
-      : `${variant}:${network}:${selectedId}:${text.trim()}`;
+      ? `${variant}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
+      : `${variant}:${network}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -334,12 +334,25 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 
               {variant === "leerplandoel" ? (
                 <p className="text-xs text-neutral-500">
-                  {lesson.referenceSchoolYear
-                    ? `Referentie: ${lesson.referenceSchoolYear}. Pas dit aan via Actieve les.`
-                    : "Schooljaar optioneel instelbaar via Actieve les."}
+                  {lesson.displayTargetGroup || lesson.referenceSchoolYear
+                    ? [
+                        lesson.displayTargetGroup
+                          ? `Doelgroep: ${lesson.displayTargetGroup}`
+                          : null,
+                        lesson.referenceSchoolYear
+                          ? `Referentie: ${lesson.referenceSchoolYear}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : "Doelgroep en schooljaar instelbaar via Actieve les."}
                 </p>
               ) : (
                 <p className="text-xs text-neutral-500">
+                  {lesson.displayTargetGroup
+                    ? `Doelgroep: ${lesson.displayTargetGroup} — leeftijdsspecifieke doelen krijgen een zachte bonus, maar blijven altijd zichtbaar.`
+                    : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking."}
+                  {" "}
                   We tonen uitsluitend decretale minimumdoelen op vaste ijkpunten:
                   4de leerjaar, 6de leerjaar of kleuter (K-codes).
                 </p>
@@ -358,8 +371,17 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       ? "/api/rag-minimum-goals"
                       : "/api/rag-curriculum",
                     variant === "minimumdoel"
-                      ? { goal: text }
-                      : { goal: text, network },
+                      ? {
+                          goal: text,
+                          grade: lesson.grade,
+                          ageRange: lesson.ageRange,
+                        }
+                      : {
+                          goal: text,
+                          network,
+                          grade: lesson.grade,
+                          ageRange: lesson.ageRange,
+                        },
                   )
                 }
               >

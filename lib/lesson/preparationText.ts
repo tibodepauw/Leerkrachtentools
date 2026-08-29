@@ -3,6 +3,7 @@ import type { ActiveLesson } from "@/types";
 export function hasActiveLessonContext(lesson: ActiveLesson) {
   return Boolean(
     lesson.topic.trim() ||
+      lesson.displayTargetGroup.trim() ||
       lesson.targetGroup.trim() ||
       lesson.goals.some((goal) => goal.text.trim()),
   );

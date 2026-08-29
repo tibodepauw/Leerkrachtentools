@@ -18,7 +18,7 @@ import {
   MINIMUM_GOALS_TOP_N,
   rankMinimumGoalResults,
 } from "@/lib/rag/minimumGoalRanking";
-import type { CurriculumSearchResult } from "@/types";
+import type { CurriculumSearchResult, TargetGroupSearchContext } from "@/types";
 
 function hasMinimumGoal(
   result: CurriculumSearchResult,
@@ -51,7 +51,11 @@ export async function POST(request: Request) {
   if (!sessionFromRequest(request)) return unauthorizedResponse();
 
   try {
-    const body = (await request.json()) as { goal?: string };
+    const body = (await request.json()) as {
+      goal?: string;
+      grade?: TargetGroupSearchContext["grade"];
+      ageRange?: string;
+    };
     const query = body.goal?.trim();
 
     if (!query) {
@@ -93,6 +97,10 @@ export async function POST(request: Request) {
       query,
       candidatePool.filter(hasMinimumGoal).map(sanitizeMinimumGoalForResponse),
       MINIMUM_GOALS_TOP_N,
+      {
+        grade: body.grade ?? "",
+        ageRange: body.ageRange?.trim() ?? "",
+      },
     );
 
     const goal = merged[0] ?? null;

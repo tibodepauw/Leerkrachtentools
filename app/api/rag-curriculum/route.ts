@@ -13,7 +13,12 @@ import {
   sanitizeStructuredResult,
   searchLocalCorpus,
 } from "@/lib/rag/curriculumCorpus";
-import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
+import { applyTargetGroupRanking } from "@/lib/rag/targetGroupBonus";
+import type {
+  CurriculumNetworkFilter,
+  CurriculumSearchResult,
+  TargetGroupSearchContext,
+} from "@/types";
 
 const NETWORKS = new Set<CurriculumNetworkFilter>([
   "ALL",
@@ -34,7 +39,10 @@ type CurriculumSearchPayload = {
 async function runCurriculumSearch(
   query: string,
   network: CurriculumNetworkFilter,
-  options?: { excludeNetwork?: CurriculumNetworkFilter },
+  options?: {
+    excludeNetwork?: CurriculumNetworkFilter;
+    targetGroup?: TargetGroupSearchContext;
+  },
 ): Promise<CurriculumSearchPayload> {
   const localCandidates = searchLocalCorpus({
     query,
@@ -79,6 +87,11 @@ async function runCurriculumSearch(
     CURRICULUM_TOP_N,
   );
 
+  merged = applyTargetGroupRanking(merged, {
+    grade: options?.targetGroup?.grade,
+    ageRange: options?.targetGroup?.ageRange,
+  });
+
   if (options?.excludeNetwork) {
     merged = merged.filter(
       (item) => item.netwerk !== options.excludeNetwork,
@@ -111,6 +124,8 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       goal?: string;
       network?: CurriculumNetworkFilter;
+      grade?: TargetGroupSearchContext["grade"];
+      ageRange?: string;
     };
 
     const query = body.goal?.trim();
@@ -129,12 +144,18 @@ export async function POST(request: Request) {
       );
     }
 
-    let searchResult = await runCurriculumSearch(query, network);
+    const targetGroup: TargetGroupSearchContext = {
+      grade: body.grade ?? "",
+      ageRange: body.ageRange?.trim() ?? "",
+    };
+
+    let searchResult = await runCurriculumSearch(query, network, { targetGroup });
     let networkFallbackNotice: string | undefined;
 
     if (searchResult.merged.length === 0 && network !== "ALL") {
       const fallback = await runCurriculumSearch(query, "ALL", {
         excludeNetwork: network,
+        targetGroup,
       });
 
       if (fallback.merged.length > 0) {

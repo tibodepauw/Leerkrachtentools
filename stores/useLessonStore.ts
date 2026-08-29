@@ -10,10 +10,15 @@ import {
   MAX_LESSON_GOALS,
 } from "@/lib/goals/lessonGoals";
 import { deleteLessonDocument } from "@/lib/documents/documentStorage";
+import {
+  migrateLessonTargetGroup,
+  resolveTargetGroupFields,
+} from "@/lib/lesson/targetGroup";
 import type {
   ActiveLesson,
   EducationNetwork,
   LessonGoal,
+  LessonGrade,
   ManualExtraction,
   ModuleId,
 } from "@/types";
@@ -23,6 +28,9 @@ const initialLesson: ActiveLesson = {
   learningArea: "",
   component: "",
   targetGroup: "",
+  grade: "",
+  ageRange: "",
+  displayTargetGroup: "",
   materials: [],
   rawPublisherGoals: [],
   goals: createEmptyGoals(),
@@ -52,6 +60,11 @@ interface LessonStore {
     key: K,
     value: ActiveLesson[K],
   ) => void;
+  setTargetGroupSelection: (value: {
+    grade: LessonGrade | "";
+    customLabel?: string;
+    customAgeRange?: string;
+  }) => void;
   setGoal: (index: number, goal: Partial<LessonGoal>) => void;
   addGoalSlot: () => LessonGoal["id"] | null;
   replaceGoalText: (index: number, text: string) => void;
@@ -83,6 +96,17 @@ export const useLessonStore = create<LessonStore>()(
         })),
       setField: (key, value) =>
         set((state) => ({ lesson: { ...state.lesson, [key]: value } })),
+      setTargetGroupSelection: ({ grade, customLabel, customAgeRange }) =>
+        set((state) => ({
+          lesson: {
+            ...state.lesson,
+            ...resolveTargetGroupFields({
+              grade,
+              customLabel,
+              customAgeRange,
+            }),
+          },
+        })),
       setGoal: (index, patch) =>
         set((state) => {
           let goals = state.lesson.goals.map((goal, goalIndex) =>
@@ -161,13 +185,16 @@ export const useLessonStore = create<LessonStore>()(
           const publisherGoals = data.rawPublisherGoals.filter((goal) =>
             goal.trim(),
           );
+          const targetGroupFields = migrateLessonTargetGroup({
+            targetGroup: data.targetGroup,
+          });
           return {
             lesson: {
               ...state.lesson,
               topic: data.topic,
               learningArea: data.learningArea,
               component: data.component,
-              targetGroup: data.targetGroup,
+              ...targetGroupFields,
               materials: data.materials,
               rawPublisherGoals: publisherGoals,
               goals: buildGoalsFromPublisher(
@@ -212,15 +239,19 @@ export const useLessonStore = create<LessonStore>()(
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<typeof currentState> | undefined;
+        const mergedLesson = {
+          ...currentState.lesson,
+          ...persisted?.lesson,
+          preparationDocument:
+            persisted?.lesson?.preparationDocument ?? null,
+        };
 
         return {
           ...currentState,
           ...persisted,
           lesson: {
-            ...currentState.lesson,
-            ...persisted?.lesson,
-            preparationDocument:
-              persisted?.lesson?.preparationDocument ?? null,
+            ...mergedLesson,
+            ...migrateLessonTargetGroup(mergedLesson),
           },
           pinnedModules: persisted?.pinnedModules ?? currentState.pinnedModules,
         };

@@ -36,6 +36,24 @@ export type LessonGoalId =
   | "D11"
   | "D12";
 
+export type LessonGrade =
+  | "peuters"
+  | "k1"
+  | "k2"
+  | "k3"
+  | "l1"
+  | "l2"
+  | "l3"
+  | "l4"
+  | "l5"
+  | "l6"
+  | "custom";
+
+export interface TargetGroupSearchContext {
+  grade?: LessonGrade | "";
+  ageRange?: string;
+}
+
 export interface LessonGoal {
   id: LessonGoalId;
   text: string;
@@ -71,6 +89,9 @@ export interface ActiveLesson {
   learningArea: string;
   component: string;
   targetGroup: string;
+  grade: LessonGrade | "";
+  ageRange: string;
+  displayTargetGroup: string;
   materials: string[];
   rawPublisherGoals: string[];
   goals: LessonGoal[];
