@@ -8,6 +8,8 @@ import {
 } from "@/lib/rag/discoveryEngine";
 import {
   enrichHitFromCorpus,
+  isStructuredResult,
+  sanitizeStructuredResult,
   searchLocalCorpus,
 } from "@/lib/rag/curriculumCorpus";
 import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
@@ -76,7 +78,7 @@ export async function POST(request: Request) {
       .map((hit) => enrichHitFromCorpus(hit, query, network))
       .filter(
         (item): item is CurriculumSearchResult & { score: number } =>
-          item !== null,
+          item !== null && isStructuredResult(item),
       );
 
     const ranked =
@@ -90,8 +92,10 @@ export async function POST(request: Request) {
 
     const merged = dedupeResults(
       [...ranked]
+        .filter(isStructuredResult)
         .sort((left, right) => (right.score ?? 0) - (left.score ?? 0))
-        .slice(0, 6),
+        .slice(0, 6)
+        .map(sanitizeStructuredResult),
     );
 
     const goal = merged[0] ?? null;
@@ -101,11 +105,10 @@ export async function POST(request: Request) {
       data: {
         goal: goal ?? "niet gevonden",
         alternatives,
-        summary: discovery.summaryText,
-        citations: discovery.citations,
-        totalSize: discovery.totalSize,
         corpusNotice:
-          "Zoekresultaten komen uit Google Cloud Discovery Engine, verrijkt met gestructureerde doelen waar een betrouwbare match mogelijk is. Fragmentresultaten tonen de gevonden tekst rechtstreeks uit de bron.",
+          merged.length > 0
+            ? `${merged.length} officiële doel${merged.length === 1 ? "" : "en"} uit de gestructureerde corpus.`
+            : "Geen match in de officiële doelencorpus. Probeer een andere formulering of een ander netwerk.",
         retrievalMode: "discovery-engine",
       },
       provider: "google-discovery-engine",

@@ -42,7 +42,7 @@ describe("curriculumCorpus matching", () => {
     expect(result.netwerk).toBe("OPSTAP");
   });
 
-  it("valt niet terug op willekeurige corpusrecords zonder jsonl-data", () => {
+  it("geeft null terug zonder corpus-match", () => {
     const hit: DiscoveryHit = {
       id: "2",
       link: "gs://leerkrachtentools-curriculum/zill/wiskunde.pdf",
@@ -52,10 +52,7 @@ describe("curriculumCorpus matching", () => {
       relevanceScore: 0.76,
     };
 
-    const enriched = enrichHitFromCorpus(hit, "optellen tot 20", "ZILL");
-    expect(enriched?.verrijking).toBe("fragment");
-    expect(enriched?.titel.toLowerCase()).toContain("optellen");
-    expect(enriched?.score).toBe(0.76);
+    expect(enrichHitFromCorpus(hit, "optellen tot 20", "ZILL")).toBeNull();
   });
 
   it("weigert verkeerd netwerk bij strikt filter", () => {

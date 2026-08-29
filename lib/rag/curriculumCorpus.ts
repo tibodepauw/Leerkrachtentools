@@ -7,6 +7,7 @@ import type {
 } from "@/types";
 import type { DiscoveryHit } from "@/lib/rag/discoveryEngine";
 import { titleFromLink } from "@/lib/rag/discoveryEngine";
+import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
 
 type RawRecord = Record<string, unknown>;
 
@@ -87,7 +88,21 @@ function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[] {
 }
 
 function asString(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  return typeof value === "string" ? decodeHtmlEntities(value.trim()) : "";
+}
+
+export function isStructuredResult(
+  result: CurriculumSearchResult,
+): boolean {
+  return result.verrijking === "corpus";
+}
+
+export function sanitizeStructuredResult<
+  T extends CurriculumSearchResult & { score?: number },
+>(result: T): T {
+  const { snippet: _snippet, sourceUri: _sourceUri, bronTitel: _bronTitel, ...rest } =
+    result;
+  return rest;
 }
 
 function normalizeMinimumGoal(value: unknown): LinkedMinimumGoal | null {
@@ -497,7 +512,7 @@ export function enrichHitFromCorpus(
     };
   }
 
-  return buildFragmentResult(hit);
+  return null;
 }
 
 export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[] {
