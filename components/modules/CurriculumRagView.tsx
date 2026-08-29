@@ -229,18 +229,20 @@ function MinimumGoalCard({
             </span>
           ) : null}
         </div>
-        {minimum.code ? (
-          <p className="font-mono text-xl font-bold tracking-tight text-emerald-100">
-            {minimum.code}
-          </p>
-        ) : null}
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-sm leading-6 text-neutral-100">{minimum.tekst}</p>
+        <p className="text-sm leading-6 text-neutral-100">
+          {minimum.code ? (
+            <span className="mr-1.5 font-mono text-xs font-semibold text-white">
+              {minimum.code}
+            </span>
+          ) : null}
+          {minimum.tekst}
+        </p>
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <CopyButton value={minimumCopy} label="📋 Minimumdoel kopiëren" />
+          <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
             <Plus className="size-4" />
             Toevoegen aan Actieve les
