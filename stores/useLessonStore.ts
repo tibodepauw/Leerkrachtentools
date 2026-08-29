@@ -2,7 +2,13 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { buildGoalsFromPublisher, createEmptyGoals } from "@/lib/goals/lessonGoals";
+import {
+  buildGoalsFromPublisher,
+  createEmptyGoals,
+  nextGoalId,
+  trimTrailingEmptyGoals,
+  MAX_LESSON_GOALS,
+} from "@/lib/goals/lessonGoals";
 import { deleteLessonDocument } from "@/lib/documents/documentStorage";
 import type {
   ActiveLesson,
@@ -47,6 +53,7 @@ interface LessonStore {
     value: ActiveLesson[K],
   ) => void;
   setGoal: (index: number, goal: Partial<LessonGoal>) => void;
+  addGoalSlot: () => LessonGoal["id"] | null;
   replaceGoalText: (index: number, text: string) => void;
   setActiveGoal: (text: string, taxonomy?: LessonGoal["taxonomy"]) => void;
   syncFromExtraction: (data: ManualExtraction) => void;
@@ -77,14 +84,44 @@ export const useLessonStore = create<LessonStore>()(
       setField: (key, value) =>
         set((state) => ({ lesson: { ...state.lesson, [key]: value } })),
       setGoal: (index, patch) =>
-        set((state) => ({
-          lesson: {
-            ...state.lesson,
-            goals: state.lesson.goals.map((goal, goalIndex) =>
-              goalIndex === index ? { ...goal, ...patch } : goal,
-            ),
-          },
-        })),
+        set((state) => {
+          let goals = state.lesson.goals.map((goal, goalIndex) =>
+            goalIndex === index ? { ...goal, ...patch } : goal,
+          );
+
+          if (patch.text !== undefined && !patch.text.trim()) {
+            goals = goals.filter((_, goalIndex) => goalIndex !== index);
+          } else {
+            goals = trimTrailingEmptyGoals(goals);
+          }
+
+          return {
+            lesson: {
+              ...state.lesson,
+              goals,
+            },
+          };
+        }),
+      addGoalSlot: () => {
+        let createdId: LessonGoal["id"] | null = null;
+
+        set((state) => {
+          const trimmed = trimTrailingEmptyGoals(state.lesson.goals);
+          if (trimmed.length >= MAX_LESSON_GOALS) {
+            return state;
+          }
+
+          createdId = nextGoalId(trimmed);
+          return {
+            lesson: {
+              ...state.lesson,
+              goals: [...trimmed, { id: createdId, text: "" }],
+            },
+          };
+        });
+
+        return createdId;
+      },
       replaceGoalText: (index, text) =>
         set((state) => {
           const previousText = state.lesson.goals[index]?.text.trim() ?? "";
@@ -105,16 +142,17 @@ export const useLessonStore = create<LessonStore>()(
         }),
       setActiveGoal: (text, taxonomy) =>
         set((state) => {
-          const firstEmpty = state.lesson.goals.findIndex(
-            (goal) => !goal.text.trim(),
-          );
-          const index = firstEmpty === -1 ? 0 : firstEmpty;
+          const trimmed = trimTrailingEmptyGoals(state.lesson.goals);
+          const newGoal: LessonGoal = {
+            id: nextGoalId(trimmed),
+            text,
+            taxonomy,
+          };
+
           return {
             lesson: {
               ...state.lesson,
-              goals: state.lesson.goals.map((goal, goalIndex) =>
-                goalIndex === index ? { ...goal, text, taxonomy } : goal,
-              ),
+              goals: [...trimmed, newGoal],
             },
           };
         }),

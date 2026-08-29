@@ -5,9 +5,11 @@ import {
   useRef,
   type ChangeEvent,
 } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { cn } from "@/lib/utils";
 import type { LessonGoal } from "@/types";
 
@@ -33,6 +35,7 @@ export function LessonGoalSelector({
   onSelect,
   text,
   onTextChange,
+  onAddGoal,
   placeholder,
   minHeightClassName = "min-h-[56px]",
   maxHeightClassName = "max-h-64",
@@ -44,12 +47,14 @@ export function LessonGoalSelector({
   onSelect: (id: LessonGoal["id"]) => void;
   text: string;
   onTextChange: (value: string) => void;
+  onAddGoal?: () => void;
   placeholder?: string;
   minHeightClassName?: string;
   maxHeightClassName?: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const filledCount = goals.filter((goal) => goal.text.trim()).length;
+  const visibleGoals = filledGoals(goals);
+  const canAddGoal = goals.length < MAX_LESSON_GOALS;
 
   useLayoutEffect(() => {
     const element = textareaRef.current;
@@ -67,8 +72,8 @@ export function LessonGoalSelector({
     <div className="space-y-3">
       <div className="space-y-2">
         <Label>{label}</Label>
-        <div className="flex flex-wrap gap-2">
-          {goals.map((goal) => (
+        <div className="flex flex-wrap items-center gap-2">
+          {visibleGoals.map((goal) => (
             <Button
               key={goal.id}
               type="button"
@@ -77,22 +82,30 @@ export function LessonGoalSelector({
               onClick={() => onSelect(goal.id)}
             >
               {goal.id}
-              {goal.taxonomy
-                ? ` · ${goal.taxonomy}`
-                : goal.text.trim()
-                  ? ""
-                  : " · leeg"}
+              {goal.taxonomy ? ` · ${goal.taxonomy}` : null}
             </Button>
           ))}
+          {onAddGoal && canAddGoal ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={onAddGoal}
+              aria-label="Doel toevoegen"
+              title="Doel toevoegen"
+            >
+              <Plus className="size-4" />
+            </Button>
+          ) : null}
         </div>
-        {filledCount > 0 ? (
+        {visibleGoals.length > 0 ? (
           <p className="text-xs text-neutral-500">
-            {filledCount} van {goals.length} doelen ingevuld via handleiding of
-            Actieve les.
+            {visibleGoals.length} doel{visibleGoals.length === 1 ? "" : "en"}{" "}
+            actief via handleiding of Actieve les.
           </p>
         ) : (
           <p className="text-xs text-neutral-500">
-            Upload eerst een handleiding of vul doelen in via Actieve les.
+            Nog geen doelen. Voeg er een toe met + of upload een handleiding.
           </p>
         )}
       </div>

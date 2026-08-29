@@ -1,8 +1,8 @@
 import type { LessonGoal, LessonGoalId } from "@/types";
 
 export const MAX_LESSON_GOALS = 12;
-/** Standaard lege slots vóór extractie (Thomas More D1–D3). */
-export const DEFAULT_LESSON_GOALS = 3;
+/** Geen vaste lege slots; doelen worden dynamisch toegevoegd. */
+export const DEFAULT_LESSON_GOALS = 0;
 
 const GOAL_IDS = Array.from(
   { length: MAX_LESSON_GOALS },
@@ -18,11 +18,28 @@ export function goalIdForIndex(index: number): LessonGoalId {
 }
 
 export function createEmptyGoals(count = DEFAULT_LESSON_GOALS): LessonGoal[] {
-  const slotCount = Math.max(1, Math.min(count, MAX_LESSON_GOALS));
+  const slotCount = Math.max(0, Math.min(count, MAX_LESSON_GOALS));
   return Array.from({ length: slotCount }, (_, index) => ({
     id: goalIdForIndex(index),
     text: "",
   }));
+}
+
+/** Verwijdert lege doelen aan het einde van de lijst. */
+export function trimTrailingEmptyGoals(goals: LessonGoal[]): LessonGoal[] {
+  let end = goals.length;
+  while (end > 0 && !goals[end - 1]?.text.trim()) {
+    end -= 1;
+  }
+  return goals.slice(0, end);
+}
+
+export function filledGoals(goals: LessonGoal[]): LessonGoal[] {
+  return goals.filter((goal) => goal.text.trim());
+}
+
+export function nextGoalId(goals: LessonGoal[]): LessonGoalId {
+  return goalIdForIndex(trimTrailingEmptyGoals(goals).length);
 }
 
 export function buildGoalsFromPublisher(
@@ -32,9 +49,7 @@ export function buildGoalsFromPublisher(
   const trimmed = publisherGoals.map((goal) => goal.trim()).filter(Boolean);
 
   if (trimmed.length === 0) {
-    return existingGoals.length > 0
-      ? existingGoals
-      : createEmptyGoals();
+    return trimTrailingEmptyGoals(existingGoals);
   }
 
   const slotCount = Math.min(trimmed.length, MAX_LESSON_GOALS);

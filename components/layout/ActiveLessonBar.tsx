@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { LogOut, Plus, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { LessonPreparationInput } from "@/components/shared/LessonPreparationInput";
+import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { EducationNetwork } from "@/types";
 
@@ -28,9 +29,14 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
   const lesson = useLessonStore((state) => state.lesson);
   const setField = useLessonStore((state) => state.setField);
   const setGoal = useLessonStore((state) => state.setGoal);
+  const addGoalSlot = useLessonStore((state) => state.addGoalSlot);
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const setNetwork = useLessonStore((state) => state.setNetwork);
   const clearSession = useLessonStore((state) => state.clearSession);
+
+  const activeGoalCount = filledGoals(lesson.goals).length;
+  const editableGoals = lesson.goals;
+  const canAddGoal = lesson.goals.length < MAX_LESSON_GOALS;
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -48,8 +54,7 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
           </div>
           <p className="truncate text-xs text-neutral-500">
             {lesson.targetGroup || "Doelgroep nog niet ingevuld"} ·{" "}
-            {lesson.goals.filter((goal) => goal.text).length}/{lesson.goals.length}{" "}
-            doelen actief
+            {activeGoalCount} doel{activeGoalCount === 1 ? "" : "en"} actief
           </p>
         </div>
 
@@ -142,7 +147,7 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
               </div>
               <Separator />
               <div className="space-y-3">
-                {lesson.goals.map((goal, index) => (
+                {editableGoals.map((goal, index) => (
                   <div key={goal.id} className="space-y-2">
                     <Label htmlFor={goal.id}>{goal.id}</Label>
                     <Input
@@ -155,6 +160,17 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                     />
                   </div>
                 ))}
+                {canAddGoal ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addGoalSlot()}
+                  >
+                    <Plus className="size-4" />
+                    Doel toevoegen
+                  </Button>
+                ) : null}
               </div>
               <Separator />
               <LessonPreparationInput

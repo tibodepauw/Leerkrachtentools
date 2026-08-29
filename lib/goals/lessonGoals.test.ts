@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { buildGoalsFromPublisher, goalIdForIndex } from "@/lib/goals/lessonGoals";
+import {
+  buildGoalsFromPublisher,
+  filledGoals,
+  goalIdForIndex,
+  trimTrailingEmptyGoals,
+} from "@/lib/goals/lessonGoals";
 
 describe("lessonGoals", () => {
-  it("maakt standaard drie lege slots aan zonder extractie", () => {
-    expect(buildGoalsFromPublisher([])).toEqual([
-      { id: "D1", text: "" },
-      { id: "D2", text: "" },
-      { id: "D3", text: "" },
-    ]);
+  it("start zonder lege slots wanneer er geen extractie is", () => {
+    expect(buildGoalsFromPublisher([])).toEqual([]);
   });
 
   it("volgt het exacte aantal geëxtraheerde doelen", () => {
@@ -46,5 +47,25 @@ describe("lessonGoals", () => {
     );
 
     expect(buildGoalsFromPublisher(publisherGoals)).toHaveLength(12);
+  });
+
+  it("filtert lege doelen uit zichtbare lijst", () => {
+    expect(
+      filledGoals([
+        { id: "D1", text: "Doel één" },
+        { id: "D2", text: "   " },
+        { id: "D3", text: "Doel drie" },
+      ]),
+    ).toHaveLength(2);
+  });
+
+  it("verwijdert lege slots aan het einde", () => {
+    expect(
+      trimTrailingEmptyGoals([
+        { id: "D1", text: "Doel één" },
+        { id: "D2", text: "" },
+        { id: "D3", text: "  " },
+      ]),
+    ).toEqual([{ id: "D1", text: "Doel één" }]);
   });
 });

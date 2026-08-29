@@ -267,7 +267,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const [network, setNetwork] = useState<CurriculumNetworkFilter>(() =>
     mapEducationNetwork(lesson.educationNetwork),
   );
-  const { goals, selectedId, setSelectedId, text, setText } =
+  const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
     variant === "minimumdoel"
@@ -331,6 +331,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 onSelect={setSelectedId}
                 text={text}
                 onTextChange={setText}
+                onAddGoal={addGoal}
               />
 
               {variant === "leerplandoel" ? (

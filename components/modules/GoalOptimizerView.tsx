@@ -23,7 +23,7 @@ interface GoalImprovementResult {
 }
 
 export function GoalOptimizerView() {
-  const { goals, selectedId, setSelectedId, text, setText } =
+  const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const replaceGoalText = useLessonStore((state) => state.replaceGoalText);
   const analysisScope = `${selectedId}:${text.trim()}`;
@@ -51,6 +51,7 @@ export function GoalOptimizerView() {
               onSelect={setSelectedId}
               text={text}
               onTextChange={setText}
+              onAddGoal={addGoal}
               placeholder="Leerling kan zoogdieren herkennen..."
             />
           }

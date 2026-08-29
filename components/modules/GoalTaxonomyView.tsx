@@ -28,7 +28,7 @@ const taxonomyLabels: Record<GoalTaxonomy, string> = {
 };
 
 export function GoalTaxonomyView() {
-  const { goals, selectedId, setSelectedId, text, setText } =
+  const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const setGoal = useLessonStore((state) => state.setGoal);
   const analysisScope = `${selectedId}:${text.trim()}`;
@@ -51,6 +51,7 @@ export function GoalTaxonomyView() {
               onSelect={setSelectedId}
               text={text}
               onTextChange={setText}
+              onAddGoal={addGoal}
               placeholder="De leerlingen kunnen zoogdieren herkennen..."
             />
           }
