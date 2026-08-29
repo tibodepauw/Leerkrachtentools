@@ -178,13 +178,6 @@ export function AccountSettings({
                   <Input id="account-email" value={email} readOnly disabled />
                   <p className="text-xs text-neutral-500">Je geverifieerde loginadres kan momenteel niet worden gewijzigd.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="account-id">Account-ID</Label>
-                  <Input id="account-id" value={userId} readOnly disabled className="font-mono text-xs" />
-                  <p className="text-xs text-neutral-500">
-                    Unieke identifier voor je account. Lesgegevens in deze browser worden aan dit ID gekoppeld.
-                  </p>
-                </div>
                 <Button disabled={savingProfile}>
                   {savingProfile ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                   Profiel opslaan
@@ -205,7 +198,7 @@ export function AccountSettings({
                 <dl
                   className={cn(
                     "grid gap-3",
-                    appCommit ? "sm:grid-cols-3" : "sm:grid-cols-2",
+                    appCommit ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3",
                   )}
                 >
                   <div>
@@ -228,12 +221,20 @@ export function AccountSettings({
                   ) : null}
                   <div>
                     <dt className="text-xs uppercase tracking-wide text-neutral-600">
-                      Status
+                      Niveau
                     </dt>
                     <dd className="mt-1">
                       <Badge variant="secondary" className="capitalize">
                         {tier === "free" ? "Gratis" : tier}
                       </Badge>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-neutral-600">
+                      Account-ID
+                    </dt>
+                    <dd className="mt-1 break-all font-mono text-xs text-neutral-200">
+                      {userId}
                     </dd>
                   </div>
                 </dl>
