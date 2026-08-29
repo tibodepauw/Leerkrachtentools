@@ -145,7 +145,7 @@ function ModuleNavButton({
                 onTogglePin();
               }}
               className={cn(
-                "mr-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors",
+                "mr-1 grid size-7 shrink-0 place-items-center rounded-full opacity-0 transition-all group-hover/nav:opacity-100 focus-visible:opacity-100",
                 pinned
                   ? "text-white hover:bg-neutral-800 hover:text-white"
                   : "text-neutral-500 hover:bg-neutral-800 hover:text-neutral-300",
