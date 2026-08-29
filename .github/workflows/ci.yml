@@ -9,6 +9,12 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      CI: true
+      AUTH_SECRET: "ci-dummy-auth-secret-for-github-actions-testing-32chars"
+      DATABASE_PATH: ":memory:"
+      NEXT_TELEMETRY_DISABLED: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,11 +22,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Generate Next.js route types
+        run: npx next typegen
 
       - name: Lint
         run: npm run lint

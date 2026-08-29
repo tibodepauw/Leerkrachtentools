@@ -9,6 +9,7 @@ let database: Database.Database | null = null;
 function databasePath() {
   const configured =
     process.env.DATABASE_PATH ?? "./data/leerkrachtentools.db";
+  if (configured === ":memory:") return configured;
   if (path.isAbsolute(configured)) return configured;
   return path.join(process.cwd(), "data", path.basename(configured));
 }
