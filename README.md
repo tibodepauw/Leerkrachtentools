@@ -95,6 +95,18 @@ Dit schrijft `data/zill/zill_volledig.jsonl`, een metadata-sidecar en
 `zill_scrape_report.json`. De scraper onderschept primair het officiële JSON-model
 en gebruikt route-per-route DOM-traversal als fallback.
 
+Voor de volledige OVSG Leer Lokaal-leerlijn (Basis/Ondersteuning/Verdieping per fase):
+
+```bash
+export OVSG_LEERLOKAAL_USER=jouw-gebruikersnaam
+export OVSG_LEERLOKAAL_PASSWORD=jouw-wachtwoord
+python3 scripts/scrape_ovsg_full.py
+```
+
+Dit schrijft `data/ovsg/ovsg_volledig.jsonl`, een metadata-sidecar en
+`ovsg_scrape_report.json`. Credentials horen in `.env.local` of als omgevingsvariabelen,
+nooit in de repository.
+
 De marketingtoestemming staat standaard uit en kan na inloggen worden
 ingetrokken. Controleer vóór publieke lancering ook het privacybeleid,
 bewaartermijnen en de afmeldlink van toekomstige mailings.
