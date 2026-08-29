@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useLessonStore } from "@/stores/useLessonStore";
+import { SidebarFeedback } from "@/components/layout/SidebarFeedback";
 import type { ModuleId } from "@/types";
 
 const sections = [
@@ -293,6 +294,7 @@ function SidebarContent({
               </div>
             </section>
           ))}
+          <SidebarFeedback userEmail={account.email} />
           </nav>
         </div>
         <div
