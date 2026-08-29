@@ -147,7 +147,7 @@ function ModuleNavButton({
               className={cn(
                 "mr-1 grid size-7 shrink-0 place-items-center rounded-full transition-colors",
                 pinned
-                  ? "text-amber-400 hover:bg-neutral-800 hover:text-amber-300"
+                  ? "text-white hover:bg-neutral-800 hover:text-white"
                   : "text-neutral-600 opacity-70 hover:bg-neutral-800 hover:text-neutral-300 lg:opacity-0 lg:group-hover/nav:opacity-100 lg:focus-visible:opacity-100",
               )}
             >
