@@ -78,12 +78,73 @@ function goalHaystack(result: CurriculumSearchResult): string {
     result.gelinktMinimumdoel?.tekst,
     result.gelinktMinimumdoel?.code,
     result.titel,
+    result.discipline,
     result.leerjaarRoute,
     result.toelichting,
     result.subdomein,
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+function earlyGradeBonus(queryPrimary: number | null, route: string): number {
+  if (queryPrimary === null || queryPrimary > 100) {
+    return 0;
+  }
+  const normalized = route.toLocaleLowerCase("nl-BE");
+  if (
+    /1ste leerjaar|2de leerjaar|kleuter|fase 1|fase 2|3de kleuter|jongste kleuter|2de kleuter/i.test(
+      normalized,
+    )
+  ) {
+    return 0.14;
+  }
+  if (/4de leerjaar|5de leerjaar|6de leerjaar|10\s*000|10000/i.test(normalized)) {
+    return -0.18;
+  }
+  return 0;
+}
+
+function titelRangeBonus(
+  query: string,
+  result: CurriculumSearchResult,
+  primary: number | null,
+): number {
+  if (primary === null || !result.titel.trim()) {
+    return 0;
+  }
+
+  const queryLower = query.toLocaleLowerCase("nl-BE");
+  const minimumLower = (result.gelinktMinimumdoel?.tekst ?? "").toLocaleLowerCase(
+    "nl-BE",
+  );
+  if (
+    queryLower.includes("optell") &&
+    !queryLower.includes("breuk") &&
+    minimumLower.includes("breuk") &&
+    !minimumLower.includes("optell")
+  ) {
+    return 0;
+  }
+
+  const titelNumbers = parseNumbers(result.titel);
+  if (titelNumbers.includes(primary)) {
+    return 0.22;
+  }
+  if (titelNumbers.some((value) => numbersConflict(primary, value))) {
+    return -0.25;
+  }
+
+  const titelLower = result.titel.toLocaleLowerCase("nl-BE");
+  if (
+    queryLower.includes("optell") &&
+    titelLower.includes("optell") &&
+    titelLower.includes(String(primary))
+  ) {
+    return 0.18;
+  }
+
+  return 0;
 }
 
 function numbersConflict(queryNumber: number, candidateNumber: number): boolean {
@@ -115,6 +176,31 @@ export function applyMinimumGoalRangeBonus(
 
   let score = baseScore;
 
+  const queryLower = query.toLocaleLowerCase("nl-BE");
+  const haystackLower = haystack.toLocaleLowerCase("nl-BE");
+  const minimumLower = (result.gelinktMinimumdoel?.tekst ?? "").toLocaleLowerCase(
+    "nl-BE",
+  );
+
+  if (queryLower.includes("optell")) {
+    if (minimumLower.includes("optell")) {
+      score += 0.22;
+    } else if (
+      minimumLower.includes("breuk") &&
+      !queryLower.includes("breuk")
+    ) {
+      score -= 0.45;
+    }
+  }
+
+  if (queryLower.includes("aftrek")) {
+    if (minimumLower.includes("aftrek")) {
+      score += 0.18;
+    } else if (minimumLower.includes("breuk") && !minimumLower.includes("aftrek")) {
+      score -= 0.2;
+    }
+  }
+
   for (const phase of signals.phases) {
     if (textPhases.has(phase)) {
       score += 0.18;
@@ -137,6 +223,25 @@ export function applyMinimumGoalRangeBonus(
     ) {
       score += 0.1;
     }
+
+    score += titelRangeBonus(query, result, primary);
+    score += earlyGradeBonus(primary, result.leerjaarRoute);
+
+    if (
+      queryLower.includes("optell") &&
+      minimumLower.includes("optell") &&
+      textNumbers.includes(primary)
+    ) {
+      score += 0.2;
+    }
+
+    if (
+      !result.titel.trim() &&
+      minimumLower.includes("optell") &&
+      textNumbers.includes(primary)
+    ) {
+      score += 0.3;
+    }
   } else if (signals.numbers.length > 0) {
     const sharedNumbers = signals.numbers.filter((value) =>
       textNumbers.includes(value),
@@ -146,7 +251,7 @@ export function applyMinimumGoalRangeBonus(
     }
   }
 
-  return Math.max(0, Math.min(1, score));
+  return Math.max(0, score);
 }
 
 export function rankMinimumGoalResults(

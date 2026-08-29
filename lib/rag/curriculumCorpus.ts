@@ -76,7 +76,7 @@ function loadJsonl(relativePath: string): RawRecord[] {
   return records;
 }
 
-function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[] {
+export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[] {
   if (network === "ALL") {
     return (
       Object.keys(CORPUS_FILES) as Array<Exclude<CurriculumNetworkFilter, "ALL">>

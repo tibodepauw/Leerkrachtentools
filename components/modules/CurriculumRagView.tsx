@@ -184,11 +184,13 @@ function MinimumGoalCard({
   onAddToLesson,
   rank,
   isBestMatch = false,
+  isAlternative = false,
 }: {
   result: CurriculumSearchResult;
   onAddToLesson: (text: string) => void;
   rank: number;
   isBestMatch?: boolean;
+  isAlternative?: boolean;
 }) {
   const minimum = result.gelinktMinimumdoel;
   if (!minimum?.tekst) {
@@ -216,6 +218,8 @@ function MinimumGoalCard({
             <Badge className="bg-emerald-700 text-white hover:bg-emerald-700">
               Beste match
             </Badge>
+          ) : isAlternative ? (
+            <Badge variant="outline">Alternatief</Badge>
           ) : (
             <Badge variant="outline">#{rank}</Badge>
           )}
@@ -235,25 +239,6 @@ function MinimumGoalCard({
 
       <CardContent className="space-y-4">
         <p className="text-sm leading-6 text-neutral-100">{minimum.tekst}</p>
-
-        <Accordion type="single" collapsible>
-          <AccordionItem value="koppeling" className="border-neutral-800">
-            <AccordionTrigger className="py-2 text-xs text-neutral-400 hover:text-neutral-200">
-              Leerplandoel-koppeling
-            </AccordionTrigger>
-            <AccordionContent className="space-y-2 text-sm leading-6 text-neutral-300">
-              {result.netwerk && result.netwerk !== "ALL" ? (
-                <Badge variant="outline" className="mb-2">
-                  {networkBadgeLabel(result.netwerk)}
-                </Badge>
-              ) : null}
-              {result.code ? (
-                <p className="font-mono text-xs text-neutral-500">{result.code}</p>
-              ) : null}
-              <p>{result.titel}</p>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
 
         <div className="flex flex-wrap gap-2 pt-1">
           <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
@@ -389,7 +374,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               <div className="space-y-3">
                 {variant === "minimumdoel" ? (
                   <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-                    Top {results.length} minimumdoel{results.length === 1 ? "" : "en"}
+                    Top {Math.min(results.length, 3)} minimumdoel
+                    {Math.min(results.length, 3) === 1 ? "" : "en"}
                   </p>
                 ) : null}
                 {results.map((goalResult, index) =>
@@ -400,6 +386,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       onAddToLesson={setText}
                       rank={index + 1}
                       isBestMatch={index === 0}
+                      isAlternative={index > 0}
                     />
                   ) : (
                     <GoalCard

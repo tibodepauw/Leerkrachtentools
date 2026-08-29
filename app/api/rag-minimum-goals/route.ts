@@ -7,9 +7,12 @@ import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
 import {
   enrichHitFromCorpus,
   isStructuredResult,
-  sanitizeStructuredResult,
-  searchMinimumGoals,
 } from "@/lib/rag/curriculumCorpus";
+import {
+  collectMinimumGoalCandidates,
+  mergeMinimumGoalCandidatePools,
+  sanitizeMinimumGoalForResponse,
+} from "@/lib/rag/minimumGoalCandidates";
 import {
   MINIMUM_GOALS_TOP_N,
   rankMinimumGoalResults,
@@ -38,27 +41,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const discovery = await searchDiscoveryEngine({
-      query,
-      network: "ALL",
-      pageSize: 16,
-    });
+    const localCandidates = collectMinimumGoalCandidates({ query, limit: 50 });
 
-    const enrichedFromDiscovery = discovery.hits
-      .map((hit) => enrichHitFromCorpus(hit, query, "ALL"))
-      .filter(
-        (item): item is CurriculumSearchResult & { score: number } =>
-          item !== null && isStructuredResult(item) && hasMinimumGoal(item),
-      );
+    let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
+      [];
+    try {
+      const discovery = await searchDiscoveryEngine({
+        query,
+        network: "ALL",
+        pageSize: 16,
+      });
 
-    const ranked =
-      enrichedFromDiscovery.length > 0
-        ? enrichedFromDiscovery
-        : searchMinimumGoals({ query, limit: 12 });
+      discoveryCandidates = discovery.hits
+        .map((hit) => enrichHitFromCorpus(hit, query, "ALL"))
+        .filter(
+          (item): item is CurriculumSearchResult & { score: number } =>
+            item !== null && isStructuredResult(item) && hasMinimumGoal(item),
+        );
+    } catch {
+      discoveryCandidates = [];
+    }
+
+    const candidatePool = mergeMinimumGoalCandidatePools(
+      [localCandidates, discoveryCandidates],
+      50,
+    );
 
     const merged = rankMinimumGoalResults(
       query,
-      [...ranked].filter(hasMinimumGoal).map(sanitizeStructuredResult),
+      candidatePool.filter(hasMinimumGoal).map(sanitizeMinimumGoalForResponse),
       MINIMUM_GOALS_TOP_N,
     );
 
@@ -71,11 +82,11 @@ export async function POST(request: Request) {
         alternatives,
         corpusNotice:
           merged.length > 0
-            ? `Top ${merged.length} bestpassende Vlaamse minimumdoel${merged.length === 1 ? "" : "en"} — hoogste match bovenaan.`
+            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} bestpassende Vlaamse minimumdoelen — hoogste match bovenaan.`
             : "Geen passend minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
-        retrievalMode: "minimum-goals",
+        retrievalMode: "minimum-goals-hybrid",
       },
-      provider: "google-discovery-engine",
+      provider: "jsonl-corpus+discovery-engine",
       fallbackErrors: [],
     });
   } catch (error) {
