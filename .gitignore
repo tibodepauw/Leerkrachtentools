@@ -30,6 +30,10 @@
 /data/opstap/
 /data/go_nieuw/
 /data/secundair/
+/dist/secundair_update.zip
+test/fixtures/curriculum-secundair.jsonl
+test/fixtures/minimumdoelen-secundair.jsonl
+test/fixtures/curriculum-pov-secundair.jsonl
 
 # Sjablonen en documenten
 data/templates/*.docx

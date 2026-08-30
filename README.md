@@ -92,8 +92,12 @@ Local search indexes official goal corpora:
 | Op.stap | Katholiek onderwijs Op.stap |
 | GO | GO! basisonderwijs vakleerplannen (9 subject books) |
 | GO! Nieuw | GO! basisonderwijs 12 doelensets |
-| Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen |
-| Vlaamse overheid | Officiële secundaire minimumdoelen (API-key of publiek portaal) |
+| Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen (lokaal) |
+| Vlaamse overheid | Officiële secundaire minimumdoelen (lokaal, via scripts) |
+
+Secundaire corpusdata (`data/secundair/`) wordt **niet** in git opgenomen. Run de
+fetch-scripts lokaal of installeer een privé zip-export; publiceer scraper-uitvoer
+niet op GitHub.
 
 Maintenance scripts (optional, not required to run the app UI):
 

@@ -218,21 +218,22 @@ python3 scripts/fetch_secundair_full.py
 
 De uitvoer is `data/secundair/minimumdoelen_secundair.jsonl`. Records bevatten
 `graad`, `finaliteit`, `stroom`, `sleutelcompetentie_nr` (SC 1-16) en
-`gelinkt_minimumdoel`. Zonder lokale data-run gebruikt de app de fixtures in
-`test/fixtures/minimumdoelen-secundair.jsonl` en
-`test/fixtures/curriculum-secundair.jsonl`.
+`gelinkt_minimumdoel`. Zonder lokale data-run blijven secundaire zoekmodules leeg
+tot je lokaal scrapet.
 
-### Zip-export (Windows)
+**Niet publiceren:** commit geen scraper-uitvoer (`data/secundair/`, zip-exports)
+naar GitHub. De repo bevat enkel de scripts; corpusdata blijft lokaal of privé.
 
-Handmatige update op een andere machine (bijv. productie zonder git clone van
-data):
+### Zip-export (Windows, lokaal)
+
+Handmatige update op een andere machine (productie zonder git clone van data):
 
 ```bash
-npm run export:secundair
-# of na een volledige fetch:
-python3 scripts/fetch_secundair_full.py --export-zip
+npm run fetch:secundair          # eerst corpus ophalen
+npm run export:secundair         # dist/secundair_update.zip
+# of: python3 scripts/fetch_secundair_full.py --export-zip
 ```
 
 Dit maakt `dist/secundair_update.zip` met JSONL-bestanden en `LEESMIJ.txt`.
-Pak de `.jsonl`-bestanden uit in `data/secundair/` in de projectroot. Het
-archief gebruikt Windows-compatibele zip-attributen (geen Unix-permissies).
+Pak de `.jsonl`-bestanden uit in `data/secundair/` in de projectroot.
+Deel het archief niet via GitHub-releases of commits.

@@ -4,6 +4,17 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.14] - 2026-08-30
+
+### Security
+- Secundaire scraper-uitvoer niet meer in git of op GitHub-releases (zip verwijderd,
+  fixtures secundair verwijderd, app laadt enkel lokale `data/secundair/`)
+
+### Changed
+- `export_secundair_zip.py` leest enkel `data/secundair/` (geen fixture-fallback)
+
+---
+
 ## [5.8.13] - 2026-08-30
 
 ### Added
