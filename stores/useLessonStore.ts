@@ -85,6 +85,25 @@ interface LessonStore {
   clearSession: () => void;
 }
 
+const EDUCATION_LEVEL_PREFERENCES = new Set<EducationLevelPreference>([
+  "kleuteronderwijs",
+  "lager_onderwijs",
+  "secundair_onderwijs",
+]);
+
+function normalizeEducationLevelPreference(
+  persisted: EducationLevelPreference | string | undefined,
+  fallback: EducationLevelPreference,
+): EducationLevelPreference {
+  if (
+    typeof persisted === "string" &&
+    EDUCATION_LEVEL_PREFERENCES.has(persisted as EducationLevelPreference)
+  ) {
+    return persisted as EducationLevelPreference;
+  }
+  return fallback;
+}
+
 export function resetLessonStoreState() {
   useLessonStore.setState({
     lesson: initialLesson,
@@ -278,8 +297,10 @@ export const useLessonStore = create<LessonStore>()(
             ...migrateLessonTargetGroup(mergedLesson),
           },
           pinnedModules: persisted?.pinnedModules ?? currentState.pinnedModules,
-          educationLevel:
-            persisted?.educationLevel ?? currentState.educationLevel,
+          educationLevel: normalizeEducationLevelPreference(
+            persisted?.educationLevel,
+            currentState.educationLevel,
+          ),
         };
       },
       onRehydrateStorage: () => (state) => state?.setHydrated(true),

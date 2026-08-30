@@ -78,7 +78,6 @@ const EDUCATION_LEVEL_OPTIONS: Array<{
   value: EducationLevelPreference;
   label: string;
 }> = [
-  { value: "alle_niveaus", label: "Alle onderwijsniveaus" },
   { value: "kleuteronderwijs", label: "Kleuteronderwijs" },
   { value: "lager_onderwijs", label: "Lager onderwijs" },
   { value: "secundair_onderwijs", label: "Secundair onderwijs" },

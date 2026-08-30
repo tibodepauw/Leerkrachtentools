@@ -14,7 +14,6 @@ export type EducationLevelFilter =
   | "LAGER"
   | "SECUNDAIR";
 export type EducationLevelPreference =
-  | "alle_niveaus"
   | "kleuteronderwijs"
   | "lager_onderwijs"
   | "secundair_onderwijs";

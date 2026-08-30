@@ -11,7 +11,7 @@ export function preferenceToFilter(
     case "secundair_onderwijs":
       return "SECUNDAIR";
     default:
-      return "ALL";
+      return "LAGER";
   }
 }
 
@@ -26,6 +26,6 @@ export function filterToPreference(
     case "SECUNDAIR":
       return "secundair_onderwijs";
     default:
-      return "alle_niveaus";
+      return "lager_onderwijs";
   }
 }

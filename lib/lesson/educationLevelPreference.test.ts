@@ -9,11 +9,12 @@ describe("educationLevelPreference", () => {
     expect(preferenceToFilter("lager_onderwijs")).toBe("LAGER");
     expect(preferenceToFilter("kleuteronderwijs")).toBe("KLEUTER");
     expect(preferenceToFilter("secundair_onderwijs")).toBe("SECUNDAIR");
-    expect(preferenceToFilter("alle_niveaus")).toBe("ALL");
   });
 
   it("mapt API-filters terug naar store-waarden", () => {
     expect(filterToPreference("LAGER")).toBe("lager_onderwijs");
-    expect(filterToPreference("ALL")).toBe("alle_niveaus");
+    expect(filterToPreference("KLEUTER")).toBe("kleuteronderwijs");
+    expect(filterToPreference("SECUNDAIR")).toBe("secundair_onderwijs");
+    expect(filterToPreference("ALL")).toBe("lager_onderwijs");
   });
 });
