@@ -173,6 +173,8 @@ class GoalRecord:
     bron_url: str
     bron_titel: str
     minimumdoel_codes: list[str] = field(default_factory=list)
+    sleutelcompetentie_nr: str = ""
+    sleutelcompetentie: str = ""
 
     def key(self) -> tuple[str, str, str]:
         return (self.netwerk, self.code, self.titel.casefold())
@@ -491,11 +493,15 @@ def parse_pdf(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
     for page in reader.pages:
         text = page.extract_text() or ""
         section_match = re.search(
-            r"(?im)^Sleutelcompetentie\s+\d+\s*:\s*(.+)$",
+            r"(?im)^Sleutelcompetentie\s+(\d+)\s*:\s*(.+)$",
             text,
         )
+        current_sc_nr = ""
+        current_sc_name = current_section
         if section_match:
-            current_section = clean_text(section_match.group(1))
+            current_sc_nr = clean_text(section_match.group(1))
+            current_sc_name = clean_text(section_match.group(2))
+            current_section = current_sc_name
 
         matches = list(GOAL_CODE_RE.finditer(text))
         for index, match in enumerate(matches):
@@ -510,7 +516,7 @@ def parse_pdf(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
                 GoalRecord(
                     code=code,
                     titel=title,
-                    discipline=source.discipline,
+                    discipline=source.discipline or current_sc_name,
                     subdomein=current_section,
                     toelichting="",
                     leerjaar_route=" · ".join(
@@ -524,6 +530,8 @@ def parse_pdf(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
                     bron_url=source.url,
                     bron_titel=source.title,
                     minimumdoel_codes=[minimum.group(1)] if minimum else [],
+                    sleutelcompetentie_nr=current_sc_nr,
+                    sleutelcompetentie=current_sc_name,
                 )
             )
     return records

@@ -75,17 +75,35 @@ const SECONDARY_CURRICULUM_PROD = path.join(
   "secundair",
   "leerplannen_secundair.jsonl",
 );
+const SECONDARY_CURRICULUM_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "curriculum-secundair.jsonl",
+);
 const SECONDARY_MINIMUM_GOALS_PROD = path.join(
   process.cwd(),
   "data",
   "secundair",
   "minimumdoelen_secundair.jsonl",
 );
+const SECONDARY_MINIMUM_GOALS_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "minimumdoelen-secundair.jsonl",
+);
 const SECONDARY_POV_CURRICULUM_PROD = path.join(
   process.cwd(),
   "data",
   "secundair",
   "leerplannen_pov_secundair.jsonl",
+);
+const SECONDARY_POV_CURRICULUM_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "curriculum-pov-secundair.jsonl",
 );
 
 const MIN_CORPUS_MATCH_SCORE = 0.32;
@@ -171,15 +189,24 @@ export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[]
         Exclude<CurriculumNetworkFilter, "ALL">
       >
       ).flatMap((key) => loadNetworkRecords(key)),
-      ...loadJsonlAt(SECONDARY_CURRICULUM_PROD),
-      ...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD),
+      ...loadCorpusWithFallback(
+        SECONDARY_CURRICULUM_PROD,
+        SECONDARY_CURRICULUM_FIXTURE,
+      ),
+      ...loadCorpusWithFallback(
+        SECONDARY_POV_CURRICULUM_PROD,
+        SECONDARY_POV_CURRICULUM_FIXTURE,
+      ),
     ];
   }
   return loadNetworkRecords(network);
 }
 
 export function secondaryMinimumGoalRecords(): RawRecord[] {
-  return loadJsonlAt(SECONDARY_MINIMUM_GOALS_PROD);
+  return loadCorpusWithFallback(
+    SECONDARY_MINIMUM_GOALS_PROD,
+    SECONDARY_MINIMUM_GOALS_FIXTURE,
+  );
 }
 
 function loadNetworkRecords(
@@ -197,12 +224,18 @@ function loadNetworkRecords(
             : [];
   const secondaryRecords =
     network === "KOV" || network === "GO" || network === "OVSG"
-      ? loadJsonlAt(SECONDARY_CURRICULUM_PROD).filter(
-          (raw) => asString(raw.netwerk).toUpperCase() === network,
-        )
+      ? loadCorpusWithFallback(
+          SECONDARY_CURRICULUM_PROD,
+          SECONDARY_CURRICULUM_FIXTURE,
+        ).filter((raw) => asString(raw.netwerk).toUpperCase() === network)
       : [];
   if (network === "POV") {
-    secondaryRecords.push(...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD));
+    secondaryRecords.push(
+      ...loadCorpusWithFallback(
+        SECONDARY_POV_CURRICULUM_PROD,
+        SECONDARY_POV_CURRICULUM_FIXTURE,
+      ),
+    );
   }
   const records = [...primaryRecords, ...secondaryRecords];
 

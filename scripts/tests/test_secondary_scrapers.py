@@ -10,7 +10,7 @@ from docx import Document
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from fetch_secondary_minimum_goals import extract_goals, normalize_goal
+from secondary_minimum_goals_common import extract_api_goals, normalize_api_goal
 from fetch_pov_secondary_curricula import normalize_pov_goal
 from scrape_secondary_curricula import (
     SourceDocument,
@@ -71,7 +71,7 @@ class SecondaryCurriculumParserTests(unittest.TestCase):
 
 class SecondaryMinimumGoalsParserTests(unittest.TestCase):
     def test_normalizes_official_api_goal(self) -> None:
-        result = normalize_goal(
+        result = normalize_api_goal(
             {
                 "uniqueCode": "06.12",
                 "title": "De leerlingen analyseren een wiskundig probleem.",
@@ -86,6 +86,35 @@ class SecondaryMinimumGoalsParserTests(unittest.TestCase):
         assert result is not None
         self.assertEqual(result["gelinkt_minimumdoel"]["code"], "06.12")
         self.assertEqual(result["netwerk"], "VLAANDEREN")
+        self.assertEqual(result["sleutelcompetentie_nr"], "")
+
+    def test_normalizes_portal_goal_with_sc_metadata(self) -> None:
+        from secondary_minimum_goals_common import normalize_portal_goal
+
+        result = normalize_portal_goal(
+            {
+                "code": "06.12",
+                "omschrijving": "<p>De leerlingen analyseren een wiskundig probleem.</p>",
+                "onderwijsdoel_type": "Eindtermen",
+                "_dataset": "SO_1STE_GRAAD_V2_1",
+                "onderwijsdoelenset": {
+                    "onderwijsdoelenset": "Secundair onderwijs 1ste graad A-stroom - Wiskunde - Eindtermen",
+                    "vlaamse_sleutelcompetentie": {
+                        "nr": "6",
+                        "naam": "Wiskunde – natuurwetenschappen – technologie en techniek (STEM)",
+                    },
+                    "onderwijsstructuur": {
+                        "graad": "1ste graad",
+                        "stroom": "A-stroom",
+                    },
+                },
+            }
+        )
+        self.assertIsNotNone(result)
+        assert result is not None
+        self.assertEqual(result["graad"], "1ste graad")
+        self.assertEqual(result["stroom"], "A-stroom")
+        self.assertEqual(result["sleutelcompetentie_nr"], "6")
 
     def test_deduplicates_nested_api_payloads(self) -> None:
         goal = {
@@ -93,7 +122,7 @@ class SecondaryMinimumGoalsParserTests(unittest.TestCase):
             "titel": "De leerlingen verwerken doelgericht informatie.",
             "onderwijsniveau": "secundair onderwijs",
         }
-        results = extract_goals([{"items": [goal, {"nested": goal}]}])
+        results = extract_api_goals([{"items": [goal, {"nested": goal}]}])
         self.assertEqual(len(results), 1)
 
 

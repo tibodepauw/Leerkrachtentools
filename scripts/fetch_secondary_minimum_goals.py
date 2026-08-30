@@ -1,21 +1,14 @@
 #!/usr/bin/env python3
 """
-Haal officiële minimumdoelen/eindtermen secundair onderwijs op via de
-Onderwijsdoelen 1.0-API van de Vlaamse overheid.
+Haal officiële minimumdoelen/eindtermen secundair onderwijs op.
 
-De API vereist een gratis publieke API-key:
-https://onderwijs-api-portaal.vlaanderen.be/node/126
+Volgorde:
+  1. Onderwijsdoelen 1.0-API (ONDERWIJSDOELEN_API_KEY) indien beschikbaar
+  2. Publiek onderwijsdoelen.be-portaal via Playwright (geen API-key nodig)
 
 Gebruik:
-  export ONDERWIJSDOELEN_API_KEY=...
   python3 scripts/fetch_secondary_minimum_goals.py
-
-API-installaties kunnen andere parameter- of endpointnamen gebruiken. Die zijn
-configureerbaar zonder codewijziging:
-  ONDERWIJSDOELEN_API_BASE=https://...
-  ONDERWIJSDOELEN_API_PATH=/v1/onderwijsdoelen/doelen
-  python3 scripts/fetch_secondary_minimum_goals.py \
-    --filter onderwijsniveau=\"secundair onderwijs\"
+  python3 scripts/fetch_secondary_minimum_goals.py --portal-only
 """
 
 from __future__ import annotations
@@ -24,19 +17,19 @@ import argparse
 import json
 import logging
 import os
-import re
 import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 from urllib.parse import urljoin
 
 import requests
 
+from secondary_minimum_goals_common import extract_api_goals, first_value
+
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_PATH = ROOT / "data/secundair/minimumdoelen_secundair.jsonl"
-REPORT_PATH = OUTPUT_PATH.with_name("minimumdoelen_secundair_report.json")
 DEFAULT_API_BASE = os.environ.get(
     "ONDERWIJSDOELEN_API_BASE",
     "https://onderwijs-vlaanderen-portaalov.apigee.io",
@@ -52,121 +45,6 @@ USER_AGENT = (
 )
 
 logger = logging.getLogger("fetch_secondary_minimum_goals")
-
-
-def clean_text(value: Any) -> str:
-    return re.sub(r"\s+", " ", str(value or "")).strip()
-
-
-def first_value(record: dict[str, Any], keys: Iterable[str]) -> Any:
-    lowered = {str(key).casefold(): value for key, value in record.items()}
-    for key in keys:
-        value = lowered.get(key.casefold())
-        if value not in (None, "", []):
-            return value
-    return None
-
-
-def walk_objects(value: Any) -> Iterable[dict[str, Any]]:
-    if isinstance(value, dict):
-        yield value
-        for nested in value.values():
-            yield from walk_objects(nested)
-    elif isinstance(value, list):
-        for nested in value:
-            yield from walk_objects(nested)
-
-
-def normalize_goal(record: dict[str, Any]) -> dict[str, Any] | None:
-    code = clean_text(
-        first_value(
-            record,
-            (
-                "uniqueCode",
-                "uniekeCode",
-                "code",
-                "nummer",
-                "onderwijsdoelCode",
-            ),
-        )
-    )
-    text = clean_text(
-        first_value(
-            record,
-            (
-                "title",
-                "titel",
-                "omschrijving",
-                "tekst",
-                "doelzin",
-                "onderwijsdoel",
-            ),
-        )
-    )
-    if not code or len(text) < 12:
-        return None
-
-    level = clean_text(
-        first_value(record, ("onderwijsniveau", "niveau", "educationLevel"))
-    )
-    combined = f"{level} {clean_text(record)}".casefold()
-    if level and "secundair" not in combined:
-        return None
-
-    goal_type = clean_text(
-        first_value(
-            record,
-            ("type", "doeltype", "onderwijsdoeltype", "goalType"),
-        )
-    )
-    grade = clean_text(first_value(record, ("graad", "grade", "graadNaam")))
-    finality = clean_text(
-        first_value(record, ("finaliteit", "finality", "finaliteitNaam"))
-    )
-    stream = clean_text(first_value(record, ("stroom", "stream")))
-    key_competence = clean_text(
-        first_value(
-            record,
-            ("sleutelcompetentie", "keyCompetence", "competentie"),
-        )
-    )
-    source_url = clean_text(
-        first_value(record, ("url", "sourceUrl", "bronUrl", "detailUrl"))
-    )
-
-    return {
-        "code": "",
-        "discipline": key_competence,
-        "subdomein": goal_type,
-        "titel": "",
-        "toelichting": "",
-        "leerjaar_route": " · ".join(
-            value for value in (grade, finality, stream) if value
-        ),
-        "onderwijsniveau": "secundair onderwijs",
-        "graad": grade,
-        "finaliteit": finality,
-        "stroom": stream,
-        "gelinkt_minimumdoel": {
-            "code": code,
-            "tekst": text,
-            "type": goal_type or "Onderwijsdoel secundair onderwijs",
-        },
-        "netwerk": "VLAANDEREN",
-        "bron_url": source_url or "https://www.onderwijsdoelen.be/",
-    }
-
-
-def extract_goals(payloads: Iterable[Any]) -> list[dict[str, Any]]:
-    unique: dict[tuple[str, str], dict[str, Any]] = {}
-    for payload in payloads:
-        for record in walk_objects(payload):
-            normalized = normalize_goal(record)
-            if not normalized:
-                continue
-            minimum = normalized["gelinkt_minimumdoel"]
-            unique.setdefault((minimum["code"], minimum["tekst"]), normalized)
-    return list(unique.values())
 
 
 def next_url(payload: Any, current_url: str) -> str | None:
@@ -239,16 +117,27 @@ class SecondaryMinimumGoalsFetcher:
             url = next_url(payload, response.url)
             params = None
 
-        goals = extract_goals(payloads)
+        goals = extract_api_goals(payloads)
         if not goals:
             raise RuntimeError(
                 "De API gaf geen herkenbare secundaire onderwijsdoelen terug. "
                 "Controleer endpoint en filters via de officiële Swagger."
             )
-        self._write(goals, len(payloads))
+        self._write(
+            goals,
+            len(payloads),
+            source="Onderwijsdoelen 1.0 - Vlaamse overheid (API-key)",
+        )
         return goals
 
-    def _write(self, goals: list[dict[str, Any]], pages: int) -> None:
+    def _write(
+        self,
+        goals: list[dict[str, Any]],
+        pages: int,
+        *,
+        source: str,
+        extra: dict[str, Any] | None = None,
+    ) -> None:
         self.output.parent.mkdir(parents=True, exist_ok=True)
         with self.output.open("w", encoding="utf-8") as handle:
             for goal in goals:
@@ -257,6 +146,8 @@ class SecondaryMinimumGoalsFetcher:
         type_counts = Counter(
             goal["gelinkt_minimumdoel"]["type"] for goal in goals
         )
+        sc_counts = Counter(goal.get("sleutelcompetentie_nr") or "?" for goal in goals)
+        grade_counts = Counter(goal.get("graad") or "?" for goal in goals)
         report = {
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "api_url": self.api_url,
@@ -264,8 +155,12 @@ class SecondaryMinimumGoalsFetcher:
             "pages": pages,
             "record_count": len(goals),
             "type_counts": dict(type_counts),
-            "source": "Onderwijsdoelen 1.0 - Vlaamse overheid",
+            "grade_counts": dict(grade_counts),
+            "sleutelcompetentie_counts": dict(sc_counts),
+            "source": source,
         }
+        if extra:
+            report.update(extra)
         self.report_path.write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
@@ -285,9 +180,18 @@ def parse_filter(values: list[str]) -> dict[str, str]:
     return filters
 
 
+def fetch_with_portal(output: Path) -> list[dict[str, Any]]:
+    from scrape_onderwijsdoelen_portal import PortalMinimumGoalsScraper
+
+    logger.info(
+        "Geen API-key: fallback naar publiek onderwijsdoelen.be-portaal."
+    )
+    return PortalMinimumGoalsScraper(output=output).run()
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Fetch officiële secundaire minimumdoelen via de Vlaamse API."
+        description="Fetch officiële secundaire minimumdoelen."
     )
     parser.add_argument(
         "--api-url",
@@ -303,6 +207,11 @@ def parse_args() -> argparse.Namespace:
         default=[],
         help="API-filter sleutel=waarde (herhaalbaar)",
     )
+    parser.add_argument(
+        "--portal-only",
+        action="store_true",
+        help="Sla API over en gebruik enkel het publieke portaal.",
+    )
     parser.add_argument("--output", type=Path, default=OUTPUT_PATH)
     parser.add_argument("--timeout", type=int, default=60)
     parser.add_argument("--max-pages", type=int, default=100)
@@ -317,22 +226,26 @@ def main() -> int:
         format="%(asctime)s %(levelname)s %(message)s",
     )
     api_key = args.api_key.strip()
-    if not api_key:
-        logger.error(
-            "ONDERWIJSDOELEN_API_KEY ontbreekt. Vraag een gratis publieke key "
-            "aan via https://onderwijs-api-portaal.vlaanderen.be/node/126"
-        )
-        return 2
+
     try:
-        SecondaryMinimumGoalsFetcher(
-            api_key=api_key,
-            api_url=args.api_url,
-            filters=parse_filter(args.filter),
-            output=args.output,
-            timeout=args.timeout,
-            max_pages=args.max_pages,
-        ).run()
-        return 0
+        if args.portal_only or not api_key:
+            fetch_with_portal(args.output)
+            return 0
+
+        try:
+            SecondaryMinimumGoalsFetcher(
+                api_key=api_key,
+                api_url=args.api_url,
+                filters=parse_filter(args.filter),
+                output=args.output,
+                timeout=args.timeout,
+                max_pages=args.max_pages,
+            ).run()
+            return 0
+        except Exception as exc:
+            logger.warning("API-fetch mislukt (%s), val terug op portaal.", exc)
+            fetch_with_portal(args.output)
+            return 0
     except KeyboardInterrupt:
         return 130
     except Exception:

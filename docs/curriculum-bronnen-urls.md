@@ -185,22 +185,39 @@ genormaliseerde uitvoer staat in
 ### Minimumdoelen ophalen
 
 Scrape `onderwijsdoelen.be/resultaten` niet: de site sluit dat pad expliciet uit
-in `robots.txt`. Gebruik de officiële Onderwijsdoelen-API:
+in `robots.txt`. Gebruik één van deze opties:
+
+**Optie A – officiële API (optioneel, sneller voor bulk):**
 
 ```bash
 export ONDERWIJSDOELEN_API_KEY="..."
 python3 scripts/fetch_secondary_minimum_goals.py
 ```
 
-De uitvoer is `data/secundair/minimumdoelen_secundair.jsonl`. API-endpoint en
-filters zijn configureerbaar, omdat de Swagger-specificatie per API-versie kan
-wijzigen:
+**Optie B – publiek portaal (geen API-key, altijd beschikbaar):**
 
 ```bash
-python3 scripts/fetch_secondary_minimum_goals.py \
-  --api-url "$ONDERWIJSDOELEN_API_BASE/v1/onderwijsdoelen/doelen" \
-  --filter onderwijsniveau="secundair onderwijs"
+pip install -r scripts/requirements-curriculum.txt
+playwright install chromium
+python3 scripts/scrape_onderwijsdoelen_portal.py
+# of automatische fallback:
+python3 scripts/fetch_secondary_minimum_goals.py --portal-only
 ```
 
-API-keys worden alleen uit de omgeving of CLI gelezen en nooit in rapporten of
-corpusbestanden opgeslagen.
+Het portaal laadt doelen via `https://onderwijs.api.vlaanderen.be/onderwijsdoelen/`
+vanuit een browsercontext. De scraper bezoekt de publieke dataset-routes
+(`/doelen/SO_1STE_GRAAD_V2_1`, `/doelen/SO_2DE_GRAAD_V2_1`, enz.) die wél in
+`robots.txt` staan.
+
+**Alles in één run:**
+
+```bash
+python3 scripts/fetch_secundair_full.py
+# npm run fetch:secundair
+```
+
+De uitvoer is `data/secundair/minimumdoelen_secundair.jsonl`. Records bevatten
+`graad`, `finaliteit`, `stroom`, `sleutelcompetentie_nr` (SC 1–16) en
+`gelinkt_minimumdoel`. Zonder lokale data-run gebruikt de app de fixtures in
+`test/fixtures/minimumdoelen-secundair.jsonl` en
+`test/fixtures/curriculum-secundair.jsonl`.

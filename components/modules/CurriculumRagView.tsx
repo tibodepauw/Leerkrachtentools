@@ -101,10 +101,10 @@ const variantCopy: Record<
   minimumdoel: {
     title: "Minimumdoelen zoeken",
     description:
-      "Zoekt het bestpassende Vlaamse decretale minimumdoel (AHOVOKS) bij je ingegeven lesdoel - 4de ijkpunt, 6de einddoel of kleuter K-codes.",
+      "Zoekt het bestpassende Vlaamse minimumdoel bij je lesdoel: decretale ijkpunten in basisonderwijs of officiële eindtermen in secundair onderwijs.",
     action: "Zoek minimumdoel",
     empty:
-      "Decretale minimumdoelkaarten met code, ijkpunt en doelzin verschijnen hier na je zoekopdracht.",
+      "Minimumdoelkaarten met code, graad of ijkpunt en doelzin verschijnen hier na je zoekopdracht.",
   },
 };
 
@@ -319,6 +319,15 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     : [];
 
   const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
+  const visibleNetworks = networkOptionsForLevel(educationLevel);
+
+  function handleEducationLevelChange(value: EducationLevelFilter) {
+    setEducationLevel(value);
+    const options = networkOptionsForLevel(value);
+    if (!options.some((option) => option.value === network)) {
+      setNetwork(options[0]?.value ?? "ALL");
+    }
+  }
 
   return (
     <ModuleShell
@@ -349,7 +358,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {NETWORK_OPTIONS.map((option) => (
+                        {visibleNetworks.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
                           </SelectItem>
@@ -363,7 +372,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                   <Select
                     value={educationLevel}
                     onValueChange={(value) =>
-                      setEducationLevel(value as EducationLevelFilter)
+                      handleEducationLevelChange(value as EducationLevelFilter)
                     }
                   >
                     <SelectTrigger>
@@ -407,12 +416,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 </p>
               ) : (
                 <p className="text-xs text-neutral-500">
-                  {lesson.displayTargetGroup
-                    ? `Doelgroep: ${lesson.displayTargetGroup} - leeftijdsspecifieke doelen krijgen een zachte bonus, maar blijven altijd zichtbaar.`
-                    : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking."}
-                  {" "}
-                  We tonen uitsluitend decretale minimumdoelen op vaste ijkpunten:
-                  4de leerjaar, 6de leerjaar of kleuter (K-codes).
+                  {minimumGoalHelperText(educationLevel, lesson.displayTargetGroup)}
                 </p>
               )}
             </div>
@@ -524,6 +528,39 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
       }
     />
   );
+}
+
+function networkOptionsForLevel(
+  level: EducationLevelFilter,
+): Array<{ value: CurriculumNetworkFilter; label: string }> {
+  if (level === "SECUNDAIR") {
+    return NETWORK_OPTIONS.filter((option) =>
+      ["ALL", "GO", "KOV", "POV", "OVSG"].includes(option.value),
+    );
+  }
+  if (level === "KLEUTER" || level === "LAGER") {
+    return NETWORK_OPTIONS.filter((option) =>
+      ["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "ZILL"].includes(option.value),
+    );
+  }
+  return NETWORK_OPTIONS;
+}
+
+function minimumGoalHelperText(
+  level: EducationLevelFilter,
+  targetGroup?: string,
+): string {
+  const prefix = targetGroup
+    ? `Doelgroep: ${targetGroup} - leeftijdsspecifieke doelen krijgen een zachte bonus, maar blijven altijd zichtbaar. `
+    : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking. ";
+
+  if (level === "SECUNDAIR") {
+    return `${prefix}We tonen officiële Vlaamse minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1–16).`;
+  }
+  if (level === "KLEUTER" || level === "LAGER") {
+    return `${prefix}We tonen uitsluitend decretale minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;
+  }
+  return `${prefix}Basisonderwijs: decretale ijkpunten (4de, 6de, kleuter). Secundair: eindtermen en minimumdoelen per graad en SC 1–16.`;
 }
 
 function mapEducationNetwork(

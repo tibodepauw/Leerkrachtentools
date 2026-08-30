@@ -93,20 +93,27 @@ Local search indexes official goal corpora:
 | GO | GO! basisonderwijs vakleerplannen (9 subject books) |
 | GO! Nieuw | GO! basisonderwijs 12 doelensets |
 | Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen |
-| Vlaamse overheid | Officiële secundaire minimumdoelen via Onderwijsdoelen 1.0 API |
+| Vlaamse overheid | Officiële secundaire minimumdoelen (API-key of publiek portaal) |
 
 Maintenance scripts (optional, not required to run the app UI):
 
 ```bash
 pip install -r scripts/requirements-curriculum.txt
+playwright install chromium   # for portal fallback + ZILL/OVSG scrapers
+
+# All secondary curricula + minimum goals in one run
+python3 scripts/fetch_secundair_full.py
+# or: npm run fetch:secundair
+
 python3 scripts/fetch_curriculum_data.py
-python3 scripts/scrape_zill_full.py      # requires: playwright install chromium
+python3 scripts/scrape_zill_full.py
 python3 scripts/scrape_opstap_full.py
 python3 scripts/fetch_go_nieuw.py
 python3 scripts/scrape_ovsg_full.py        # requires OVSG credentials in env
 python3 scripts/scrape_secondary_curricula.py
+python3 scripts/fetch_secondary_minimum_goals.py  # API-key optional; portal fallback
+python3 scripts/scrape_onderwijsdoelen_portal.py  # explicit portal-only fetch
 python3 scripts/fetch_pov_secondary_curricula.py  # requires POV_API_KEY
-python3 scripts/fetch_secondary_minimum_goals.py  # requires ONDERWIJSDOELEN_API_KEY
 ```
 
 See `docs/curriculum-bronnen-urls.md` for official source URLs.
@@ -196,6 +203,6 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 
 ## Releases
 
-Current version: **5.8.7**
+Current version: **5.8.8**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).

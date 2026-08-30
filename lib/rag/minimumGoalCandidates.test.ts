@@ -42,6 +42,7 @@ describe("minimumGoalCandidates", () => {
   it("haalt brede kandidaten op voor optellen tot 20", () => {
     const candidates = collectMinimumGoalCandidates({
       query: "optellen tot 20",
+      educationLevel: "LAGER",
       limit: 50,
     });
 
@@ -84,5 +85,18 @@ describe("minimumGoalCandidates", () => {
     expect(record?.gelinktMinimumdoel?.code).toBe("06.12");
     expect(record?.leerjaarRoute).toBe("1ste graad");
     expect(record?.netwerk).toBe("VLAANDEREN");
+  });
+
+  it("vindt secundaire minimumdoelen in de fixture-corpus", () => {
+    const candidates = collectMinimumGoalCandidates({
+      query: "wiskundig probleem analyseren",
+      educationLevel: "SECUNDAIR",
+      limit: 10,
+    });
+
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(
+      candidates.some((item) => item.netwerk === "VLAANDEREN"),
+    ).toBe(true);
   });
 });

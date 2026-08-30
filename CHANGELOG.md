@@ -4,6 +4,25 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.8] - 2026-08-30
+
+### Added
+- Publieke onderwijsdoelen.be-portaalscraper als fallback zonder
+  `ONDERWIJSDOELEN_API_KEY` (Playwright + robots.txt-toegestane `/doelen`-routes)
+- Batch-script `scripts/fetch_secundair_full.py` en npm-script `fetch:secundair`
+- Gecommitte secundaire fixture-corpus in `test/fixtures/` (SC 1–16, graden,
+  finaliteiten) zodat RAG direct werkt zonder lokale data-run
+- Metadatavelden `sleutelcompetentie_nr` en `sleutelcompetentie` in secundaire
+  JSONL-records
+
+### Changed
+- `fetch_secondary_minimum_goals.py` valt automatisch terug op het portaal als
+  geen API-key beschikbaar is of de Apigee-API faalt
+- Onderwijsniveau-selector schakelt netwerkopties tussen basisonderwijs (BaO) en
+  secundair onderwijs (SO) en past helpteksten aan
+
+---
+
 ## [5.8.7] - 2026-08-30
 
 ### Added
