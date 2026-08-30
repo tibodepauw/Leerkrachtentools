@@ -116,7 +116,7 @@ const variantCopy: Record<
   leerplandoel: {
     title: "Leerplandoelen zoeken",
     description:
-      "Zoekt in de leerplannen van koepels: Katholiek Onderwijs (Op.stap, ZILL, KOV), GO!, OVSG en POV.",
+      "Zoekt in de leerplannen van koepels: Katholiek Onderwijs, GO!, OVSG en POV.",
     action: "Zoek leerplandoel",
     empty: "Officiële doelkaarten met code, discipline en doelzin verschijnen hier.",
   },
