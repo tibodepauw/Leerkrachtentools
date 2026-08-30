@@ -143,3 +143,76 @@
 * {
   scrollbar-color: oklch(0.3 0 0) transparent;
 }
+
+/* Playful wordmark loading (see docs/loading-screen-concepts.md) */
+.wordmark-loader {
+  position: relative;
+  width: min(92vw, 68rem);
+  height: clamp(4.5rem, 14vw, 7rem);
+  font-family: var(--font-rubik), "Rubik", ui-sans-serif, sans-serif;
+  font-size: clamp(2rem, 6.2vw, 4.5rem);
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.wordmark-loader__letter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  line-height: 1;
+  transform: translate(calc(-50% + var(--fx, 0em)), calc(-50% + var(--fy, 0em)))
+    rotate(var(--fr, 0deg));
+  will-change: transform, opacity;
+}
+
+.wordmark-loader__letter--gather {
+  opacity: 0;
+  animation: wordmark-gather 1.45s cubic-bezier(0.34, 1.15, 0.54, 1) var(--delay, 0ms)
+    forwards;
+}
+
+@keyframes wordmark-gather {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy)))
+      rotate(var(--sr)) scale(0.45);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  58% {
+    transform: translate(calc(-50% + var(--mx)), calc(-50% + var(--my)))
+      rotate(var(--mr)) scale(1.06);
+  }
+
+  78% {
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy)))
+      rotate(calc(var(--fr) + 2deg)) scale(0.97);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy)))
+      rotate(var(--fr)) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wordmark-loader__letter--gather {
+    animation: wordmark-gather-reduced 0.4s ease-out var(--delay, 0ms) forwards;
+  }
+
+  @keyframes wordmark-gather-reduced {
+    0% {
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 1;
+      transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy)))
+        rotate(var(--fr));
+    }
+  }
+}
