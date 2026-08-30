@@ -1,3 +1,5 @@
+![Leerkrachtentools Bento Banner](docs/assets/bento-banner.svg)
+
 # Leerkrachtentools
 
 Research platform to explore which AI-assisted workflows can save preparation and reflection time for teachers and teacher trainers in Flemish education.
