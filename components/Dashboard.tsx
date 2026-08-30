@@ -8,7 +8,7 @@ import {
   useModuleAccess,
 } from "@/components/auth/ModuleAccessProvider";
 import { UserStorageScope } from "@/components/auth/UserStorageScope";
-import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
+import { LoadingGate } from "@/components/shared/LoadingGate";
 import { ModuleAccessDeniedCard } from "@/components/shared/ModuleShell";
 import { PreparationTextSync } from "@/components/shared/PreparationTextSync";
 import { ActiveLessonView } from "@/components/modules/ActiveLessonView";
@@ -105,7 +105,11 @@ function DashboardContent({
   }, [activeModule, accessibleModuleIds, canAccessModule, setActiveModule]);
 
   if (!ready) {
-    return <AppLoadingScreen label="Leerkrachtentools laden…" />;
+    return (
+      <LoadingGate loading intent="quick" label="Leerkrachtentools laden…">
+        <></>
+      </LoadingGate>
+    );
   }
 
   const moduleAllowed = canAccessModule(activeModule);

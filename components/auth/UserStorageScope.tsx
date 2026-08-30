@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useState, type ReactNode } from "react";
-import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
+import { LoadingGate } from "@/components/shared/LoadingGate";
 import {
   migrateLegacyDocumentStorage,
   migrateLegacyLessonStorage,
@@ -19,10 +19,28 @@ interface UserStorageScopeProps {
   children: ReactNode;
 }
 
+/** Avoid re-showing loader on client navigations when storage is already warm. */
+let cachedReadyUserId: string | null = null;
+
+function isStorageWarmForUser(userId: string): boolean {
+  return (
+    cachedReadyUserId === userId &&
+    useLessonStore.getState().storageUserId === userId &&
+    useLessonStore.persist.hasHydrated()
+  );
+}
+
 export function UserStorageScope({ userId, children }: UserStorageScopeProps) {
-  const [readyUserId, setReadyUserId] = useState<string | null>(null);
+  const [readyUserId, setReadyUserId] = useState<string | null>(() =>
+    isStorageWarmForUser(userId) ? userId : null,
+  );
 
   useLayoutEffect(() => {
+    if (isStorageWarmForUser(userId)) {
+      setReadyUserId(userId);
+      return;
+    }
+
     let cancelled = false;
 
     async function activateUserStorage() {
@@ -43,6 +61,7 @@ export function UserStorageScope({ userId, children }: UserStorageScopeProps) {
       useLessonStore.getState().setStorageUserId(userId);
       useLessonStore.getState().setHydrated(true);
       useSettingsStore.getState().setHydrated(true);
+      cachedReadyUserId = userId;
       setReadyUserId(userId);
     }
 
@@ -55,9 +74,13 @@ export function UserStorageScope({ userId, children }: UserStorageScopeProps) {
     };
   }, [userId]);
 
-  if (readyUserId !== userId) {
-    return <AppLoadingScreen label="Accountgegevens laden…" />;
-  }
-
-  return children;
+  return (
+    <LoadingGate
+      loading={readyUserId !== userId}
+      intent="auto"
+      label="Accountgegevens laden…"
+    >
+      {children}
+    </LoadingGate>
+  );
 }
