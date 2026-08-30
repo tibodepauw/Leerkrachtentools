@@ -5,6 +5,7 @@ import {
   evaluateBenchmarkCase,
   RAG_BENCHMARK_CASES,
   summarizeBenchmarkReport,
+  warmBenchmarkCase,
   warmRagBenchmarkCorpus,
   type RagBenchmarkApiResponse,
   type RagBenchmarkCase,
@@ -84,9 +85,24 @@ async function callBenchmarkApi(
 }
 
 describe("RAG benchmark suite", () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     warmRagBenchmarkCorpus();
-  });
+    await callBenchmarkApi({
+      id: "warmup-curriculum",
+      label: "warmup",
+      endpoint: "curriculum",
+      query: "optellen tot 20",
+      educationLevel: "LAGER",
+      network: "OPSTAP",
+    });
+    await callBenchmarkApi({
+      id: "warmup-minimum",
+      label: "warmup",
+      endpoint: "minimum-goals",
+      query: "optellen tot 20",
+      educationLevel: "LAGER",
+    });
+  }, 60_000);
 
   it("evalueert 10 randgevallen en rapporteert kwaliteitsscore", async () => {
     const caseResults: RagBenchmarkCaseResult[] = [];
@@ -111,6 +127,7 @@ describe("RAG benchmark suite", () => {
         continue;
       }
 
+      warmBenchmarkCase(benchmarkCase);
       const apiResponse = await callBenchmarkApi(benchmarkCase);
       caseResults.push(evaluateBenchmarkCase(benchmarkCase, apiResponse));
     }

@@ -1,5 +1,3 @@
-import { readFileSync, existsSync } from "node:fs";
-import path from "node:path";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
@@ -19,114 +17,38 @@ import {
   scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
+import {
+  DOMAIN_CORPUS_PATHS,
+  getCorpusForEducationLevel,
+  getCorpusForLevel as getCorpusRecordsForLevel,
+  registerCorpusLevelUnloadListener,
+  resolveCorpusLevel,
+  secondaryMinimumGoalRecords,
+  type CorpusLevel,
+  SECONDARY_CURRICULUM_PROD,
+  SECONDARY_POV_CURRICULUM_PROD,
+  OPSTAP_CORPUS_PROD,
+  OVSG_CORPUS_PROD,
+  GO_NIEUW_CORPUS_PROD,
+  ZILL_CORPUS_PROD,
+} from "@/lib/rag/corpusLevelCache";
 import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
 import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
 
 type RawRecord = Record<string, unknown>;
 
-const OPSTAP_CORPUS_PROD = path.join(
-  process.cwd(),
-  "data",
-  "opstap",
-  "opstap_volledig.jsonl",
-);
-const OPSTAP_CORPUS_FIXTURE = path.join(
-  process.cwd(),
-  "test",
-  "fixtures",
-  "curriculum-opstap.jsonl",
-);
-const OVSG_CORPUS_PROD = path.join(
-  process.cwd(),
-  "data",
-  "ovsg",
-  "ovsg_volledig.jsonl",
-);
-const OVSG_CORPUS_FIXTURE = path.join(
-  process.cwd(),
-  "test",
-  "fixtures",
-  "curriculum-ovsg.jsonl",
-);
-const GO_NIEUW_CORPUS_PROD = path.join(
-  process.cwd(),
-  "data",
-  "go_nieuw",
-  "go_nieuw_volledig.jsonl",
-);
-const GO_NIEUW_CORPUS_FIXTURE = path.join(
-  process.cwd(),
-  "test",
-  "fixtures",
-  "curriculum-go-nieuw.jsonl",
-);
-const ZILL_CORPUS_PROD = path.join(
-  process.cwd(),
-  "data",
-  "zill",
-  "zill_volledig.jsonl",
-);
-const ZILL_CORPUS_FIXTURE = path.join(
-  process.cwd(),
-  "test",
-  "fixtures",
-  "curriculum-zill.jsonl",
-);
-const SECONDARY_CURRICULUM_PROD = path.join(
-  process.cwd(),
-  "data",
-  "secundair",
-  "leerplannen_secundair.jsonl",
-);
-const SECONDARY_MINIMUM_GOALS_PROD = path.join(
-  process.cwd(),
-  "data",
-  "secundair",
-  "minimumdoelen_secundair.jsonl",
-);
-const SECONDARY_POV_CURRICULUM_PROD = path.join(
-  process.cwd(),
-  "data",
-  "secundair",
-  "leerplannen_pov_secundair.jsonl",
-);
+export {
+  getCorpusForEducationLevel,
+  resolveCorpusLevel,
+  secondaryMinimumGoalRecords,
+  type CorpusLevel,
+} from "@/lib/rag/corpusLevelCache";
 
-const DOMAIN_CORPUS_PATHS: Array<{
-  level: EducationLevelFilter;
-  prod: string;
-  fixture?: string;
-}> = [
-  {
-    level: "OKAN",
-    prod: path.join(process.cwd(), "data", "okan", "onderwijsdoelen_okan.jsonl"),
-    fixture: path.join(process.cwd(), "test", "fixtures", "onderwijsdoelen-okan.jsonl"),
-  },
-  {
-    level: "BUBAO",
-    prod: path.join(process.cwd(), "data", "bubao", "onderwijsdoelen_bubao.jsonl"),
-  },
-  {
-    level: "BUSO",
-    prod: path.join(process.cwd(), "data", "buso", "onderwijsdoelen_buso.jsonl"),
-  },
-  {
-    level: "DKO",
-    prod: path.join(process.cwd(), "data", "dko", "onderwijsdoelen_dko.jsonl"),
-  },
-  {
-    level: "VOLWASSENEN",
-    prod: path.join(
-      process.cwd(),
-      "data",
-      "volwassenen",
-      "onderwijsdoelen_volwassenen.jsonl",
-    ),
-  },
-  {
-    level: "HOGER",
-    prod: path.join(process.cwd(), "data", "hoger", "onderwijsdoelen_hoger.jsonl"),
-  },
-];
+export function getCorpusForLevel(
+  level: EducationLevelFilter,
+): RawRecord[] {
+  return getCorpusForEducationLevel(level);
+}
 
 const MIN_CORPUS_MATCH_SCORE = 0.32;
 const MIN_LOCAL_SEARCH_SCORE = 0.1;
@@ -136,6 +58,7 @@ const MIN_LOCAL_TOKEN_MATCHES = 1;
 export const ABSOLUTE_MIN_SCORE = 0.18;
 export const CURRICULUM_CANDIDATE_LIMIT = 50;
 export const CURRICULUM_TOP_N = 5;
+const MAX_CORPUS_INDICES_TO_SCORE = 96;
 const STOPWORDS = new Set([
   "tot",
   "een",
@@ -177,8 +100,6 @@ const STOPWORDS = new Set([
   "gebruiken",
 ]);
 
-const loaded = new Map<string, RawRecord[]>();
-
 const GO_LEGEND_META_PATTERNS = [
   /links in de eerste rij van elk leerplandoel staat het go!?-volgnummer/i,
   /het gaat hier over een doel basisvorming/i,
@@ -188,6 +109,7 @@ const GO_LEGEND_META_PATTERNS = [
 type IndexedCorpusRecord = {
   raw: RawRecord;
   haystack: string;
+  record: CurriculumSearchResult | null;
 };
 
 type CorpusTokenIndex = {
@@ -196,6 +118,21 @@ type CorpusTokenIndex = {
 };
 
 const corpusIndexCache = new Map<string, CorpusTokenIndex>();
+
+function corpusIndexKey(
+  network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter,
+): string {
+  return `${resolveCorpusLevel(educationLevel, network)}:${network}`;
+}
+
+registerCorpusLevelUnloadListener((level) => {
+  for (const key of [...corpusIndexCache.keys()]) {
+    if (key.startsWith(`${level}:`)) {
+      corpusIndexCache.delete(key);
+    }
+  }
+});
 
 function expandLookupTokens(tokens: Iterable<string>): Set<string> {
   const expanded = new Set<string>();
@@ -226,8 +163,12 @@ function buildQueryLookupTokens(query: string): Set<string> {
   return expandLookupTokens(tokens);
 }
 
-function getCorpusTokenIndex(network: CurriculumNetworkFilter): CorpusTokenIndex {
-  const cached = corpusIndexCache.get(network);
+function getCorpusTokenIndex(
+  network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter = "ALL",
+): CorpusTokenIndex {
+  const cacheKey = corpusIndexKey(network, educationLevel);
+  const cached = corpusIndexCache.get(cacheKey);
   if (cached) {
     return cached;
   }
@@ -235,10 +176,14 @@ function getCorpusTokenIndex(network: CurriculumNetworkFilter): CorpusTokenIndex
   const records: IndexedCorpusRecord[] = [];
   const tokenToRecordIndices = new Map<string, number[]>();
 
-  for (const raw of recordsForNetwork(network)) {
+  for (const raw of recordsForNetwork(network, educationLevel)) {
     const index = records.length;
     const haystack = buildRecordHaystack(raw);
-    records.push({ raw, haystack });
+    records.push({
+      raw,
+      haystack,
+      record: normalizeRecord(raw, networkFromRaw(raw)),
+    });
 
     for (const token of buildRecordIndexTokens(haystack)) {
       let indices = tokenToRecordIndices.get(token);
@@ -253,7 +198,7 @@ function getCorpusTokenIndex(network: CurriculumNetworkFilter): CorpusTokenIndex
   }
 
   const built = { records, tokenToRecordIndices };
-  corpusIndexCache.set(network, built);
+  corpusIndexCache.set(cacheKey, built);
   return built;
 }
 
@@ -279,8 +224,9 @@ function candidateIndicesFromQuery(
 
 export function warmCorpusTokenIndex(
   network: CurriculumNetworkFilter = "ALL",
+  educationLevel: EducationLevelFilter = "ALL",
 ): void {
-  getCorpusTokenIndex(network);
+  getCorpusTokenIndex(network, educationLevel);
 }
 
 export function filterByAbsoluteMinScore<T extends { score: number }>(
@@ -295,101 +241,122 @@ export function filterByAbsoluteMinScore<T extends { score: number }>(
   return results;
 }
 
-function loadJsonlAt(absolutePath: string): RawRecord[] {
-  if (loaded.has(absolutePath)) {
-    return loaded.get(absolutePath)!;
-  }
-  if (!existsSync(absolutePath)) {
-    loaded.set(absolutePath, []);
-    return [];
-  }
-  const records = readFileSync(absolutePath, "utf8")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as RawRecord);
-  loaded.set(absolutePath, records);
-  return records;
-}
+export function recordsForNetwork(
+  network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter = "ALL",
+): RawRecord[] {
+  const corpusLevel = resolveCorpusLevel(educationLevel, network);
 
-function loadCorpusWithFallback(prodPath: string, fixturePath: string): RawRecord[] {
-  const prodRecords = loadJsonlAt(prodPath);
-  if (prodRecords.length > 0) {
-    return prodRecords;
+  if (corpusLevel === "BASISONDERWIJS") {
+    if (network === "ALL") {
+      return (
+        ["OPSTAP", "OVSG", "GO_NIEUW", "ZILL"] as Array<
+          Exclude<CurriculumNetworkFilter, "ALL">
+        >
+      ).flatMap((key) => loadBasisonderwijsNetworkRecords(key));
+    }
+    return loadBasisonderwijsNetworkRecords(network);
   }
-  return loadJsonlAt(fixturePath);
-}
 
-export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[] {
+  if (corpusLevel === "SECUNDAIR") {
+    const secundairRecords = sanitizeCorpusRecords(
+      getCorpusRecordsForLevel("SECUNDAIR").filter(
+        (raw) => !isStandaloneSecundairMinimumGoal(raw),
+      ),
+    );
+    if (network === "ALL") {
+      return secundairRecords.map((raw) => ({
+        ...raw,
+        netwerk: asString(raw.netwerk ?? raw.network) || "GO",
+      }));
+    }
+    return secundairRecords
+      .filter((raw) => recordMatchesNetwork(raw, network))
+      .map((raw) => ({
+        ...raw,
+        netwerk: asString(raw.netwerk ?? raw.network) || network,
+      }));
+  }
+
+  const domainRecords = getCorpusRecordsForLevel(corpusLevel);
   if (network === "ALL") {
-    return [
-      ...(
-      ["OPSTAP", "OVSG", "GO_NIEUW", "ZILL"] as Array<
-        Exclude<CurriculumNetworkFilter, "ALL">
-      >
-      ).flatMap((key) => loadNetworkRecords(key)),
-      ...sanitizeCorpusRecords(loadJsonlAt(SECONDARY_CURRICULUM_PROD)),
-      ...sanitizeCorpusRecords(loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD)),
-      ...educationDomainRecords("ALL"),
-    ];
+    return domainRecords;
   }
-  return loadNetworkRecords(network);
+  return domainRecords.filter((raw) => recordMatchesNetwork(raw, network));
 }
 
-export function secondaryMinimumGoalRecords(): RawRecord[] {
-  return loadJsonlAt(SECONDARY_MINIMUM_GOALS_PROD);
+function isStandaloneSecundairMinimumGoal(raw: RawRecord): boolean {
+  if (raw.gelinkt_minimumdoel || raw.leerlijn || raw.inhouden) {
+    return false;
+  }
+  return asString(raw.onderwijsniveau)
+    .toLocaleLowerCase("nl-BE")
+    .includes("secundair onderwijs");
 }
 
 export function educationDomainRecords(
   level: EducationLevelFilter = "ALL",
 ): RawRecord[] {
-  return DOMAIN_CORPUS_PATHS.flatMap(({ level: domainLevel, prod, fixture }) => {
-    if (level !== "ALL" && level !== domainLevel) {
-      return [];
-    }
-    if (fixture) {
-      return loadCorpusWithFallback(prod, fixture);
-    }
-    return loadJsonlAt(prod);
-  });
+  if (level === "ALL") {
+    return (
+      Object.keys(DOMAIN_CORPUS_PATHS) as Array<
+        Exclude<CorpusLevel, "BASISONDERWIJS" | "SECUNDAIR">
+      >
+    ).flatMap((domainLevel) => getCorpusRecordsForLevel(domainLevel));
+  }
+
+  const corpusLevel = resolveCorpusLevel(level);
+  if (corpusLevel === "BASISONDERWIJS" || corpusLevel === "SECUNDAIR") {
+    return [];
+  }
+  return getCorpusRecordsForLevel(corpusLevel);
 }
 
-export function allMinimumGoalRecords(): RawRecord[] {
-  return [
-    ...recordsForNetwork("OPSTAP"),
-    ...secondaryMinimumGoalRecords(),
-    ...educationDomainRecords("ALL"),
-  ];
+export function allMinimumGoalRecords(
+  educationLevel: EducationLevelFilter = "ALL",
+): RawRecord[] {
+  const corpusLevel = resolveCorpusLevel(educationLevel);
+  if (corpusLevel === "BASISONDERWIJS") {
+    return recordsForNetwork("OPSTAP", educationLevel);
+  }
+  if (corpusLevel === "SECUNDAIR") {
+    return getCorpusRecordsForLevel("SECUNDAIR");
+  }
+  return getCorpusRecordsForLevel(corpusLevel);
 }
 
-function loadNetworkRecords(
+function loadBasisonderwijsNetworkRecords(
   network: Exclude<CurriculumNetworkFilter, "ALL">,
 ): RawRecord[] {
+  getCorpusRecordsForLevel("BASISONDERWIJS");
   const primaryRecords =
     network === "OPSTAP"
-      ? loadCorpusWithFallback(OPSTAP_CORPUS_PROD, OPSTAP_CORPUS_FIXTURE)
+      ? recordsFromBasisonderwijsNetwork("OPSTAP")
       : network === "OVSG"
-        ? loadCorpusWithFallback(OVSG_CORPUS_PROD, OVSG_CORPUS_FIXTURE)
+        ? recordsFromBasisonderwijsNetwork("OVSG")
         : network === "GO_NIEUW"
-          ? loadCorpusWithFallback(GO_NIEUW_CORPUS_PROD, GO_NIEUW_CORPUS_FIXTURE)
+          ? recordsFromBasisonderwijsNetwork("GO_NIEUW")
           : network === "ZILL"
-            ? loadCorpusWithFallback(ZILL_CORPUS_PROD, ZILL_CORPUS_FIXTURE)
+            ? recordsFromBasisonderwijsNetwork("ZILL")
             : [];
-  const secondaryRecords =
-    network === "KOV" || network === "GO" || network === "OVSG"
-      ? loadJsonlAt(SECONDARY_CURRICULUM_PROD).filter(
-          (raw) => asString(raw.netwerk).toUpperCase() === network,
-        )
-      : [];
-  if (network === "POV") {
-    secondaryRecords.push(...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD));
-  }
-  const records = sanitizeCorpusRecords([...primaryRecords, ...secondaryRecords]);
+  const records = sanitizeCorpusRecords(primaryRecords);
 
   return records.map((raw) => ({
     ...raw,
     netwerk: asString(raw.netwerk ?? raw.network) || network,
   }));
+}
+
+function recordsFromBasisonderwijsNetwork(
+  network: "OPSTAP" | "OVSG" | "GO_NIEUW" | "ZILL",
+): RawRecord[] {
+  return getCorpusRecordsForLevel("BASISONDERWIJS").filter((raw) => {
+    const netwerk = asString(raw.netwerk ?? raw.network).toUpperCase();
+    if (netwerk) {
+      return netwerk === network;
+    }
+    return networkFromRaw(raw) === network;
+  });
 }
 
 function asString(value: unknown): string {
@@ -661,7 +628,7 @@ export function findCorpusRecordByCode(
   if (!needle) {
     return null;
   }
-  for (const raw of recordsForNetwork(network)) {
+  for (const raw of recordsForNetwork(network, educationLevel)) {
     if (
       !recordMatchesNetwork(raw, network) ||
       !recordMatchesEducationLevel(raw, educationLevel)
@@ -710,7 +677,7 @@ export function findBestCorpusMatch({
       }
     | null = null;
 
-  const index = getCorpusTokenIndex(network);
+  const index = getCorpusTokenIndex(network, educationLevel);
   const candidateIndices = candidateIndicesFromQuery(query, index);
   const indicesToScore =
     candidateIndices.size > 0
@@ -724,12 +691,19 @@ export function findBestCorpusMatch({
     }
     const raw = indexed.raw;
     if (
-      !recordMatchesNetwork(raw, network) ||
+      network === "ALL" &&
+      (!recordMatchesNetwork(raw, network) ||
+        !recordMatchesEducationLevel(raw, educationLevel))
+    ) {
+      continue;
+    }
+    if (
+      network !== "ALL" &&
       !recordMatchesEducationLevel(raw, educationLevel)
     ) {
       continue;
     }
-    const record = normalizeRecord(raw, networkFromRaw(raw));
+    const record = indexed.record;
     if (!record) {
       continue;
     }
@@ -809,12 +783,36 @@ export function searchLocalCorpus({
     return [];
   }
 
-  const index = getCorpusTokenIndex(scopedNetwork);
+  const index = getCorpusTokenIndex(scopedNetwork, educationLevel);
   const candidateIndices = candidateIndicesFromQuery(query, index);
-  const indicesToScore =
-    candidateIndices.size > 0
-      ? candidateIndices
-      : new Set(index.records.map((_, recordIndex) => recordIndex));
+  let indicesToScore: Set<number> = candidateIndices;
+  if (indicesToScore.size === 0) {
+    return [];
+  }
+  const maxCorpusIndices =
+    queryTokens.size >= 4 ? 140 : MAX_CORPUS_INDICES_TO_SCORE;
+  if (indicesToScore.size > maxCorpusIndices) {
+    const ranked = [...indicesToScore]
+      .map((recordIndex) => {
+        const haystack = index.records[recordIndex]?.haystack ?? "";
+        return {
+          recordIndex,
+          tokenMatches: countCurriculumTokenMatches(
+            haystack,
+            queryTokens,
+            query,
+          ),
+        };
+      })
+      .sort(
+        (left, right) =>
+          right.tokenMatches - left.tokenMatches ||
+          left.recordIndex - right.recordIndex,
+      )
+      .slice(0, maxCorpusIndices)
+      .map((entry) => entry.recordIndex);
+    indicesToScore = new Set(ranked);
+  }
 
   const candidates: Array<{
     record: CurriculumSearchResult;
@@ -829,12 +827,19 @@ export function searchLocalCorpus({
     }
     const raw = indexed.raw;
     if (
-      !recordMatchesNetwork(raw, scopedNetwork) ||
+      scopedNetwork === "ALL" &&
+      (!recordMatchesNetwork(raw, scopedNetwork) ||
+        !recordMatchesEducationLevel(raw, educationLevel))
+    ) {
+      continue;
+    }
+    if (
+      scopedNetwork !== "ALL" &&
       !recordMatchesEducationLevel(raw, educationLevel)
     ) {
       continue;
     }
-    const record = normalizeRecord(raw, networkFromRaw(raw));
+    const record = indexed.record;
     if (!record) {
       continue;
     }
@@ -894,16 +899,18 @@ export function mergeCurriculumResults(
 export function searchMinimumGoals({
   query,
   limit = 6,
+  educationLevel = "BASISONDERWIJS",
 }: {
   query: string;
   limit?: number;
+  educationLevel?: EducationLevelFilter;
 }): Array<CurriculumSearchResult & { score: number }> {
   const queryTokens = tokenize(query);
   if (queryTokens.size === 0) {
     return [];
   }
 
-  return recordsForNetwork("ALL")
+  return recordsForNetwork("ALL", educationLevel)
     .map((raw) => {
       const record = normalizeRecord(raw, networkFromRaw(raw));
       const minimum = record?.gelinktMinimumdoel;

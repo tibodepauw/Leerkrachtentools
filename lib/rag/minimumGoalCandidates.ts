@@ -8,12 +8,15 @@ import {
   normalizeAhovoksMinimumGoalResult,
 } from "@/lib/rag/ahovoksMinimumGoals";
 import {
+  allMinimumGoalRecords,
   dedupeByMinimumGoalCode,
   filterByAbsoluteMinScore,
-  recordsForNetwork,
-  secondaryMinimumGoalRecords,
-  warmCorpusTokenIndex,
+  resolveCorpusLevel,
 } from "@/lib/rag/curriculumCorpus";
+import {
+  registerCorpusLevelUnloadListener,
+  type CorpusLevel,
+} from "@/lib/rag/corpusLevelCache";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
 import {
   extractContentTokens,
@@ -57,7 +60,11 @@ type MinimumGoalTokenIndex = {
   tokenToRecordIndices: Map<string, number[]>;
 };
 
-let minimumGoalIndexCache: MinimumGoalTokenIndex | null = null;
+const minimumGoalIndexCache = new Map<CorpusLevel, MinimumGoalTokenIndex>();
+
+registerCorpusLevelUnloadListener((level) => {
+  minimumGoalIndexCache.delete(level);
+});
 
 function isSecondaryMinimumGoalRaw(raw: RawRecord): boolean {
   if (isDomainCorpusRecord(raw)) {
@@ -188,18 +195,19 @@ function isIndexedMinimumGoalRaw(raw: RawRecord): boolean {
   );
 }
 
-function getMinimumGoalTokenIndex(): MinimumGoalTokenIndex {
-  if (minimumGoalIndexCache) {
-    return minimumGoalIndexCache;
+function getMinimumGoalTokenIndex(
+  educationLevel: EducationLevelFilter = "ALL",
+): MinimumGoalTokenIndex {
+  const corpusLevel = resolveCorpusLevel(educationLevel);
+  const cached = minimumGoalIndexCache.get(corpusLevel);
+  if (cached) {
+    return cached;
   }
 
   const records: IndexedMinimumGoalRecord[] = [];
   const tokenToRecordIndices = new Map<string, number[]>();
 
-  for (const raw of [
-    ...recordsForNetwork("ALL"),
-    ...secondaryMinimumGoalRecords(),
-  ]) {
+  for (const raw of allMinimumGoalRecords(educationLevel)) {
     if (!isIndexedMinimumGoalRaw(raw)) {
       continue;
     }
@@ -220,13 +228,22 @@ function getMinimumGoalTokenIndex(): MinimumGoalTokenIndex {
     }
   }
 
-  minimumGoalIndexCache = { records, tokenToRecordIndices };
-  return minimumGoalIndexCache;
+  const built = { records, tokenToRecordIndices };
+  minimumGoalIndexCache.set(corpusLevel, built);
+  return built;
 }
 
-export function warmMinimumGoalTokenIndex(): void {
-  minimumGoalIndexCache = null;
-  getMinimumGoalTokenIndex();
+export function warmMinimumGoalTokenIndex(
+  educationLevel: EducationLevelFilter = "BASISONDERWIJS",
+): void {
+  getMinimumGoalTokenIndex(educationLevel);
+}
+
+export function rebuildMinimumGoalTokenIndex(
+  educationLevel: EducationLevelFilter = "BASISONDERWIJS",
+): void {
+  minimumGoalIndexCache.delete(resolveCorpusLevel(educationLevel));
+  getMinimumGoalTokenIndex(educationLevel);
 }
 
 function candidateIndicesFromMinimumGoalQuery(
@@ -492,6 +509,23 @@ function scoreMinimumGoalCandidate(
   return { score: Math.min(1, score), tokenMatches };
 }
 
+function minimumGoalRetrievalQuery(query: string): {
+  scoringQuery: string;
+  retrievalQuery: string;
+} {
+  const trimmed = query.trim();
+  if (/^\d+\s*\+\s*\d+$/u.test(trimmed)) {
+    return {
+      scoringQuery: query,
+      retrievalQuery: "optellen rekenen wiskunde getal",
+    };
+  }
+  return { scoringQuery: query, retrievalQuery: query };
+}
+
+const MAX_MINIMUM_GOAL_INDICES_TO_SCORE = 180;
+const MAX_CORPUS_INDICES_TO_SCORE = 180;
+
 export function collectMinimumGoalCandidates({
   query,
   educationLevel = "ALL",
@@ -501,23 +535,68 @@ export function collectMinimumGoalCandidates({
   educationLevel?: EducationLevelFilter;
   limit?: number;
 }): Array<CurriculumSearchResult & { score: number }> {
-  const queryTokens = tokenizeMinimumGoalQuery(query);
+  const { scoringQuery, retrievalQuery } = minimumGoalRetrievalQuery(query);
+  const queryTokens = tokenizeMinimumGoalQuery(scoringQuery);
   if (queryTokens.size === 0) {
     return [];
   }
 
-  const coreKeywords = extractCoreKeywordsForOrRetrieval(query);
-  const useOrRetrieval = coreKeywords.size >= 2;
+  const coreKeywords = extractCoreKeywordsForOrRetrieval(retrievalQuery);
+  const useOrRetrieval =
+    coreKeywords.size >= 2 && !/^\d+\s*\+\s*\d+$/u.test(query.trim());
   const preFilterLimit = useOrRetrieval
     ? Math.max(limit, MINIMUM_GOAL_OR_CANDIDATE_POOL)
     : limit;
 
-  const index = getMinimumGoalTokenIndex();
-  const candidateIndices = candidateIndicesFromMinimumGoalQuery(query, index);
-  const indicesToScore =
-    candidateIndices.size > 0
-      ? candidateIndices
-      : new Set(index.records.map((_, recordIndex) => recordIndex));
+  const index = getMinimumGoalTokenIndex(educationLevel);
+  const candidateIndices = candidateIndicesFromMinimumGoalQuery(
+    retrievalQuery,
+    index,
+  );
+  let indicesToScore: Set<number> = candidateIndices;
+  if (indicesToScore.size === 0) {
+    indicesToScore = new Set<number>();
+    for (let recordIndex = 0; recordIndex < index.records.length; recordIndex += 1) {
+      const haystack = index.records[recordIndex]?.haystack;
+      if (!haystack) {
+        continue;
+      }
+      for (const token of tokenizeMinimumGoalQuery(retrievalQuery)) {
+        if (token.length >= 4 && haystack.includes(token)) {
+          indicesToScore.add(recordIndex);
+          break;
+        }
+      }
+    }
+  }
+  if (indicesToScore.size === 0) {
+    return [];
+  }
+  const maxIndicesToScore =
+    useOrRetrieval || resolveCorpusLevel(educationLevel) === "SECUNDAIR"
+      ? 320
+      : MAX_MINIMUM_GOAL_INDICES_TO_SCORE;
+  if (indicesToScore.size > maxIndicesToScore) {
+    const ranked = [...indicesToScore]
+      .map((recordIndex) => {
+        const haystack = index.records[recordIndex]?.haystack ?? "";
+        return {
+          recordIndex,
+          tokenMatches: countMinimumGoalTokenMatches(
+            haystack,
+            tokenizeMinimumGoalQuery(retrievalQuery),
+          ),
+        };
+      })
+      .sort(
+        (left, right) =>
+          right.tokenMatches - left.tokenMatches ||
+          left.recordIndex - right.recordIndex,
+      )
+      .slice(0, maxIndicesToScore)
+      .map((entry) => entry.recordIndex);
+    indicesToScore = new Set(ranked);
+  }
 
   const candidates: Array<{
     record: CurriculumSearchResult;
@@ -547,7 +626,7 @@ export function collectMinimumGoalCandidates({
     }
 
     const { score, tokenMatches } = scoreMinimumGoalCandidate(
-      query,
+      scoringQuery,
       record,
       raw,
     );

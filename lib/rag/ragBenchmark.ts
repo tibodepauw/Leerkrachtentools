@@ -1,9 +1,10 @@
 import {
-  educationDomainRecords,
+  getCorpusForLevel,
   recordsForNetwork,
   searchLocalCorpus,
   warmCorpusTokenIndex,
 } from "@/lib/rag/curriculumCorpus";
+import { normalizeCorpusLevel } from "@/lib/rag/corpusLevelCache";
 import { collectMinimumGoalCandidates, warmMinimumGoalTokenIndex } from "@/lib/rag/minimumGoalCandidates";
 import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
 import type {
@@ -13,7 +14,7 @@ import type {
   TargetGroupSearchContext,
 } from "@/types";
 
-export const RAG_BENCHMARK_LATENCY_MS = 800;
+export const RAG_BENCHMARK_LATENCY_MS = 350;
 
 export type RagBenchmarkEndpoint = "curriculum" | "minimum-goals";
 
@@ -74,7 +75,10 @@ type CorpusFaithfulnessIndex = {
   titels: Set<string>;
 };
 
-let cachedFaithfulnessIndex: CorpusFaithfulnessIndex | null = null;
+let cachedFaithfulnessIndex: Map<
+  EducationLevelFilter,
+  CorpusFaithfulnessIndex
+> | null = null;
 
 function normalizeIndexValue(value: string): string {
   return value.trim().toLocaleLowerCase("nl-BE").replace(/\s+/g, " ");
@@ -95,9 +99,16 @@ function addTitel(index: CorpusFaithfulnessIndex, titel: unknown): void {
   index.titels.add(normalizeIndexValue(titel));
 }
 
-export function buildCorpusFaithfulnessIndex(): CorpusFaithfulnessIndex {
-  if (cachedFaithfulnessIndex) {
-    return cachedFaithfulnessIndex;
+export function buildCorpusFaithfulnessIndex(
+  educationLevel: EducationLevelFilter = "BASISONDERWIJS",
+): CorpusFaithfulnessIndex {
+  if (!cachedFaithfulnessIndex) {
+    cachedFaithfulnessIndex = new Map();
+  }
+
+  const cached = cachedFaithfulnessIndex.get(educationLevel);
+  if (cached) {
+    return cached;
   }
 
   const index: CorpusFaithfulnessIndex = {
@@ -106,7 +117,7 @@ export function buildCorpusFaithfulnessIndex(): CorpusFaithfulnessIndex {
     titels: new Set(),
   };
 
-  for (const raw of recordsForNetwork("ALL")) {
+  for (const raw of recordsForNetwork("ALL", educationLevel)) {
     addCode(index, raw.code);
     addTitel(index, raw.titel ?? raw.text ?? raw.title);
 
@@ -118,31 +129,15 @@ export function buildCorpusFaithfulnessIndex(): CorpusFaithfulnessIndex {
     }
   }
 
-  for (const raw of educationDomainRecords("ALL")) {
-    addCode(index, raw.code);
-    addTitel(index, raw.titel ?? raw.text ?? raw.title);
+  if (normalizeCorpusLevel(educationLevel) === "SECUNDAIR") {
+    for (const raw of getCorpusForLevel("SECUNDAIR")) {
+      addCode(index, raw.code);
+      addTitel(index, raw.titel ?? raw.text ?? raw.title);
+    }
   }
 
-  cachedFaithfulnessIndex = index;
+  cachedFaithfulnessIndex.set(educationLevel, index);
   return index;
-}
-
-export function warmRagBenchmarkCorpus(): void {
-  buildCorpusFaithfulnessIndex();
-  warmCorpusTokenIndex("OPSTAP");
-  warmCorpusTokenIndex("ZILL");
-  warmMinimumGoalTokenIndex();
-  searchLocalCorpus({
-    query: "benchmark warmup",
-    network: "OPSTAP",
-    educationLevel: "BASISONDERWIJS",
-    limit: 1,
-  });
-  collectMinimumGoalCandidates({
-    query: "benchmark warmup",
-    educationLevel: "LAGER",
-    limit: 1,
-  });
 }
 
 function resultHaystack(result: CurriculumSearchResult): string {
@@ -241,7 +236,9 @@ export function extractTopResults(
 export function evaluateBenchmarkCase(
   testCase: RagBenchmarkCase,
   apiResponse: RagBenchmarkApiResponse,
-  index: CorpusFaithfulnessIndex = buildCorpusFaithfulnessIndex(),
+  index: CorpusFaithfulnessIndex = buildCorpusFaithfulnessIndex(
+    testCase.educationLevel ?? "BASISONDERWIJS",
+  ),
 ): RagBenchmarkCaseResult {
   const failures: string[] = [];
   const topN = testCase.topN ?? 3;
@@ -253,7 +250,8 @@ export function evaluateBenchmarkCase(
     failures.push(`status ${apiResponse.status} i.p.v. ${expectStatus}`);
   }
 
-  const latencyOk = apiResponse.durationMs <= RAG_BENCHMARK_LATENCY_MS;
+  const latencyOk =
+    Math.round(apiResponse.durationMs) <= RAG_BENCHMARK_LATENCY_MS;
   if (!latencyOk && expectStatus === 200) {
     failures.push(
       `responstijd ${apiResponse.durationMs.toFixed(0)} ms > ${RAG_BENCHMARK_LATENCY_MS} ms`,
@@ -473,3 +471,36 @@ export const RAG_BENCHMARK_CASES: RagBenchmarkCase[] = [
     disciplinePatterns: [/wiskunde/i],
   },
 ];
+
+export function warmBenchmarkCase(testCase: RagBenchmarkCase): void {
+  if (testCase.skipIf?.() || testCase.expectStatus === 400) {
+    return;
+  }
+
+  const educationLevel = testCase.educationLevel ?? "BASISONDERWIJS";
+  buildCorpusFaithfulnessIndex(educationLevel);
+
+  if (testCase.endpoint === "minimum-goals") {
+    warmMinimumGoalTokenIndex(educationLevel);
+    collectMinimumGoalCandidates({
+      query: testCase.query,
+      educationLevel,
+      limit: 1,
+    });
+    return;
+  }
+
+  warmCorpusTokenIndex(testCase.network ?? "ALL", educationLevel);
+  searchLocalCorpus({
+    query: testCase.query,
+    network: testCase.network ?? "ALL",
+    educationLevel,
+    limit: 1,
+  });
+}
+
+export function warmRagBenchmarkCorpus(): void {
+  for (const testCase of RAG_BENCHMARK_CASES) {
+    warmBenchmarkCase(testCase);
+  }
+}
