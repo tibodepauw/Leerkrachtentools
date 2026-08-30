@@ -36,12 +36,13 @@ import {
   formatMinimumGoalCopyText,
   networkBadgeLabel,
   presentCurriculumGoal,
+  resolveDisplayToelichting,
   sanitizeCurriculumText,
 } from "@/lib/rag/curriculumDisplay";
 import {
   preferenceToFilter,
   EDUCATION_LEVEL_OPTIONS,
-  resolveCurriculumNetwork,
+  isAhovoksDomainLevel,
 } from "@/lib/lesson/educationLevelPreference";
 import {
   domainFilterOptions,
@@ -89,6 +90,20 @@ const NETWORK_OPTIONS: Array<{
 
 const EDUCATION_LEVEL_OPTIONS_UI = EDUCATION_LEVEL_OPTIONS;
 
+const MINIMUM_ONLY_EDUCATION_PREFERENCES = new Set<EducationLevelPreference>([
+  "bubao",
+  "buso",
+  "okan",
+  "dko",
+  "volwassenenonderwijs",
+  "hoger_onderwijs",
+  "alle_niveaus",
+]);
+
+const LEERPLAN_EDUCATION_LEVEL_OPTIONS = EDUCATION_LEVEL_OPTIONS.filter(
+  (option) => !MINIMUM_ONLY_EDUCATION_PREFERENCES.has(option.value),
+);
+
 const variantCopy: Record<
   SearchVariant,
   {
@@ -101,19 +116,38 @@ const variantCopy: Record<
   leerplandoel: {
     title: "Leerplandoelen zoeken",
     description:
-      "Zoekt semantisch in de geïndexeerde leerplandoelen en toont uitsluitend officiële doelen uit de gestructureerde corpus.",
+      "Zoekt in de leerplannen van koepels: Katholiek Onderwijs (Op.stap, ZILL, KOV), GO!, OVSG en POV.",
     action: "Zoek leerplandoel",
     empty: "Officiële doelkaarten met code, discipline en doelzin verschijnen hier.",
   },
   minimumdoel: {
     title: "Minimumdoelen zoeken",
     description:
-      "Zoekt het bestpassende Vlaamse minimumdoel bij je lesdoel in basisonderwijs of secundair onderwijs.",
+      "Zoekt Vlaamse minimumdoelen en AHOVOKS-doelen: basisonderwijs, secundair, BuBaO, BuSO, OKAN, DKO, volwassenen- en hoger onderwijs.",
     action: "Zoek minimumdoel",
     empty:
       "Minimumdoelkaarten met code, graad of leerjaar en doelzin verschijnen hier na je zoekopdracht.",
   },
 };
+
+function ToelichtingAccordion({ text }: { text: string }) {
+  if (!text) {
+    return null;
+  }
+
+  return (
+    <Accordion type="single" collapsible>
+      <AccordionItem value="toelichting" className="border-neutral-800">
+        <AccordionTrigger className="py-2 text-xs text-neutral-400 hover:text-neutral-200">
+          Toelichting
+        </AccordionTrigger>
+        <AccordionContent className="whitespace-pre-wrap text-sm leading-6 text-neutral-300">
+          {text}
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
+  );
+}
 
 function GoalCard({
   result,
@@ -125,6 +159,7 @@ function GoalCard({
   const presented = presentCurriculumGoal(result);
   const goalCopy = formatGoalCopyText(presented);
   const { code, titel } = formatGoalTitleParts(presented);
+  const toelichting = resolveDisplayToelichting(presented);
   const minimumCopy = result.gelinktMinimumdoel
     ? formatMinimumGoalCopyText(result.gelinktMinimumdoel)
     : null;
@@ -166,18 +201,7 @@ function GoalCard({
           )}
         </p>
 
-        {presented.toelichting ? (
-          <Accordion type="single" collapsible>
-            <AccordionItem value="toelichting" className="border-neutral-800">
-              <AccordionTrigger className="py-2 text-xs text-neutral-400 hover:text-neutral-200">
-                Toelichting
-              </AccordionTrigger>
-              <AccordionContent className="whitespace-pre-wrap text-sm leading-6 text-neutral-300">
-                {sanitizeCurriculumText(presented.toelichting)}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        ) : null}
+        <ToelichtingAccordion text={toelichting} />
 
         {result.gelinktMinimumdoel ? (
           <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">
@@ -235,6 +259,7 @@ function MinimumGoalCard({
   const minimumCopy = formatMinimumGoalCopy(minimum);
   const ijkpuntLabel =
     minimum.ijkpuntLabel ?? result.leerjaarRoute ?? "Minimumdoel";
+  const toelichting = resolveDisplayToelichting(result);
 
   function handleAddToLesson() {
     onAddToLesson(minimumCopy);
@@ -281,6 +306,8 @@ function MinimumGoalCard({
           )}
         </p>
 
+        <ToelichtingAccordion text={toelichting} />
+
         <div className="flex flex-wrap gap-2 pt-1">
           <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
@@ -321,13 +348,14 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     (state) => state.domainFinalityFilter,
   );
   const educationLevelFilter = preferenceToFilter(educationLevel);
+  const educationLevelOptions =
+    variant === "leerplandoel"
+      ? LEERPLAN_EDUCATION_LEVEL_OPTIONS
+      : EDUCATION_LEVEL_OPTIONS_UI;
   const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
-  const resolvedNetwork = resolveCurriculumNetwork(
-    visibleNetworks.some((option) => option.value === network)
-      ? network
-      : (visibleNetworks[0]?.value ?? "ALL"),
-    educationLevelFilter,
-  );
+  const resolvedNetwork = visibleNetworks.some((option) => option.value === network)
+    ? network
+    : (visibleNetworks[0]?.value ?? "ALL");
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
@@ -354,10 +382,26 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     : [];
 
   const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
-  const showDomainDetailFilter = supportsDomainDetailFilter(educationLevelFilter);
-  const showDomainFinalityFilter = supportsDomainFinalityFilter(educationLevelFilter);
+  const showDomainDetailFilter =
+    supportsDomainDetailFilter(educationLevelFilter) &&
+    (variant === "minimumdoel" || educationLevelFilter === "SECUNDAIR");
+  const showDomainFinalityFilter =
+    supportsDomainFinalityFilter(educationLevelFilter) &&
+    (variant === "minimumdoel" || educationLevelFilter === "SECUNDAIR");
   const detailFilterOptions = domainFilterOptions(educationLevelFilter);
   const finalityFilterOptions = domainSecondaryFinalityOptions(educationLevelFilter);
+
+  useEffect(() => {
+    if (variant !== "leerplandoel") {
+      return;
+    }
+    if (
+      MINIMUM_ONLY_EDUCATION_PREFERENCES.has(educationLevel) ||
+      isAhovoksDomainLevel(educationLevelFilter)
+    ) {
+      setEducationLevel("basisonderwijs");
+    }
+  }, [variant, educationLevel, educationLevelFilter, setEducationLevel]);
 
   useEffect(() => {
     const options = networkOptionsForLevel(educationLevelFilter);
@@ -503,7 +547,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {EDUCATION_LEVEL_OPTIONS_UI.map((option) => (
+                      {educationLevelOptions.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -668,16 +712,6 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 function networkOptionsForLevel(
   level: EducationLevelFilter,
 ): Array<{ value: CurriculumNetworkFilter; label: string }> {
-  if (
-    level === "BUBAO" ||
-    level === "BUSO" ||
-    level === "OKAN" ||
-    level === "DKO" ||
-    level === "VOLWASSENEN" ||
-    level === "HOGER"
-  ) {
-    return [{ value: "ALL", label: "AHOVOKS · Officiële onderwijsdoelen" }];
-  }
   if (level === "SECUNDAIR") {
     return NETWORK_OPTIONS.filter((option) =>
       ["ALL", "GO", "KOV", "POV", "OVSG"].includes(option.value),
@@ -692,7 +726,11 @@ function networkOptionsForLevel(
       ["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "ZILL"].includes(option.value),
     );
   }
-  return NETWORK_OPTIONS;
+  return NETWORK_OPTIONS.filter((option) =>
+    ["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "ZILL", "GO", "KOV", "POV"].includes(
+      option.value,
+    ),
+  );
 }
 
 function minimumGoalHelperText(

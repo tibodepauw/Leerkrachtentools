@@ -4,6 +4,14 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.9.1] - 2026-08-30
+
+### Changed
+- Leerplandoelen: enkel koepels (Op.stap, ZILL, KOV, GO!, OVSG, POV); AHOVOKS-domeinen uitsluitend in Minimumdoelen
+- Doelkaarten: generieke toelichtingslabels (Ontwikkelingsdoelen, OV1, Type 2, …) worden niet meer getoond
+
+---
+
 ## [5.9.0] - 2026-08-30
 
 Feature release: volledige Vlaamse onderwijsdomeinen via onderwijsdoelen.be (AHOVOKS), gestroomlijnde secundaire pipeline en UX voor OKAN/BuBaO/BuSO/DKO.

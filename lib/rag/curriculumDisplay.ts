@@ -13,6 +13,69 @@ const NETWORK_BADGE_LABELS: Record<string, string> = {
 
 const AHOVOKS_TITLE_SPLIT_PATTERN = /\s+(Verwerkingsniveau\b[\s\S]*)$/u;
 
+const BOILERPLATE_TOELICHTING_PATTERNS = [
+  /^na te streven minimumdoelen op populatieniveau$/iu,
+  /^te bereiken minimumdoelen op populatieniveau$/iu,
+  /^te bereiken minimumdoelen op individueel niveau$/iu,
+  /^ontwikkelingsdoelen$/iu,
+  /^eindtermen$/iu,
+  /^basiscompetenties$/iu,
+  /^specifieke eindtermen$/iu,
+  /^ov\s*[123]$/iu,
+  /^type\s*\d+$/iu,
+  /^\d+(?:de|e|ste|nd|rd|th)?\s+graad$/iu,
+] as const;
+
+function normalizeToelichtingSegment(value: string): string {
+  return sanitizeCurriculumText(value).trim().replace(/\s+/g, " ");
+}
+
+function splitToelichtingSegments(value: string): string[] {
+  return value
+    .split(/\n{2,}|\n|[·•;|]/u)
+    .map(normalizeToelichtingSegment)
+    .filter(Boolean);
+}
+
+function isBoilerplateSegment(segment: string): boolean {
+  const normalized = normalizeToelichtingSegment(segment);
+  if (!normalized) {
+    return true;
+  }
+  return BOILERPLATE_TOELICHTING_PATTERNS.some((pattern) =>
+    pattern.test(normalized),
+  );
+}
+
+export function isBoilerplateToelichting(text: string): boolean {
+  const clean = sanitizeCurriculumText(text).trim();
+  if (!clean) {
+    return true;
+  }
+
+  const segments = splitToelichtingSegments(clean);
+  if (segments.length === 0) {
+    return true;
+  }
+
+  return segments.every(isBoilerplateSegment);
+}
+
+export function resolveDisplayToelichting(
+  result: Pick<CurriculumSearchResult, "toelichting" | "gelinktMinimumdoel">,
+): string {
+  const parts = [result.toelichting, result.gelinktMinimumdoel?.type]
+    .map((value) => sanitizeCurriculumText(value ?? "").trim())
+    .filter(Boolean);
+
+  const merged = parts.join("\n\n");
+  return isBoilerplateToelichting(merged) ? "" : merged;
+}
+
+export function shouldShowToelichting(text: string): boolean {
+  return Boolean(sanitizeCurriculumText(text).trim()) && !isBoilerplateToelichting(text);
+}
+
 const GOAL_CODE_PATTERNS = [
   /\d\.\d+\.[A-Z]{2}\d+(?:\.\d+)?/u,
   /[A-Z]{3}[a-z]{3}\d+[BOV]\.\d+/u,

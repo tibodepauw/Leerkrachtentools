@@ -5,9 +5,11 @@ import {
   formatGoalTitleParts,
   formatMinimumGoalCopyText,
   formatSearchResultMetadata,
+  isBoilerplateToelichting,
   networkBadgeLabel,
   presentCurriculumGoal,
   repairUtf8Mojibake,
+  resolveDisplayToelichting,
   splitAhovoksGoalText,
   splitGoalCodeAndTitle,
 } from "@/lib/rag/curriculumDisplay";
@@ -62,6 +64,51 @@ describe("curriculumDisplay", () => {
       code: "NL.001",
       titel: "Herkennen eenvoudige eindrijm.",
     });
+  });
+
+  it("herkent generieke boilerplate-toelichtingen", () => {
+    expect(isBoilerplateToelichting("Ontwikkelingsdoelen")).toBe(true);
+    expect(
+      isBoilerplateToelichting("Te bereiken minimumdoelen op populatieniveau"),
+    ).toBe(true);
+    expect(isBoilerplateToelichting("OV2")).toBe(true);
+    expect(isBoilerplateToelichting("Type 2")).toBe(true);
+    expect(isBoilerplateToelichting("4de graad")).toBe(true);
+    expect(
+      isBoilerplateToelichting(
+        "Verwerkingsniveau Het beschrijvende niveau houdt in dat de taalgebruiker luistert.",
+      ),
+    ).toBe(false);
+    expect(
+      isBoilerplateToelichting(
+        "Ontwikkelingsdoelen\n\nVerwerkingsniveau Details over het niveau.",
+      ),
+    ).toBe(false);
+  });
+
+  it("verbergt boilerplate-toelichting op kaarten", () => {
+    expect(
+      resolveDisplayToelichting({
+        toelichting: "Ontwikkelingsdoelen",
+        gelinktMinimumdoel: null,
+      }),
+    ).toBe("");
+    expect(
+      resolveDisplayToelichting({
+        toelichting: "",
+        gelinktMinimumdoel: {
+          code: "2",
+          tekst: "Doeltekst",
+          type: "Te bereiken minimumdoelen op populatieniveau",
+        },
+      }),
+    ).toBe("");
+    expect(
+      resolveDisplayToelichting({
+        toelichting: "Concrete didactische tip voor de klas.",
+        gelinktMinimumdoel: null,
+      }),
+    ).toBe("Concrete didactische tip voor de klas.");
   });
 
   it("formatteert netwerk-badges", () => {
