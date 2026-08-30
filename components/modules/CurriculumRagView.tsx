@@ -35,9 +35,14 @@ import {
   formatGoalTitleParts,
   formatMinimumGoalCopyText,
   networkBadgeLabel,
+  presentCurriculumGoal,
   sanitizeCurriculumText,
 } from "@/lib/rag/curriculumDisplay";
-import { preferenceToFilter, EDUCATION_LEVEL_OPTIONS } from "@/lib/lesson/educationLevelPreference";
+import {
+  preferenceToFilter,
+  EDUCATION_LEVEL_OPTIONS,
+  resolveCurriculumNetwork,
+} from "@/lib/lesson/educationLevelPreference";
 import {
   domainFilterOptions,
   domainSecondaryFinalityOptions,
@@ -117,8 +122,9 @@ function GoalCard({
   result: CurriculumSearchResult;
   onAddToLesson: (text: string) => void;
 }) {
-  const goalCopy = formatGoalCopyText(result);
-  const { code, titel } = formatGoalTitleParts(result);
+  const presented = presentCurriculumGoal(result);
+  const goalCopy = formatGoalCopyText(presented);
+  const { code, titel } = formatGoalTitleParts(presented);
   const minimumCopy = result.gelinktMinimumdoel
     ? formatMinimumGoalCopyText(result.gelinktMinimumdoel)
     : null;
@@ -160,14 +166,14 @@ function GoalCard({
           )}
         </p>
 
-        {result.toelichting ? (
+        {presented.toelichting ? (
           <Accordion type="single" collapsible>
             <AccordionItem value="toelichting" className="border-neutral-800">
               <AccordionTrigger className="py-2 text-xs text-neutral-400 hover:text-neutral-200">
                 Toelichting
               </AccordionTrigger>
-              <AccordionContent className="text-sm leading-6 text-neutral-300">
-                {sanitizeCurriculumText(result.toelichting)}
+              <AccordionContent className="whitespace-pre-wrap text-sm leading-6 text-neutral-300">
+                {sanitizeCurriculumText(presented.toelichting)}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -316,9 +322,12 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   );
   const educationLevelFilter = preferenceToFilter(educationLevel);
   const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
-  const resolvedNetwork = visibleNetworks.some((option) => option.value === network)
-    ? network
-    : (visibleNetworks[0]?.value ?? "ALL");
+  const resolvedNetwork = resolveCurriculumNetwork(
+    visibleNetworks.some((option) => option.value === network)
+      ? network
+      : (visibleNetworks[0]?.value ?? "ALL"),
+    educationLevelFilter,
+  );
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =

@@ -6,7 +6,9 @@ import {
   formatMinimumGoalCopyText,
   formatSearchResultMetadata,
   networkBadgeLabel,
+  presentCurriculumGoal,
   repairUtf8Mojibake,
+  splitAhovoksGoalText,
   splitGoalCodeAndTitle,
 } from "@/lib/rag/curriculumDisplay";
 import type { CurriculumSearchResult } from "@/types";
@@ -53,6 +55,8 @@ describe("curriculumDisplay", () => {
       formatGoalTitleParts({
         code: "NL.001",
         titel: "NL.001 Herkennen eenvoudige eindrijm.",
+        netwerk: "OPSTAP",
+        toelichting: "",
       }),
     ).toEqual({
       code: "NL.001",
@@ -63,6 +67,54 @@ describe("curriculumDisplay", () => {
   it("formatteert netwerk-badges", () => {
     expect(networkBadgeLabel("OPSTAP")).toBe("Op.stap");
     expect(networkBadgeLabel("GO_NIEUW")).toBe("GO! Nieuw");
+    expect(networkBadgeLabel("AHOVOKS")).toBe("AHOVOKS");
+  });
+
+  it("splitst AHOVOKS-doeltekst in titel en toelichting", () => {
+    const longTitle =
+      "De leerlingen kunnen op beschrijvend niveau relevante informatie verwerken. Verwerkingsniveau Het beschrijvende niveau houdt in dat de taalgebruiker de aangeleverde informatie in zich opneemt. Concretisering het globale onderwerp bepalen";
+
+    expect(splitAhovoksGoalText(longTitle)).toEqual({
+      titel:
+        "De leerlingen kunnen op beschrijvend niveau relevante informatie verwerken.",
+      toelichting:
+        "Verwerkingsniveau Het beschrijvende niveau houdt in dat de taalgebruiker de aangeleverde informatie in zich opneemt. Concretisering het globale onderwerp bepalen",
+    });
+  });
+
+  it("voegt bestaande toelichting samen met AHOVOKS-details", () => {
+    const { titel, toelichting } = splitAhovoksGoalText(
+      "De leerlingen kunnen informatie opzoeken. Verwerkingsniveau Details hier.",
+      "Ontwikkelingsdoelen",
+    );
+
+    expect(titel).toBe("De leerlingen kunnen informatie opzoeken.");
+    expect(toelichting).toBe("Ontwikkelingsdoelen\n\nVerwerkingsniveau Details hier.");
+  });
+
+  it("presenteert AHOVOKS-doelen met korte titel voor kaarten", () => {
+    const result: CurriculumSearchResult = {
+      code: "2",
+      discipline: "Secundair onderwijs",
+      subdomein: "",
+      titel:
+        "De leerlingen kunnen teksten verwerken. Verwerkingsniveau Het beschrijvende niveau houdt in dat de taalgebruiker luistert.",
+      toelichting: "Ontwikkelingsdoelen",
+      leerjaarRoute: "",
+      gelinktMinimumdoel: null,
+      netwerk: "AHOVOKS",
+      bronUrl: "",
+    };
+
+    const presented = presentCurriculumGoal(result);
+    expect(formatGoalTitleParts(presented).titel).toBe(
+      "De leerlingen kunnen teksten verwerken.",
+    );
+    expect(presented.toelichting).toContain("Ontwikkelingsdoelen");
+    expect(presented.toelichting).toContain("Verwerkingsniveau");
+    expect(formatGoalCopyText(presented)).toBe(
+      "[2] De leerlingen kunnen teksten verwerken.",
+    );
   });
 
   it("formatteert kopieertekst voor doelen", () => {

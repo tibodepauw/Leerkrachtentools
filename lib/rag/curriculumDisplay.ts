@@ -8,7 +8,10 @@ const NETWORK_BADGE_LABELS: Record<string, string> = {
   GO: "GO! Legacy",
   KOV: "Katholiek Onderwijs",
   POV: "Provinciaal Onderwijs",
+  AHOVOKS: "AHOVOKS",
 };
+
+const AHOVOKS_TITLE_SPLIT_PATTERN = /\s+(Verwerkingsniveau\b[\s\S]*)$/u;
 
 const GOAL_CODE_PATTERNS = [
   /\d\.\d+\.[A-Z]{2}\d+(?:\.\d+)?/u,
@@ -97,8 +100,63 @@ export function splitGoalCodeAndTitle(
   return { code: "", titel: cleanTitel };
 }
 
-export function formatGoalTitleParts(result: Pick<CurriculumSearchResult, "code" | "titel">) {
-  return splitGoalCodeAndTitle(result.code, result.titel);
+export function shouldSplitAhovoksGoalText(
+  result: Pick<CurriculumSearchResult, "netwerk" | "titel">,
+): boolean {
+  if (result.netwerk === "AHOVOKS") {
+    return true;
+  }
+  return AHOVOKS_TITLE_SPLIT_PATTERN.test(sanitizeCurriculumText(result.titel));
+}
+
+export function splitAhovoksGoalText(
+  titel: string,
+  toelichting = "",
+): { titel: string; toelichting: string } {
+  const cleanTitel = sanitizeCurriculumText(titel).trim();
+  const cleanToelichting = sanitizeCurriculumText(toelichting).trim();
+  const match = cleanTitel.match(AHOVOKS_TITLE_SPLIT_PATTERN);
+
+  if (!match || match.index === undefined) {
+    return { titel: cleanTitel, toelichting: cleanToelichting };
+  }
+
+  const mainTitle = cleanTitel.slice(0, match.index).trim();
+  const details = match[1].trim();
+  const mergedToelichting = [cleanToelichting, details].filter(Boolean).join("\n\n");
+
+  return {
+    titel: mainTitle || cleanTitel,
+    toelichting: mergedToelichting,
+  };
+}
+
+export function presentCurriculumGoal(
+  result: CurriculumSearchResult,
+): CurriculumSearchResult {
+  if (!shouldSplitAhovoksGoalText(result)) {
+    return result;
+  }
+
+  const { titel, toelichting } = splitAhovoksGoalText(result.titel, result.toelichting);
+  return { ...result, titel, toelichting };
+}
+
+export function formatGoalTitleParts(
+  result: Pick<CurriculumSearchResult, "code" | "titel" | "netwerk" | "toelichting">,
+) {
+  const presented = presentCurriculumGoal({
+    code: result.code,
+    titel: result.titel,
+    toelichting: result.toelichting ?? "",
+    discipline: "",
+    subdomein: "",
+    leerjaarRoute: "",
+    gelinktMinimumdoel: null,
+    netwerk: result.netwerk ?? "",
+    bronUrl: "",
+  });
+  return splitGoalCodeAndTitle(presented.code, presented.titel);
 }
 
 export function networkBadgeLabel(network: string): string {
@@ -106,7 +164,8 @@ export function networkBadgeLabel(network: string): string {
 }
 
 export function formatGoalCopyText(result: CurriculumSearchResult): string {
-  const { code, titel } = formatGoalTitleParts(result);
+  const presented = presentCurriculumGoal(result);
+  const { code, titel } = splitGoalCodeAndTitle(presented.code, presented.titel);
   return code ? `[${code}] ${titel}` : titel;
 }
 

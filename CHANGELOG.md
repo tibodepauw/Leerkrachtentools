@@ -4,6 +4,14 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.20] - 2026-08-30
+
+### Changed
+- OKAN, BuBaO, BuSO, DKO, volwassenen- en hoger onderwijs: zoeken forceert automatisch AHOVOKS/ALL (geen ZILL-fallback meer)
+- AHOVOKS-doelen: lange titel gesplitst op Verwerkingsniveau; details in Toelichting-accordion
+
+---
+
 ## [5.8.17] - 2026-08-30
 
 ### Added

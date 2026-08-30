@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   filterToPreference,
+  isAhovoksDomainLevel,
   preferenceToFilter,
+  resolveCurriculumNetwork,
 } from "@/lib/lesson/educationLevelPreference";
 import { matchesDomainDetailFilter } from "@/lib/lesson/domainFilters";
 import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
@@ -18,6 +20,13 @@ describe("educationLevelPreference", () => {
     expect(filterToPreference("BASISONDERWIJS")).toBe("basisonderwijs");
     expect(filterToPreference("BUBAO")).toBe("bubao");
     expect(filterToPreference("ALL")).toBe("alle_niveaus");
+  });
+
+  it("forceert ALL-netwerk voor AHOVOKS-domeinen", () => {
+    expect(isAhovoksDomainLevel("OKAN")).toBe(true);
+    expect(isAhovoksDomainLevel("BASISONDERWIJS")).toBe(false);
+    expect(resolveCurriculumNetwork("ZILL", "OKAN")).toBe("ALL");
+    expect(resolveCurriculumNetwork("ZILL", "BASISONDERWIJS")).toBe("ZILL");
   });
 });
 

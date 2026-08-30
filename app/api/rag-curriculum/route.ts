@@ -5,6 +5,10 @@ import {
 } from "@/lib/auth/guard";
 import { approvedTierResponse } from "@/lib/ai/serverAccess";
 import { networkBadgeLabel } from "@/lib/rag/curriculumDisplay";
+import {
+  isAhovoksDomainLevel,
+  resolveCurriculumNetwork,
+} from "@/lib/lesson/educationLevelPreference";
 import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
 import {
   CURRICULUM_TOP_N,
@@ -166,8 +170,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const network = body.network ?? "ALL";
-    if (!NETWORKS.has(network)) {
+    const requestedNetwork = body.network ?? "ALL";
+    if (!NETWORKS.has(requestedNetwork)) {
       return NextResponse.json(
         { error: "Selecteer een geldig onderwijsnet." },
         { status: 400 },
@@ -181,6 +185,8 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
+    const network = resolveCurriculumNetwork(requestedNetwork, educationLevel);
 
     const targetGroup: TargetGroupSearchContext = {
       grade: body.grade ?? "",
@@ -200,7 +206,11 @@ export async function POST(request: Request) {
     );
     let networkFallbackNotice: string | undefined;
 
-    if (searchResult.merged.length === 0 && network !== "ALL") {
+    if (
+      searchResult.merged.length === 0 &&
+      network !== "ALL" &&
+      !isAhovoksDomainLevel(educationLevel)
+    ) {
       const fallback = await runCurriculumSearch(query, "ALL", educationLevel, {
         excludeNetwork: network,
         targetGroup,

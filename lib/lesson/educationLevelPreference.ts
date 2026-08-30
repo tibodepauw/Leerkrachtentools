@@ -1,4 +1,29 @@
-import type { EducationLevelFilter, EducationLevelPreference } from "@/types";
+import type {
+  CurriculumNetworkFilter,
+  EducationLevelFilter,
+  EducationLevelPreference,
+} from "@/types";
+
+export function isAhovoksDomainLevel(level: EducationLevelFilter): boolean {
+  return (
+    level === "BUBAO" ||
+    level === "BUSO" ||
+    level === "OKAN" ||
+    level === "DKO" ||
+    level === "VOLWASSENEN" ||
+    level === "HOGER"
+  );
+}
+
+export function resolveCurriculumNetwork(
+  network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter,
+): CurriculumNetworkFilter {
+  if (isAhovoksDomainLevel(educationLevel)) {
+    return "ALL";
+  }
+  return network;
+}
 
 export function preferenceToFilter(
   preference: EducationLevelPreference,
