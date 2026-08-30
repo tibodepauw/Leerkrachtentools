@@ -29,6 +29,8 @@ const NETWORKS = new Set<CurriculumNetworkFilter>([
   "GO_NIEUW",
   "ZILL",
   "GO",
+  "KOV",
+  "POV",
 ]);
 const EDUCATION_LEVELS = new Set<EducationLevelFilter>([
   "ALL",

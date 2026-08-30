@@ -29,6 +29,8 @@ const NETWORK_PATH: Record<Exclude<CurriculumNetworkFilter, "ALL">, string> = {
   GO_NIEUW: "/go_nieuw/",
   ZILL: "/zill/",
   GO: "/go/",
+  KOV: "/secundair/",
+  POV: "/secundair/",
 };
 
 function readEnv(name: string): string {
@@ -63,6 +65,8 @@ export function networkFromUri(uri: string): CurriculumNetworkFilter | null {
   if (normalized.includes("/ovsg/")) return "OVSG";
   if (normalized.includes("/zill/")) return "ZILL";
   if (normalized.includes("/go/")) return "GO";
+  if (normalized.includes("/secundair/pov/")) return "POV";
+  if (normalized.includes("/secundair/")) return "KOV";
   return null;
 }
 

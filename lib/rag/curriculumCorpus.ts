@@ -69,6 +69,24 @@ const ZILL_CORPUS_FIXTURE = path.join(
   "fixtures",
   "curriculum-zill.jsonl",
 );
+const SECONDARY_CURRICULUM_PROD = path.join(
+  process.cwd(),
+  "data",
+  "secundair",
+  "leerplannen_secundair.jsonl",
+);
+const SECONDARY_MINIMUM_GOALS_PROD = path.join(
+  process.cwd(),
+  "data",
+  "secundair",
+  "minimumdoelen_secundair.jsonl",
+);
+const SECONDARY_POV_CURRICULUM_PROD = path.join(
+  process.cwd(),
+  "data",
+  "secundair",
+  "leerplannen_pov_secundair.jsonl",
+);
 
 const MIN_CORPUS_MATCH_SCORE = 0.32;
 const MIN_LOCAL_SEARCH_SCORE = 0.1;
@@ -147,19 +165,27 @@ function loadCorpusWithFallback(prodPath: string, fixturePath: string): RawRecor
 
 export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[] {
   if (network === "ALL") {
-    return (
+    return [
+      ...(
       ["OPSTAP", "OVSG", "GO_NIEUW", "ZILL"] as Array<
         Exclude<CurriculumNetworkFilter, "ALL">
       >
-    ).flatMap((key) => loadNetworkRecords(key));
+      ).flatMap((key) => loadNetworkRecords(key)),
+      ...loadJsonlAt(SECONDARY_CURRICULUM_PROD),
+      ...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD),
+    ];
   }
   return loadNetworkRecords(network);
+}
+
+export function secondaryMinimumGoalRecords(): RawRecord[] {
+  return loadJsonlAt(SECONDARY_MINIMUM_GOALS_PROD);
 }
 
 function loadNetworkRecords(
   network: Exclude<CurriculumNetworkFilter, "ALL">,
 ): RawRecord[] {
-  const records =
+  const primaryRecords =
     network === "OPSTAP"
       ? loadCorpusWithFallback(OPSTAP_CORPUS_PROD, OPSTAP_CORPUS_FIXTURE)
       : network === "OVSG"
@@ -169,6 +195,16 @@ function loadNetworkRecords(
           : network === "ZILL"
             ? loadCorpusWithFallback(ZILL_CORPUS_PROD, ZILL_CORPUS_FIXTURE)
             : [];
+  const secondaryRecords =
+    network === "KOV" || network === "GO" || network === "OVSG"
+      ? loadJsonlAt(SECONDARY_CURRICULUM_PROD).filter(
+          (raw) => asString(raw.netwerk).toUpperCase() === network,
+        )
+      : [];
+  if (network === "POV") {
+    secondaryRecords.push(...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD));
+  }
+  const records = [...primaryRecords, ...secondaryRecords];
 
   return records.map((raw) => ({
     ...raw,
@@ -217,6 +253,8 @@ function networkFromRaw(raw: RawRecord): CurriculumNetworkFilter | null {
   if (netwerk === "GO_NIEUW") return "GO_NIEUW";
   if (netwerk === "ZILL") return "ZILL";
   if (netwerk === "GO") return "GO";
+  if (netwerk === "KOV") return "KOV";
+  if (netwerk === "POV") return "POV";
   return null;
 }
 
@@ -900,19 +938,25 @@ export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[
     case "OPSTAP":
       return [OPSTAP_CORPUS_PROD];
     case "OVSG":
-      return [OVSG_CORPUS_PROD];
+      return [OVSG_CORPUS_PROD, SECONDARY_CURRICULUM_PROD];
     case "GO_NIEUW":
       return [GO_NIEUW_CORPUS_PROD];
     case "ZILL":
       return [ZILL_CORPUS_PROD];
     case "GO":
-      return [];
+      return [SECONDARY_CURRICULUM_PROD];
+    case "KOV":
+      return [SECONDARY_CURRICULUM_PROD];
+    case "POV":
+      return [SECONDARY_POV_CURRICULUM_PROD];
     case "ALL":
       return [
         OPSTAP_CORPUS_PROD,
         OVSG_CORPUS_PROD,
         GO_NIEUW_CORPUS_PROD,
         ZILL_CORPUS_PROD,
+        SECONDARY_CURRICULUM_PROD,
+        SECONDARY_POV_CURRICULUM_PROD,
       ];
   }
 }

@@ -57,4 +57,17 @@ describe("educationLevel", () => {
     expect(recordMatchesEducationLevel({ titel: "Doel" }, "ALL")).toBe(true);
     expect(recordMatchesEducationLevel({ titel: "Doel" }, "LAGER")).toBe(false);
   });
+
+  it("herkent secundaire graad- en finaliteitsmetadata", () => {
+    expect(
+      recordMatchesEducationLevel(
+        {
+          onderwijsniveau: "secundair onderwijs",
+          graad: "2de graad",
+          finaliteit: "doorstroomfinaliteit",
+        },
+        "SECUNDAIR",
+      ),
+    ).toBe(true);
+  });
 });

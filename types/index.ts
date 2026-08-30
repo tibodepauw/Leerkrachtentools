@@ -5,7 +5,9 @@ export type CurriculumNetworkFilter =
   | "OVSG"
   | "GO_NIEUW"
   | "ZILL"
-  | "GO";
+  | "GO"
+  | "KOV"
+  | "POV";
 export type EducationLevelFilter =
   | "ALL"
   | "KLEUTER"

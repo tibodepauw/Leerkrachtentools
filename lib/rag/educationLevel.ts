@@ -127,6 +127,16 @@ export function resultMatchesEducationLevel(
         : false;
   }
 
+  if (
+    level === "SECUNDAIR" &&
+    (result.netwerk === "VLAANDEREN" ||
+      /\b(?:1ste|2de|3de|eerste|tweede|derde)\s+graad\b|finaliteit|[AB]-stroom/iu.test(
+        result.leerjaarRoute,
+      ))
+  ) {
+    return true;
+  }
+
   return recordMatchesEducationLevel(
     {
       onderwijsniveau: result.leerjaarRoute,

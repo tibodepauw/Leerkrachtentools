@@ -67,4 +67,22 @@ describe("minimumGoalCandidates", () => {
     const codes = merged.map((item) => item.gelinktMinimumdoel?.code);
     expect(new Set(codes).size).toBe(codes.length);
   });
+
+  it("normaliseert secundaire minimumdoelen zonder basisschoolcode", () => {
+    const record = normalizeMinimumGoalCandidate({
+      onderwijsniveau: "secundair onderwijs",
+      graad: "1ste graad",
+      discipline: "Wiskunde",
+      gelinkt_minimumdoel: {
+        code: "06.12",
+        tekst: "De leerlingen analyseren een wiskundig probleem.",
+        type: "eindterm",
+      },
+      netwerk: "VLAANDEREN",
+    });
+
+    expect(record?.gelinktMinimumdoel?.code).toBe("06.12");
+    expect(record?.leerjaarRoute).toBe("1ste graad");
+    expect(record?.netwerk).toBe("VLAANDEREN");
+  });
 });

@@ -10,6 +10,7 @@ import {
 import {
   dedupeByMinimumGoalCode,
   recordsForNetwork,
+  secondaryMinimumGoalRecords,
   tokenize,
 } from "@/lib/rag/curriculumCorpus";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
@@ -20,8 +21,8 @@ type RawRecord = Record<string, unknown>;
 export const MINIMUM_GOAL_CANDIDATE_LIMIT = 50;
 
 const MINIMUM_GOAL_CORPUS_NETWORKS: Array<
-  Exclude<CurriculumNetworkFilter, "ALL" | "ZILL" | "GO" | "OVSG" | "GO_NIEUW">
-> = ["OPSTAP"];
+  "OPSTAP" | "VLAANDEREN"
+> = ["OPSTAP", "VLAANDEREN"];
 
 const MIN_CANDIDATE_TOKEN_MATCHES = 1;
 const MIN_CANDIDATE_SCORE = 0.12;
@@ -90,13 +91,18 @@ function asString(value: unknown): string {
   return typeof value === "string" ? decodeHtmlEntities(value.trim()) : "";
 }
 
-function networkFromRaw(raw: RawRecord): CurriculumNetworkFilter | null {
+function networkFromRaw(
+  raw: RawRecord,
+): CurriculumNetworkFilter | "VLAANDEREN" | null {
   const netwerk = asString(raw.netwerk ?? raw.network).toUpperCase();
   if (netwerk === "OPSTAP") return "OPSTAP";
   if (netwerk === "OVSG") return "OVSG";
   if (netwerk === "GO_NIEUW") return "GO_NIEUW";
   if (netwerk === "ZILL") return "ZILL";
   if (netwerk === "GO") return "GO";
+  if (netwerk === "KOV") return "KOV";
+  if (netwerk === "POV") return "POV";
+  if (netwerk === "VLAANDEREN") return "VLAANDEREN";
   return null;
 }
 
@@ -109,7 +115,14 @@ function normalizeMinimumGoal(raw: RawRecord) {
   const record = linked as Record<string, unknown>;
   const code = asString(record.code);
   const tekst = asString(record.tekst);
-  if (!code || !tekst || !isAhovoksMinimumGoalCode(code)) {
+  const isSecondary =
+    asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE") ===
+    "secundair onderwijs";
+  if (
+    !code ||
+    !tekst ||
+    (!isSecondary && !isAhovoksMinimumGoalCode(code))
+  ) {
     return null;
   }
 
@@ -123,6 +136,9 @@ function normalizeMinimumGoal(raw: RawRecord) {
 export function normalizeMinimumGoalCandidate(
   raw: RawRecord,
 ): CurriculumSearchResult | null {
+  const isSecondary =
+    asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE") ===
+    "secundair onderwijs";
   const minimum = normalizeMinimumGoal(raw);
   if (!minimum?.tekst) {
     return null;
@@ -149,14 +165,14 @@ export function normalizeMinimumGoalCandidate(
     subdomein: asString(raw.subdomein ?? raw.domain ?? raw.component),
     titel: hasLinkedMinimum ? asString(raw.titel ?? raw.text ?? raw.title) : "",
     toelichting: hasLinkedMinimum ? asString(raw.toelichting ?? raw.description) : "",
-    leerjaarRoute: "",
+    leerjaarRoute: asString(raw.leerjaar_route ?? raw.graad),
     gelinktMinimumdoel: minimum,
     netwerk: network,
     bronUrl: asString(raw.bron_url ?? raw.sourceUrl ?? raw.source_url),
     verrijking: "corpus",
   };
 
-  return normalizeAhovoksMinimumGoalResult(candidate);
+  return isSecondary ? candidate : normalizeAhovoksMinimumGoalResult(candidate);
 }
 
 function candidateHaystack(record: CurriculumSearchResult): string {
@@ -230,7 +246,10 @@ export function collectMinimumGoalCandidates({
     tokenMatches: number;
   }> = [];
 
-  for (const raw of recordsForNetwork("ALL")) {
+  for (const raw of [
+    ...recordsForNetwork("ALL"),
+    ...secondaryMinimumGoalRecords(),
+  ]) {
     const network = networkFromRaw(raw);
     if (
       !network ||

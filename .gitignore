@@ -29,6 +29,7 @@
 /data/minimumdoelen/
 /data/opstap/
 /data/go_nieuw/
+/data/secundair/
 
 # Sjablonen en documenten
 data/templates/*.docx

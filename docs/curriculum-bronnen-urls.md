@@ -1,4 +1,4 @@
-# Officiële bron-URL's - Vlaams basisonderwijs
+# Officiële bron-URL's - Vlaams basis- en secundair onderwijs
 
 Overzicht van de **huidige officiële overzichts- en downloadpagina's** voor de vier
 koepels. Dit document beschrijft bewust **niet** het GO!-concept *nieuw leerplan
@@ -126,3 +126,81 @@ data/minimumdoelen/
 
 Elk bestand krijgt een JSON-sidecar (`*.meta.json`) met `network`, `onderwijsniveau`
 (`lager onderwijs`) en `brontitel`.
+
+---
+
+## 5. Secundair onderwijs
+
+### Welke doelen bestaan er?
+
+De Vlaamse overheid legt voor het secundair onderwijs minimumdoelen vast per
+graad, stroom en finaliteit. De officiële terminologie omvat onder meer
+eindtermen, eindtermen basisgeletterdheid, uitbreidingsdoelen Nederlands,
+cesuurdoelen en specifieke minimumdoelen. De onderwijsverstrekkers vertalen die
+naar goedgekeurde leerplannen en voegen eigen leerplandoelen toe.
+
+| Bron | Officiële ingang | Publieke toegang |
+|------|-------------------|------------------|
+| Vlaamse minimumdoelen | https://www.onderwijsdoelen.be/ | Zoekportaal; `/resultaten` wordt door robots.txt uitgesloten van scraping |
+| Onderwijsdoelen 1.0 API | https://onderwijs-api-portaal.vlaanderen.be/node/126 | JSON met gratis aan te vragen API-key |
+| GO! | https://pro.g-o.be/themas/leerplannen/ | Publieke PDF's voor alle graden/finaliteiten |
+| Katholiek Onderwijs Vlaanderen | https://pro.katholiekonderwijs.vlaanderen/vakken-en-leerplannen?tab=eerstegraad | Publieke actuele Word/PDF-versies; LLinkid zelf vereist een account |
+| OVSG | https://www.ovsg.be/leerplannen-secundair-onderwijs | Publieke documenten; eigen leerplannen vooral voor de eerste graad en unieke richtingen |
+| Provinciaal Onderwijs Vlaanderen | https://pov.classid.io/website/sapo-endpoints | Officiële Doelenverdeler-API; gratis API-key via registratie |
+
+OVSG ontwikkelt sinds de modernisering niet langer voor elke richting in de
+tweede en derde graad een eigen leerplan. Stedelijke en gemeentelijke scholen
+kunnen daar ook goedgekeurde plannen van GO!, Katholiek Onderwijs Vlaanderen of
+Provinciaal Onderwijs Vlaanderen gebruiken. Daarom worden die plannen niet als
+OVSG-duplicaten geïndexeerd.
+
+### Leerplannen scrapen
+
+```bash
+pip install -r scripts/requirements-curriculum.txt
+
+# Alle publiek scrape-bare verstrekkers
+python3 scripts/scrape_secondary_curricula.py
+
+# Eén verstrekker of een beperkte controlerun
+python3 scripts/scrape_secondary_curricula.py --provider GO
+python3 scripts/scrape_secondary_curricula.py --provider KOV --limit 2
+python3 scripts/scrape_secondary_curricula.py --provider OVSG --limit 2
+
+# Provinciale leerplannen via de officiële API
+export POV_API_KEY="..."
+python3 scripts/fetch_pov_secondary_curricula.py
+```
+
+De scraper ontdekt telkens de actuele downloadlinks, bewaart bronbestanden in
+`data/secundair/downloads/` en schrijft genormaliseerde doelen naar
+`data/secundair/leerplannen_secundair.jsonl`. GO!- en OVSG-PDF's en katholieke
+Word-documenten hebben elk een eigen parser.
+
+De POV-API gebruikt `https://classid.io/api/leerplannen/list` voor het overzicht
+en `https://classid.io/api/leerplannen/{leerplanId}/detailed` voor doelen. De
+genormaliseerde uitvoer staat in
+`data/secundair/leerplannen_pov_secundair.jsonl`.
+
+### Minimumdoelen ophalen
+
+Scrape `onderwijsdoelen.be/resultaten` niet: de site sluit dat pad expliciet uit
+in `robots.txt`. Gebruik de officiële Onderwijsdoelen-API:
+
+```bash
+export ONDERWIJSDOELEN_API_KEY="..."
+python3 scripts/fetch_secondary_minimum_goals.py
+```
+
+De uitvoer is `data/secundair/minimumdoelen_secundair.jsonl`. API-endpoint en
+filters zijn configureerbaar, omdat de Swagger-specificatie per API-versie kan
+wijzigen:
+
+```bash
+python3 scripts/fetch_secondary_minimum_goals.py \
+  --api-url "$ONDERWIJSDOELEN_API_BASE/v1/onderwijsdoelen/doelen" \
+  --filter onderwijsniveau="secundair onderwijs"
+```
+
+API-keys worden alleen uit de omgeving of CLI gelezen en nooit in rapporten of
+corpusbestanden opgeslagen.

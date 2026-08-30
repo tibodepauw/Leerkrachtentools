@@ -68,6 +68,8 @@ const NETWORK_OPTIONS: Array<{
   { value: "GO_NIEUW", label: "GO! · Nieuw leerplan" },
   { value: "ZILL", label: "ZILL · Katholiek onderwijs" },
   { value: "GO", label: "GO! · Legacy leerplan" },
+  { value: "KOV", label: "Katholiek onderwijs · Secundair" },
+  { value: "POV", label: "Provinciaal onderwijs · Secundair" },
 ];
 
 const EDUCATION_LEVEL_OPTIONS: Array<{
@@ -377,13 +379,6 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                   </Select>
                 </div>
               </div>
-              {educationLevel === "SECUNDAIR" ? (
-                <p className="text-xs text-amber-400/80">
-                  De huidige lokale corpus bevat nog geen leerplannen of
-                  minimumdoelen voor het secundair onderwijs.
-                </p>
-              ) : null}
-
               <LessonGoalSelector
                 id={`${variant}-goal`}
                 label="Kies een actief lesdoel"

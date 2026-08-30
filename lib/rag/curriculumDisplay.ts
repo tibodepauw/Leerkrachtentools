@@ -6,6 +6,8 @@ const NETWORK_BADGE_LABELS: Record<string, string> = {
   GO_NIEUW: "GO! Nieuw",
   ZILL: "ZILL",
   GO: "GO! Legacy",
+  KOV: "Katholiek Onderwijs",
+  POV: "Provinciaal Onderwijs",
 };
 
 const GOAL_CODE_PATTERNS = [

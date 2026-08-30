@@ -92,6 +92,8 @@ Local search indexes official goal corpora:
 | Op.stap | Katholiek onderwijs Op.stap |
 | GO | GO! basisonderwijs vakleerplannen (9 subject books) |
 | GO! Nieuw | GO! basisonderwijs 12 doelensets |
+| Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen |
+| Vlaamse overheid | Officiële secundaire minimumdoelen via Onderwijsdoelen 1.0 API |
 
 Maintenance scripts (optional, not required to run the app UI):
 
@@ -102,6 +104,9 @@ python3 scripts/scrape_zill_full.py      # requires: playwright install chromium
 python3 scripts/scrape_opstap_full.py
 python3 scripts/fetch_go_nieuw.py
 python3 scripts/scrape_ovsg_full.py        # requires OVSG credentials in env
+python3 scripts/scrape_secondary_curricula.py
+python3 scripts/fetch_pov_secondary_curricula.py  # requires POV_API_KEY
+python3 scripts/fetch_secondary_minimum_goals.py  # requires ONDERWIJSDOELEN_API_KEY
 ```
 
 See `docs/curriculum-bronnen-urls.md` for official source URLs.
