@@ -105,8 +105,8 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ZILL">Katholiek · ZILL</SelectItem>
-                      <SelectItem value="OVSG">OVSG · LeerLokaal</SelectItem>
+                      <SelectItem value="ZILL">Katholiek / ZILL</SelectItem>
+                      <SelectItem value="OVSG">OVSG / LeerLokaal</SelectItem>
                       <SelectItem value="GO">GO!</SelectItem>
                     </SelectContent>
                   </Select>
