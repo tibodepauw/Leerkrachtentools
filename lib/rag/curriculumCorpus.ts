@@ -3,6 +3,7 @@ import path from "node:path";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
+  EducationLevelFilter,
   LinkedMinimumGoal,
 } from "@/types";
 import type { DiscoveryHit } from "@/lib/rag/discoveryEngine";
@@ -16,6 +17,7 @@ import {
   scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
+import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
 
 type RawRecord = Record<string, unknown>;
 
@@ -408,13 +410,17 @@ function blendScore(discoveryScore: number, corpusScore: number): number {
 export function findCorpusRecordByCode(
   code: string,
   network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter = "ALL",
 ): CurriculumSearchResult | null {
   const needle = code.trim();
   if (!needle) {
     return null;
   }
   for (const raw of recordsForNetwork(network)) {
-    if (!recordMatchesNetwork(raw, network)) {
+    if (
+      !recordMatchesNetwork(raw, network) ||
+      !recordMatchesEducationLevel(raw, educationLevel)
+    ) {
       continue;
     }
     if (asString(raw.code) === needle) {
@@ -429,12 +435,14 @@ export function findBestCorpusMatch({
   query,
   title,
   network,
+  educationLevel = "ALL",
   relaxed = false,
 }: {
   snippet: string;
   query: string;
   title?: string;
   network: CurriculumNetworkFilter;
+  educationLevel?: EducationLevelFilter;
   relaxed?: boolean;
 }): (CurriculumSearchResult & { score: number }) | null {
   const queryTokens = tokenizeCurriculumQuery(query);
@@ -458,7 +466,10 @@ export function findBestCorpusMatch({
     | null = null;
 
   for (const raw of recordsForNetwork(network)) {
-    if (!recordMatchesNetwork(raw, network)) {
+    if (
+      !recordMatchesNetwork(raw, network) ||
+      !recordMatchesEducationLevel(raw, educationLevel)
+    ) {
       continue;
     }
     const record = normalizeRecord(raw, networkFromRaw(raw));
@@ -521,11 +532,13 @@ export function findBestCorpusMatch({
 export function searchLocalCorpus({
   query,
   network,
+  educationLevel = "ALL",
   limit = CURRICULUM_TOP_N,
   candidateLimit = CURRICULUM_CANDIDATE_LIMIT,
 }: {
   query: string;
   network?: CurriculumNetworkFilter;
+  educationLevel?: EducationLevelFilter;
   limit?: number;
   candidateLimit?: number;
 }): Array<CurriculumSearchResult & { score: number }> {
@@ -542,7 +555,10 @@ export function searchLocalCorpus({
   }> = [];
 
   for (const raw of recordsForNetwork(scopedNetwork)) {
-    if (!recordMatchesNetwork(raw, scopedNetwork)) {
+    if (
+      !recordMatchesNetwork(raw, scopedNetwork) ||
+      !recordMatchesEducationLevel(raw, educationLevel)
+    ) {
       continue;
     }
     const record = normalizeRecord(raw, networkFromRaw(raw));
@@ -761,6 +777,7 @@ export function enrichHitFromCorpus(
   hit: DiscoveryHit,
   query: string,
   network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter = "ALL",
 ): (CurriculumSearchResult & { score: number }) | null {
   if (network !== "ALL" && hit.network && hit.network !== network) {
     return null;
@@ -777,7 +794,11 @@ export function enrichHitFromCorpus(
 
   const code = extractCodeFromSnippet(`${snippet} ${title}`);
   if (code) {
-    const byCode = findCorpusRecordByCode(code, scopedNetwork);
+    const byCode = findCorpusRecordByCode(
+      code,
+      scopedNetwork,
+      educationLevel,
+    );
     if (byCode) {
       return {
         ...byCode,
@@ -795,6 +816,7 @@ export function enrichHitFromCorpus(
     query,
     title,
     network: scopedNetwork,
+    educationLevel,
   });
   if (corpusMatch) {
     return {
@@ -814,17 +836,24 @@ export function resolveDiscoveryCandidates({
   hits,
   query,
   network,
+  educationLevel = "ALL",
   semanticFallback = false,
 }: {
   hits: DiscoveryHit[];
   query: string;
   network: CurriculumNetworkFilter;
+  educationLevel?: EducationLevelFilter;
   semanticFallback?: boolean;
 }): Array<CurriculumSearchResult & { score: number }> {
   const resolved: Array<CurriculumSearchResult & { score: number }> = [];
 
   for (const hit of hits) {
-    const enriched = enrichHitFromCorpus(hit, query, network);
+    const enriched = enrichHitFromCorpus(
+      hit,
+      query,
+      network,
+      educationLevel,
+    );
     if (enriched) {
       resolved.push(enriched);
       continue;
@@ -839,6 +868,7 @@ export function resolveDiscoveryCandidates({
       query,
       title: hit.title,
       network,
+      educationLevel,
       relaxed: true,
     });
     if (relaxedMatch) {
@@ -853,11 +883,13 @@ export function resolveDiscoveryCandidates({
       continue;
     }
 
-    const fragment = buildFragmentResult(hit);
-    resolved.push({
-      ...fragment,
-      score: Math.max(fragment.score, hit.relevanceScore * 0.82),
-    });
+    if (educationLevel === "ALL") {
+      const fragment = buildFragmentResult(hit);
+      resolved.push({
+        ...fragment,
+        score: Math.max(fragment.score, hit.relevanceScore * 0.82),
+      });
+    }
   }
 
   return resolved.sort((left, right) => right.score - left.score);

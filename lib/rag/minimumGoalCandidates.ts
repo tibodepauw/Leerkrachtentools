@@ -1,6 +1,7 @@
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
+  EducationLevelFilter,
 } from "@/types";
 import {
   isAhovoksMinimumGoalCode,
@@ -12,6 +13,7 @@ import {
   tokenize,
 } from "@/lib/rag/curriculumCorpus";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
+import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
 
 type RawRecord = Record<string, unknown>;
 
@@ -210,9 +212,11 @@ function scoreMinimumGoalCandidate(
 
 export function collectMinimumGoalCandidates({
   query,
+  educationLevel = "ALL",
   limit = MINIMUM_GOAL_CANDIDATE_LIMIT,
 }: {
   query: string;
+  educationLevel?: EducationLevelFilter;
   limit?: number;
 }): Array<CurriculumSearchResult & { score: number }> {
   const queryTokens = tokenizeMinimumGoalQuery(query);
@@ -238,7 +242,7 @@ export function collectMinimumGoalCandidates({
     }
 
     const record = normalizeMinimumGoalCandidate(raw);
-    if (!record) {
+    if (!record || !resultMatchesEducationLevel(record, educationLevel)) {
       continue;
     }
 

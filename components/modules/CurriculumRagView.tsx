@@ -40,7 +40,11 @@ import {
 import { formatAhovoksMinimumGoalCopy } from "@/lib/rag/ahovoksMinimumGoals";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
-import type { CurriculumNetworkFilter, CurriculumSearchResult } from "@/types";
+import type {
+  CurriculumNetworkFilter,
+  CurriculumSearchResult,
+  EducationLevelFilter,
+} from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -64,6 +68,16 @@ const NETWORK_OPTIONS: Array<{
   { value: "GO_NIEUW", label: "GO! · Nieuw leerplan" },
   { value: "ZILL", label: "ZILL · Katholiek onderwijs" },
   { value: "GO", label: "GO! · Legacy leerplan" },
+];
+
+const EDUCATION_LEVEL_OPTIONS: Array<{
+  value: EducationLevelFilter;
+  label: string;
+}> = [
+  { value: "ALL", label: "Alle onderwijsniveaus" },
+  { value: "KLEUTER", label: "Kleuteronderwijs" },
+  { value: "LAGER", label: "Lager onderwijs" },
+  { value: "SECUNDAIR", label: "Secundair onderwijs" },
 ];
 
 const variantCopy: Record<
@@ -275,12 +289,14 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const [network, setNetwork] = useState<CurriculumNetworkFilter>(() =>
     mapEducationNetwork(lesson.educationNetwork),
   );
+  const [educationLevel, setEducationLevel] =
+    useState<EducationLevelFilter>("ALL");
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
-      : `${variant}:${network}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
+      ? `${variant}:${educationLevel}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
+      : `${variant}:${network}:${educationLevel}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -311,20 +327,48 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
         <ModuleInputLayout
           fields={
             <div className="space-y-5">
-              {variant === "leerplandoel" ? (
+              <div
+                className={
+                  variant === "leerplandoel"
+                    ? "grid gap-4 sm:grid-cols-2"
+                    : undefined
+                }
+              >
+                {variant === "leerplandoel" ? (
+                  <div className="space-y-2">
+                    <Label>Onderwijsnet</Label>
+                    <Select
+                      value={network}
+                      onValueChange={(value) =>
+                        setNetwork(value as CurriculumNetworkFilter)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {NETWORK_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
                 <div className="space-y-2">
-                  <Label>Onderwijsnet</Label>
+                  <Label>Onderwijsniveau</Label>
                   <Select
-                    value={network}
+                    value={educationLevel}
                     onValueChange={(value) =>
-                    setNetwork(value as CurriculumNetworkFilter)
-                  }
+                      setEducationLevel(value as EducationLevelFilter)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {NETWORK_OPTIONS.map((option) => (
+                      {EDUCATION_LEVEL_OPTIONS.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -332,6 +376,12 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              {educationLevel === "SECUNDAIR" ? (
+                <p className="text-xs text-amber-400/80">
+                  De huidige lokale corpus bevat nog geen leerplannen of
+                  minimumdoelen voor het secundair onderwijs.
+                </p>
               ) : null}
 
               <LessonGoalSelector
@@ -385,12 +435,14 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     variant === "minimumdoel"
                       ? {
                           goal: text,
+                          educationLevel,
                           grade: lesson.grade,
                           ageRange: lesson.ageRange,
                         }
                       : {
                           goal: text,
                           network,
+                          educationLevel,
                           grade: lesson.grade,
                           ageRange: lesson.ageRange,
                         },

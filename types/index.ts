@@ -6,6 +6,11 @@ export type CurriculumNetworkFilter =
   | "GO_NIEUW"
   | "ZILL"
   | "GO";
+export type EducationLevelFilter =
+  | "ALL"
+  | "KLEUTER"
+  | "LAGER"
+  | "SECUNDAIR";
 export type GoalTaxonomy = "MC" | "DAS" | "SPM";
 export type ModuleId =
   | "active-lesson"

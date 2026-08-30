@@ -18,6 +18,7 @@ import { applyTargetGroupRanking } from "@/lib/rag/targetGroupBonus";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
+  EducationLevelFilter,
   TargetGroupSearchContext,
 } from "@/types";
 
@@ -28,6 +29,12 @@ const NETWORKS = new Set<CurriculumNetworkFilter>([
   "GO_NIEUW",
   "ZILL",
   "GO",
+]);
+const EDUCATION_LEVELS = new Set<EducationLevelFilter>([
+  "ALL",
+  "KLEUTER",
+  "LAGER",
+  "SECUNDAIR",
 ]);
 
 type CurriculumSearchPayload = {
@@ -40,6 +47,7 @@ type CurriculumSearchPayload = {
 async function runCurriculumSearch(
   query: string,
   network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter,
   options?: {
     excludeNetwork?: CurriculumNetworkFilter;
     targetGroup?: TargetGroupSearchContext;
@@ -48,6 +56,7 @@ async function runCurriculumSearch(
   const localCandidates = searchLocalCorpus({
     query,
     network,
+    educationLevel,
     limit: CURRICULUM_TOP_N,
   });
 
@@ -66,6 +75,7 @@ async function runCurriculumSearch(
       hits: discovery.hits,
       query,
       network,
+      educationLevel,
       semanticFallback,
     }).filter(
       (item) => semanticFallback || isStructuredResult(item),
@@ -128,6 +138,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       goal?: string;
       network?: CurriculumNetworkFilter;
+      educationLevel?: EducationLevelFilter;
       grade?: TargetGroupSearchContext["grade"];
       ageRange?: string;
     };
@@ -148,16 +159,29 @@ export async function POST(request: Request) {
       );
     }
 
+    const educationLevel = body.educationLevel ?? "ALL";
+    if (!EDUCATION_LEVELS.has(educationLevel)) {
+      return NextResponse.json(
+        { error: "Selecteer een geldig onderwijsniveau." },
+        { status: 400 },
+      );
+    }
+
     const targetGroup: TargetGroupSearchContext = {
       grade: body.grade ?? "",
       ageRange: body.ageRange?.trim() ?? "",
     };
 
-    let searchResult = await runCurriculumSearch(query, network, { targetGroup });
+    let searchResult = await runCurriculumSearch(
+      query,
+      network,
+      educationLevel,
+      { targetGroup },
+    );
     let networkFallbackNotice: string | undefined;
 
     if (searchResult.merged.length === 0 && network !== "ALL") {
-      const fallback = await runCurriculumSearch(query, "ALL", {
+      const fallback = await runCurriculumSearch(query, "ALL", educationLevel, {
         excludeNetwork: network,
         targetGroup,
       });

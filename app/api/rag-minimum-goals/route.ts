@@ -19,7 +19,19 @@ import {
   MINIMUM_GOALS_TOP_N,
   rankMinimumGoalResults,
 } from "@/lib/rag/minimumGoalRanking";
-import type { CurriculumSearchResult, TargetGroupSearchContext } from "@/types";
+import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
+import type {
+  CurriculumSearchResult,
+  EducationLevelFilter,
+  TargetGroupSearchContext,
+} from "@/types";
+
+const EDUCATION_LEVELS = new Set<EducationLevelFilter>([
+  "ALL",
+  "KLEUTER",
+  "LAGER",
+  "SECUNDAIR",
+]);
 
 function hasMinimumGoal(
   result: CurriculumSearchResult,
@@ -57,6 +69,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       goal?: string;
+      educationLevel?: EducationLevelFilter;
       grade?: TargetGroupSearchContext["grade"];
       ageRange?: string;
     };
@@ -69,7 +82,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const localCandidates = collectMinimumGoalCandidates({ query, limit: 50 });
+    const educationLevel = body.educationLevel ?? "ALL";
+    if (!EDUCATION_LEVELS.has(educationLevel)) {
+      return NextResponse.json(
+        { error: "Selecteer een geldig onderwijsniveau." },
+        { status: 400 },
+      );
+    }
+
+    const localCandidates = collectMinimumGoalCandidates({
+      query,
+      educationLevel,
+      limit: 50,
+    });
 
     let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
       [];
@@ -82,10 +107,15 @@ export async function POST(request: Request) {
 
       discoveryCandidates = toAhovoksCandidates(
         discovery.hits
-          .map((hit) => enrichHitFromCorpus(hit, query, "ALL"))
+          .map((hit) =>
+            enrichHitFromCorpus(hit, query, "ALL", educationLevel),
+          )
           .filter(
             (item): item is CurriculumSearchResult & { score: number } =>
-              item !== null && isStructuredResult(item) && hasMinimumGoal(item),
+              item !== null &&
+              isStructuredResult(item) &&
+              hasMinimumGoal(item) &&
+              resultMatchesEducationLevel(item, educationLevel),
           ),
       );
     } catch {
