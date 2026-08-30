@@ -1,38 +1,53 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { copyFileSync, mkdirSync, rmSync } from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
 
-const baseHost = process.env.WORDMARK_EXPORT_URL ?? "http://127.0.0.1:3000";
+const baseHost = process.env.WORDMARK_EXPORT_URL ?? "http://127.0.0.1:43123";
 const framesDir = path.join("/tmp", "wordmark-gather-frames");
 const pngOutput = path.join("docs", "assets", "banner-wordmark.png");
 const gifOutput = path.join("docs", "assets", "banner-wordmark-gather.gif");
 
-/** Gather: 1.45s duration + up to 16×55ms stagger ≈ 2.33s until settled. */
-const ANIMATION_MS = 2500;
-const CAPTURE_INTERVAL_MS = 25;
+/** Last letter: 16×55ms stagger + 1450ms duration ≈ 2.33s */
+const ANIMATION_MS = 2600;
+const SETTLE_MS = 500;
+const CAPTURE_INTERVAL_MS = 40;
 const HOLD_SECONDS = 10;
-const OUTPUT_FPS = 40;
+const OUTPUT_FPS = 20;
 
 rmSync(framesDir, { recursive: true, force: true });
 mkdirSync(framesDir, { recursive: true });
 
 const browser = await chromium.launch();
-const page = await browser.newPage({
+const context = await browser.newContext({
   viewport: { width: 1200, height: 360 },
   deviceScaleFactor: 2,
+  reducedMotion: "no-preference",
+});
+const page = await context.newPage();
+
+await page.addStyleTag({
+  content: `
+    nextjs-portal,
+    [data-nextjs-badge-root],
+    [data-nextjs-toast],
+    [data-nextjs-dev-tools-button],
+    #__next-build-watcher {
+      display: none !important;
+    }
+  `,
 });
 
 async function waitForFonts() {
   await page.waitForFunction(() => document.fonts.ready);
-  await page.waitForTimeout(100);
+  await page.waitForTimeout(150);
 }
 
 async function screenshotCanvas(targetPath) {
   await page.locator("#wordmark-export").screenshot({ path: targetPath });
 }
 
-// --- Static PNG (Rubik via browser, not sharp-on-SVG) ---
+// --- Static PNG ---
 await page.goto(`${baseHost}/dev/wordmark-export?mode=static`, {
   waitUntil: "networkidle",
 });
@@ -40,11 +55,12 @@ await waitForFonts();
 await screenshotCanvas(pngOutput);
 console.log(`Wrote ${pngOutput}`);
 
-// --- Animated GIF: gather + 10s hold on final frame ---
+// --- Animated GIF ---
 await page.goto(`${baseHost}/dev/wordmark-export?mode=gather&fresh=${Date.now()}`, {
   waitUntil: "networkidle",
 });
 await waitForFonts();
+await page.waitForTimeout(80);
 
 const animationFrameCount = Math.ceil(ANIMATION_MS / CAPTURE_INTERVAL_MS);
 let frameIndex = 0;
@@ -55,7 +71,7 @@ for (let step = 0; step < animationFrameCount; step += 1) {
   await page.waitForTimeout(CAPTURE_INTERVAL_MS);
 }
 
-await page.waitForTimeout(350);
+await page.waitForTimeout(SETTLE_MS);
 const finalFramePath = path.join(framesDir, "final.png");
 await screenshotCanvas(finalFramePath);
 
@@ -77,6 +93,8 @@ execFileSync(
     path.join(framesDir, "frame-%05d.png"),
     "-frames:v",
     String(frameIndex),
+    "-loop",
+    "0",
     "-vf",
     [
       "scale=1200:360:flags=lanczos",
@@ -90,7 +108,7 @@ execFileSync(
 );
 
 console.log(
-  `Wrote ${gifOutput} (${animationFrameCount} anim frames + ${holdFrameCount} hold frames @ ${OUTPUT_FPS}fps)`,
+  `Wrote ${gifOutput} (${animationFrameCount} anim + ${holdFrameCount} hold @ ${OUTPUT_FPS}fps)`,
 );
 
 function frameName(index) {

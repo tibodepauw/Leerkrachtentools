@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="docs/assets/banner-wordmark-gather.gif" alt="Leerkrachtentools" width="100%" />
+  <img
+    src="docs/assets/banner-wordmark-gather.gif?v=2"
+    alt="Leerkrachtentools"
+    width="100%"
+  />
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)

@@ -5,25 +5,30 @@ import {
   shouldShowSplash,
 } from "@/lib/loading/splashSession";
 
+function createSessionStorageMock() {
+  const store: Record<string, string> = {};
+  return {
+    getItem(key: string) {
+      return store[key] ?? null;
+    },
+    setItem(key: string, value: string) {
+      store[key] = value;
+    },
+    removeItem(key: string) {
+      delete store[key];
+    },
+    clear() {
+      for (const key of Object.keys(store)) {
+        delete store[key];
+      }
+    },
+  };
+}
+
 describe("splashSession", () => {
   beforeEach(() => {
     vi.stubGlobal("window", {});
-    vi.stubGlobal("sessionStorage", {
-      store: {} as Record<string, string>,
-      getItem(key: string) {
-        return this.store[key] ?? null;
-      },
-      setItem(key: string, value: string) {
-        this.store[key] = value;
-      },
-      removeItem(key: string) {
-        delete this.store[key];
-      },
-      clear() {
-        this.store = {};
-      },
-    });
-    sessionStorage.clear();
+    vi.stubGlobal("sessionStorage", createSessionStorageMock());
     vi.stubGlobal("performance", {
       getEntriesByType: () => [{ type: "navigate" }],
     });

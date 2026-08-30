@@ -14,7 +14,8 @@
     "fetch:all": "python3 scripts/fetch_all_curriculum.py",
     "fetch:domains": "python3 scripts/fetch_onderwijsdoelen_domains.py",
     "export:secundair": "python3 scripts/export_secundair_zip.py",
-    "export:banner": "node scripts/export-banner-assets.mjs"
+    "export:banner": "node scripts/export-banner-prod.mjs",
+    "export:banner:dev": "node scripts/export-banner-assets.mjs"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.78",

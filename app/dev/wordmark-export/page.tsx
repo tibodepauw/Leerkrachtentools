@@ -22,7 +22,9 @@ function WordmarkExportCanvas() {
 export default function WordmarkExportPage() {
   return (
     <Suspense fallback={<div className="h-[360px] w-[1200px] bg-black" />}>
-      <WordmarkExportCanvas />
+      <div className="wordmark-export-root bg-black">
+        <WordmarkExportCanvas />
+      </div>
     </Suspense>
   );
 }

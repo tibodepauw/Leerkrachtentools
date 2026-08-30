@@ -199,6 +199,12 @@
   }
 }
 
+.wordmark-export-root .wordmark-loader {
+  width: 68rem;
+  height: 7rem;
+  font-size: 4.5rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wordmark-loader__letter--gather {
     animation: wordmark-gather-reduced 0.4s ease-out var(--delay, 0ms) forwards;
