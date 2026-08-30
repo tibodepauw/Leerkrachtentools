@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ProviderName } from "@/lib/ai/providers";
+import { getGoogleModelId } from "@/lib/ai/googleModel";
 
 export interface ListedModel {
   id: string;
@@ -99,7 +100,7 @@ export async function listProviderModels(
 export function defaultModelForProvider(provider: ProviderName) {
   switch (provider) {
     case "google":
-      return "gemini-2.5-flash-lite";
+      return getGoogleModelId();
     case "groq":
       return "llama-3.3-70b-versatile";
     case "cerebras":

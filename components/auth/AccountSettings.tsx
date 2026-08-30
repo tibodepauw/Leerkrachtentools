@@ -33,6 +33,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { detachClientUserStorage } from "@/lib/storage/clientUserSession";
 import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
+import { SettingsView } from "@/components/settings/SettingsView";
 
 interface AccountSettingsProps {
   userId: string;
@@ -260,6 +261,8 @@ export function AccountSettings({
           <div className="xl:col-span-2">
             <ApiKeysSettings />
           </div>
+
+          <SettingsView />
 
           <Card>
             <CardHeader>

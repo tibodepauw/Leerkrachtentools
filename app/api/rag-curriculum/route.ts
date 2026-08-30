@@ -19,6 +19,7 @@ import {
   searchLocalCorpus,
 } from "@/lib/rag/curriculumCorpus";
 import { applyTargetGroupRanking } from "@/lib/rag/targetGroupBonus";
+import { resolveRagSearchQuery } from "@/lib/rag/queryRewriter";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
@@ -160,6 +161,7 @@ export async function POST(request: Request) {
       secondaryFinality?: TargetGroupSearchContext["secondaryFinality"];
       domainDetail?: TargetGroupSearchContext["domainDetail"];
       domainFinality?: TargetGroupSearchContext["domainFinality"];
+      enableLlmQueryRewriting?: boolean;
     };
 
     const query = body.goal?.trim();
@@ -198,8 +200,13 @@ export async function POST(request: Request) {
       educationLevel,
     };
 
-    let searchResult = await runCurriculumSearch(
+    const { searchQuery, rewrite } = await resolveRagSearchQuery(
       query,
+      body.enableLlmQueryRewriting === true,
+    );
+
+    let searchResult = await runCurriculumSearch(
+      searchQuery,
       network,
       educationLevel,
       { targetGroup },
@@ -211,10 +218,15 @@ export async function POST(request: Request) {
       network !== "ALL" &&
       !isAhovoksDomainLevel(educationLevel)
     ) {
-      const fallback = await runCurriculumSearch(query, "ALL", educationLevel, {
-        excludeNetwork: network,
-        targetGroup,
-      });
+      const fallback = await runCurriculumSearch(
+        searchQuery,
+        "ALL",
+        educationLevel,
+        {
+          excludeNetwork: network,
+          targetGroup,
+        },
+      );
 
       if (fallback.merged.length > 0) {
         searchResult = {
@@ -237,6 +249,7 @@ export async function POST(request: Request) {
         corpusNotice: searchResult.corpusNotice,
         networkFallbackNotice,
         retrievalMode: searchResult.retrievalMode,
+        queryRewrite: rewrite,
       },
       provider: "jsonl-corpus+discovery-engine",
       fallbackErrors: [],

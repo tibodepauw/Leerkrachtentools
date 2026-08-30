@@ -54,6 +54,7 @@ import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilte
 import { formatMinimumGoalCopy } from "@/lib/rag/minimumGoalCopy";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
@@ -323,6 +324,9 @@ function MinimumGoalCard({
 function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const copy = variantCopy[variant];
   const lesson = useLessonStore((state) => state.lesson);
+  const enableLlmQueryRewriting = useSettingsStore(
+    (state) => state.enableLlmQueryRewriting,
+  );
   const [network, setNetwork] = useState<CurriculumNetworkFilter>(() =>
     mapEducationNetwork(lesson.educationNetwork),
   );
@@ -612,6 +616,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                           secondaryFinality: secondaryFinalityFilter,
                           domainDetail: domainDetailFilter,
                           domainFinality: domainFinalityFilter,
+                          enableLlmQueryRewriting,
                         }
                       : {
                           goal: text,
@@ -623,6 +628,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                           secondaryFinality: secondaryFinalityFilter,
                           domainDetail: domainDetailFilter,
                           domainFinality: domainFinalityFilter,
+                          enableLlmQueryRewriting,
                         },
                   )
                 }

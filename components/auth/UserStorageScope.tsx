@@ -11,6 +11,7 @@ import {
   resetLessonStoreState,
   useLessonStore,
 } from "@/stores/useLessonStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 interface UserStorageScopeProps {
   userId: string;
@@ -34,14 +35,17 @@ export function UserStorageScope({ userId, children }: UserStorageScopeProps) {
       await migrateLegacyDocumentStorage(userId);
 
       await useLessonStore.persist.rehydrate();
+      await useSettingsStore.persist.rehydrate();
       if (cancelled) return;
 
       useLessonStore.getState().setStorageUserId(userId);
       useLessonStore.getState().setHydrated(true);
+      useSettingsStore.getState().setHydrated(true);
       setReadyUserId(userId);
     }
 
     useLessonStore.getState().setHydrated(false);
+    useSettingsStore.getState().setHydrated(false);
     void activateUserStorage();
 
     return () => {

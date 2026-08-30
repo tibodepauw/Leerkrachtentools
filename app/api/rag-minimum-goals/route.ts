@@ -20,6 +20,7 @@ import {
   rankMinimumGoalResults,
 } from "@/lib/rag/minimumGoalRanking";
 import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
+import { resolveRagSearchQuery } from "@/lib/rag/queryRewriter";
 import type {
   CurriculumSearchResult,
   EducationLevelFilter,
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
       secondaryFinality?: TargetGroupSearchContext["secondaryFinality"];
       domainDetail?: TargetGroupSearchContext["domainDetail"];
       domainFinality?: TargetGroupSearchContext["domainFinality"];
+      enableLlmQueryRewriting?: boolean;
     };
     const query = body.goal?.trim();
 
@@ -101,8 +103,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const localCandidates = collectMinimumGoalCandidates({
+    const { searchQuery, rewrite } = await resolveRagSearchQuery(
       query,
+      body.enableLlmQueryRewriting === true,
+    );
+
+    const localCandidates = collectMinimumGoalCandidates({
+      query: searchQuery,
       educationLevel,
       limit: 50,
     });
@@ -111,7 +118,7 @@ export async function POST(request: Request) {
       [];
     try {
       const discovery = await searchDiscoveryEngine({
-        query,
+        query: searchQuery,
         network: "ALL",
         pageSize: 16,
       });
@@ -119,7 +126,7 @@ export async function POST(request: Request) {
       discoveryCandidates = toAhovoksCandidates(
         discovery.hits
           .map((hit) =>
-            enrichHitFromCorpus(hit, query, "ALL", educationLevel),
+            enrichHitFromCorpus(hit, searchQuery, "ALL", educationLevel),
           )
           .filter(
             (item): item is CurriculumSearchResult & { score: number } =>
@@ -139,7 +146,7 @@ export async function POST(request: Request) {
     );
 
     const merged = rankMinimumGoalResults(
-      query,
+      searchQuery,
       candidatePool.filter(hasMinimumGoal).map(sanitizeMinimumGoalForResponse),
       MINIMUM_GOALS_TOP_N,
       {
@@ -165,6 +172,7 @@ export async function POST(request: Request) {
             ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} minimumdoelen - hoogste match bovenaan.`
             : "Geen passend minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
         retrievalMode: "minimum-goals-hybrid",
+        queryRewrite: rewrite,
       },
       provider: "jsonl-corpus+discovery-engine",
       fallbackErrors: [],

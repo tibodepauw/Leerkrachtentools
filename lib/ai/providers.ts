@@ -6,6 +6,7 @@ import type { LanguageModel } from "ai";
 import type { UserAiConfig } from "@/lib/ai/userCredentials";
 import { userAiConfigHasCredentials } from "@/lib/ai/userCredentials";
 import { defaultModelForProvider } from "@/lib/ai/listModels";
+import { getGoogleModelId } from "@/lib/ai/googleModel";
 
 export type ProviderName =
   | "google"
@@ -61,7 +62,7 @@ function envModelCandidates(preferred?: ProviderName): ModelCandidate[] {
     });
     candidates.push({
       name: "google",
-      model: google(process.env.GOOGLE_MODEL ?? "gemini-2.5-flash-lite"),
+      model: google(getGoogleModelId()),
     });
   }
 
