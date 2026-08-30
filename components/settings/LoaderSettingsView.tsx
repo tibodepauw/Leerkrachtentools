@@ -27,7 +27,7 @@ export function LoaderSettingsView() {
       <CardHeader>
         <CardTitle>Laadscherm</CardTitle>
         <CardDescription>
-          Standaard is Gather. Kies een andere wordmark-animatie — puur voor de fun.
+          Standaard is Gather. Kies een andere wordmark-animatie, puur voor de fun.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
