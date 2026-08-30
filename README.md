@@ -42,8 +42,8 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 |--------|----------------|
 | **Doelverbeteraar** | Rewrites a selected lesson goal to Thomas More formulation rules. Shows rationale and term changes. Requires AI. |
 | **MC-DAS-SPM herkenner** | Classifies a goal as mental-cognitive (MC), dynamic-affective (DAS), or sensomotor/psychomotor (SPM) without rewriting it. Requires AI. |
-| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora (ZILL, OVSG, Op.stap, GO! Nieuw). Filters by education network and level (kindergarten, primary, secondary). Typo-tolerant matching, domain bonuses, optional semantic fallback, and target-group ranking. |
-| **Minimumdoelen** | Matches official minimum goals (4th grade checkpoint, 6th grade end goal, kindergarten K-codes), with education-level filter. Numeric range awareness and top 3 ranked results. |
+| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora (Op.stap, ZILL, OVSG, GO! Nieuw, secundair, POV). Filters by education network and level (kindergarten, primary, secondary, OKAN, BuBaO, BuSO, DKO, and more). Typo-tolerant matching, lazy corpus loading per level, optional semantic fallback, and target-group ranking. |
+| **Minimumdoelen** | Matches official minimum goals across basisonderwijs, secundair, and AHOVOKS domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger). Education-level filter, numeric range awareness, and top 3 ranked results. Repeated exact queries are served from a client-side session cache. |
 
 Curriculum search is **retrieval only** (no generative AI in the matcher itself). Results come from indexed JSONL files shipped with or built for the deployment.
 
@@ -76,6 +76,7 @@ Curriculum search is **retrieval only** (no generative AI in the matcher itself)
 - Daily server-side AI usage limits per tier (bypassed when you use your own API key)
 - Profile name and photo; account ID and **Niveau** shown in Settings
 - **Bring your own API key**: choose provider and model in Settings; when enabled, only your key is used
+- **Opt-in LLM query rewriting** for RAG searches (Settings; default off)
 - Per-account browser storage for active lesson data and document previews
 - Marketing email preference (opt-in, off by default)
 - In-app feedback form (idea, feedback, bug)
@@ -168,10 +169,11 @@ Local development works without Brevo: the login API returns a visible dev code 
 npm run lint
 npm run typecheck
 npm test
+npm run test:rag-benchmark
 npm run build
 ```
 
-147 automated tests cover curriculum tokenization, minimum-goal ranking, fuzzy matching, auth tiers, and core utilities.
+181 automated tests cover curriculum tokenization, minimum-goal ranking, RAG benchmarks, fuzzy matching, auth tiers, and core utilities.
 
 ## Production deployment
 
@@ -183,6 +185,8 @@ PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js
 ```
 
 Also copy `.next/static` and `public` into `.next/standalone` for a self-hosted deploy.
+
+Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs.
 
 Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database.
 
