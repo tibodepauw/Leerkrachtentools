@@ -1,5 +1,11 @@
+"use client";
+
 import type { ReactNode } from "react";
-import { Sidebar } from "@/components/layout/Sidebar";
+import {
+  Sidebar,
+  SidebarMain,
+} from "@/components/layout/Sidebar";
+import { SidebarLayoutProvider } from "@/hooks/useSidebarLayout";
 
 interface AccountSummary {
   email: string;
@@ -16,11 +22,13 @@ export function AppShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-black">
-      <Sidebar account={account} />
-      <div className="lg:pl-64">
-        <main>{children}</main>
+    <SidebarLayoutProvider>
+      <div className="min-h-screen bg-black">
+        <Sidebar account={account} />
+        <SidebarMain>
+          <main>{children}</main>
+        </SidebarMain>
       </div>
-    </div>
+    </SidebarLayoutProvider>
   );
 }

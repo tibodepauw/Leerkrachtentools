@@ -21,10 +21,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { FeedbackKind } from "@/lib/feedback/feedback";
 
-export function SidebarFeedback({ userEmail }: { userEmail: string }) {
+export function SidebarFeedback({
+  userEmail,
+  collapsed = false,
+}: {
+  userEmail: string;
+  collapsed?: boolean;
+}) {
   const activeModule = useLessonStore((state) => state.activeModule);
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<FeedbackKind>("idea");
@@ -83,7 +95,7 @@ export function SidebarFeedback({ userEmail }: { userEmail: string }) {
   }
 
   return (
-    <section className="border-t border-neutral-800/80 pt-4">
+    <section className={cn("border-t border-neutral-800/80", collapsed ? "pt-2" : "pt-4")}>
       <Dialog
         open={open}
         onOpenChange={(nextOpen) => {
@@ -95,13 +107,28 @@ export function SidebarFeedback({ userEmail }: { userEmail: string }) {
         }}
       >
         <DialogTrigger asChild>
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
-          >
-            <Lightbulb className="size-4 shrink-0" />
-            <span>Idee of feedback</span>
-          </button>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Idee of feedback"
+                  className="mx-auto grid size-10 place-items-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
+                >
+                  <Lightbulb className="size-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Idee of feedback</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
+            >
+              <Lightbulb className="size-4 shrink-0" />
+              <span>Idee of feedback</span>
+            </button>
+          )}
         </DialogTrigger>
         <DialogContent className="border-neutral-800 bg-neutral-950 p-6 sm:max-w-2xl">
           <DialogHeader>
