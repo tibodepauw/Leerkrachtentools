@@ -65,6 +65,11 @@ def main() -> int:
         action="store_true",
         help="Gebruik enkel het publieke portaal voor minimumdoelen.",
     )
+    parser.add_argument(
+        "--export-zip",
+        action="store_true",
+        help="Maak na afloop dist/secundair_update.zip (Windows-compatibel).",
+    )
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -108,6 +113,17 @@ def main() -> int:
     print("  Leerplannen: data/secundair/leerplannen_secundair.jsonl")
     print("  Minimumdoelen: data/secundair/minimumdoelen_secundair.jsonl")
     print("  POV: data/secundair/leerplannen_pov_secundair.jsonl")
+
+    if args.export_zip:
+        export_script = SCRIPTS / "export_secundair_zip.py"
+        export_code = run_step(
+            "Windows-compatibele zip-export",
+            [python, str(export_script)],
+        )
+        failures += export_code
+        if export_code == 0:
+            print("  Zip: dist/secundair_update.zip")
+
     return 1 if failures else 0
 
 

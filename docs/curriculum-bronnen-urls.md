@@ -221,3 +221,18 @@ De uitvoer is `data/secundair/minimumdoelen_secundair.jsonl`. Records bevatten
 `gelinkt_minimumdoel`. Zonder lokale data-run gebruikt de app de fixtures in
 `test/fixtures/minimumdoelen-secundair.jsonl` en
 `test/fixtures/curriculum-secundair.jsonl`.
+
+### Zip-export (Windows)
+
+Handmatige update op een andere machine (bijv. productie zonder git clone van
+data):
+
+```bash
+npm run export:secundair
+# of na een volledige fetch:
+python3 scripts/fetch_secundair_full.py --export-zip
+```
+
+Dit maakt `dist/secundair_update.zip` met JSONL-bestanden en `LEESMIJ.txt`.
+Pak de `.jsonl`-bestanden uit in `data/secundair/` in de projectroot. Het
+archief gebruikt Windows-compatibele zip-attributen (geen Unix-permissies).

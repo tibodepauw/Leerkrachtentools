@@ -1,6 +1,6 @@
 {
   "name": "leerkrachtentools",
-  "version": "5.8.12",
+  "version": "5.8.13",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "fetch:secundair": "python3 scripts/fetch_secundair_full.py"
+    "fetch:secundair": "python3 scripts/fetch_secundair_full.py",
+    "export:secundair": "python3 scripts/export_secundair_zip.py"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.78",

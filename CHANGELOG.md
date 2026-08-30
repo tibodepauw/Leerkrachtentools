@@ -4,6 +4,15 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.13] - 2026-08-30
+
+### Added
+- `scripts/export_secundair_zip.py` en `npm run export:secundair` voor een
+  Windows-compatibele `dist/secundair_update.zip` (plat JSONL-archief + LEESMIJ.txt)
+- Optioneel `--export-zip` op `fetch_secundair_full.py`
+
+---
+
 ## [5.8.12] - 2026-08-30
 
 ### Changed
