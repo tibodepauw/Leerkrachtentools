@@ -224,6 +224,20 @@
   height: 1.45em;
 }
 
+.wordmark-preview-frame {
+  container-type: inline-size;
+  width: 100%;
+  overflow: hidden;
+}
+
+.wordmark-loader--preview.wordmark-loader {
+  width: 12em;
+  height: 1.45em;
+  max-width: 100%;
+  margin-inline: auto;
+  font-size: clamp(0.5625rem, 7cqi, 1.75rem);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wordmark-loader__letter--gather {
     animation: wordmark-gather-reduced 0.4s ease-out var(--delay, 0ms) forwards;
