@@ -79,13 +79,13 @@ const NETWORK_OPTIONS: Array<{
   label: string;
 }> = [
   { value: "ALL", label: "Alle leerplannen" },
-  { value: "OPSTAP", label: "Op.stap · Katholiek onderwijs" },
-  { value: "OVSG", label: "OVSG · LeerLokaal" },
-  { value: "GO_NIEUW", label: "GO! · Nieuw leerplan" },
-  { value: "ZILL", label: "ZILL · Katholiek onderwijs" },
-  { value: "GO", label: "GO! · Legacy leerplan" },
-  { value: "KOV", label: "Katholiek onderwijs · Secundair" },
-  { value: "POV", label: "Provinciaal onderwijs · Secundair" },
+  { value: "OPSTAP", label: "Op.stap / Katholiek onderwijs" },
+  { value: "OVSG", label: "OVSG / LeerLokaal" },
+  { value: "GO_NIEUW", label: "GO! / Nieuw leerplan" },
+  { value: "ZILL", label: "ZILL / Katholiek onderwijs" },
+  { value: "GO", label: "GO! / Legacy leerplan" },
+  { value: "KOV", label: "Katholiek onderwijs / Secundair" },
+  { value: "POV", label: "Provinciaal onderwijs / Secundair" },
 ];
 
 const EDUCATION_LEVEL_OPTIONS_UI = EDUCATION_LEVEL_OPTIONS;
@@ -716,7 +716,7 @@ function networkOptionsForLevel(
       ["ALL", "GO", "KOV", "POV", "OVSG"].includes(option.value),
     ).map((option) =>
       option.value === "GO"
-        ? { ...option, label: "GO! · Secundair onderwijs" }
+        ? { ...option, label: "GO! / Secundair onderwijs" }
         : option,
     );
   }
