@@ -1,6 +1,6 @@
 {
   "name": "leerkrachtentools",
-  "version": "5.8.21",
+  "version": "5.9.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

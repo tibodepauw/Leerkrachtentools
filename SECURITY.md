@@ -6,8 +6,8 @@ Security fixes apply to the latest release on the `main` branch.
 
 | Version | Supported |
 | ------- | --------- |
-| 5.8.x   | Yes       |
-| older   | No        |
+| 5.9.x   | Yes       |
+| 5.8.x   | No        |
 
 ## Reporting a vulnerability
 

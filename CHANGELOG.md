@@ -4,22 +4,27 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
-## [5.8.21] - 2026-08-30
+## [5.9.0] - 2026-08-30
+
+Feature release: volledige Vlaamse onderwijsdomeinen via onderwijsdoelen.be (AHOVOKS), gestroomlijnde secundaire pipeline en UX voor OKAN/BuBaO/BuSO/DKO.
 
 ### Added
+- **Onderwijsniveaus** in Leerplandoelen en Minimumdoelen: OKAN, BuBaO, BuSO, DKO, volwassenenonderwijs, hoger onderwijs
+- Dynamische domeinfilters per niveau (NT2/integratie, BuBaO-types, BuSO OV1–3, DKO-graad, …)
+- Python-fetch via onderwijsdoelen.be API (~24.571 doelen): `npm run fetch:all`, `npm run fetch:domains`
+- Uniform JSONL-schema + GCS `.txt`-export voor alle AHOVOKS-domeinen
+- Gestroomlijnde secundaire scrape-pipeline: flat JSONL-schema, `secondary_record_schema.py`, auto GCS-export in `fetch_secundair_full.py`
 - OKAN testfixture voor CI; domain-corpus laadt prod-data met fixture-fallback
-- OKAN-zoektest: ZILL levert geen OKAN-resultaten, ALL wel AHOVOKS
+- Documentatie: `docs/onderwijsdoelen-volledig-overzicht.md`
 
 ### Changed
-- README en docs: fetch:all / fetch:domains, AHOVOKS-domeinen, gitignore voor domain-data
-
----
-
-## [5.8.20] - 2026-08-30
-
-### Changed
-- OKAN, BuBaO, BuSO, DKO, volwassenen- en hoger onderwijs: zoeken forceert automatisch AHOVOKS/ALL (geen ZILL-fallback meer)
+- Leerplan-selectie schakelt automatisch naar AHOVOKS/ALL voor OKAN, BuBaO, BuSO, DKO, volwassenen en hoger onderwijs (geen ZILL-fallback meer)
 - AHOVOKS-doelen: lange titel gesplitst op Verwerkingsniveau; details in Toelichting-accordion
+- Leerplan-dropdown: statisch label bij enkel AHOVOKS-optie; netwerk sync bij niveauwissel
+- README: fetch-scripts, AHOVOKS-domeinen, gitignore voor lokale domain-data
+
+### Fixed
+- Lege Leerplan-select (42px) wanneer netwerk niet matcht met gekozen onderwijsniveau
 
 ---
 
