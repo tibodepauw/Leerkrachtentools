@@ -1,3 +1,7 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-181%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
+[![Version](https://img.shields.io/badge/version-v5.11.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 # Leerkrachtentools
 
 Research platform to explore which AI-assisted workflows can save preparation and reflection time for teachers and teacher trainers in Flemish education.
