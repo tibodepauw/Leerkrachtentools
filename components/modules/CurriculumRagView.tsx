@@ -349,7 +349,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               >
                 {variant === "leerplandoel" ? (
                   <div className="space-y-2">
-                    <Label>Onderwijsnet</Label>
+                    <Label>Leerplan</Label>
                     <Select
                       value={network}
                       onValueChange={(value) =>
