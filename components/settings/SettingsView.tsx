@@ -21,9 +21,9 @@ export function SettingsView() {
           Optionele AI-verrijking voor Leerplandoelen en Minimumdoelen.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
+      <CardContent className="@container">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-1">
             <Label
               htmlFor="settings-llm-query-rewriting"
               className="font-normal leading-5 text-neutral-100"
@@ -40,6 +40,7 @@ export function SettingsView() {
             checked={enableLlmQueryRewriting}
             onCheckedChange={setEnableLlmQueryRewriting}
             aria-label="Slimme AI-zoekherformulering inschakelen"
+            className="shrink-0"
           />
         </div>
       </CardContent>

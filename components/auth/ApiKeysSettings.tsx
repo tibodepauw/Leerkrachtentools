@@ -92,33 +92,45 @@ export function ApiKeysSettings() {
 
   async function detectModels() {
     setDetecting(true);
-    const response = await fetch("/api/account/list-models", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        provider: settings.provider,
-        apiKey: apiKey.trim() || undefined,
-        cloudflareAccountId:
-          settings.provider === "cloudflare"
-            ? cloudflareAccountId.trim() || undefined
-            : undefined,
-      }),
-    });
-    const payload = (await response.json()) as {
-      error?: string;
-      models?: ListedModel[];
-    };
-    setDetecting(false);
-    if (!response.ok) {
-      toast.error(payload.error ?? "Modellen konden niet worden opgehaald.");
-      return;
+    try {
+      const response = await fetch("/api/account/list-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: settings.provider,
+          apiKey: apiKey.trim() || undefined,
+          cloudflareAccountId:
+            settings.provider === "cloudflare"
+              ? cloudflareAccountId.trim() || undefined
+              : undefined,
+        }),
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        models?: ListedModel[];
+      };
+      if (!response.ok) {
+        toast.error(payload.error ?? "Modellen konden niet worden opgehaald.");
+        return;
+      }
+      const detected = payload.models ?? [];
+      setModels(detected);
+      if (detected.length > 0) {
+        setSettings((current) => ({
+          ...current,
+          model: detected.some((model) => model.id === current.model)
+            ? current.model
+            : detected[0]!.id,
+        }));
+      }
+      toast.success(`${detected.length} model(len) gevonden.`);
+    } catch {
+      toast.error(
+        "Modellen detecteren mislukt. Controleer je verbinding en probeer opnieuw.",
+      );
+    } finally {
+      setDetecting(false);
     }
-    const detected = payload.models ?? [];
-    setModels(detected);
-    if (detected.length > 0 && !settings.model) {
-      setSettings((current) => ({ ...current, model: detected[0].id }));
-    }
-    toast.success(`${detected.length} model(len) gevonden.`);
   }
 
   async function saveSettings(event: FormEvent) {
@@ -264,19 +276,19 @@ export function ApiKeysSettings() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="@container/model-picker space-y-2">
                 <Label htmlFor="ai-model">Model</Label>
-                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                <div className="flex min-w-0 flex-col gap-2 @2xl/model-picker:flex-row @2xl/model-picker:items-stretch">
                   <Select
                     value={settings.model || undefined}
                     onValueChange={(value) =>
                       setSettings((current) => ({ ...current, model: value }))
                     }
                   >
-                    <SelectTrigger id="ai-model" className="w-full">
+                    <SelectTrigger id="ai-model" className="min-w-0 w-full">
                       <SelectValue placeholder="Selecteer model" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" align="start" side="bottom">
                       {models.length > 0 ? (
                         models.map((model) => (
                           <SelectItem key={model.id} value={model.id}>
@@ -293,7 +305,7 @@ export function ApiKeysSettings() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-8 w-full sm:w-auto"
+                    className="h-8 w-full shrink-0 @2xl/model-picker:w-auto @2xl/model-picker:min-w-[11.5rem]"
                     disabled={detecting}
                     onClick={() => void detectModels()}
                   >
