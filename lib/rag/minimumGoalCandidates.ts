@@ -101,6 +101,18 @@ function minimumGoalHaystackFromRaw(raw: RawRecord): string {
     }
   }
 
+  const linked = raw.gelinkt_minimumdoel;
+  const linkedFields: string[] = [];
+  if (linked && typeof linked === "object") {
+    const record = linked as Record<string, unknown>;
+    linkedFields.push(
+      typeof record.code === "string" ? record.code : "",
+      typeof record.tekst === "string" ? record.tekst : "",
+      typeof record.text === "string" ? record.text : "",
+      typeof record.type === "string" ? record.type : "",
+    );
+  }
+
   return [
     raw.code,
     raw.titel,
@@ -112,6 +124,10 @@ function minimumGoalHaystackFromRaw(raw: RawRecord): string {
     raw.toelichting,
     raw.sleutelcompetentie,
     raw.sleutelcompetentie_nr,
+    raw.leerjaar_route,
+    raw.graad,
+    raw.finaliteit,
+    ...linkedFields,
     ...leerlijnSteps,
   ]
     .filter(Boolean)
@@ -209,6 +225,7 @@ function getMinimumGoalTokenIndex(): MinimumGoalTokenIndex {
 }
 
 export function warmMinimumGoalTokenIndex(): void {
+  minimumGoalIndexCache = null;
   getMinimumGoalTokenIndex();
 }
 

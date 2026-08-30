@@ -134,7 +134,7 @@ describe("minimumGoalCandidates", () => {
 
   it("haalt secundaire klimaatdoelen op bij lange zoekopdracht", () => {
     const query =
-      "De leerlingen onderzoeken het broeikaseffect en het gebruik van fossiele brandstoffen in relatie tot klimaatverandering";
+      "het broeikaseffect en de impact van fossiele brandstoffen op het klimaat";
     const candidates = collectMinimumGoalCandidates({
       query,
       educationLevel: "SECUNDAIR",
