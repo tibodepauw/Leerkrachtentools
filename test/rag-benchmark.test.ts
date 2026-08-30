@@ -137,8 +137,7 @@ describe("RAG benchmark suite", () => {
     );
 
     expect(report.total).toBe(10);
-    expect(report.qualityScore).toBeGreaterThanOrEqual(0);
-    expect(report.qualityScore).toBeLessThanOrEqual(100);
+    expect(report.qualityScore).toBe(100);
   }, 60_000);
 });
 

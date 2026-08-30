@@ -127,3 +127,23 @@ export function haystackWordsFromText(haystack: string): string[] {
 
   return words;
 }
+
+const PHONETIC_TYPO_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/opptell/giu, "optell"],
+  [/optelling/giu, "optell"],
+  [/twintich/giu, "twintig"],
+  [/vermeningvuld/giu, "vermenigvuld"],
+  [/presntat/giu, "present"],
+];
+
+export function applyPhoneticTypos(text: string): string {
+  let result = text;
+  for (const [pattern, replacement] of PHONETIC_TYPO_REPLACEMENTS) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
+}
+
+export function normalizePhoneticToken(token: string): string {
+  return applyPhoneticTypos(token);
+}

@@ -9,11 +9,16 @@ import {
 } from "@/lib/rag/ahovoksMinimumGoals";
 import {
   dedupeByMinimumGoalCode,
+  filterByAbsoluteMinScore,
   recordsForNetwork,
   secondaryMinimumGoalRecords,
-  tokenize,
+  warmCorpusTokenIndex,
 } from "@/lib/rag/curriculumCorpus";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
+import {
+  extractIndexTokens,
+  normalizeQueryText,
+} from "@/lib/rag/curriculumQueryTokens";
 import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
 import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
 
@@ -29,26 +34,170 @@ const MIN_CANDIDATE_TOKEN_MATCHES = 1;
 const MIN_CANDIDATE_SCORE = 0.12;
 
 const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stem: string }> = [
-  { pattern: /optell/i, stem: "optell" },
+  { pattern: /optell|opptell/i, stem: "optell" },
   { pattern: /aftrek/i, stem: "aftrek" },
-  { pattern: /vermenigvuld/i, stem: "vermenigvuld" },
+  { pattern: /vermenigvuld|vermeningvuld/i, stem: "vermenigvuld" },
   { pattern: /deel/i, stem: "deel" },
   { pattern: /tellen/i, stem: "tel" },
   { pattern: /breuk/i, stem: "breuk" },
   { pattern: /komma/i, stem: "komma" },
 ];
 
-function normalizeNumericText(text: string): string {
-  return text
-    .toLocaleLowerCase("nl-BE")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2");
+type IndexedMinimumGoalRecord = {
+  raw: RawRecord;
+  haystack: string;
+};
+
+type MinimumGoalTokenIndex = {
+  records: IndexedMinimumGoalRecord[];
+  tokenToRecordIndices: Map<string, number[]>;
+};
+
+let minimumGoalIndexCache: MinimumGoalTokenIndex | null = null;
+
+function expandLookupTokens(tokens: Iterable<string>): Set<string> {
+  const expanded = new Set<string>();
+  for (const token of tokens) {
+    expanded.add(token);
+    if (token.length >= 5) {
+      expanded.add(token.slice(0, 5));
+    }
+    if (token.length >= 4) {
+      expanded.add(token.slice(0, 4));
+    }
+  }
+  return expanded;
+}
+
+function minimumGoalHaystackFromRaw(raw: RawRecord): string {
+  const leerlijnSteps: string[] = [];
+  if (Array.isArray(raw.leerlijn)) {
+    for (const entry of raw.leerlijn) {
+      if (!entry || typeof entry !== "object") {
+        continue;
+      }
+      const steps = (entry as Record<string, unknown>).ontwikkelstappen;
+      if (!Array.isArray(steps)) {
+        continue;
+      }
+      for (const step of steps) {
+        if (typeof step === "string" && step.trim()) {
+          leerlijnSteps.push(step.trim());
+        }
+      }
+    }
+  }
+
+  return [
+    raw.code,
+    raw.titel,
+    raw.text,
+    raw.discipline,
+    raw.leergebied,
+    raw.ontwikkelveld,
+    raw.subdomein,
+    raw.toelichting,
+    ...leerlijnSteps,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function buildMinimumGoalIndexTokens(haystack: string): Set<string> {
+  return expandLookupTokens(extractIndexTokens(haystack));
+}
+
+function buildMinimumGoalQueryTokens(query: string): Set<string> {
+  const tokens = new Set<string>();
+  for (const token of tokenizeMinimumGoalQuery(query)) {
+    tokens.add(token);
+  }
+  for (const token of extractIndexTokens(normalizeQueryText(query))) {
+    tokens.add(token);
+  }
+  return expandLookupTokens(tokens);
+}
+
+function isIndexedMinimumGoalRaw(raw: RawRecord): boolean {
+  const network = networkFromRaw(raw);
+  return (
+    network !== null &&
+    MINIMUM_GOAL_CORPUS_NETWORKS.includes(
+      network as (typeof MINIMUM_GOAL_CORPUS_NETWORKS)[number],
+    )
+  );
+}
+
+function getMinimumGoalTokenIndex(): MinimumGoalTokenIndex {
+  if (minimumGoalIndexCache) {
+    return minimumGoalIndexCache;
+  }
+
+  const records: IndexedMinimumGoalRecord[] = [];
+  const tokenToRecordIndices = new Map<string, number[]>();
+
+  for (const raw of [
+    ...recordsForNetwork("ALL"),
+    ...secondaryMinimumGoalRecords(),
+  ]) {
+    if (!isIndexedMinimumGoalRaw(raw)) {
+      continue;
+    }
+
+    const index = records.length;
+    const haystack = minimumGoalHaystackFromRaw(raw);
+    records.push({ raw, haystack });
+
+    for (const token of buildMinimumGoalIndexTokens(haystack)) {
+      let indices = tokenToRecordIndices.get(token);
+      if (!indices) {
+        indices = [];
+        tokenToRecordIndices.set(token, indices);
+      }
+      if (indices[indices.length - 1] !== index) {
+        indices.push(index);
+      }
+    }
+  }
+
+  minimumGoalIndexCache = { records, tokenToRecordIndices };
+  return minimumGoalIndexCache;
+}
+
+export function warmMinimumGoalTokenIndex(): void {
+  getMinimumGoalTokenIndex();
+}
+
+function candidateIndicesFromMinimumGoalQuery(
+  query: string,
+  index: MinimumGoalTokenIndex,
+): Set<number> {
+  const lookupTokens = buildMinimumGoalQueryTokens(query);
+  const candidates = new Set<number>();
+
+  for (const token of lookupTokens) {
+    const indices = index.tokenToRecordIndices.get(token);
+    if (!indices) {
+      continue;
+    }
+    for (const recordIndex of indices) {
+      candidates.add(recordIndex);
+    }
+  }
+
+  return candidates;
 }
 
 export function tokenizeMinimumGoalQuery(value: string): Set<string> {
-  const tokens = tokenize(value);
-  const normalized = normalizeNumericText(value);
+  const normalized = normalizeQueryText(value);
+  const tokens = new Set<string>();
+
+  for (const word of normalized
+    .replace(/[^\p{Letter}\p{Number}\s]/gu, " ")
+    .split(/\s+/)
+    .filter((token) => token.length > 2)) {
+    tokens.add(word);
+  }
 
   for (const match of normalized.matchAll(/\b\d{1,7}\b/g)) {
     tokens.add(match[0]);
@@ -67,10 +216,7 @@ function countMinimumGoalTokenMatches(
   haystack: string,
   tokens: Set<string>,
 ): number {
-  const normalizedHaystack = haystack
-    .toLocaleLowerCase("nl-BE")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "");
+  const normalizedHaystack = normalizeQueryText(haystack);
 
   let matches = 0;
   for (const token of tokens) {
@@ -248,8 +394,8 @@ function scoreMinimumGoalCandidate(
     minimumScore * 0.5 + leerplanScore * 0.35 + contextScore * 0.15,
   );
 
-  const queryLower = query.toLocaleLowerCase("nl-BE");
-  const haystackLower = haystack.toLocaleLowerCase("nl-BE");
+  const queryLower = normalizeQueryText(query);
+  const haystackLower = normalizeQueryText(haystack);
 
   if (queryLower.includes("optell") && haystackLower.includes("optell")) {
     score += 0.12;
@@ -281,16 +427,25 @@ export function collectMinimumGoalCandidates({
     return [];
   }
 
+  const index = getMinimumGoalTokenIndex();
+  const candidateIndices = candidateIndicesFromMinimumGoalQuery(query, index);
+  const indicesToScore =
+    candidateIndices.size > 0
+      ? candidateIndices
+      : new Set(index.records.map((_, recordIndex) => recordIndex));
+
   const candidates: Array<{
     record: CurriculumSearchResult;
     score: number;
     tokenMatches: number;
   }> = [];
 
-  for (const raw of [
-    ...recordsForNetwork("ALL"),
-    ...secondaryMinimumGoalRecords(),
-  ]) {
+  for (const recordIndex of indicesToScore) {
+    const indexed = index.records[recordIndex];
+    if (!indexed) {
+      continue;
+    }
+    const raw = indexed.raw;
     const network = networkFromRaw(raw);
     if (
       !network ||
@@ -324,13 +479,15 @@ export function collectMinimumGoalCandidates({
     candidates.push({ record, score, tokenMatches });
   }
 
-  return candidates
-    .sort(
-      (left, right) =>
-        right.score - left.score || right.tokenMatches - left.tokenMatches,
-    )
-    .slice(0, limit)
-    .map((entry) => ({ ...entry.record, score: entry.score }));
+  return filterByAbsoluteMinScore(
+    candidates
+      .sort(
+        (left, right) =>
+          right.score - left.score || right.tokenMatches - left.tokenMatches,
+      )
+      .slice(0, limit)
+      .map((entry) => ({ ...entry.record, score: entry.score })),
+  );
 }
 
 export function sanitizeMinimumGoalForResponse<

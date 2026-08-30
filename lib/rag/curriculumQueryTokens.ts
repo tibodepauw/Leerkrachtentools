@@ -1,5 +1,6 @@
 import { tokenize } from "@/lib/rag/curriculumCorpus";
 import {
+  applyPhoneticTypos,
   fuzzySimilarity,
   isFuzzySimilar,
 } from "@/lib/rag/fuzzyMatch";
@@ -58,7 +59,7 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
     stems: ["deel", "deeltafel", "verdel", "quotient"],
   },
   {
-    pattern: /optell|optel[^a-z]|som|plus/i,
+    pattern: /optell|optel[^a-z]|som|plus|opptell/i,
     stems: ["optell", "som", "plus", "brug"],
   },
   {
@@ -102,7 +103,7 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   },
   {
     pattern:
-      /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|turn/i,
+      /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|\bturnen\b|\bturn\b/i,
     stems: [
       "koprol",
       "tuimel",
@@ -264,7 +265,7 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
   { pattern: /godsdienst/i, discipline: "Godsdienst" },
   {
     pattern:
-      /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|turn|lo\b/i,
+      /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|\bturnen\b|\bturn\b|\blo\b/i,
     discipline: "Lichamelijke opvoeding",
   },
   {
@@ -276,12 +277,62 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
 
 const FUZZY_MATCH_THRESHOLD = 0.72;
 
-function normalizeQueryText(text: string): string {
-  return text
-    .toLocaleLowerCase("nl-BE")
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2");
+const DUTCH_NUMBER_WORDS: Array<[string, string]> = [
+  ["duizend", "1000"],
+  ["honderd", "100"],
+  ["negentig", "90"],
+  ["tachtig", "80"],
+  ["zeventig", "70"],
+  ["zestig", "60"],
+  ["vijftig", "50"],
+  ["veertig", "40"],
+  ["dertig", "30"],
+  ["twintig", "20"],
+  ["twintich", "20"],
+  ["negentien", "19"],
+  ["achttien", "18"],
+  ["zeventien", "17"],
+  ["zestien", "16"],
+  ["vijftien", "15"],
+  ["veertien", "14"],
+  ["dertien", "13"],
+  ["twaalf", "12"],
+  ["elf", "11"],
+  ["tien", "10"],
+  ["negen", "9"],
+  ["acht", "8"],
+  ["zeven", "7"],
+  ["zes", "6"],
+  ["vijf", "5"],
+  ["vier", "4"],
+  ["drie", "3"],
+  ["twee", "2"],
+  ["een", "1"],
+  ["eén", "1"],
+  ["één", "1"],
+];
+
+export function normalizeDutchNumberWords(text: string): string {
+  let result = text;
+  for (const [word, digit] of DUTCH_NUMBER_WORDS) {
+    result = result.replace(
+      new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "giu"),
+      digit,
+    );
+  }
+  return result;
+}
+
+export function normalizeQueryText(text: string): string {
+  return applyPhoneticTypos(
+    normalizeDutchNumberWords(
+      text
+        .toLocaleLowerCase("nl-BE")
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2"),
+    ),
+  );
 }
 
 function queryWords(value: string): string[] {
@@ -352,8 +403,8 @@ function expandFuzzyCanonicalStems(tokens: Set<string>, normalized: string): voi
 }
 
 export function tokenizeCurriculumQuery(value: string): Set<string> {
-  const tokens = tokenize(value);
   const normalized = normalizeQueryText(value);
+  const tokens = tokenize(normalized);
 
   for (const match of normalized.matchAll(/\b\d{1,7}\b/g)) {
     tokens.add(match[0]);
@@ -371,6 +422,29 @@ export function tokenizeCurriculumQuery(value: string): Set<string> {
 
   for (const stopword of DIDACTIC_STOPWORDS) {
     tokens.delete(stopword);
+  }
+
+  return tokens;
+}
+
+export function extractIndexTokens(text: string): Set<string> {
+  const normalized = normalizeQueryText(text);
+  const tokens = new Set<string>();
+
+  for (const word of queryWords(normalized)) {
+    if (word.length >= 3) {
+      tokens.add(word);
+    }
+    if (word.length >= 5) {
+      tokens.add(word.slice(0, 5));
+    }
+    if (word.length >= 4) {
+      tokens.add(word.slice(0, 4));
+    }
+  }
+
+  for (const match of normalized.matchAll(/\b\d{1,7}\b/g)) {
+    tokens.add(match[0]);
   }
 
   return tokens;
@@ -489,7 +563,7 @@ function queryMatchesHistoryTopic(query: string): boolean {
 }
 
 function queryMatchesMotorTopic(query: string): boolean {
-  return /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|turn|\blo\b/i.test(
+  return /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|\bturnen\b|\bturn\b|\blo\b/i.test(
     normalizeQueryText(query),
   );
 }

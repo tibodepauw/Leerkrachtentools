@@ -11,9 +11,11 @@ import { titleFromLink } from "@/lib/rag/discoveryEngine";
 import { sanitizeCurriculumText } from "@/lib/rag/curriculumDisplay";
 import {
   countCurriculumTokenMatches,
+  extractIndexTokens,
   isZillMathThinkingCode,
   isZillMediaCode,
   isZillMotorCode,
+  normalizeQueryText,
   scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
@@ -131,6 +133,7 @@ const MIN_LOCAL_SEARCH_SCORE = 0.1;
 const MIN_RELAXED_SEARCH_SCORE = 0.06;
 const MIN_TOKEN_MATCHES = 2;
 const MIN_LOCAL_TOKEN_MATCHES = 1;
+export const ABSOLUTE_MIN_SCORE = 0.18;
 export const CURRICULUM_CANDIDATE_LIMIT = 50;
 export const CURRICULUM_TOP_N = 5;
 const STOPWORDS = new Set([
@@ -175,6 +178,116 @@ const STOPWORDS = new Set([
 ]);
 
 const loaded = new Map<string, RawRecord[]>();
+
+type IndexedCorpusRecord = {
+  raw: RawRecord;
+  haystack: string;
+};
+
+type CorpusTokenIndex = {
+  records: IndexedCorpusRecord[];
+  tokenToRecordIndices: Map<string, number[]>;
+};
+
+const corpusIndexCache = new Map<string, CorpusTokenIndex>();
+
+function expandLookupTokens(tokens: Iterable<string>): Set<string> {
+  const expanded = new Set<string>();
+  for (const token of tokens) {
+    expanded.add(token);
+    if (token.length >= 5) {
+      expanded.add(token.slice(0, 5));
+    }
+    if (token.length >= 4) {
+      expanded.add(token.slice(0, 4));
+    }
+  }
+  return expanded;
+}
+
+function buildRecordIndexTokens(haystack: string): Set<string> {
+  return expandLookupTokens(extractIndexTokens(haystack));
+}
+
+function buildQueryLookupTokens(query: string): Set<string> {
+  const tokens = new Set<string>();
+  for (const token of tokenizeCurriculumQuery(query)) {
+    tokens.add(token);
+  }
+  for (const token of extractIndexTokens(normalizeQueryText(query))) {
+    tokens.add(token);
+  }
+  return expandLookupTokens(tokens);
+}
+
+function getCorpusTokenIndex(network: CurriculumNetworkFilter): CorpusTokenIndex {
+  const cached = corpusIndexCache.get(network);
+  if (cached) {
+    return cached;
+  }
+
+  const records: IndexedCorpusRecord[] = [];
+  const tokenToRecordIndices = new Map<string, number[]>();
+
+  for (const raw of recordsForNetwork(network)) {
+    const index = records.length;
+    const haystack = buildRecordHaystack(raw);
+    records.push({ raw, haystack });
+
+    for (const token of buildRecordIndexTokens(haystack)) {
+      let indices = tokenToRecordIndices.get(token);
+      if (!indices) {
+        indices = [];
+        tokenToRecordIndices.set(token, indices);
+      }
+      if (indices[indices.length - 1] !== index) {
+        indices.push(index);
+      }
+    }
+  }
+
+  const built = { records, tokenToRecordIndices };
+  corpusIndexCache.set(network, built);
+  return built;
+}
+
+function candidateIndicesFromQuery(
+  query: string,
+  index: CorpusTokenIndex,
+): Set<number> {
+  const lookupTokens = buildQueryLookupTokens(query);
+  const candidates = new Set<number>();
+
+  for (const token of lookupTokens) {
+    const indices = index.tokenToRecordIndices.get(token);
+    if (!indices) {
+      continue;
+    }
+    for (const recordIndex of indices) {
+      candidates.add(recordIndex);
+    }
+  }
+
+  return candidates;
+}
+
+export function warmCorpusTokenIndex(
+  network: CurriculumNetworkFilter = "ALL",
+): void {
+  getCorpusTokenIndex(network);
+}
+
+export function filterByAbsoluteMinScore<T extends { score: number }>(
+  results: T[],
+): T[] {
+  if (results.length === 0) {
+    return [];
+  }
+  if (results[0]!.score < ABSOLUTE_MIN_SCORE) {
+    return [];
+  }
+  return results;
+}
 
 function loadJsonlAt(absolutePath: string): RawRecord[] {
   if (loaded.has(absolutePath)) {
@@ -577,7 +690,19 @@ export function findBestCorpusMatch({
       }
     | null = null;
 
-  for (const raw of recordsForNetwork(network)) {
+  const index = getCorpusTokenIndex(network);
+  const candidateIndices = candidateIndicesFromQuery(query, index);
+  const indicesToScore =
+    candidateIndices.size > 0
+      ? candidateIndices
+      : new Set(index.records.map((_, recordIndex) => recordIndex));
+
+  for (const recordIndex of indicesToScore) {
+    const indexed = index.records[recordIndex];
+    if (!indexed) {
+      continue;
+    }
+    const raw = indexed.raw;
     if (
       !recordMatchesNetwork(raw, network) ||
       !recordMatchesEducationLevel(raw, educationLevel)
@@ -589,7 +714,7 @@ export function findBestCorpusMatch({
       continue;
     }
 
-    const haystack = recordHaystack(raw);
+    const haystack = indexed.haystack;
     const tokenMatches = countCurriculumTokenMatches(haystack, tokens, query);
     const queryTokenMatches = countCurriculumTokenMatches(
       haystack,
@@ -638,6 +763,10 @@ export function findBestCorpusMatch({
     return null;
   }
 
+  if (best.score < ABSOLUTE_MIN_SCORE) {
+    return null;
+  }
+
   return { ...best.record, score: best.score };
 }
 
@@ -660,13 +789,25 @@ export function searchLocalCorpus({
     return [];
   }
 
+  const index = getCorpusTokenIndex(scopedNetwork);
+  const candidateIndices = candidateIndicesFromQuery(query, index);
+  const indicesToScore =
+    candidateIndices.size > 0
+      ? candidateIndices
+      : new Set(index.records.map((_, recordIndex) => recordIndex));
+
   const candidates: Array<{
     record: CurriculumSearchResult;
     score: number;
     tokenMatches: number;
   }> = [];
 
-  for (const raw of recordsForNetwork(scopedNetwork)) {
+  for (const recordIndex of indicesToScore) {
+    const indexed = index.records[recordIndex];
+    if (!indexed) {
+      continue;
+    }
+    const raw = indexed.raw;
     if (
       !recordMatchesNetwork(raw, scopedNetwork) ||
       !recordMatchesEducationLevel(raw, educationLevel)
@@ -678,7 +819,7 @@ export function searchLocalCorpus({
       continue;
     }
 
-    const haystack = recordHaystack(raw);
+    const haystack = indexed.haystack;
     const { score, tokenMatches } = scoreCurriculumCandidate({
       query,
       haystack,
@@ -695,15 +836,20 @@ export function searchLocalCorpus({
     candidates.push({ record, score, tokenMatches });
   }
 
-  return candidates
-    .sort(
-      (left, right) =>
-        right.score - left.score || right.tokenMatches - left.tokenMatches,
-    )
-    .slice(0, candidateLimit)
-    .filter((entry) => entry.score >= MIN_LOCAL_SEARCH_SCORE || entry.tokenMatches >= 1)
-    .slice(0, limit)
-    .map((entry) => ({ ...entry.record, score: entry.score }));
+  return filterByAbsoluteMinScore(
+    candidates
+      .sort(
+        (left, right) =>
+          right.score - left.score || right.tokenMatches - left.tokenMatches,
+      )
+      .slice(0, candidateLimit)
+      .filter(
+        (entry) =>
+          entry.score >= MIN_LOCAL_SEARCH_SCORE || entry.tokenMatches >= 1,
+      )
+      .slice(0, limit)
+      .map((entry) => ({ ...entry.record, score: entry.score })),
+  );
 }
 
 export function mergeCurriculumResults(

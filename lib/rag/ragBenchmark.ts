@@ -2,8 +2,9 @@ import {
   educationDomainRecords,
   recordsForNetwork,
   searchLocalCorpus,
+  warmCorpusTokenIndex,
 } from "@/lib/rag/curriculumCorpus";
-import { collectMinimumGoalCandidates } from "@/lib/rag/minimumGoalCandidates";
+import { collectMinimumGoalCandidates, warmMinimumGoalTokenIndex } from "@/lib/rag/minimumGoalCandidates";
 import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
 import type {
   CurriculumNetworkFilter,
@@ -128,6 +129,9 @@ export function buildCorpusFaithfulnessIndex(): CorpusFaithfulnessIndex {
 
 export function warmRagBenchmarkCorpus(): void {
   buildCorpusFaithfulnessIndex();
+  warmCorpusTokenIndex("OPSTAP");
+  warmCorpusTokenIndex("ZILL");
+  warmMinimumGoalTokenIndex();
   searchLocalCorpus({
     query: "benchmark warmup",
     network: "OPSTAP",

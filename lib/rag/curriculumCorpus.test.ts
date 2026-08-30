@@ -5,6 +5,7 @@ import {
   dedupeByMinimumGoalCode,
   enrichHitFromCorpus,
   extractCodeFromSnippet,
+  filterByAbsoluteMinScore,
   findBestCorpusMatch,
   scoreTextOverlap,
   searchLocalCorpus,
@@ -70,6 +71,21 @@ describe("curriculumCorpus matching", () => {
     };
 
     expect(enrichHitFromCorpus(hit, "optellen tot 20", "OPSTAP")).toBeNull();
+  });
+
+  it("filtert zwakke ruis-resultaten onder absolute drempel", () => {
+    expect(
+      filterByAbsoluteMinScore([
+        { score: 0.13, id: "a" },
+        { score: 0.11, id: "b" },
+      ]),
+    ).toEqual([]);
+    expect(
+      filterByAbsoluteMinScore([
+        { score: 0.42, id: "a" },
+        { score: 0.21, id: "b" },
+      ]),
+    ).toHaveLength(2);
   });
 
   it("geeft lege lokale fallback bij te weinig overlap", () => {
