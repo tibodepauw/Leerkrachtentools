@@ -4,6 +4,27 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.10.4] - 2026-08-30
+
+### Added
+- **Lazy loading RAG-corpora per onderwijsniveau** (`lib/rag/corpusLevelCache.ts`): on-demand laden i.p.v. volledige corpus bij server-start
+- Max. 2 actieve niveau-caches in RAM, automatische unload na 5 min inactiviteit
+- Tests voor corpus-level cache-evictie (`lib/rag/corpusLevelCache.test.ts`)
+
+### Changed
+- RAG-benchmark latency-drempel: 800 ms → **350 ms** (warme corpus-zoekopdrachten ~250–300 ms)
+- Token-indexen gescopeerd per onderwijsniveau + netwerk; gecachte record-normalisatie voor snellere scans
+- Minimumdoelen-zoekopdracht: gerichte retrieval voor korte reken-queries (`1 + 1`) en candidate-capping
+
+### Fixed
+- **Secundaire minimumdoelen** (klimaat/broeikaseffect): indexeer `gelinkt_minimumdoel`-tekst; OR-candidate retrieval voor multi-keyword queries
+- **Onderwijsniveau-sync** tussen Minimumdoelen en Leerplandoelen (persistente filters, geen reset bij module-wissel)
+- **Sidebar**: uitvouwen/invouwen-iconen (`PanelLeftOpen` / `PanelLeftClose`); gecentreerde iconen in ingeklapte modus
+- Netwerkfoutmelding: stageschool-wifi-zinnetje verwijderd
+- UI: model-detect-knop layout bij smalle sidebar-inhoud
+
+---
+
 ## [5.10.0] - 2026-08-30
 
 ### Added
