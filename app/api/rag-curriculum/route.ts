@@ -161,7 +161,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const educationLevel = body.educationLevel ?? "ALL";
+    const educationLevel = body.educationLevel ?? "LAGER";
     if (!EDUCATION_LEVELS.has(educationLevel)) {
       return NextResponse.json(
         { error: "Selecteer een geldig onderwijsniveau." },

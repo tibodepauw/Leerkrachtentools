@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const educationLevel = body.educationLevel ?? "ALL";
+    const educationLevel = body.educationLevel ?? "LAGER";
     if (!EDUCATION_LEVELS.has(educationLevel)) {
       return NextResponse.json(
         { error: "Selecteer een geldig onderwijsniveau." },
@@ -146,8 +146,8 @@ export async function POST(request: Request) {
         alternatives,
         corpusNotice:
           merged.length > 0
-            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} decretale minimumdoelen (AHOVOKS) - hoogste match bovenaan.`
-            : "Geen passend decretale minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
+            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} minimumdoelen - hoogste match bovenaan.`
+            : "Geen passend minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
         retrievalMode: "minimum-goals-hybrid",
       },
       provider: "jsonl-corpus+discovery-engine",

@@ -101,10 +101,10 @@ const variantCopy: Record<
   minimumdoel: {
     title: "Minimumdoelen zoeken",
     description:
-      "Zoekt het bestpassende Vlaamse minimumdoel bij je lesdoel: decretale ijkpunten in basisonderwijs of officiële eindtermen in secundair onderwijs.",
+      "Zoekt het bestpassende Vlaamse minimumdoel bij je lesdoel in basisonderwijs of secundair onderwijs.",
     action: "Zoek minimumdoel",
     empty:
-      "Minimumdoelkaarten met code, graad of ijkpunt en doelzin verschijnen hier na je zoekopdracht.",
+      "Minimumdoelkaarten met code, graad of leerjaar en doelzin verschijnen hier na je zoekopdracht.",
   },
 };
 
@@ -226,7 +226,7 @@ function MinimumGoalCard({
 
   const minimumCopy = formatAhovoksMinimumGoalCopy(minimum);
   const ijkpuntLabel =
-    minimum.ijkpuntLabel ?? result.leerjaarRoute ?? "Decretaal minimumdoel";
+    minimum.ijkpuntLabel ?? result.leerjaarRoute ?? "Minimumdoel";
 
   function handleAddToLesson() {
     onAddToLesson(minimumCopy);
@@ -292,7 +292,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     mapEducationNetwork(lesson.educationNetwork),
   );
   const [educationLevel, setEducationLevel] =
-    useState<EducationLevelFilter>("ALL");
+    useState<EducationLevelFilter>("LAGER");
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
@@ -555,12 +555,12 @@ function minimumGoalHelperText(
     : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking. ";
 
   if (level === "SECUNDAIR") {
-    return `${prefix}We tonen officiële Vlaamse minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1–16).`;
+    return `${prefix}We tonen minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1–16).`;
   }
   if (level === "KLEUTER" || level === "LAGER") {
-    return `${prefix}We tonen uitsluitend decretale minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;
+    return `${prefix}We tonen minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;
   }
-  return `${prefix}Basisonderwijs: decretale ijkpunten (4de, 6de, kleuter). Secundair: eindtermen en minimumdoelen per graad en SC 1–16.`;
+  return `${prefix}Basisonderwijs: minimumdoelen (4de, 6de, kleuter). Secundair: minimumdoelen per graad en SC 1–16.`;
 }
 
 function mapEducationNetwork(

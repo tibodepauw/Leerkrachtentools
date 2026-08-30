@@ -65,7 +65,7 @@ Lesson scripts use **Lk** (teacher) and **Lln** (pupils) lines. Board work and o
 ### Curriculum alignment
 
 - **Leerplandoelen**: official Flemish curriculum goals (ZILL, OVSG, Op.stap, GO! Nieuw)
-- **Minimumdoelen**: decreetal AHOVOKS checkpoints (4th grade, 6th grade end goal, kindergarten K-codes)
+- **Minimumdoelen**: official minimum goals (4th grade checkpoint, 6th grade end goal, kindergarten K-codes)
 
 Changes to search ranking should preserve soft target-group boosting and must not hard-filter results by age or grade.
 

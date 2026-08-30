@@ -4,6 +4,14 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.10] - 2026-08-30
+
+### Changed
+- Gebruikersgerichte teksten spreken enkel nog over **minimumdoelen** (geen AHOVOKS)
+- Standaard onderwijsniveau in Leerplandoelen en Minimumdoelen is nu **Lager onderwijs**
+
+---
+
 ## [5.8.9] - 2026-08-30
 
 ### Added
