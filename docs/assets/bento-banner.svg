@@ -3,12 +3,12 @@
 
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@700;900&amp;display=swap");
-    .pill {
+    .t {
       font-family: "Rubik", sans-serif;
       font-weight: 700;
       fill: #000000;
     }
-    .pill-black {
+    .tb {
       font-family: "Rubik", sans-serif;
       font-weight: 900;
       fill: #000000;
@@ -17,31 +17,33 @@
 
   <rect width="1200" height="480" fill="#000000"/>
 
-  <!-- Row 1: hero -->
-  <rect x="32" y="32" width="1136" height="96" rx="48" fill="#ffffff"/>
-  <text x="600" y="88" class="pill-black" font-size="52" text-anchor="middle">Leerkrachtentools</text>
+  <!-- Bento grid: mixed tile sizes, rounded rects (not pills) -->
+  <!-- Hero tile -->
+  <rect x="28" y="28" width="692" height="156" rx="20" fill="#ffffff"/>
+  <text x="56" y="118" class="tb" font-size="58">Leerkrachtentools</text>
 
-  <!-- Row 2 -->
-  <rect x="32" y="144" width="360" height="72" rx="36" fill="#ffffff"/>
-  <text x="212" y="188" class="pill-black" font-size="26" text-anchor="middle">37,500+ Official Goals</text>
+  <!-- Top right -->
+  <rect x="736" y="28" width="436" height="156" rx="20" fill="#ffffff"/>
+  <text x="764" y="118" class="t" font-size="30">Hybrid Vector RAG Engine</text>
 
-  <rect x="408" y="144" width="384" height="72" rx="36" fill="#ffffff"/>
-  <text x="600" y="188" class="pill" font-size="24" text-anchor="middle">Hybrid Vector RAG Engine</text>
+  <!-- Middle row -->
+  <rect x="28" y="200" width="340" height="108" rx="18" fill="#ffffff"/>
+  <text x="56" y="264" class="tb" font-size="28">37,500+ Official Goals</text>
 
-  <rect x="808" y="144" width="360" height="72" rx="36" fill="#ffffff"/>
-  <text x="988" y="188" class="pill-black" font-size="26" text-anchor="middle">181 Passing Tests</text>
+  <rect x="384" y="200" width="340" height="108" rx="18" fill="#ffffff"/>
+  <text x="412" y="264" class="tb" font-size="28">Thomas More BALO</text>
 
-  <!-- Row 3 -->
-  <rect x="32" y="232" width="360" height="72" rx="36" fill="#ffffff"/>
-  <text x="212" y="276" class="pill" font-size="24" text-anchor="middle">AHOVOKS 2026 Ready</text>
+  <rect x="740" y="200" width="432" height="108" rx="18" fill="#ffffff"/>
+  <text x="768" y="264" class="tb" font-size="28">181 Passing Tests</text>
 
-  <rect x="408" y="232" width="384" height="72" rx="36" fill="#ffffff"/>
-  <text x="600" y="276" class="pill-black" font-size="26" text-anchor="middle">Thomas More BALO</text>
+  <!-- Lower row -->
+  <rect x="28" y="324" width="340" height="128" rx="18" fill="#ffffff"/>
+  <text x="56" y="396" class="t" font-size="28">AHOVOKS 2026 Ready</text>
 
-  <rect x="808" y="232" width="360" height="72" rx="36" fill="#ffffff"/>
-  <text x="988" y="276" class="pill-black" font-size="28" text-anchor="middle">Next.js</text>
+  <rect x="384" y="324" width="220" height="128" rx="18" fill="#ffffff"/>
+  <text x="412" y="396" class="tb" font-size="28">Next.js</text>
 
-  <!-- Row 4: sources -->
-  <rect x="32" y="320" width="1136" height="72" rx="36" fill="#ffffff"/>
-  <text x="600" y="364" class="pill" font-size="22" text-anchor="middle">Op.stap · ZILL · LeerLokaal · GO! · SO · BuO · OKAN</text>
+  <!-- Tall side tile -->
+  <rect x="620" y="324" width="552" height="128" rx="18" fill="#ffffff"/>
+  <text x="648" y="396" class="t" font-size="24">Op.stap · ZILL · LeerLokaal · GO! · SO · BuO · OKAN</text>
 </svg>

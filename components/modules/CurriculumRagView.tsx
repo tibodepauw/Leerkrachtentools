@@ -346,6 +346,9 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   )
     ? curriculumNetworkFilter
     : (visibleNetworks[0]?.value ?? "ALL");
+  const selectedNetworkLabel =
+    visibleNetworks.find((option) => option.value === resolvedNetwork)?.label ??
+    "Alle leerplannen";
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
@@ -383,8 +386,13 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 
   useEffect(() => {
     const options = networkOptionsForLevel(educationLevelFilter);
-    if (!options.some((option) => option.value === curriculumNetworkFilter)) {
-      setCurriculumNetworkFilter(options[0]?.value ?? "ALL");
+    const nextNetwork = options.some(
+      (option) => option.value === curriculumNetworkFilter,
+    )
+      ? curriculumNetworkFilter
+      : (options[0]?.value ?? "ALL");
+    if (nextNetwork !== curriculumNetworkFilter) {
+      setCurriculumNetworkFilter(nextNetwork);
     }
   }, [
     curriculumNetworkFilter,
@@ -438,6 +446,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       </p>
                     ) : (
                       <Select
+                        key={`${educationLevelFilter}-${resolvedNetwork}`}
                         value={resolvedNetwork}
                         onValueChange={(value) =>
                           setCurriculumNetworkFilter(
@@ -446,7 +455,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                         }
                       >
                         <SelectTrigger className="w-full min-w-0">
-                          <SelectValue placeholder="Kies een leerplan" />
+                          <SelectValue>{selectedNetworkLabel}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           {visibleNetworks.map((option) => (

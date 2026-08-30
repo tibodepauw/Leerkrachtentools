@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useClientMounted } from "@/hooks/useAppReady";
+import { cn } from "@/lib/utils";
 
 export function AuthScreen() {
   const mounted = useClientMounted();
@@ -109,51 +110,78 @@ export function AuthScreen() {
                     placeholder="naam@school.be"
                   />
                 </div>
-                <div className="flex items-start gap-3 rounded-lg border border-neutral-800 bg-black/40 p-3">
-                  <Checkbox
-                    id="privacy"
-                    checked={privacyAccepted}
-                    onCheckedChange={(checked) =>
-                      setPrivacyAccepted(checked === true)
-                    }
-                    className="mt-0.5"
-                    required
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="privacy" className="font-normal leading-5">
-                      Ik ga akkoord met het{" "}
+
+                <div className="space-y-3 rounded-xl border border-neutral-800 bg-black p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                    Toestemming
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrivacyAccepted((current) => !current)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+                      privacyAccepted
+                        ? "border-white bg-white text-black"
+                        : "border-neutral-800 bg-neutral-950 text-neutral-100 hover:border-neutral-600",
+                    )}
+                  >
+                    <Checkbox
+                      id="privacy"
+                      checked={privacyAccepted}
+                      onCheckedChange={(checked) =>
+                        setPrivacyAccepted(checked === true)
+                      }
+                      className={cn(
+                        "mt-0.5 pointer-events-none",
+                        privacyAccepted && "border-black data-[state=checked]:bg-black",
+                      )}
+                      tabIndex={-1}
+                    />
+                    <span className="text-sm leading-6">
+                      <span className="font-semibold">Verplicht:</span> ik ga akkoord met het{" "}
                       <Link
                         href="/privacy"
-                        className="underline hover:text-white"
+                        className={cn(
+                          "underline underline-offset-2",
+                          privacyAccepted
+                            ? "text-black hover:text-neutral-700"
+                            : "text-white hover:text-neutral-200",
+                        )}
                         target="_blank"
+                        onClick={(event) => event.stopPropagation()}
                       >
                         privacybeleid
                       </Link>
                       .
-                    </Label>
-                    <p className="text-xs leading-4 text-neutral-500">
-                      Verplicht om een account aan te maken of in te loggen.
-                    </p>
-                  </div>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMarketingOptIn((current) => !current)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+                      marketingOptIn
+                        ? "border-neutral-500 bg-neutral-900 text-white"
+                        : "border-neutral-800 bg-neutral-950 text-neutral-300 hover:border-neutral-600",
+                    )}
+                  >
+                    <Checkbox
+                      id="marketing"
+                      checked={marketingOptIn}
+                      onCheckedChange={(checked) =>
+                        setMarketingOptIn(checked === true)
+                      }
+                      className="mt-0.5 pointer-events-none"
+                      tabIndex={-1}
+                    />
+                    <span className="text-sm leading-6">
+                      <span className="font-semibold">Optioneel:</span> houd mij op de hoogte van het uitgebreidere project.
+                    </span>
+                  </button>
                 </div>
-                <div className="flex items-start gap-3 rounded-lg border border-neutral-800 bg-black/40 p-3">
-                  <Checkbox
-                    id="marketing"
-                    checked={marketingOptIn}
-                    onCheckedChange={(checked) =>
-                      setMarketingOptIn(checked === true)
-                    }
-                    className="mt-0.5"
-                  />
-                  <div className="space-y-1">
-                    <Label htmlFor="marketing" className="font-normal leading-5">
-                      Houd mij op de hoogte van het toekomstige, uitgebreidere project.
-                    </Label>
-                    <p className="text-xs leading-4 text-neutral-500">
-                      Optioneel. Je toestemming wordt apart opgeslagen en kan later worden ingetrokken.
-                    </p>
-                  </div>
-                </div>
+
                 {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
                 <Button
                   type="submit"
