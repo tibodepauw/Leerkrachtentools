@@ -4,6 +4,18 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.17] - 2026-08-30
+
+### Added
+- Secundair: graad- en finaliteitsfilters in Leerplandoelen en Minimumdoelen
+- Secundair: leerjaren s1-s7 in Actieve les (doelgroep) met auto-sync naar filters
+- Rankingbonus op graad/finaliteit in curriculum- en minimumdoelen-API
+
+### Changed
+- GO!-label bij secundair: "GO! · Secundair onderwijs" i.p.v. "Legacy leerplan"
+
+---
+
 ## [5.8.16] - 2026-08-30
 
 ### Changed

@@ -1,12 +1,20 @@
 import { ahovoksMetaFromGoal } from "@/lib/rag/ahovoksMinimumGoals";
 import { gradeOption } from "@/lib/lesson/targetGroup";
-import type { CurriculumSearchResult, LessonGrade } from "@/types";
+import type {
+  CurriculumSearchResult,
+  LessonGrade,
+  SecondaryFinalityFilter,
+  SecondaryGradeFilter,
+} from "@/types";
+import { scoreSecondaryFilterBonus } from "@/lib/lesson/secondaryFilters";
 
 export const TARGET_GROUP_BONUS = 0.15;
 
 export interface TargetGroupContext {
   grade?: LessonGrade | "" | null;
   ageRange?: string | null;
+  secondaryGrade?: SecondaryGradeFilter;
+  secondaryFinality?: SecondaryFinalityFilter;
 }
 
 type AgeBounds = { min: number; max: number };
@@ -176,7 +184,13 @@ export function applyTargetGroupRanking<T extends CurriculumSearchResult & { sco
   results: T[],
   context: TargetGroupContext,
 ): T[] {
-  if (!context.grade && !context.ageRange?.trim()) {
+  const hasContext =
+    context.grade ||
+    context.ageRange?.trim() ||
+    (context.secondaryGrade && context.secondaryGrade !== "all") ||
+    (context.secondaryFinality && context.secondaryFinality !== "all");
+
+  if (!hasContext) {
     return results;
   }
 
@@ -184,8 +198,16 @@ export function applyTargetGroupRanking<T extends CurriculumSearchResult & { sco
     .map((result) => ({
       ...result,
       score: Math.min(
-        1.35,
-        (result.score ?? 0) + scoreTargetGroupBonus(context, result),
+        1.45,
+        (result.score ?? 0) +
+          scoreTargetGroupBonus(context, result) +
+          scoreSecondaryFilterBonus(
+            {
+              secondaryGrade: context.secondaryGrade,
+              secondaryFinality: context.secondaryFinality,
+            },
+            result,
+          ),
       ),
     }))
     .sort((left, right) => (right.score ?? 0) - (left.score ?? 0));

@@ -74,6 +74,16 @@ export function TargetGroupSelect({
               )}
             </SelectGroup>
             <SelectGroup>
+              <SelectLabel>Secundair onderwijs</SelectLabel>
+              {GRADE_OPTIONS.filter((option) => option.group === "secundair").map(
+                (option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label} ({option.ageRange})
+                  </SelectItem>
+                ),
+              )}
+            </SelectGroup>
+            <SelectGroup>
               <SelectLabel>Aangepast</SelectLabel>
               <SelectItem value="custom">
                 Aangepast / Graadsklas (vrij veld)

@@ -58,11 +58,30 @@ export type LessonGrade =
   | "l4"
   | "l5"
   | "l6"
+  | "s1"
+  | "s2"
+  | "s3"
+  | "s7"
   | "custom";
+
+export type SecondaryGradeFilter =
+  | "all"
+  | "1ste_graad"
+  | "2de_graad"
+  | "3de_graad"
+  | "7de_specialisatie";
+
+export type SecondaryFinalityFilter =
+  | "all"
+  | "doorstroom"
+  | "dubbel"
+  | "arbeidsmarkt";
 
 export interface TargetGroupSearchContext {
   grade?: LessonGrade | "";
   ageRange?: string;
+  secondaryGrade?: SecondaryGradeFilter;
+  secondaryFinality?: SecondaryFinalityFilter;
 }
 
 export interface LessonGoal {

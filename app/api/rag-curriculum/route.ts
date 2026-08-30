@@ -103,6 +103,8 @@ async function runCurriculumSearch(
   merged = applyTargetGroupRanking(merged, {
     grade: options?.targetGroup?.grade,
     ageRange: options?.targetGroup?.ageRange,
+    secondaryGrade: options?.targetGroup?.secondaryGrade,
+    secondaryFinality: options?.targetGroup?.secondaryFinality,
   });
 
   if (options?.excludeNetwork) {
@@ -143,6 +145,8 @@ export async function POST(request: Request) {
       educationLevel?: EducationLevelFilter;
       grade?: TargetGroupSearchContext["grade"];
       ageRange?: string;
+      secondaryGrade?: TargetGroupSearchContext["secondaryGrade"];
+      secondaryFinality?: TargetGroupSearchContext["secondaryFinality"];
     };
 
     const query = body.goal?.trim();
@@ -172,6 +176,8 @@ export async function POST(request: Request) {
     const targetGroup: TargetGroupSearchContext = {
       grade: body.grade ?? "",
       ageRange: body.ageRange?.trim() ?? "",
+      secondaryGrade: body.secondaryGrade ?? "all",
+      secondaryFinality: body.secondaryFinality ?? "all",
     };
 
     let searchResult = await runCurriculumSearch(

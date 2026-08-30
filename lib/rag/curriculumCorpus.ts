@@ -18,6 +18,7 @@ import {
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
 import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
+import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
 
 type RawRecord = Record<string, unknown>;
 
@@ -383,13 +384,25 @@ function normalizeRecord(
   );
   const toelichting = asString(raw.toelichting ?? raw.description);
   const leerjaren = raw.leerjaren;
-  const leerjaarRoute = asString(
-    raw.leerjaar_route ??
-      raw.fase ??
-      (Array.isArray(leerjaren)
-        ? leerjaren.map((item) => String(item)).join(", ")
-        : ""),
-  );
+  const leerjaarRoute =
+    formatSecondaryRouteLabel(
+      asString(raw.graad),
+      asString(raw.finaliteit),
+      asString(
+        raw.leerjaar_route ??
+          raw.fase ??
+          (Array.isArray(leerjaren)
+            ? leerjaren.map((item) => String(item)).join(", ")
+            : ""),
+      ),
+    ) ||
+    asString(
+      raw.leerjaar_route ??
+        raw.fase ??
+        (Array.isArray(leerjaren)
+          ? leerjaren.map((item) => String(item)).join(", ")
+          : ""),
+    );
   const netwerk = asString(raw.netwerk ?? raw.network) || network || "ALL";
   const bronUrl = asString(raw.bron_url ?? raw.sourceUrl ?? raw.source_url);
 

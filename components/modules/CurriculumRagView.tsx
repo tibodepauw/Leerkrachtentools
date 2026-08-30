@@ -38,6 +38,11 @@ import {
   sanitizeCurriculumText,
 } from "@/lib/rag/curriculumDisplay";
 import { preferenceToFilter } from "@/lib/lesson/educationLevelPreference";
+import {
+  SECONDARY_FINALITY_FILTER_OPTIONS,
+  SECONDARY_GRADE_FILTER_OPTIONS,
+  secondaryGradeFilterFromLessonGrade,
+} from "@/lib/lesson/secondaryFilters";
 import { formatMinimumGoalCopy } from "@/lib/rag/minimumGoalCopy";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
@@ -46,8 +51,10 @@ import type {
   CurriculumSearchResult,
   EducationLevelFilter,
   EducationLevelPreference,
+  SecondaryFinalityFilter,
+  SecondaryGradeFilter,
 } from "@/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type SearchVariant = "leerplandoel" | "minimumdoel";
@@ -294,13 +301,25 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   );
   const educationLevel = useLessonStore((state) => state.educationLevel);
   const setEducationLevel = useLessonStore((state) => state.setEducationLevel);
+  const secondaryGradeFilter = useLessonStore(
+    (state) => state.secondaryGradeFilter,
+  );
+  const secondaryFinalityFilter = useLessonStore(
+    (state) => state.secondaryFinalityFilter,
+  );
+  const setSecondaryGradeFilter = useLessonStore(
+    (state) => state.setSecondaryGradeFilter,
+  );
+  const setSecondaryFinalityFilter = useLessonStore(
+    (state) => state.setSecondaryFinalityFilter,
+  );
   const educationLevelFilter = preferenceToFilter(educationLevel);
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${educationLevelFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
-      : `${variant}:${network}:${educationLevelFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
+      ? `${variant}:${educationLevelFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
+      : `${variant}:${network}:${educationLevelFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -322,6 +341,16 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 
   const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
   const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
+  const showSecondaryFilters = educationLevelFilter === "SECUNDAIR";
+
+  useEffect(() => {
+    const mappedGrade = secondaryGradeFilterFromLessonGrade(lesson.grade);
+    if (!mappedGrade) {
+      return;
+    }
+    setSecondaryGradeFilter(mappedGrade);
+    setEducationLevel("secundair_onderwijs");
+  }, [lesson.grade, setEducationLevel, setSecondaryGradeFilter]);
 
   function handleEducationLevelChange(value: EducationLevelPreference) {
     setEducationLevel(value);
@@ -343,8 +372,12 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               <div
                 className={
                   variant === "leerplandoel"
-                    ? "grid gap-4 sm:grid-cols-2"
-                    : undefined
+                    ? showSecondaryFilters
+                      ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                      : "grid gap-4 sm:grid-cols-2"
+                    : showSecondaryFilters
+                      ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+                      : undefined
                 }
               >
                 {variant === "leerplandoel" ? (
@@ -368,6 +401,52 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       </SelectContent>
                     </Select>
                   </div>
+                ) : null}
+                {showSecondaryFilters ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Graad</Label>
+                      <Select
+                        value={secondaryGradeFilter}
+                        onValueChange={(value) =>
+                          setSecondaryGradeFilter(value as SecondaryGradeFilter)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SECONDARY_GRADE_FILTER_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Finaliteit</Label>
+                      <Select
+                        value={secondaryFinalityFilter}
+                        onValueChange={(value) =>
+                          setSecondaryFinalityFilter(
+                            value as SecondaryFinalityFilter,
+                          )
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SECONDARY_FINALITY_FILTER_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
                 ) : null}
                 <div className="space-y-2">
                   <Label>Onderwijsniveau</Label>
@@ -444,6 +523,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                           educationLevel: educationLevelFilter,
                           grade: lesson.grade,
                           ageRange: lesson.ageRange,
+                          secondaryGrade: secondaryGradeFilter,
+                          secondaryFinality: secondaryFinalityFilter,
                         }
                       : {
                           goal: text,
@@ -451,6 +532,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                           educationLevel: educationLevelFilter,
                           grade: lesson.grade,
                           ageRange: lesson.ageRange,
+                          secondaryGrade: secondaryGradeFilter,
+                          secondaryFinality: secondaryFinalityFilter,
                         },
                   )
                 }
@@ -543,6 +626,10 @@ function networkOptionsForLevel(
   if (level === "SECUNDAIR") {
     return NETWORK_OPTIONS.filter((option) =>
       ["ALL", "GO", "KOV", "POV", "OVSG"].includes(option.value),
+    ).map((option) =>
+      option.value === "GO"
+        ? { ...option, label: "GO! · Secundair onderwijs" }
+        : option,
     );
   }
   if (level === "KLEUTER" || level === "LAGER") {
@@ -562,7 +649,7 @@ function minimumGoalHelperText(
     : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking. ";
 
   if (level === "SECUNDAIR") {
-    return `${prefix}We tonen minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1-16).`;
+    return `${prefix}We tonen minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1-16). Gebruik de graad- en finaliteitsfilters voor sterkere ranking.`;
   }
   if (level === "KLEUTER" || level === "LAGER") {
     return `${prefix}We tonen minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;

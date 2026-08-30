@@ -86,8 +86,21 @@ describe("targetGroup lesson model", () => {
       "l4",
       "l5",
       "l6",
+      "s1",
+      "s2",
+      "s3",
+      "s7",
       "custom",
     ]);
+  });
+
+  it("vult secundaire leerjaren automatisch aan met leeftijd", () => {
+    expect(resolveTargetGroupFields({ grade: "s2" })).toEqual({
+      grade: "s2",
+      ageRange: "14-16j",
+      displayTargetGroup: "2de graad (14-16j)",
+      targetGroup: "2de graad (14-16j)",
+    });
   });
 });
 

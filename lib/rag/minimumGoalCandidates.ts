@@ -14,6 +14,7 @@ import {
   tokenize,
 } from "@/lib/rag/curriculumCorpus";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
+import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
 import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
 
 type RawRecord = Record<string, unknown>;
@@ -165,7 +166,11 @@ export function normalizeMinimumGoalCandidate(
     subdomein: asString(raw.subdomein ?? raw.domain ?? raw.component),
     titel: hasLinkedMinimum ? asString(raw.titel ?? raw.text ?? raw.title) : "",
     toelichting: hasLinkedMinimum ? asString(raw.toelichting ?? raw.description) : "",
-    leerjaarRoute: asString(raw.leerjaar_route ?? raw.graad),
+    leerjaarRoute: formatSecondaryRouteLabel(
+      asString(raw.graad),
+      asString(raw.finaliteit),
+      asString(raw.leerjaar_route ?? raw.fase),
+    ) || asString(raw.leerjaar_route ?? raw.graad),
     gelinktMinimumdoel: minimum,
     netwerk: network,
     bronUrl: asString(raw.bron_url ?? raw.sourceUrl ?? raw.source_url),

@@ -5,7 +5,7 @@ export interface GradeOption {
   label: string;
   ageRange: string;
   displayTargetGroup: string;
-  group: "kleuter" | "lager" | "custom";
+  group: "kleuter" | "lager" | "secundair" | "custom";
   matchTerms: string[];
 }
 
@@ -89,6 +89,57 @@ export const GRADE_OPTIONS: GradeOption[] = [
     displayTargetGroup: "6de leerjaar (11-12j)",
     group: "lager",
     matchTerms: ["6de leerjaar", "6de leer", "11-12"],
+  },
+  {
+    value: "s1",
+    label: "1ste graad (1A / 1B / 2de jaar)",
+    ageRange: "12-14j",
+    displayTargetGroup: "1ste graad (12-14j)",
+    group: "secundair",
+    matchTerms: [
+      "1ste graad",
+      "eerste graad",
+      "1a",
+      "1b",
+      "2de jaar secundair",
+      "12-14",
+    ],
+  },
+  {
+    value: "s2",
+    label: "2de graad (3de / 4de middelbaar)",
+    ageRange: "14-16j",
+    displayTargetGroup: "2de graad (14-16j)",
+    group: "secundair",
+    matchTerms: [
+      "2de graad",
+      "tweede graad",
+      "3de middelbaar",
+      "4de middelbaar",
+      "14-16",
+    ],
+  },
+  {
+    value: "s3",
+    label: "3de graad (5de / 6de middelbaar)",
+    ageRange: "16-18j",
+    displayTargetGroup: "3de graad (16-18j)",
+    group: "secundair",
+    matchTerms: [
+      "3de graad",
+      "derde graad",
+      "5de middelbaar",
+      "6de middelbaar",
+      "16-18",
+    ],
+  },
+  {
+    value: "s7",
+    label: "7de specialisatiejaar",
+    ageRange: "18-19j",
+    displayTargetGroup: "7de specialisatiejaar (18-19j)",
+    group: "secundair",
+    matchTerms: ["7de specialisatie", "specialisatiejaar", "7de graad", "18-19"],
   },
   {
     value: "custom",

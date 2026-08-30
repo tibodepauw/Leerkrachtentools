@@ -12,9 +12,11 @@ import {
 } from "@/lib/goals/lessonGoals";
 import { deleteLessonDocument } from "@/lib/documents/documentStorage";
 import {
+  gradeOption,
   migrateLessonTargetGroup,
   resolveTargetGroupFields,
 } from "@/lib/lesson/targetGroup";
+import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilters";
 import type {
   ActiveLesson,
   EducationLevelPreference,
@@ -23,6 +25,8 @@ import type {
   LessonGrade,
   ManualExtraction,
   ModuleId,
+  SecondaryFinalityFilter,
+  SecondaryGradeFilter,
 } from "@/types";
 
 const initialLesson: ActiveLesson = {
@@ -55,6 +59,8 @@ interface LessonStore {
   activeModule: ModuleId;
   pinnedModules: ModuleId[];
   educationLevel: EducationLevelPreference;
+  secondaryGradeFilter: SecondaryGradeFilter;
+  secondaryFinalityFilter: SecondaryFinalityFilter;
   storageUserId: string | null;
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
@@ -62,6 +68,10 @@ interface LessonStore {
   setActiveModule: (module: ModuleId) => void;
   togglePinnedModule: (module: ModuleId) => void;
   setEducationLevel: (educationLevel: EducationLevelPreference) => void;
+  setSecondaryGradeFilter: (secondaryGradeFilter: SecondaryGradeFilter) => void;
+  setSecondaryFinalityFilter: (
+    secondaryFinalityFilter: SecondaryFinalityFilter,
+  ) => void;
   setField: <K extends keyof ActiveLesson>(
     key: K,
     value: ActiveLesson[K],
@@ -110,6 +120,8 @@ export function resetLessonStoreState() {
     activeModule: "manual-scanner",
     pinnedModules: [],
     educationLevel: "lager_onderwijs",
+    secondaryGradeFilter: "all",
+    secondaryFinalityFilter: "all",
     storageUserId: null,
     hydrated: false,
   });
@@ -122,6 +134,8 @@ export const useLessonStore = create<LessonStore>()(
       activeModule: "manual-scanner",
       pinnedModules: [],
       educationLevel: "lager_onderwijs",
+      secondaryGradeFilter: "all",
+      secondaryFinalityFilter: "all",
       storageUserId: null,
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
@@ -133,20 +147,54 @@ export const useLessonStore = create<LessonStore>()(
             ? state.pinnedModules.filter((id) => id !== moduleId)
             : [...state.pinnedModules, moduleId],
         })),
-      setEducationLevel: (educationLevel) => set({ educationLevel }),
+      setEducationLevel: (educationLevel) =>
+        set((state) => ({
+          educationLevel,
+          secondaryGradeFilter:
+            educationLevel === "secundair_onderwijs"
+              ? state.secondaryGradeFilter
+              : "all",
+          secondaryFinalityFilter:
+            educationLevel === "secundair_onderwijs"
+              ? state.secondaryFinalityFilter
+              : "all",
+        })),
+      setSecondaryGradeFilter: (secondaryGradeFilter) =>
+        set({ secondaryGradeFilter }),
+      setSecondaryFinalityFilter: (secondaryFinalityFilter) =>
+        set({ secondaryFinalityFilter }),
       setField: (key, value) =>
         set((state) => ({ lesson: { ...state.lesson, [key]: value } })),
       setTargetGroupSelection: ({ grade, customLabel, customAgeRange }) =>
-        set((state) => ({
-          lesson: {
-            ...state.lesson,
-            ...resolveTargetGroupFields({
-              grade,
-              customLabel,
-              customAgeRange,
-            }),
-          },
-        })),
+        set((state) => {
+          const resolved = resolveTargetGroupFields({
+            grade,
+            customLabel,
+            customAgeRange,
+          });
+          const mappedGradeFilter = secondaryGradeFilterFromLessonGrade(
+            resolved.grade,
+          );
+          const selectedGroup = gradeOption(resolved.grade)?.group;
+
+          return {
+            lesson: {
+              ...state.lesson,
+              ...resolved,
+            },
+            ...(mappedGradeFilter
+              ? {
+                  educationLevel: "secundair_onderwijs" as const,
+                  secondaryGradeFilter: mappedGradeFilter,
+                }
+              : selectedGroup === "kleuter" || selectedGroup === "lager"
+                ? {
+                    secondaryGradeFilter: "all" as const,
+                    secondaryFinalityFilter: "all" as const,
+                  }
+                : {}),
+          };
+        }),
       setGoal: (index, patch) =>
         set((state) => {
           let goals = state.lesson.goals.map((goal, goalIndex) =>
@@ -279,6 +327,8 @@ export const useLessonStore = create<LessonStore>()(
         activeModule: state.activeModule,
         pinnedModules: state.pinnedModules,
         educationLevel: state.educationLevel,
+        secondaryGradeFilter: state.secondaryGradeFilter,
+        secondaryFinalityFilter: state.secondaryFinalityFilter,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<typeof currentState> | undefined;

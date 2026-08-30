@@ -72,6 +72,8 @@ export async function POST(request: Request) {
       educationLevel?: EducationLevelFilter;
       grade?: TargetGroupSearchContext["grade"];
       ageRange?: string;
+      secondaryGrade?: TargetGroupSearchContext["secondaryGrade"];
+      secondaryFinality?: TargetGroupSearchContext["secondaryFinality"];
     };
     const query = body.goal?.trim();
 
@@ -134,6 +136,8 @@ export async function POST(request: Request) {
       {
         grade: body.grade ?? "",
         ageRange: body.ageRange?.trim() ?? "",
+        secondaryGrade: body.secondaryGrade ?? "all",
+        secondaryFinality: body.secondaryFinality ?? "all",
       },
     );
 
