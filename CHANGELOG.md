@@ -4,6 +4,14 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.15] - 2026-08-30
+
+### Changed
+- Optie "Alle onderwijsniveaus" verwijderd uit de onderwijsniveau-selector
+- Oude opgeslagen waarde `alle_niveaus` wordt gemigreerd naar `lager_onderwijs`
+
+---
+
 ## [5.8.14] - 2026-08-30
 
 ### Security
