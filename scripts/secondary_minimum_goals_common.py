@@ -6,6 +6,8 @@ import html
 import re
 from typing import Any, Iterable
 
+from secondary_record_schema import normalize_minimum_goal_record as build_secondary_record
+
 SC_LABELS: dict[str, str] = {
     "1": "Lichamelijke en geestelijke gezondheid",
     "2": "Nederlands",
@@ -70,28 +72,16 @@ def normalize_minimum_goal_record(
     source_label: str = "",
 ) -> dict[str, Any]:
     sc_label = sc_name or SC_LABELS.get(sc_nr, "")
-    return {
-        "code": "",
-        "discipline": sc_label,
-        "subdomein": goal_type,
-        "titel": "",
-        "toelichting": "",
-        "leerjaar_route": route_parts(grade, finality, stream),
-        "onderwijsniveau": "secundair onderwijs",
-        "graad": grade,
-        "finaliteit": finality,
-        "stroom": stream,
-        "sleutelcompetentie_nr": sc_nr,
-        "sleutelcompetentie": sc_label,
-        "gelinkt_minimumdoel": {
-            "code": code,
-            "tekst": text,
-            "type": goal_type or "Onderwijsdoel secundair onderwijs",
-        },
-        "netwerk": "VLAANDEREN",
-        "bron_url": source_url or "https://www.onderwijsdoelen.be/",
-        "bron_titel": source_label,
-    }
+    return build_secondary_record(
+        code=code,
+        text=text,
+        goal_type=goal_type or source_label or "Onderwijsdoel secundair onderwijs",
+        grade=grade,
+        finality=finality,
+        stream=stream,
+        sc_name=sc_label,
+        source_url=source_url,
+    )
 
 
 def normalize_api_goal(record: dict[str, Any]) -> dict[str, Any] | None:
@@ -227,8 +217,7 @@ def extract_api_goals(payloads: Iterable[Any]) -> list[dict[str, Any]]:
             normalized = normalize_api_goal(record)
             if not normalized:
                 continue
-            minimum = normalized["gelinkt_minimumdoel"]
-            unique.setdefault((minimum["code"], minimum["tekst"]), normalized)
+            unique.setdefault((normalized["code"], normalized["titel"]), normalized)
     return list(unique.values())
 
 
@@ -238,7 +227,6 @@ def extract_portal_goals(records: Iterable[dict[str, Any]]) -> list[dict[str, An
         normalized = normalize_portal_goal(record)
         if not normalized:
             continue
-        minimum = normalized["gelinkt_minimumdoel"]
-        key = (minimum["code"], minimum["tekst"], normalized.get("graad", ""))
+        key = (normalized["code"], normalized["titel"], normalized.get("graad", ""))
         unique.setdefault(key, normalized)
     return list(unique.values())

@@ -73,7 +73,18 @@ export function recordMatchesEducationLevel(
 
   const text = explicitLevelText(raw);
   if (level === "SECUNDAIR") {
-    return /\b(secundair|so|aso|tso|bso|kso)\b/u.test(text);
+    if (text.includes("secundair")) {
+      return true;
+    }
+    if (
+      typeof raw.onderwijsniveau === "string" &&
+      raw.onderwijsniveau.toUpperCase() === "SECUNDAIR"
+    ) {
+      return true;
+    }
+    return /\b(?:1ste|2de|3de|eerste|tweede|derde)\s+graad\b|finaliteit|[AB]-stroom/u.test(
+      text,
+    );
   }
 
   if (/\b(secundair|so|aso|tso|bso|kso)\b/u.test(text)) {

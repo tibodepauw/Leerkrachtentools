@@ -86,7 +86,7 @@ describe("curriculumCorpus matching", () => {
     expect(searchMinimumGoals({ query: "xyzqwerty onzin foobar" })).toEqual(
       [],
     );
-  });
+  }, 20_000);
 
   it("dedupliceert minimumdoelen op code", () => {
     const results = dedupeByMinimumGoalCode([

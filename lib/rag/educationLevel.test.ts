@@ -62,9 +62,9 @@ describe("educationLevel", () => {
     expect(
       recordMatchesEducationLevel(
         {
-          onderwijsniveau: "secundair onderwijs",
+          onderwijsniveau: "SECUNDAIR",
           graad: "2de graad",
-          finaliteit: "doorstroomfinaliteit",
+          finaliteit: "Doorstroom",
         },
         "SECUNDAIR",
       ),

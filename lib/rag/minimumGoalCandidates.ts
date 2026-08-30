@@ -92,6 +92,11 @@ function asString(value: unknown): string {
   return typeof value === "string" ? decodeHtmlEntities(value.trim()) : "";
 }
 
+function isSecondaryCorpusRecord(raw: RawRecord): boolean {
+  const level = asString(raw.onderwijsniveau).toUpperCase();
+  return level === "SECUNDAIR" || level === "SECUNDAIR ONDERWIJS";
+}
+
 function networkFromRaw(
   raw: RawRecord,
 ): CurriculumNetworkFilter | "VLAANDEREN" | null {
@@ -104,42 +109,58 @@ function networkFromRaw(
   if (netwerk === "KOV") return "KOV";
   if (netwerk === "POV") return "POV";
   if (netwerk === "VLAANDEREN") return "VLAANDEREN";
+  if (!netwerk && isSecondaryCorpusRecord(raw) && asString(raw.code)) {
+    return "VLAANDEREN";
+  }
   return null;
 }
 
 function normalizeMinimumGoal(raw: RawRecord) {
   const linked = raw.gelinkt_minimumdoel;
-  if (!linked || typeof linked !== "object") {
+  if (linked && typeof linked === "object") {
+    const record = linked as Record<string, unknown>;
+    const code = asString(record.code);
+    const tekst = asString(record.tekst);
+    const isSecondary =
+      isSecondaryCorpusRecord(raw) ||
+      asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE") ===
+        "secundair onderwijs";
+    if (
+      !code ||
+      !tekst ||
+      (!isSecondary && !isAhovoksMinimumGoalCode(code))
+    ) {
+      return null;
+    }
+
+    return {
+      code,
+      tekst,
+      type: asString(record.type),
+    };
+  }
+
+  if (!isSecondaryCorpusRecord(raw)) {
     return null;
   }
 
-  const record = linked as Record<string, unknown>;
-  const code = asString(record.code);
-  const tekst = asString(record.tekst);
-  const isSecondary =
-    asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE") ===
-    "secundair onderwijs";
-  if (
-    !code ||
-    !tekst ||
-    (!isSecondary && !isAhovoksMinimumGoalCode(code))
-  ) {
+  const code = asString(raw.code);
+  const tekst = asString(raw.titel);
+  if (!code || !tekst) {
     return null;
   }
 
   return {
     code,
     tekst,
-    type: asString(record.type),
+    type: asString(raw.toelichting),
   };
 }
 
 export function normalizeMinimumGoalCandidate(
   raw: RawRecord,
 ): CurriculumSearchResult | null {
-  const isSecondary =
-    asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE") ===
-    "secundair onderwijs";
+  const isSecondary = isSecondaryCorpusRecord(raw);
   const minimum = normalizeMinimumGoal(raw);
   if (!minimum?.tekst) {
     return null;
@@ -164,13 +185,19 @@ export function normalizeMinimumGoalCandidate(
     code: "",
     discipline,
     subdomein: asString(raw.subdomein ?? raw.domain ?? raw.component),
-    titel: hasLinkedMinimum ? asString(raw.titel ?? raw.text ?? raw.title) : "",
-    toelichting: hasLinkedMinimum ? asString(raw.toelichting ?? raw.description) : "",
-    leerjaarRoute: formatSecondaryRouteLabel(
-      asString(raw.graad),
-      asString(raw.finaliteit),
-      asString(raw.leerjaar_route ?? raw.fase),
-    ) || asString(raw.leerjaar_route ?? raw.graad),
+    titel: hasLinkedMinimum && !isSecondary
+      ? asString(raw.titel ?? raw.text ?? raw.title)
+      : "",
+    toelichting:
+      hasLinkedMinimum && !isSecondary
+        ? asString(raw.toelichting ?? raw.description)
+        : "",
+    leerjaarRoute:
+      formatSecondaryRouteLabel(
+        asString(raw.graad),
+        asString(raw.finaliteit),
+        asString(raw.leerjaar_route ?? raw.fase),
+      ) || asString(raw.leerjaar_route ?? raw.graad),
     gelinktMinimumdoel: minimum,
     netwerk: network,
     bronUrl: asString(raw.bron_url ?? raw.sourceUrl ?? raw.source_url),

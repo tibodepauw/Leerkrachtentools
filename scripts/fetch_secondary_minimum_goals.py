@@ -143,10 +143,8 @@ class SecondaryMinimumGoalsFetcher:
             for goal in goals:
                 handle.write(json.dumps(goal, ensure_ascii=False) + "\n")
 
-        type_counts = Counter(
-            goal["gelinkt_minimumdoel"]["type"] for goal in goals
-        )
-        sc_counts = Counter(goal.get("sleutelcompetentie_nr") or "?" for goal in goals)
+        type_counts = Counter(goal.get("toelichting") or "?" for goal in goals)
+        sc_counts = Counter(goal.get("discipline") or "?" for goal in goals)
         grade_counts = Counter(goal.get("graad") or "?" for goal in goals)
         report = {
             "generated_at": datetime.now(timezone.utc).isoformat(),

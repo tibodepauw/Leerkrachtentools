@@ -38,6 +38,8 @@ from bs4 import BeautifulSoup
 from docx import Document
 from pypdf import PdfReader
 
+from secondary_record_schema import normalize_curriculum_record
+
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_PATH = ROOT / "data/secundair/leerplannen_secundair.jsonl"
 REPORT_PATH = OUTPUT_PATH.with_name("leerplannen_secundair_report.json")
@@ -430,7 +432,8 @@ class SecondaryCurriculumScraper:
         self.output.parent.mkdir(parents=True, exist_ok=True)
         with self.output.open("w", encoding="utf-8") as handle:
             for record in records:
-                handle.write(json.dumps(asdict(record), ensure_ascii=False) + "\n")
+                normalized = normalize_curriculum_record(record)
+                handle.write(json.dumps(normalized, ensure_ascii=False) + "\n")
 
         report = {
             "generated_at": datetime.now(timezone.utc).isoformat(),

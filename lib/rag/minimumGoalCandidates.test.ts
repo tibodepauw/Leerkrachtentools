@@ -71,19 +71,19 @@ describe("minimumGoalCandidates", () => {
 
   it("normaliseert secundaire minimumdoelen zonder basisschoolcode", () => {
     const record = normalizeMinimumGoalCandidate({
-      onderwijsniveau: "secundair onderwijs",
+      onderwijsniveau: "SECUNDAIR",
       graad: "1ste graad",
+      finaliteit: "A-stroom",
       discipline: "Wiskunde",
-      gelinkt_minimumdoel: {
-        code: "06.12",
-        tekst: "De leerlingen analyseren een wiskundig probleem.",
-        type: "eindterm",
-      },
-      netwerk: "VLAANDEREN",
+      code: "06.12",
+      titel: "De leerlingen analyseren een wiskundig probleem.",
+      toelichting: "Eindtermen",
+      netwerk: "",
+      bron_url: "https://www.onderwijsdoelen.be/",
     });
 
     expect(record?.gelinktMinimumdoel?.code).toBe("06.12");
-    expect(record?.leerjaarRoute).toBe("1ste graad");
+    expect(record?.leerjaarRoute).toBe("1ste graad · A-stroom");
     expect(record?.netwerk).toBe("VLAANDEREN");
   });
 

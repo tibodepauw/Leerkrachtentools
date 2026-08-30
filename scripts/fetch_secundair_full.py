@@ -114,6 +114,15 @@ def main() -> int:
     print("  Minimumdoelen: data/secundair/minimumdoelen_secundair.jsonl")
     print("  POV: data/secundair/leerplannen_pov_secundair.jsonl")
 
+    export_gcs_script = SCRIPTS / "export_secundair_gcs.py"
+    gcs_code = run_step(
+        "Discovery Engine .txt-export (data/secundair/gcs/)",
+        [python, str(export_gcs_script)],
+    )
+    failures += gcs_code
+    if gcs_code == 0:
+        print("  GCS-export: data/secundair/gcs/")
+
     if args.export_zip:
         export_script = SCRIPTS / "export_secundair_zip.py"
         export_code = run_step(

@@ -26,6 +26,8 @@ from typing import Any, Iterable
 
 import requests
 
+from secondary_record_schema import normalize_curriculum_record
+
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_PATH = ROOT / "data/secundair/leerplannen_pov_secundair.jsonl"
 API_BASE = "https://classid.io/api/leerplannen"
@@ -135,28 +137,21 @@ def normalize_pov_goal(
         or curriculum_title
     )
 
-    return {
-        "code": code,
-        "titel": title,
-        "discipline": discipline,
-        "subdomein": clean_text(
-            first_value(goal, ("subdomein", "domein", "component", "rubriek"))
-        ),
-        "toelichting": clean_text(
-            first_value(goal, ("toelichting", "description", "wenk"))
-        ),
-        "leerjaar_route": " · ".join(
-            value for value in (grade, finality, stream) if value
-        ),
-        "onderwijsniveau": "secundair onderwijs",
-        "graad": grade,
-        "finaliteit": finality,
-        "stroom": stream,
-        "netwerk": "POV",
-        "bron_url": DOCS_URL,
-        "bron_titel": curriculum_title or "POV Doelenverdeler",
-        "minimumdoel_codes": [],
-    }
+    return normalize_curriculum_record(
+        {
+            "code": code,
+            "titel": title,
+            "discipline": discipline,
+            "toelichting": clean_text(
+                first_value(goal, ("toelichting", "description", "wenk"))
+            ),
+            "graad": grade,
+            "finaliteit": finality,
+            "stroom": stream,
+            "netwerk": "POV",
+            "bron_url": DOCS_URL,
+        }
+    )
 
 
 class PovCurriculumFetcher:
@@ -213,7 +208,7 @@ class PovCurriculumFetcher:
                 logger.warning("Leerplan %s mislukt: %s", curriculum_id, exc)
 
         unique = {
-            (record["code"], record["bron_titel"], record["titel"]): record
+            (record["code"], record["discipline"], record["titel"]): record
             for record in records
         }
         records = list(unique.values())
