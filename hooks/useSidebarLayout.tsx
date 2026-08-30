@@ -10,7 +10,7 @@ import {
 } from "react";
 import { getActiveUserId } from "@/lib/storage/userStorageScope";
 
-export const SIDEBAR_DEFAULT_WIDTH = 256;
+export const SIDEBAR_DEFAULT_WIDTH = 320;
 export const SIDEBAR_MIN_WIDTH = 200;
 export const SIDEBAR_MAX_WIDTH = 360;
 export const SIDEBAR_COLLAPSED_WIDTH = 72;
