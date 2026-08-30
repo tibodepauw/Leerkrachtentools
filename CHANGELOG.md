@@ -4,6 +4,17 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.21] - 2026-08-30
+
+### Added
+- OKAN testfixture voor CI; domain-corpus laadt prod-data met fixture-fallback
+- OKAN-zoektest: ZILL levert geen OKAN-resultaten, ALL wel AHOVOKS
+
+### Changed
+- README en docs: fetch:all / fetch:domains, AHOVOKS-domeinen, gitignore voor domain-data
+
+---
+
 ## [5.8.20] - 2026-08-30
 
 ### Changed
