@@ -15,6 +15,7 @@ import {
   Landmark,
   Menu,
   MessageSquareQuote,
+  PanelLeftClose,
   PanelLeftOpen,
   Pin,
   ScanText,
@@ -299,9 +300,24 @@ function SidebarContent({
               <TooltipContent side="right">Zijbalk uitvouwen</TooltipContent>
             </Tooltip>
           ) : (
-            <p className="truncate text-sm font-black tracking-tight">
-              Leerkrachtentools
-            </p>
+            <div className="flex w-full min-w-0 items-center justify-between gap-2">
+              <p className="truncate text-sm font-black tracking-tight">
+                Leerkrachtentools
+              </p>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={toggleCollapsed}
+                    aria-label="Zijbalk invouwen"
+                    className="grid size-8 shrink-0 place-items-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
+                  >
+                    <PanelLeftClose className="size-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Zijbalk invouwen</TooltipContent>
+              </Tooltip>
+            </div>
           )}
         </div>
         <div className="relative min-h-0 flex-1">
