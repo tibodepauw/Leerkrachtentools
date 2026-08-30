@@ -1,4 +1,6 @@
-![Leerkrachtentools](docs/assets/banner-wordmark.svg)
+<p align="center">
+  <img src="docs/assets/banner-wordmark.svg" alt="Leerkrachtentools" width="100%" />
+</p>
 
 # Leerkrachtentools
 
