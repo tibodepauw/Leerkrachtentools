@@ -124,3 +124,13 @@ BuBaO-ontwikkelingsdoelen zijn deels beschikbaar via onderwijsdoelen.be (AHOVOKS
 - **GO!/OVSG**: geen aparte machine-readable BuBaO-API gevonden; leerplannen via PDF/Word (toekomstige uitbreiding scraper).
 
 BuSO OV1/OV2/OV3-doelen zijn volledig via AHOVOKS API. OV4 volgt het reguliere secundair leerplan.
+
+## Scripts
+
+```bash
+npm run fetch:all                              # Volledige fetch
+npm run fetch:domains                          # Alleen OKAN t/m HO
+npm run fetch:secundair                        # Secundair leerplannen + minimumdoelen
+python3 scripts/fetch_onderwijsdoelen_domains.py
+python3 scripts/fetch_secundair_full.py
+```

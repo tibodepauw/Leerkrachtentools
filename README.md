@@ -93,11 +93,10 @@ Local search indexes official goal corpora:
 | GO | GO! basisonderwijs vakleerplannen (9 subject books) |
 | GO! Nieuw | GO! basisonderwijs 12 doelensets |
 | Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen (lokaal) |
+| AHOVOKS-domeinen | OKAN, BuBaO, BuSO, DKO, volwassenenonderwijs en hoger onderwijs via onderwijsdoelen.be (lokaal) |
 | Vlaamse overheid | Officiële secundaire minimumdoelen (lokaal, via scripts) |
 
-Secundaire corpusdata (`data/secundair/`) wordt **niet** in git opgenomen. Run de
-fetch-scripts lokaal of installeer een privé zip-export; publiceer scraper-uitvoer
-niet op GitHub.
+Domain corpusdata (`data/okan/`, `data/bubao/`, …) en secundaire corpusdata (`data/secundair/`) worden **niet** in git opgenomen. Run de fetch-scripts lokaal; publiceer scraper-uitvoer niet op GitHub.
 
 Maintenance scripts (optional, not required to run the app UI):
 
@@ -105,9 +104,15 @@ Maintenance scripts (optional, not required to run the app UI):
 pip install -r scripts/requirements-curriculum.txt
 playwright install chromium   # for portal fallback + ZILL/OVSG scrapers
 
-# All secondary curricula + minimum goals in one run
+# All education domains (OKAN through hoger onderwijs) + secundair in one run
+npm run fetch:all
+
+# Only AHOVOKS domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger)
+npm run fetch:domains
+
+# Secondary curricula + minimum goals
+npm run fetch:secundair
 python3 scripts/fetch_secundair_full.py
-# or: npm run fetch:secundair
 
 python3 scripts/fetch_curriculum_data.py
 python3 scripts/scrape_zill_full.py
@@ -166,7 +171,7 @@ npm test
 npm run build
 ```
 
-128 automated tests cover curriculum tokenization, minimum-goal ranking, fuzzy matching, auth tiers, and core utilities.
+147 automated tests cover curriculum tokenization, minimum-goal ranking, fuzzy matching, auth tiers, and core utilities.
 
 ## Production deployment
 
@@ -195,6 +200,7 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 | [CHANGELOG.md](./CHANGELOG.md) | Version history |
 | [docs/AI-en-RAG-overzicht.md](./docs/AI-en-RAG-overzicht.md) | Architecture notes (Dutch) |
 | [docs/curriculum-bronnen-urls.md](./docs/curriculum-bronnen-urls.md) | Official curriculum URLs |
+| [docs/onderwijsdoelen-volledig-overzicht.md](./docs/onderwijsdoelen-volledig-overzicht.md) | AHOVOKS domain coverage (OKAN–HO) |
 
 ## Tech stack
 

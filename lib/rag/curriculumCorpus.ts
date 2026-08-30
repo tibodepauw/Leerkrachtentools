@@ -89,16 +89,41 @@ const SECONDARY_POV_CURRICULUM_PROD = path.join(
   "leerplannen_pov_secundair.jsonl",
 );
 
-const DOMAIN_CORPUS_PATHS: Array<{ level: EducationLevelFilter; path: string }> = [
-  { level: "OKAN", path: path.join(process.cwd(), "data", "okan", "onderwijsdoelen_okan.jsonl") },
-  { level: "BUBAO", path: path.join(process.cwd(), "data", "bubao", "onderwijsdoelen_bubao.jsonl") },
-  { level: "BUSO", path: path.join(process.cwd(), "data", "buso", "onderwijsdoelen_buso.jsonl") },
-  { level: "DKO", path: path.join(process.cwd(), "data", "dko", "onderwijsdoelen_dko.jsonl") },
+const DOMAIN_CORPUS_PATHS: Array<{
+  level: EducationLevelFilter;
+  prod: string;
+  fixture?: string;
+}> = [
+  {
+    level: "OKAN",
+    prod: path.join(process.cwd(), "data", "okan", "onderwijsdoelen_okan.jsonl"),
+    fixture: path.join(process.cwd(), "test", "fixtures", "onderwijsdoelen-okan.jsonl"),
+  },
+  {
+    level: "BUBAO",
+    prod: path.join(process.cwd(), "data", "bubao", "onderwijsdoelen_bubao.jsonl"),
+  },
+  {
+    level: "BUSO",
+    prod: path.join(process.cwd(), "data", "buso", "onderwijsdoelen_buso.jsonl"),
+  },
+  {
+    level: "DKO",
+    prod: path.join(process.cwd(), "data", "dko", "onderwijsdoelen_dko.jsonl"),
+  },
   {
     level: "VOLWASSENEN",
-    path: path.join(process.cwd(), "data", "volwassenen", "onderwijsdoelen_volwassenen.jsonl"),
+    prod: path.join(
+      process.cwd(),
+      "data",
+      "volwassenen",
+      "onderwijsdoelen_volwassenen.jsonl",
+    ),
   },
-  { level: "HOGER", path: path.join(process.cwd(), "data", "hoger", "onderwijsdoelen_hoger.jsonl") },
+  {
+    level: "HOGER",
+    prod: path.join(process.cwd(), "data", "hoger", "onderwijsdoelen_hoger.jsonl"),
+  },
 ];
 
 const MIN_CORPUS_MATCH_SCORE = 0.32;
@@ -199,13 +224,15 @@ export function secondaryMinimumGoalRecords(): RawRecord[] {
 export function educationDomainRecords(
   level: EducationLevelFilter = "ALL",
 ): RawRecord[] {
-  const entries = DOMAIN_CORPUS_PATHS.flatMap(({ level: domainLevel, path: filePath }) => {
+  return DOMAIN_CORPUS_PATHS.flatMap(({ level: domainLevel, prod, fixture }) => {
     if (level !== "ALL" && level !== domainLevel) {
       return [];
     }
-    return loadJsonlAt(filePath);
+    if (fixture) {
+      return loadCorpusWithFallback(prod, fixture);
+    }
+    return loadJsonlAt(prod);
   });
-  return entries;
 }
 
 export function allMinimumGoalRecords(): RawRecord[] {

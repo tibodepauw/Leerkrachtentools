@@ -128,4 +128,23 @@ describe("curriculumCorpus matching", () => {
     expect(results[0]?.score).toBe(0.8);
     expect(results[0]?.netwerk).toBe("OVSG");
   });
+
+  it("vindt OKAN-doelen via AHOVOKS-corpus bij ALL-netwerk", () => {
+    const zillOnly = searchLocalCorpus({
+      query: "informatie verwerken mondelinge teksten",
+      network: "ZILL",
+      educationLevel: "OKAN",
+      limit: 3,
+    });
+    const ahovoks = searchLocalCorpus({
+      query: "informatie verwerken mondelinge teksten",
+      network: "ALL",
+      educationLevel: "OKAN",
+      limit: 3,
+    });
+
+    expect(zillOnly).toHaveLength(0);
+    expect(ahovoks.length).toBeGreaterThanOrEqual(1);
+    expect(ahovoks[0]?.netwerk).toBe("AHOVOKS");
+  });
 });
