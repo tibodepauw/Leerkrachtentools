@@ -61,15 +61,14 @@ export function ModuleShell({
       </div>
       <div
         className={cn(
-          "grid gap-px rounded-xl border border-neutral-800 bg-neutral-800 xl:grid-cols-2",
-          pageScroll
-            ? "overflow-visible"
-            : "h-[calc(100vh-11rem)] max-h-[calc(100vh-11rem)] overflow-hidden",
+          "grid gap-px overflow-hidden rounded-xl border border-neutral-800 bg-neutral-800 xl:grid-cols-2",
+          !pageScroll &&
+            "h-[calc(100vh-11rem)] max-h-[calc(100vh-11rem)]",
         )}
       >
         <section
           className={cn(
-            "flex flex-col bg-neutral-950 p-4 sm:p-6",
+            "flex flex-col rounded-tl-xl rounded-tr-xl bg-neutral-950 p-4 sm:p-6 xl:rounded-tr-none xl:rounded-bl-xl",
             !pageScroll && "min-h-0 overflow-hidden",
           )}
         >
@@ -87,7 +86,7 @@ export function ModuleShell({
         </section>
         <section
           className={cn(
-            "flex flex-col bg-black p-4 sm:p-6",
+            "flex flex-col rounded-br-xl rounded-bl-xl bg-black p-4 sm:p-6 xl:rounded-tl-none xl:rounded-bl-none xl:rounded-tr-xl",
             !pageScroll && "min-h-0 overflow-hidden",
           )}
         >
