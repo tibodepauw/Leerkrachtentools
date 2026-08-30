@@ -15,6 +15,7 @@ import {
   Landmark,
   Menu,
   MessageSquareQuote,
+  PanelLeftOpen,
   Pin,
   ScanText,
   Settings,
@@ -221,6 +222,7 @@ function SidebarContent({
   const pinnedModules = useLessonStore((state) => state.pinnedModules);
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
   const togglePinnedModule = useLessonStore((state) => state.togglePinnedModule);
+  const { toggleCollapsed } = useSidebarLayout();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const pinnedItems = pinnedModules
@@ -285,9 +287,16 @@ function SidebarContent({
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="text-sm font-black tracking-tight">LT</p>
+                <button
+                  type="button"
+                  onClick={toggleCollapsed}
+                  aria-label="Zijbalk uitvouwen"
+                  className="grid size-10 place-items-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
+                >
+                  <PanelLeftOpen className="size-4" />
+                </button>
               </TooltipTrigger>
-              <TooltipContent side="right">Leerkrachtentools</TooltipContent>
+              <TooltipContent side="right">Zijbalk uitvouwen</TooltipContent>
             </Tooltip>
           ) : (
             <p className="truncate text-sm font-black tracking-tight">
