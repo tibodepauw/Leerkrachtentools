@@ -19,6 +19,7 @@ import {
 import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilters";
 import type {
   ActiveLesson,
+  CurriculumNetworkFilter,
   DomainDetailFilter,
   EducationLevelPreference,
   EducationNetwork,
@@ -64,6 +65,7 @@ interface LessonStore {
   secondaryFinalityFilter: SecondaryFinalityFilter;
   domainDetailFilter: DomainDetailFilter;
   domainFinalityFilter: DomainDetailFilter;
+  curriculumNetworkFilter: CurriculumNetworkFilter;
   storageUserId: string | null;
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
@@ -77,6 +79,7 @@ interface LessonStore {
   ) => void;
   setDomainDetailFilter: (domainDetailFilter: DomainDetailFilter) => void;
   setDomainFinalityFilter: (domainFinalityFilter: DomainDetailFilter) => void;
+  setCurriculumNetworkFilter: (network: CurriculumNetworkFilter) => void;
   setField: <K extends keyof ActiveLesson>(
     key: K,
     value: ActiveLesson[K],
@@ -133,6 +136,39 @@ function normalizeEducationLevelPreference(
   return fallback;
 }
 
+const CURRICULUM_NETWORK_FILTERS = new Set<CurriculumNetworkFilter>([
+  "ALL",
+  "OPSTAP",
+  "OVSG",
+  "GO_NIEUW",
+  "ZILL",
+  "GO",
+  "KOV",
+  "POV",
+]);
+
+function normalizeCurriculumNetworkFilter(
+  persisted: CurriculumNetworkFilter | string | undefined,
+  fallback: CurriculumNetworkFilter,
+): CurriculumNetworkFilter {
+  if (
+    typeof persisted === "string" &&
+    CURRICULUM_NETWORK_FILTERS.has(persisted as CurriculumNetworkFilter)
+  ) {
+    return persisted as CurriculumNetworkFilter;
+  }
+  return fallback;
+}
+
+function mapEducationNetworkToCurriculumFilter(
+  network: EducationNetwork,
+): CurriculumNetworkFilter {
+  if (network === "GO") {
+    return "GO_NIEUW";
+  }
+  return network;
+}
+
 export function resetLessonStoreState() {
   useLessonStore.setState({
     lesson: initialLesson,
@@ -143,6 +179,7 @@ export function resetLessonStoreState() {
     secondaryFinalityFilter: "all",
     domainDetailFilter: "all",
     domainFinalityFilter: "all",
+    curriculumNetworkFilter: "ALL",
     storageUserId: null,
     hydrated: false,
   });
@@ -159,6 +196,9 @@ export const useLessonStore = create<LessonStore>()(
       secondaryFinalityFilter: "all",
       domainDetailFilter: "all",
       domainFinalityFilter: "all",
+      curriculumNetworkFilter: mapEducationNetworkToCurriculumFilter(
+        initialLesson.educationNetwork,
+      ),
       storageUserId: null,
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
@@ -171,13 +211,17 @@ export const useLessonStore = create<LessonStore>()(
             : [...state.pinnedModules, moduleId],
         })),
       setEducationLevel: (educationLevel) =>
-        set(() => ({
-          educationLevel,
-          secondaryGradeFilter: "all",
-          secondaryFinalityFilter: "all",
-          domainDetailFilter: "all",
-          domainFinalityFilter: "all",
-        })),
+        set((state) =>
+          state.educationLevel === educationLevel
+            ? state
+            : {
+                educationLevel,
+                secondaryGradeFilter: "all",
+                secondaryFinalityFilter: "all",
+                domainDetailFilter: "all",
+                domainFinalityFilter: "all",
+              },
+        ),
       setSecondaryGradeFilter: (secondaryGradeFilter) =>
         set({ secondaryGradeFilter }),
       setSecondaryFinalityFilter: (secondaryFinalityFilter) =>
@@ -186,6 +230,8 @@ export const useLessonStore = create<LessonStore>()(
         set({ domainDetailFilter }),
       setDomainFinalityFilter: (domainFinalityFilter) =>
         set({ domainFinalityFilter }),
+      setCurriculumNetworkFilter: (curriculumNetworkFilter) =>
+        set({ curriculumNetworkFilter }),
       setField: (key, value) =>
         set((state) => ({ lesson: { ...state.lesson, [key]: value } })),
       setTargetGroupSelection: ({ grade, customLabel, customAgeRange }) =>
@@ -331,6 +377,9 @@ export const useLessonStore = create<LessonStore>()(
       setNetwork: (educationNetwork) =>
         set((state) => ({
           lesson: { ...state.lesson, educationNetwork },
+          curriculumNetworkFilter: mapEducationNetworkToCurriculumFilter(
+            educationNetwork,
+          ),
         })),
       clearSession: () => {
         const previousDocumentId =
@@ -354,6 +403,7 @@ export const useLessonStore = create<LessonStore>()(
         secondaryFinalityFilter: state.secondaryFinalityFilter,
         domainDetailFilter: state.domainDetailFilter,
         domainFinalityFilter: state.domainFinalityFilter,
+        curriculumNetworkFilter: state.curriculumNetworkFilter,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<typeof currentState> | undefined;
@@ -375,6 +425,10 @@ export const useLessonStore = create<LessonStore>()(
           educationLevel: normalizeEducationLevelPreference(
             persisted?.educationLevel,
             currentState.educationLevel,
+          ),
+          curriculumNetworkFilter: normalizeCurriculumNetworkFilter(
+            persisted?.curriculumNetworkFilter,
+            currentState.curriculumNetworkFilter,
           ),
         };
       },

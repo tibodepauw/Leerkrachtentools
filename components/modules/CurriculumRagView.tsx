@@ -42,7 +42,6 @@ import {
 import {
   preferenceToFilter,
   EDUCATION_LEVEL_OPTIONS,
-  isAhovoksDomainLevel,
 } from "@/lib/lesson/educationLevelPreference";
 import {
   domainFilterOptions,
@@ -62,7 +61,7 @@ import type {
   EducationLevelFilter,
   EducationLevelPreference,
 } from "@/types";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 type SearchVariant = "leerplandoel" | "minimumdoel";
@@ -90,20 +89,6 @@ const NETWORK_OPTIONS: Array<{
 ];
 
 const EDUCATION_LEVEL_OPTIONS_UI = EDUCATION_LEVEL_OPTIONS;
-
-const MINIMUM_ONLY_EDUCATION_PREFERENCES = new Set<EducationLevelPreference>([
-  "bubao",
-  "buso",
-  "okan",
-  "dko",
-  "volwassenenonderwijs",
-  "hoger_onderwijs",
-  "alle_niveaus",
-]);
-
-const LEERPLAN_EDUCATION_LEVEL_OPTIONS = EDUCATION_LEVEL_OPTIONS.filter(
-  (option) => !MINIMUM_ONLY_EDUCATION_PREFERENCES.has(option.value),
-);
 
 const variantCopy: Record<
   SearchVariant,
@@ -327,11 +312,14 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const enableLlmQueryRewriting = useSettingsStore(
     (state) => state.enableLlmQueryRewriting,
   );
-  const [network, setNetwork] = useState<CurriculumNetworkFilter>(() =>
-    mapEducationNetwork(lesson.educationNetwork),
-  );
   const educationLevel = useLessonStore((state) => state.educationLevel);
   const setEducationLevel = useLessonStore((state) => state.setEducationLevel);
+  const curriculumNetworkFilter = useLessonStore(
+    (state) => state.curriculumNetworkFilter,
+  );
+  const setCurriculumNetworkFilter = useLessonStore(
+    (state) => state.setCurriculumNetworkFilter,
+  );
   const secondaryGradeFilter = useLessonStore(
     (state) => state.secondaryGradeFilter,
   );
@@ -352,13 +340,11 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     (state) => state.domainFinalityFilter,
   );
   const educationLevelFilter = preferenceToFilter(educationLevel);
-  const educationLevelOptions =
-    variant === "leerplandoel"
-      ? LEERPLAN_EDUCATION_LEVEL_OPTIONS
-      : EDUCATION_LEVEL_OPTIONS_UI;
   const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
-  const resolvedNetwork = visibleNetworks.some((option) => option.value === network)
-    ? network
+  const resolvedNetwork = visibleNetworks.some(
+    (option) => option.value === curriculumNetworkFilter,
+  )
+    ? curriculumNetworkFilter
     : (visibleNetworks[0]?.value ?? "ALL");
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
@@ -396,25 +382,15 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const finalityFilterOptions = domainSecondaryFinalityOptions(educationLevelFilter);
 
   useEffect(() => {
-    if (variant !== "leerplandoel") {
-      return;
-    }
-    if (
-      MINIMUM_ONLY_EDUCATION_PREFERENCES.has(educationLevel) ||
-      isAhovoksDomainLevel(educationLevelFilter)
-    ) {
-      setEducationLevel("basisonderwijs");
-    }
-  }, [variant, educationLevel, educationLevelFilter, setEducationLevel]);
-
-  useEffect(() => {
     const options = networkOptionsForLevel(educationLevelFilter);
-    setNetwork((current) =>
-      options.some((option) => option.value === current)
-        ? current
-        : (options[0]?.value ?? "ALL"),
-    );
-  }, [educationLevelFilter]);
+    if (!options.some((option) => option.value === curriculumNetworkFilter)) {
+      setCurriculumNetworkFilter(options[0]?.value ?? "ALL");
+    }
+  }, [
+    curriculumNetworkFilter,
+    educationLevelFilter,
+    setCurriculumNetworkFilter,
+  ]);
 
   useEffect(() => {
     const mappedGrade = secondaryGradeFilterFromLessonGrade(lesson.grade);
@@ -428,8 +404,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   function handleEducationLevelChange(value: EducationLevelPreference) {
     setEducationLevel(value);
     const options = networkOptionsForLevel(preferenceToFilter(value));
-    if (!options.some((option) => option.value === network)) {
-      setNetwork(options[0]?.value ?? "ALL");
+    if (!options.some((option) => option.value === curriculumNetworkFilter)) {
+      setCurriculumNetworkFilter(options[0]?.value ?? "ALL");
     }
   }
 
@@ -464,7 +440,9 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       <Select
                         value={resolvedNetwork}
                         onValueChange={(value) =>
-                          setNetwork(value as CurriculumNetworkFilter)
+                          setCurriculumNetworkFilter(
+                            value as CurriculumNetworkFilter,
+                          )
                         }
                       >
                         <SelectTrigger className="w-full min-w-0">
@@ -551,7 +529,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {educationLevelOptions.map((option) => (
+                      {EDUCATION_LEVEL_OPTIONS_UI.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -766,15 +744,6 @@ function minimumGoalHelperText(
     return `${prefix}We tonen minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;
   }
   return `${prefix}Basisonderwijs: minimumdoelen (4de, 6de, kleuter). Secundair: minimumdoelen per graad en SC 1-16.`;
-}
-
-function mapEducationNetwork(
-  network: "ZILL" | "OVSG" | "GO",
-): CurriculumNetworkFilter {
-  if (network === "GO") {
-    return "GO_NIEUW";
-  }
-  return network;
 }
 
 export function CurriculumRagView() {
