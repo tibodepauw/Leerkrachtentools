@@ -16,10 +16,18 @@ import { useAnalysis } from "@/hooks/useAnalysis";
 import { MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { shouldSyncScannerSourceToPreparation } from "@/lib/lesson/preparationText";
 import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
+import {
+  isGeminiDirectManualFile,
+  isManualScannerFile,
+  LESSON_DOCUMENT_MAX_BYTES,
+  MANUAL_SCANNER_ACCEPT,
+  MANUAL_SCANNER_FORMATS_LABEL,
+  MANUAL_SCANNER_UPLOAD_HELPER,
+} from "@/lib/documents/supportedFormats";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { ManualExtraction } from "@/types";
 
-const MAX_FILE_BYTES = 15 * 1024 * 1024;
+const MAX_FILE_BYTES = LESSON_DOCUMENT_MAX_BYTES;
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -94,12 +102,19 @@ function ManualScannerContent() {
     fileData?: string;
     mediaType?: string;
   }) {
-    const response = await analyze("/api/extract-manual", {
-      content: overrides?.content ?? content,
-      fileName: overrides?.fileName ?? fileName,
-      fileData: overrides?.fileData ?? fileData,
-      mediaType: overrides?.mediaType ?? mediaType,
-    });
+    const nextContent = overrides?.content ?? content;
+    const nextFileName = overrides?.fileName ?? fileName;
+    const nextFileData = overrides?.fileData ?? fileData;
+    const nextMediaType = overrides?.mediaType ?? mediaType;
+
+    const body: Record<string, string> = {
+      content: nextContent,
+    };
+    if (nextFileName.trim()) body.fileName = nextFileName;
+    if (nextFileData.trim()) body.fileData = nextFileData;
+    if (nextMediaType.trim()) body.mediaType = nextMediaType;
+
+    const response = await analyze("/api/extract-manual", body);
 
     if (response?.data) {
       syncFromExtraction(response.data);
@@ -115,33 +130,79 @@ function ManualScannerContent() {
     if (!file) return;
     setUploadError("");
 
+    if (!isManualScannerFile(file)) {
+      setUploadError(`Ondersteunde formaten: ${MANUAL_SCANNER_FORMATS_LABEL}.`);
+      return;
+    }
+
     if (file.size > MAX_FILE_BYTES) {
       setUploadError("Het bestand mag maximaal 15 MB zijn.");
       return;
     }
 
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-      const nextMediaType = file.type || "application/octet-stream";
-      const nextContent = file.type.startsWith("text/")
-        ? await file.text()
-        : content;
+      if (isGeminiDirectManualFile(file)) {
+        const dataUrl = await readFileAsDataUrl(file);
+        const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
+        const nextMediaType = file.type || "application/octet-stream";
+        const nextContent =
+          file.type.startsWith("text/") ||
+          file.name.endsWith(".txt") ||
+          file.name.endsWith(".md") ||
+          file.name.endsWith(".csv")
+            ? await file.text()
+            : content;
 
+        setFileName(file.name);
+        setFileSize(file.size);
+        setMediaType(nextMediaType);
+        setFileData(base64);
+        if (nextContent !== content) setContent(nextContent);
+
+        await Promise.all([
+          extractAndSync({
+            content: nextContent,
+            fileName: file.name,
+            fileData: base64,
+            mediaType: nextMediaType,
+          }),
+          importDocumentText(file).catch(() => undefined),
+        ]);
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      const response = await fetch("/api/import-lesson-document", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        text?: string;
+      };
+
+      if (!response.ok || !payload.text?.trim()) {
+        setUploadError(
+          payload.error ?? "Er kon geen leesbare tekst uit dit bestand worden gehaald.",
+        );
+        return;
+      }
+
+      const extractedText = payload.text.trim();
       setFileName(file.name);
       setFileSize(file.size);
-      setMediaType(nextMediaType);
-      setFileData(base64);
-      if (file.type.startsWith("text/")) setContent(nextContent);
+      setMediaType("");
+      setFileData("");
+      setContent(extractedText);
 
       await Promise.all([
         extractAndSync({
-          content: nextContent,
+          content: extractedText,
           fileName: file.name,
-          fileData: base64,
-          mediaType: nextMediaType,
         }),
-        importDocumentText(file).catch(() => undefined),
+        syncPreparationDocumentFromFile(file),
+        syncSourceTextToPreparation(extractedText),
       ]);
     } catch {
       setUploadError("Bestand kon niet worden gelezen.");
@@ -151,20 +212,20 @@ function ManualScannerContent() {
   const primaryText =
     loading && fileName
       ? "Gegevens worden geëxtraheerd…"
-      : fileName || "PDF of afbeelding kiezen";
+      : fileName || "Bestand kiezen";
 
   const helperText =
     fileName && fileSize && !loading
       ? formatFileSize(fileSize)
       : !fileName
-        ? "PDF, afbeelding of tekst · max. 15 MB"
+        ? MANUAL_SCANNER_UPLOAD_HELPER
         : null;
 
   return (
     <ModuleShell
       moduleId="manual-scanner"
       title="Handleiding Scanner"
-      description="Upload een PDF of afbeelding van een handleiding. Gemini leest het document en extraheert leergebied, doelgroep en uitgeverijdoelen."
+      description="Upload een handleiding (PDF, Word, afbeelding, …). Gemini leest het document en extraheert leergebied, doelgroep en uitgeverijdoelen."
       input={
         <ModuleInputLayout
           fields={
@@ -184,7 +245,7 @@ function ManualScannerContent() {
                   <Input
                     id="manual-file"
                     type="file"
-                    accept=".pdf,image/*,.txt"
+                    accept={MANUAL_SCANNER_ACCEPT}
                     className="sr-only"
                     disabled={loading}
                     onChange={(event) => {
