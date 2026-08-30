@@ -1,4 +1,4 @@
-![Leerkrachtentools Bento Banner](docs/assets/bento-banner.svg)
+![Leerkrachtentools](docs/assets/banner-wordmark.svg)
 
 # Leerkrachtentools
 

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-labelledby="bannerTitle">
+  <title id="bannerTitle">Leerkrachtentools</title>
+
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@900&amp;display=swap");
+    .letter {
+      font-family: "Rubik", sans-serif;
+      font-weight: 900;
+      fill: #ffffff;
+      font-size: 80px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+  </style>
+
+  <rect width="1200" height="320" fill="#000000"/>
+
+  <!-- 17 letters, index 0-16, center index 8 = "h" at x=600 y=160 -->
+  <text class="letter" transform="translate(232 168) rotate(-6)">L</text>
+  <text class="letter" transform="translate(278 142) rotate(5)">e</text>
+  <text class="letter" transform="translate(324 174) rotate(-4)">e</text>
+  <text class="letter" transform="translate(370 148) rotate(7)">r</text>
+  <text class="letter" transform="translate(416 176) rotate(-5)">k</text>
+  <text class="letter" transform="translate(462 144) rotate(4)">r</text>
+  <text class="letter" transform="translate(508 172) rotate(-7)">a</text>
+  <text class="letter" transform="translate(554 146) rotate(5)">c</text>
+  <text class="letter" transform="translate(600 160) rotate(0)">h</text>
+  <text class="letter" transform="translate(646 174) rotate(-5)">e</text>
+  <text class="letter" transform="translate(692 142) rotate(6)">n</text>
+  <text class="letter" transform="translate(738 168) rotate(-4)">t</text>
+  <text class="letter" transform="translate(784 148) rotate(5)">o</text>
+  <text class="letter" transform="translate(830 176) rotate(-6)">o</text>
+  <text class="letter" transform="translate(876 144) rotate(4)">l</text>
+  <text class="letter" transform="translate(922 172) rotate(-7)">s</text>
+</svg>
