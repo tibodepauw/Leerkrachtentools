@@ -1,23 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { WordmarkLoader } from "@/components/shared/WordmarkLoader";
 
-/** Minimal black canvas for README banner GIF/PNG export scripts. */
-export default function WordmarkExportPage() {
-  const [key, setKey] = useState(0);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setKey((value) => value + 1), 2200);
-    return () => window.clearInterval(timer);
-  }, []);
+function WordmarkExportCanvas() {
+  const searchParams = useSearchParams();
+  const mode = searchParams.get("mode") ?? "gather";
 
   return (
     <div
       id="wordmark-export"
       className="flex h-[360px] w-[1200px] items-center justify-center bg-black"
     >
-      <WordmarkLoader key={key} variant="gather" />
+      <WordmarkLoader variant={mode === "static" ? "static" : "gather"} />
     </div>
+  );
+}
+
+/** Minimal black canvas for README banner export scripts (Playwright + Rubik). */
+export default function WordmarkExportPage() {
+  return (
+    <Suspense fallback={<div className="h-[360px] w-[1200px] bg-black" />}>
+      <WordmarkExportCanvas />
+    </Suspense>
   );
 }
