@@ -79,7 +79,7 @@ function writeStore(store: StoredRagQueryCache): void {
   try {
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {
-    // sessionStorage full or unavailable — ignore
+    // sessionStorage full or unavailable; ignore
   }
 }
 

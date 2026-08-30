@@ -200,7 +200,7 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 | [CHANGELOG.md](./CHANGELOG.md) | Version history |
 | [docs/AI-en-RAG-overzicht.md](./docs/AI-en-RAG-overzicht.md) | Architecture notes (Dutch) |
 | [docs/curriculum-bronnen-urls.md](./docs/curriculum-bronnen-urls.md) | Official curriculum URLs |
-| [docs/onderwijsdoelen-volledig-overzicht.md](./docs/onderwijsdoelen-volledig-overzicht.md) | AHOVOKS domain coverage (OKAN–HO) |
+| [docs/onderwijsdoelen-volledig-overzicht.md](./docs/onderwijsdoelen-volledig-overzicht.md) | AHOVOKS domain coverage (OKAN-HO) |
 
 ## Tech stack
 

@@ -27,7 +27,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Tests voor corpus-level cache-evictie (`lib/rag/corpusLevelCache.test.ts`)
 
 ### Changed
-- RAG-benchmark latency-drempel: 800 ms → **350 ms** (warme corpus-zoekopdrachten ~250–300 ms)
+- RAG-benchmark latency-drempel: 800 ms → **350 ms** (warme corpus-zoekopdrachten ~250-300 ms)
 - Token-indexen gescopeerd per onderwijsniveau + netwerk; gecachte record-normalisatie voor snellere scans
 - Minimumdoelen-zoekopdracht: gerichte retrieval voor korte reken-queries (`1 + 1`) en candidate-capping
 
@@ -97,7 +97,7 @@ Feature release: volledige Vlaamse onderwijsdomeinen via onderwijsdoelen.be (AHO
 
 ### Added
 - **Onderwijsniveaus** in Leerplandoelen en Minimumdoelen: OKAN, BuBaO, BuSO, DKO, volwassenenonderwijs, hoger onderwijs
-- Dynamische domeinfilters per niveau (NT2/integratie, BuBaO-types, BuSO OV1–3, DKO-graad, …)
+- Dynamische domeinfilters per niveau (NT2/integratie, BuBaO-types, BuSO OV1-3, DKO-graad, …)
 - Python-fetch via onderwijsdoelen.be API (~24.571 doelen): `npm run fetch:all`, `npm run fetch:domains`
 - Uniform JSONL-schema + GCS `.txt`-export voor alle AHOVOKS-domeinen
 - Gestroomlijnde secundaire scrape-pipeline: flat JSONL-schema, `secondary_record_schema.py`, auto GCS-export in `fetch_secundair_full.py`

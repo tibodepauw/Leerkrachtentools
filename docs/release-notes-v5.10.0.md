@@ -7,7 +7,7 @@ Release met volledige Vlaamse onderwijsdomeindekking, RAG-benchmark 10/10, Gemin
 ## Vlaanderen All Domains (v5.9.0)
 
 - **OKAN, BuBaO, BuSO, DKO, volwassenen- en hoger onderwijs** via onderwijsdoelen.be (~24.571 doelen)
-- Dynamische domeinfilters per niveau (NT2/integratie, BuBaO-types, BuSO OV1–3, DKO-graad, …)
+- Dynamische domeinfilters per niveau (NT2/integratie, BuBaO-types, BuSO OV1-3, DKO-graad, …)
 - Python-fetch: `npm run fetch:all`, `npm run fetch:domains`
 - Uniform JSONL-schema + GCS-export voor alle AHOVOKS-domeinen
 - Gestroomlijnde secundaire scrape-pipeline (flat JSONL, `secondary_record_schema.py`)
@@ -20,7 +20,7 @@ Release met volledige Vlaamse onderwijsdomeindekking, RAG-benchmark 10/10, Gemin
 - Generieke toelichtingslabels (Ontwikkelingsdoelen, OV1, Type 2, …) verborgen in doelkaarten
 - Fix lege Leerplan-select bij netwerk/niveau-mismatch
 
-## RAG-benchmark 10/10 (v5.9.2 – v5.9.4)
+## RAG-benchmark 10/10 (v5.9.2 - v5.9.4)
 
 - Benchmarksuite met 10 randgevallen: faithfulness, relevancy, latency, prompt-injectie
 - **Inverted token-index** voor corpus-scan < 250 ms
@@ -36,11 +36,11 @@ Release met volledige Vlaamse onderwijsdomeindekking, RAG-benchmark 10/10, Gemin
 - **Opt-in LLM Query Rewriting** in Instellingen: verrijkt vage zoekopdrachten via Gemini vóór RAG
 - Standaard uit: snelle lokale Didactische Thesaurus blijft actief
 
-## Secundair & UX (v5.8.13 – v5.8.17)
+## Secundair & UX (v5.8.13 - v5.8.17)
 
 - Windows-compatibele `dist/secundair_update.zip` export
 - Secundaire scraper-uitvoer niet meer op GitHub (security)
-- Graad- en finaliteitsfilters secundair; leerjaren s1–s7 in Actieve les
+- Graad- en finaliteitsfilters secundair; leerjaren s1-s7 in Actieve les
 - UI: sidebar 320px, resize/icoon-modus, minimumdoelen-terminologie
 
 ---
