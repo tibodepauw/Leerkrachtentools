@@ -1,6 +1,6 @@
 {
   "name": "leerkrachtentools",
-  "version": "5.9.1",
+  "version": "5.9.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:rag-benchmark": "vitest run test/rag-benchmark.test.ts lib/rag/ragBenchmark.test.ts",
     "fetch:secundair": "python3 scripts/fetch_secundair_full.py",
     "fetch:all": "python3 scripts/fetch_all_curriculum.py",
     "fetch:domains": "python3 scripts/fetch_onderwijsdoelen_domains.py",

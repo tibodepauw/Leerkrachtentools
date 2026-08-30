@@ -4,6 +4,15 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.9.2] - 2026-08-30
+
+### Added
+- RAG-benchmark testsuite (`test/rag-benchmark.test.ts`): 10 randgevallen, faithfulness/relevancy/latency checks, kwaliteitsscore-rapport
+- `lib/rag/ragBenchmark.ts` met corpus-index, evaluatie-helpers en benchmark-case definities
+- `npm run test:rag-benchmark` voor gerichte benchmark-run
+
+---
+
 ## [5.9.1] - 2026-08-30
 
 ### Changed
