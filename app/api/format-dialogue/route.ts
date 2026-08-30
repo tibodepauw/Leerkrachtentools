@@ -4,6 +4,7 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { requireModuleAccess } from "@/lib/auth/moduleRouteGuard";
 import {
   enforceThomasMoreDialogue,
   isStrictThomasMoreDialogue,
@@ -28,6 +29,9 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
+
+  const moduleDenied = requireModuleAccess(session, "dialogue-formatter");
+  if (moduleDenied) return moduleDenied;
 
   const userAiConfig = getUserAiConfig(session.id);
   const access = checkServerAiAccess({

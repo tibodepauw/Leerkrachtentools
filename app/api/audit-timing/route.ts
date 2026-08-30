@@ -13,4 +13,5 @@ export const POST = createAnalysisHandler({
   buildMock: () => mockTimingAdvice,
   preferredProvider: "google",
   requireAi: true,
+  moduleId: "timing-check",
 });

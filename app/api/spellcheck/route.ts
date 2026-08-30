@@ -13,4 +13,5 @@ export const POST = createAnalysisHandler({
   preferredProvider: "google",
   requireAi: true,
   maxOutputTokens: 8192,
+  moduleId: "spellcheck",
 });

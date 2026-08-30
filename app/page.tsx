@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { AuthScreen } from "@/components/auth/AuthScreen";
 import { Dashboard } from "@/components/Dashboard";
+import { resolveAccessibleModuleIds } from "@/lib/auth/moduleVisibility";
 import {
   getSession,
   SESSION_COOKIE,
@@ -19,6 +20,7 @@ export default async function Home() {
       displayName={session.displayName}
       profileImageUrl={session.profileImageUrl}
       tier={session.tier}
+      accessibleModuleIds={resolveAccessibleModuleIds(session.tier, session.email)}
     />
   ) : (
     <AuthScreen />

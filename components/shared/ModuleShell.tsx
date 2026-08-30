@@ -2,10 +2,9 @@
 
 import type { ReactNode } from "react";
 import { Lock } from "lucide-react";
-import { useAccountTier } from "@/components/auth/ModuleAccessProvider";
+import { useModuleAccess } from "@/components/auth/ModuleAccessProvider";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  hasModuleAccess,
   moduleAccessDeniedMessage,
   type ModuleConfigKey,
 } from "@/lib/auth/moduleAccess";
@@ -43,9 +42,9 @@ export function ModuleShell({
   output: ReactNode;
   scrollMode?: "panel" | "page";
 }) {
-  const tier = useAccountTier();
+  const { tier, canAccessModule } = useModuleAccess();
 
-  if (!hasModuleAccess(tier, moduleId)) {
+  if (!canAccessModule(moduleId)) {
     return <ModuleAccessDeniedCard tier={tier} />;
   }
 

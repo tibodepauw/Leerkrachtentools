@@ -12,4 +12,5 @@ export const POST = createAnalysisHandler({
   buildMock: (input) => mockGoalTaxonomy(text(input, "goal")),
   preferredProvider: "google",
   requireAi: true,
+  moduleId: "goal-taxonomy",
 });

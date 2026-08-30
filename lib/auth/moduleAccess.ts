@@ -91,6 +91,15 @@ export function getDefaultModuleForTier(tier: string): ModuleId | null {
   return TOOL_MODULE_IDS.find((moduleId) => hasModuleAccess(tier, moduleId)) ?? null;
 }
 
+export function getDefaultModuleFromAccessibleIds(
+  accessibleModuleIds: readonly ModuleId[],
+): ModuleId | null {
+  if (accessibleModuleIds.includes("active-lesson")) return "active-lesson";
+  return TOOL_MODULE_IDS.find((moduleId) =>
+    accessibleModuleIds.includes(moduleId),
+  ) ?? null;
+}
+
 export function moduleAccessDeniedMessage(tier: string) {
   return `Deze module is niet beschikbaar voor jouw accountniveau (${tierBadgeLabel(tier)}).`;
 }

@@ -4,6 +4,8 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { requireModuleAccess } from "@/lib/auth/moduleRouteGuard";
+import type { ModuleId } from "@/types";
 import { analysisRequestSchema } from "@/lib/ai/inputValidation";
 import { runStructured } from "@/lib/ai/router";
 import type { ProviderName } from "@/lib/ai/providers";
@@ -34,6 +36,7 @@ export function createAnalysisHandler<T>({
   preferredProvider,
   requireAi = false,
   maxOutputTokens,
+  moduleId,
 }: {
   schema: z.ZodType<T>;
   inputSchema?: z.ZodType<InputRecord>;
@@ -43,10 +46,15 @@ export function createAnalysisHandler<T>({
   preferredProvider?: ProviderName;
   requireAi?: boolean;
   maxOutputTokens?: number;
+  moduleId: ModuleId;
 }) {
   return async function POST(request: Request) {
     const session = sessionFromRequest(request);
     if (!session) return unauthorizedResponse();
+
+    const moduleDenied = requireModuleAccess(session, moduleId);
+    if (moduleDenied) return moduleDenied;
+
     try {
       const input = inputSchema.parse(await request.json()) as InputRecord;
       const userAiConfig = getUserAiConfig(session.id);

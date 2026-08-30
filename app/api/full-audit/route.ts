@@ -12,4 +12,5 @@ export const POST = createAnalysisHandler({
   buildMock: () => mockFullAudit,
   preferredProvider: "google",
   requireAi: true,
+  moduleId: "full-audit",
 });

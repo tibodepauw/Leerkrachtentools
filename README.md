@@ -167,6 +167,24 @@ FEEDBACK_TO_EMAIL=feedback@yourdomain.be
 
 Local development works without Brevo: the login API returns a visible dev code when email is not configured.
 
+### Module visibility (server `.env.local`)
+
+Control which tools appear in the sidebar and API without an admin UI. Restart the server after changes.
+
+```bash
+# Hide for everyone
+HIDDEN_MODULES=voice-reflection,engagement
+
+# Hide for one tier
+HIDDEN_MODULES_PARTNER=full-audit
+
+# Per user: email:module1,module2;other@school.be:module3
+USER_MODULE_DENIALS=jan@school.be:spellcheck,full-audit
+USER_MODULE_GRANTS=beta@school.be:voice-reflection
+```
+
+Module ids: `active-lesson`, `manual-scanner`, `goal-optimizer`, `goal-taxonomy`, `curriculum-rag`, `minimum-goals`, `dialogue-formatter`, `spellcheck`, `timing-check`, `alignment`, `engagement`, `full-audit`, `voice-reflection`.
+
 ## Quality checks
 
 ```bash

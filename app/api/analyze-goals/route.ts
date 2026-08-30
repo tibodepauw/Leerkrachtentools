@@ -12,4 +12,5 @@ export const POST = createAnalysisHandler({
   buildMock: (input) => mockGoalAnalysis(text(input, "goal")),
   preferredProvider: "google",
   requireAi: true,
+  moduleId: "goal-optimizer",
 });

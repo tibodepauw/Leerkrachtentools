@@ -17,4 +17,5 @@ export const POST = createAnalysisHandler({
   buildMock: (input) => mockAlignment(stringArray(input, "goals")),
   preferredProvider: "google",
   requireAi: true,
+  moduleId: "alignment",
 });

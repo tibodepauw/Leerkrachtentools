@@ -3,7 +3,10 @@
 import { useEffect } from "react";
 import { ActiveLessonBar } from "@/components/layout/ActiveLessonBar";
 import { AppShell } from "@/components/layout/AppShell";
-import { ModuleAccessProvider } from "@/components/auth/ModuleAccessProvider";
+import {
+  ModuleAccessProvider,
+  useModuleAccess,
+} from "@/components/auth/ModuleAccessProvider";
 import { UserStorageScope } from "@/components/auth/UserStorageScope";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { ModuleAccessDeniedCard } from "@/components/shared/ModuleShell";
@@ -24,11 +27,9 @@ import { SpellcheckView } from "@/components/modules/SpellcheckView";
 import { TimingCheckView } from "@/components/modules/TimingCheckView";
 import { VoiceReflectionView } from "@/components/modules/VoiceReflectionView";
 import { useAppReady } from "@/hooks/useAppReady";
-import {
-  getDefaultModuleForTier,
-  hasModuleAccess,
-} from "@/lib/auth/moduleAccess";
+import { getDefaultModuleFromAccessibleIds } from "@/lib/auth/moduleAccess";
 import { useLessonStore } from "@/stores/useLessonStore";
+import type { ModuleId } from "@/types";
 
 const modules = {
   "active-lesson": ActiveLessonView,
@@ -52,21 +53,25 @@ export function Dashboard({
   displayName,
   profileImageUrl,
   tier,
+  accessibleModuleIds,
 }: {
   userId: string;
   userEmail: string;
   displayName: string | null;
   profileImageUrl: string | null;
   tier: string;
+  accessibleModuleIds: ModuleId[];
 }) {
   return (
     <UserStorageScope userId={userId}>
-      <DashboardContent
-        userEmail={userEmail}
-        displayName={displayName}
-        profileImageUrl={profileImageUrl}
-        tier={tier}
-      />
+      <ModuleAccessProvider tier={tier} accessibleModuleIds={accessibleModuleIds}>
+        <DashboardContent
+          userEmail={userEmail}
+          displayName={displayName}
+          profileImageUrl={profileImageUrl}
+          tier={tier}
+        />
+      </ModuleAccessProvider>
     </UserStorageScope>
   );
 }
@@ -83,39 +88,40 @@ function DashboardContent({
   tier: string;
 }) {
   const ready = useAppReady();
+  const { canAccessModule, accessibleModuleIds } = useModuleAccess();
   const activeModule = useLessonStore((state) => state.activeModule);
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
   const ActiveModule = modules[activeModule];
 
   useEffect(() => {
-    if (!hasModuleAccess(tier, activeModule)) {
-      const fallback = getDefaultModuleForTier(tier);
+    if (!canAccessModule(activeModule)) {
+      const fallback = getDefaultModuleFromAccessibleIds(
+        Array.from(accessibleModuleIds),
+      );
       if (fallback) {
         setActiveModule(fallback);
       }
     }
-  }, [tier, activeModule, setActiveModule]);
+  }, [activeModule, accessibleModuleIds, canAccessModule, setActiveModule]);
 
   if (!ready) {
     return <AppLoadingScreen label="Leerkrachtentools laden…" />;
   }
 
-  const moduleAllowed = hasModuleAccess(tier, activeModule);
+  const moduleAllowed = canAccessModule(activeModule);
 
   return (
-    <ModuleAccessProvider tier={tier}>
-      <AppShell
-        account={{
-          email: userEmail,
-          displayName,
-          tier,
-          profileImageUrl,
-        }}
-      >
-        <PreparationTextSync />
-        <ActiveLessonBar userEmail={userEmail} />
-        {moduleAllowed ? <ActiveModule /> : <ModuleAccessDeniedCard tier={tier} />}
-      </AppShell>
-    </ModuleAccessProvider>
+    <AppShell
+      account={{
+        email: userEmail,
+        displayName,
+        tier,
+        profileImageUrl,
+      }}
+    >
+      <PreparationTextSync />
+      <ActiveLessonBar userEmail={userEmail} />
+      {moduleAllowed ? <ActiveModule /> : <ModuleAccessDeniedCard tier={tier} />}
+    </AppShell>
   );
 }

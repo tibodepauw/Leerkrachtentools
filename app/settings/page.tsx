@@ -1,8 +1,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AccountSettings } from "@/components/auth/AccountSettings";
+import { ModuleAccessProvider } from "@/components/auth/ModuleAccessProvider";
 import { UserStorageScope } from "@/components/auth/UserStorageScope";
 import { getAppVersionInfo } from "@/lib/app/version";
+import { resolveAccessibleModuleIds } from "@/lib/auth/moduleVisibility";
 import {
   getSession,
   SESSION_COOKIE,
@@ -22,17 +24,25 @@ export default async function SettingsPage() {
 
   return (
     <UserStorageScope userId={session.id}>
-      <AccountSettings
-        userId={session.id}
-        email={session.email}
-      displayName={session.displayName}
-      profileImageUrl={session.profileImageUrl}
-      tier={session.tier}
-      marketingOptIn={session.marketingOptIn}
-      appVersion={appVersion.version}
-      appCommit={appVersion.commit}
-      githubRepo={appVersion.githubRepo}
-      />
+      <ModuleAccessProvider
+        tier={session.tier}
+        accessibleModuleIds={resolveAccessibleModuleIds(
+          session.tier,
+          session.email,
+        )}
+      >
+        <AccountSettings
+          userId={session.id}
+          email={session.email}
+          displayName={session.displayName}
+          profileImageUrl={session.profileImageUrl}
+          tier={session.tier}
+          marketingOptIn={session.marketingOptIn}
+          appVersion={appVersion.version}
+          appCommit={appVersion.commit}
+          githubRepo={appVersion.githubRepo}
+        />
+      </ModuleAccessProvider>
     </UserStorageScope>
   );
 }

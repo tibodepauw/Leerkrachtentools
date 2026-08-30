@@ -34,7 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { hasModuleAccess } from "@/lib/auth/moduleAccess";
+import { useModuleAccess } from "@/components/auth/ModuleAccessProvider";
 import { useSidebarLayout } from "@/hooks/useSidebarLayout";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { SidebarFeedback } from "@/components/layout/SidebarFeedback";
@@ -224,21 +224,22 @@ function SidebarContent({
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
   const togglePinnedModule = useLessonStore((state) => state.togglePinnedModule);
   const { toggleCollapsed } = useSidebarLayout();
+  const { canAccessModule } = useModuleAccess();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showBottomFade, setShowBottomFade] = useState(false);
   const pinnedItems = pinnedModules
     .map((id) => moduleById(id))
     .filter(
       (item): item is SidebarModule =>
-        item !== undefined && hasModuleAccess(account.tier, item.id),
+        item !== undefined && canAccessModule(item.id),
     );
   const visibleSections = sections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => hasModuleAccess(account.tier, item.id)),
+      items: section.items.filter((item) => canAccessModule(item.id)),
     }))
     .filter((section) => section.items.length > 0);
-  const showActiveLesson = hasModuleAccess(account.tier, "active-lesson");
+  const showActiveLesson = canAccessModule("active-lesson");
 
   function updateBottomFade() {
     const element = scrollRef.current;

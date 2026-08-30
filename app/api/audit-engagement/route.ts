@@ -12,4 +12,5 @@ export const POST = createAnalysisHandler({
   buildMock: () => mockEngagement,
   preferredProvider: "google",
   requireAi: true,
+  moduleId: "engagement",
 });

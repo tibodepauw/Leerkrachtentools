@@ -4,6 +4,7 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { requireModuleAccess } from "@/lib/auth/moduleRouteGuard";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
 import { reflectionRequestSchema } from "@/lib/ai/inputValidation";
 import { prompts } from "@/lib/ai/prompts";
@@ -21,6 +22,9 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
+
+  const moduleDenied = requireModuleAccess(session, "voice-reflection");
+  if (moduleDenied) return moduleDenied;
 
   const userAiConfig = getUserAiConfig(session.id);
   const access = checkServerAiAccess({

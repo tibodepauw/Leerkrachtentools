@@ -3,6 +3,7 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { requireModuleAccess } from "@/lib/auth/moduleRouteGuard";
 import { approvedTierResponse } from "@/lib/ai/serverAccess";
 import { networkBadgeLabel } from "@/lib/rag/curriculumDisplay";
 import {
@@ -149,6 +150,8 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
   const tierDenied = approvedTierResponse(session.tier);
   if (tierDenied) return tierDenied;
+  const moduleDenied = requireModuleAccess(session, "curriculum-rag");
+  if (moduleDenied) return moduleDenied;
 
   try {
     const body = (await request.json()) as {
