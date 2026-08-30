@@ -4,6 +4,25 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.7] - 2026-08-30
+
+### Added
+- Live-discovery scraper for public GO!, Katholiek Onderwijs Vlaanderen and
+  OVSG secondary curriculum documents
+- Provider-specific PDF and Word parsers with normalized JSONL output
+- Official Provinciaal Onderwijs Vlaanderen Doelenverdeler API client
+- Official Vlaamse Onderwijsdoelen 1.0 API client for secondary minimum goals
+- Secondary corpus loading and network filters for KOV and POV
+- Parser unit tests and verified live sample runs for GO!, KOV and OVSG
+
+### Changed
+- Secondary education filtering now reads generated curriculum and minimum-goal
+  corpora instead of always returning an empty result
+- Curriculum source documentation expanded with access constraints, API
+  endpoints and scraper commands
+
+---
+
 ## [5.8.6] - 2026-08-30
 
 ### Added
