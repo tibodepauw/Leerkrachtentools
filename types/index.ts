@@ -13,6 +13,11 @@ export type EducationLevelFilter =
   | "KLEUTER"
   | "LAGER"
   | "SECUNDAIR";
+export type EducationLevelPreference =
+  | "alle_niveaus"
+  | "kleuteronderwijs"
+  | "lager_onderwijs"
+  | "secundair_onderwijs";
 export type GoalTaxonomy = "MC" | "DAS" | "SPM";
 export type ModuleId =
   | "active-lesson"

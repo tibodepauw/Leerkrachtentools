@@ -17,6 +17,7 @@ import {
 } from "@/lib/lesson/targetGroup";
 import type {
   ActiveLesson,
+  EducationLevelPreference,
   EducationNetwork,
   LessonGoal,
   LessonGrade,
@@ -53,12 +54,14 @@ interface LessonStore {
   lesson: ActiveLesson;
   activeModule: ModuleId;
   pinnedModules: ModuleId[];
+  educationLevel: EducationLevelPreference;
   storageUserId: string | null;
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
   setStorageUserId: (userId: string | null) => void;
   setActiveModule: (module: ModuleId) => void;
   togglePinnedModule: (module: ModuleId) => void;
+  setEducationLevel: (educationLevel: EducationLevelPreference) => void;
   setField: <K extends keyof ActiveLesson>(
     key: K,
     value: ActiveLesson[K],
@@ -87,6 +90,7 @@ export function resetLessonStoreState() {
     lesson: initialLesson,
     activeModule: "manual-scanner",
     pinnedModules: [],
+    educationLevel: "lager_onderwijs",
     storageUserId: null,
     hydrated: false,
   });
@@ -98,6 +102,7 @@ export const useLessonStore = create<LessonStore>()(
       lesson: initialLesson,
       activeModule: "manual-scanner",
       pinnedModules: [],
+      educationLevel: "lager_onderwijs",
       storageUserId: null,
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
@@ -109,6 +114,7 @@ export const useLessonStore = create<LessonStore>()(
             ? state.pinnedModules.filter((id) => id !== moduleId)
             : [...state.pinnedModules, moduleId],
         })),
+      setEducationLevel: (educationLevel) => set({ educationLevel }),
       setField: (key, value) =>
         set((state) => ({ lesson: { ...state.lesson, [key]: value } })),
       setTargetGroupSelection: ({ grade, customLabel, customAgeRange }) =>
@@ -253,6 +259,7 @@ export const useLessonStore = create<LessonStore>()(
         lesson: state.lesson,
         activeModule: state.activeModule,
         pinnedModules: state.pinnedModules,
+        educationLevel: state.educationLevel,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<typeof currentState> | undefined;
@@ -271,6 +278,8 @@ export const useLessonStore = create<LessonStore>()(
             ...migrateLessonTargetGroup(mergedLesson),
           },
           pinnedModules: persisted?.pinnedModules ?? currentState.pinnedModules,
+          educationLevel:
+            persisted?.educationLevel ?? currentState.educationLevel,
         };
       },
       onRehydrateStorage: () => (state) => state?.setHydrated(true),

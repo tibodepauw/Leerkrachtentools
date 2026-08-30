@@ -37,13 +37,15 @@ import {
   networkBadgeLabel,
   sanitizeCurriculumText,
 } from "@/lib/rag/curriculumDisplay";
-import { formatAhovoksMinimumGoalCopy } from "@/lib/rag/ahovoksMinimumGoals";
+import { preferenceToFilter } from "@/lib/lesson/educationLevelPreference";
+import { formatMinimumGoalCopy } from "@/lib/rag/minimumGoalCopy";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
   EducationLevelFilter,
+  EducationLevelPreference,
 } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -73,13 +75,13 @@ const NETWORK_OPTIONS: Array<{
 ];
 
 const EDUCATION_LEVEL_OPTIONS: Array<{
-  value: EducationLevelFilter;
+  value: EducationLevelPreference;
   label: string;
 }> = [
-  { value: "ALL", label: "Alle onderwijsniveaus" },
-  { value: "KLEUTER", label: "Kleuteronderwijs" },
-  { value: "LAGER", label: "Lager onderwijs" },
-  { value: "SECUNDAIR", label: "Secundair onderwijs" },
+  { value: "alle_niveaus", label: "Alle onderwijsniveaus" },
+  { value: "kleuteronderwijs", label: "Kleuteronderwijs" },
+  { value: "lager_onderwijs", label: "Lager onderwijs" },
+  { value: "secundair_onderwijs", label: "Secundair onderwijs" },
 ];
 
 const variantCopy: Record<
@@ -224,7 +226,7 @@ function MinimumGoalCard({
     return null;
   }
 
-  const minimumCopy = formatAhovoksMinimumGoalCopy(minimum);
+  const minimumCopy = formatMinimumGoalCopy(minimum);
   const ijkpuntLabel =
     minimum.ijkpuntLabel ?? result.leerjaarRoute ?? "Minimumdoel";
 
@@ -291,14 +293,15 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const [network, setNetwork] = useState<CurriculumNetworkFilter>(() =>
     mapEducationNetwork(lesson.educationNetwork),
   );
-  const [educationLevel, setEducationLevel] =
-    useState<EducationLevelFilter>("LAGER");
+  const educationLevel = useLessonStore((state) => state.educationLevel);
+  const setEducationLevel = useLessonStore((state) => state.setEducationLevel);
+  const educationLevelFilter = preferenceToFilter(educationLevel);
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${educationLevel}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
-      : `${variant}:${network}:${educationLevel}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
+      ? `${variant}:${educationLevelFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
+      : `${variant}:${network}:${educationLevelFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -319,11 +322,11 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     : [];
 
   const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
-  const visibleNetworks = networkOptionsForLevel(educationLevel);
+  const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
 
-  function handleEducationLevelChange(value: EducationLevelFilter) {
+  function handleEducationLevelChange(value: EducationLevelPreference) {
     setEducationLevel(value);
-    const options = networkOptionsForLevel(value);
+    const options = networkOptionsForLevel(preferenceToFilter(value));
     if (!options.some((option) => option.value === network)) {
       setNetwork(options[0]?.value ?? "ALL");
     }
@@ -372,7 +375,9 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                   <Select
                     value={educationLevel}
                     onValueChange={(value) =>
-                      handleEducationLevelChange(value as EducationLevelFilter)
+                      handleEducationLevelChange(
+                        value as EducationLevelPreference,
+                      )
                     }
                   >
                     <SelectTrigger>
@@ -416,7 +421,10 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 </p>
               ) : (
                 <p className="text-xs text-neutral-500">
-                  {minimumGoalHelperText(educationLevel, lesson.displayTargetGroup)}
+                  {minimumGoalHelperText(
+                    educationLevelFilter,
+                    lesson.displayTargetGroup,
+                  )}
                 </p>
               )}
             </div>
@@ -434,14 +442,14 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     variant === "minimumdoel"
                       ? {
                           goal: text,
-                          educationLevel,
+                          educationLevel: educationLevelFilter,
                           grade: lesson.grade,
                           ageRange: lesson.ageRange,
                         }
                       : {
                           goal: text,
                           network,
-                          educationLevel,
+                          educationLevel: educationLevelFilter,
                           grade: lesson.grade,
                           ageRange: lesson.ageRange,
                         },
