@@ -87,7 +87,7 @@ export class ModuleErrorBoundary extends Component<
                 </CardTitle>
                 <CardDescription className="text-sm leading-6 text-amber-100/80">
                   {networkIssue
-                    ? "De verbinding met de server is onderbroken of duurde te lang. Op een stageschool met beperkt wifi komt dat soms voor."
+                    ? "De verbinding met de server is onderbroken of duurde te lang."
                     : "Er trad een onverwachte fout op in deze module. Je lesgegevens in de actieve les blijven bewaard."}
                 </CardDescription>
               </div>
