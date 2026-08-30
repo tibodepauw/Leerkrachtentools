@@ -4,6 +4,40 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.10.0] - 2026-08-30
+
+### Added
+- **LLM Query Rewriting** (opt-in): instelling in Settings → herschrijft vage zoekopdrachten via Gemini 3.5 Flash Lite vóór RAG-retrieval
+- `stores/useSettingsStore.ts`, `components/settings/SettingsView.tsx`, `lib/rag/queryRewriter.ts`
+- Centrale Google-modelconfiguratie in `lib/ai/googleModel.ts`
+
+### Changed
+- Standaard Google AI-model: **`gemini-3.5-flash-lite`** (via `GOOGLE_MODEL` env override)
+- Alle AI-endpoints gebruiken consequent `getGoogleModelId()` i.p.v. verouderde `gemini-2.5-flash-lite`-fallbacks
+
+---
+
+## [5.9.4] - 2026-08-30
+
+### Fixed
+- RAG: GO! PDF legende-/meta-pagina's uit corpus-index gefilterd
+- RAG: Engels (+0.35), schrijfopstel-stemming, wiskunde/grammatica-disambiguatie bij `functie`
+- RAG: typo-mapping `prorgammeren` → programmeren met ICT/STEM-bonus
+
+---
+
+## [5.9.3] - 2026-08-30
+
+### Added
+- RAG inverted token-index voor snellere corpus-scan (< 250 ms)
+- Harde ruis-drempel `ABSOLUTE_MIN_SCORE = 0.18` tegen zwakke/toevallige matches
+- Nederlandse getallen-normalizer en fonetische typos (`opptellingen tot twintich`)
+
+### Changed
+- RAG-benchmark: **10/10** (100% kwaliteitsscore)
+
+---
+
 ## [5.9.2] - 2026-08-30
 
 ### Added
