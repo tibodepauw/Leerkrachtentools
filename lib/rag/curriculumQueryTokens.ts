@@ -146,6 +146,28 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
       "toelicht",
     ],
   },
+  {
+    pattern: /\bopstel\b|\bessay\b|schrijfopdracht|tekst schrijven/i,
+    stems: ["opstel", "essay", "schrijfopdr", "schrijven", "schrijf"],
+  },
+  {
+    pattern:
+      /programm|prorgamm|coding|\bcode\b|algoritme|computationeel denken|computational thinking/i,
+    stems: ["programm", "code", "coding", "algoritm", "comput", "informatica"],
+  },
+  {
+    pattern:
+      /(?:snijpunt|x-as|y-as|x as|y as|grafiek|eerstegraadsfunctie|voorschrift|tabel).{0,48}\bfunctie\b|\bfunctie\b.{0,48}(?:snijpunt|x-as|y-as|x as|y as|grafiek|eerstegraadsfunctie|voorschrift|tabel)/i,
+    stems: [
+      "functie",
+      "grafiek",
+      "snijpunt",
+      "voorschrift",
+      "eerstegraads",
+      "x-as",
+      "y-as",
+    ],
+  },
 ];
 
 const CANONICAL_QUERY_TERMS: Array<{
@@ -226,13 +248,35 @@ const CANONICAL_QUERY_TERMS: Array<{
       "mondel",
     ],
   },
+  {
+    canonical: "programmeren",
+    stems: ["programm", "code", "coding", "algoritm", "comput", "informatica"],
+  },
+  {
+    canonical: "opstel",
+    stems: ["opstel", "essay", "schrijfopdr", "schrijven", "schrijf"],
+  },
 ];
 
 const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
   {
     pattern:
+      /(?:snijpunt|x-as|y-as|x as|y as|grafiek|eerstegraadsfunctie|voorschrift|tabel).{0,48}\bfunctie\b|\bfunctie\b.{0,48}(?:snijpunt|x-as|y-as|x as|y as|grafiek|eerstegraadsfunctie|voorschrift|tabel)/i,
+    discipline: "Wiskunde",
+  },
+  {
+    pattern:
+      /programm|prorgamm|coding|\bcode\b|algoritme|computationeel denken|computational thinking/i,
+    discipline: "ICT",
+  },
+  {
+    pattern:
       /vermenigvuld|vermeningvuld|optell|optel|aftrek|deel|breuk|wiskunde|getal|tafel|reken|maaltafel|splitz/i,
     discipline: "Wiskunde",
+  },
+  {
+    pattern: /\bopstel\b|\bessay\b|schrijfopdracht|tekst schrijven/i,
+    discipline: "Schriftelijke taalvaardigheid",
   },
   {
     pattern: /sleutelwoord|begrijpend|alinea|woordbetekenis/i,
@@ -242,6 +286,7 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
     pattern: /nederlands|lezen|spell|schrijf|taal|tekst/i,
     discipline: "Nederlands",
   },
+  { pattern: /\bengels\b/i, discipline: "Engels" },
   { pattern: /frans/i, discipline: "Frans" },
   {
     pattern:
@@ -270,7 +315,7 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
   },
   {
     pattern:
-      /powerpoint|presentatie|presntatie|presenteren|spreekbeurt|slides|canva|digitaal|digitale media|computer|tablet|software|\bapp\b|voordragen|mondeling|toelichten|\bict\b/i,
+      /powerpoint|presentatie|presntatie|presenteren|spreekbeurt|slides|canva|digitaal|digitale media|computer|tablet|software|\bapp\b|voordragen|mondeling|toelichten|\bict\b|programm|prorgamm|coding|\bcode\b|algoritme|computationeel denken/i,
     discipline: "ICT",
   },
 ];
@@ -389,6 +434,21 @@ export function tokenWeight(token: string, contentTokens: Set<string>): number {
 function expandFuzzyCanonicalStems(tokens: Set<string>, normalized: string): void {
   for (const word of queryWords(normalized)) {
     for (const { canonical, stems } of CANONICAL_QUERY_TERMS) {
+      if (
+        canonical === "opstel" &&
+        word !== "opstel" &&
+        word.startsWith("opstel")
+      ) {
+        continue;
+      }
+      if (
+        canonical === "optellen" &&
+        word.startsWith("opstel") &&
+        word !== "optellen"
+      ) {
+        continue;
+      }
+
       if (
         isFuzzySimilar(word, canonical, FUZZY_MATCH_THRESHOLD) ||
         fuzzySimilarity(word, canonical) >= 0.68
@@ -574,6 +634,28 @@ function queryMatchesMediaTopic(query: string): boolean {
   );
 }
 
+export function queryMatchesEnglishTopic(query: string): boolean {
+  return /\bengels\b/i.test(normalizeQueryText(query));
+}
+
+function queryMatchesWritingTopic(query: string): boolean {
+  return /\bopstel\b|\bessay\b|schrijfopdracht|tekst schrijven/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+export function queryMatchesMathFunctionTopic(query: string): boolean {
+  return /(?:snijpunt|x-as|y-as|x as|y as|grafiek|eerstegraadsfunctie|voorschrift|tabel).{0,48}\bfunctie\b|\bfunctie\b.{0,48}(?:snijpunt|x-as|y-as|x as|y as|grafiek|eerstegraadsfunctie|voorschrift|tabel)/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+export function queryMatchesProgrammingTopic(query: string): boolean {
+  return /programm|prorgamm|coding|\bcode\b|algoritme|computationeel denken|computational thinking/i.test(
+    normalizeQueryText(query),
+  );
+}
+
 export function scoreCodePrefixBonus(query: string, code: string): number {
   const trimmedCode = code.trim();
   if (!trimmedCode) {
@@ -659,6 +741,69 @@ export function scoreDisciplineBonus(
   const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
   let bonus = scoreCodePrefixBonus(query, code);
 
+  if (queryMatchesEnglishTopic(query)) {
+    if (
+      combined.includes("engels") ||
+      combined.includes("vreemde talen") ||
+      combined.includes("english")
+    ) {
+      bonus += 0.35;
+    } else if (discipline.trim() && bonus <= 0) {
+      bonus -= 0.08;
+    }
+  }
+
+  if (queryMatchesWritingTopic(query)) {
+    if (
+      combined.includes("schriftelijke taalvaardigheid") ||
+      combined.includes("schrijf") ||
+      combined.includes("taalvaardigheid")
+    ) {
+      bonus += 0.22;
+    }
+  }
+
+  if (queryMatchesMathFunctionTopic(query)) {
+    if (
+      combined.includes("wiskunde") ||
+      combined.includes("wiskundig") ||
+      combined.includes("algebra") ||
+      combined.includes("grafiek")
+    ) {
+      bonus += 0.35;
+    }
+    if (
+      combined.includes("engels") ||
+      combined.includes("grammatica") ||
+      combined.includes("taalkundig") ||
+      combined.includes("zinsdeel")
+    ) {
+      bonus -= 0.35;
+    }
+  }
+
+  if (queryMatchesProgrammingTopic(query)) {
+    if (
+      combined.includes("ict") ||
+      combined.includes("media") ||
+      combined.includes("mediakundig") ||
+      combined.includes("digitaal") ||
+      combined.includes("informatica")
+    ) {
+      bonus += 0.35;
+    }
+    if (combined.includes("wiskunde") || combined.includes("wiskundig")) {
+      bonus += 0.22;
+    }
+    if (
+      combined.includes("stem") ||
+      combined.includes("techniek") ||
+      combined.includes("wetenschap")
+    ) {
+      bonus += 0.22;
+    }
+  }
+
   if (!hint) {
     return bonus;
   }
@@ -670,6 +815,10 @@ export function scoreDisciplineBonus(
     normalizedHint.includes(combined) ||
     combined.includes("wiskundig denken") ||
     (isZillMathThinkingCode(code) && hint === "Wiskunde") ||
+    (hint === "Engels" &&
+      (combined.includes("engels") ||
+        combined.includes("vreemde talen") ||
+        combined.includes("english"))) ||
     (hint === "Oriëntatie op natuur" && combined.includes("natuur")) ||
     (hint === "Oriëntatie op tijd" &&
       (combined.includes("tijd") || combined.includes("wereld"))) ||
@@ -744,6 +893,32 @@ export function scoreCurriculumCandidate({
     score += 0.12;
   }
   if (queryLower.includes("aftrek") && titelLower.includes("aftrek")) {
+    score += 0.12;
+  }
+
+  if (queryMatchesMathFunctionTopic(query)) {
+    if (
+      titelLower.includes("zinsdel") ||
+      titelLower.includes("grammatica") ||
+      titelLower.includes("taalkundig")
+    ) {
+      score -= 0.35;
+    }
+    if (
+      discipline.toLocaleLowerCase("nl-BE").includes("wiskunde") &&
+      (titelLower.includes("grafiek") ||
+        titelLower.includes("functie") ||
+        titelLower.includes("voorschrift"))
+    ) {
+      score += 0.15;
+    }
+  }
+
+  if (
+    queryMatchesWritingTopic(query) &&
+    /\bopstel\b/u.test(queryLower) &&
+    /\bopstel\b/u.test(titelLower)
+  ) {
     score += 0.12;
   }
 

@@ -134,6 +134,7 @@ const PHONETIC_TYPO_REPLACEMENTS: Array<[RegExp, string]> = [
   [/twintich/giu, "twintig"],
   [/vermeningvuld/giu, "vermenigvuld"],
   [/presntat/giu, "present"],
+  [/prorgamm/giu, "programm"],
 ];
 
 export function applyPhoneticTypos(text: string): string {

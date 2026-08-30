@@ -27,6 +27,7 @@ describe("fuzzyMatch", () => {
       "optellen tot twintig",
     );
     expect(applyPhoneticTypos("vermeningvuldigen")).toBe("vermenigvuldigen");
+    expect(applyPhoneticTypos("prorgammeren")).toBe("programmeren");
   });
 
   it("berekent bigram overlap", () => {

@@ -7,7 +7,10 @@ import {
   isZillMotorCode,
   normalizeDutchNumberWords,
   normalizeQueryText,
+  queryMatchesMathFunctionTopic,
+  queryMatchesProgrammingTopic,
   scoreCurriculumOverlap,
+  scoreDisciplineBonus,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
@@ -139,6 +142,45 @@ describe("curriculumQueryTokens", () => {
     expect(isZillMediaCode("MEge2")).toBe(true);
     expect(isZillMediaCode("MEmw1")).toBe(true);
     expect(isZillMediaCode("MEva1")).toBe(true);
+  });
+
+  it("herkent Engels en schrijfopdracht-stemming", () => {
+    expect(inferDisciplineFromQuery("engels mondeling examen")).toBe("Engels");
+    expect(
+      scoreDisciplineBonus("engels mondeling examen", "Engels", "", "Engels"),
+    ).toBeGreaterThanOrEqual(0.35);
+
+    const opstelTokens = tokenizeCurriculumQuery("opstel schrijven");
+    expect(opstelTokens.has("opstel")).toBe(true);
+    expect(opstelTokens.has("schrijf")).toBe(true);
+
+    const ondernemenTokens = tokenizeCurriculumQuery("opstellen ondernemingszin");
+    expect(ondernemenTokens.has("opstel")).toBe(false);
+    expect(ondernemenTokens.has("optell")).toBe(false);
+  });
+
+  it("disambiguiert wiskundige functie van grammatica", () => {
+    const query = "functie grafiek snijpunt x-as y-as";
+    expect(queryMatchesMathFunctionTopic(query)).toBe(true);
+    expect(inferDisciplineFromQuery(query)).toBe("Wiskunde");
+
+    const mathBonus = scoreDisciplineBonus(query, "Wiskunde", "", "Algebra");
+    const grammarBonus = scoreDisciplineBonus(
+      query,
+      "Engels",
+      "",
+      "Grammatica",
+    );
+    expect(mathBonus).toBeGreaterThan(grammarBonus);
+  });
+
+  it("herkent programmeer-typos en ICT-discipline", () => {
+    expect(normalizeQueryText("prorgammeren in scratch")).toContain("programm");
+    expect(queryMatchesProgrammingTopic("prorgammeren met code")).toBe(true);
+    expect(inferDisciplineFromQuery("prorgammeren algoritme")).toBe("ICT");
+    expect(
+      scoreDisciplineBonus("prorgammeren algoritme", "ICT", "", "Informatica"),
+    ).toBeGreaterThanOrEqual(0.35);
   });
 });
 

@@ -7,6 +7,7 @@ import {
   extractCodeFromSnippet,
   filterByAbsoluteMinScore,
   findBestCorpusMatch,
+  isGoLegendOrMetaRecord,
   scoreTextOverlap,
   searchLocalCorpus,
   searchMinimumGoals,
@@ -86,6 +87,41 @@ describe("curriculumCorpus matching", () => {
         { score: 0.21, id: "b" },
       ]),
     ).toHaveLength(2);
+  });
+
+  it("filtert GO! legende- en meta-records uit de corpus", () => {
+    expect(
+      isGoLegendOrMetaRecord({
+        netwerk: "GO",
+        titel:
+          "Links in de eerste rij van elk leerplandoel staat het GO!-volgnummer.",
+      }),
+    ).toBe(true);
+    expect(
+      isGoLegendOrMetaRecord({
+        netwerk: "GO_NIEUW",
+        titel: "Het gaat hier over een doel basisvorming.",
+      }),
+    ).toBe(true);
+    expect(
+      isGoLegendOrMetaRecord({
+        netwerk: "GO",
+        titel: "BG: basisgeletterdheid - toelichting bij de codes.",
+      }),
+    ).toBe(true);
+    expect(
+      isGoLegendOrMetaRecord({
+        netwerk: "GO",
+        titel: "De leerlingen analyseren eerstegraadsfuncties in een grafiek.",
+        discipline: "Wiskunde",
+      }),
+    ).toBe(false);
+    expect(
+      isGoLegendOrMetaRecord({
+        netwerk: "OPSTAP",
+        titel: "Links in de eerste rij van elk leerplandoel staat het GO!-volgnummer.",
+      }),
+    ).toBe(false);
   });
 
   it("geeft lege lokale fallback bij te weinig overlap", () => {

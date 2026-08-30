@@ -179,6 +179,12 @@ const STOPWORDS = new Set([
 
 const loaded = new Map<string, RawRecord[]>();
 
+const GO_LEGEND_META_PATTERNS = [
+  /links in de eerste rij van elk leerplandoel staat het go!?-volgnummer/i,
+  /het gaat hier over een doel basisvorming/i,
+  /bg:\s*basisgeletterdheid/i,
+];
+
 type IndexedCorpusRecord = {
   raw: RawRecord;
   haystack: string;
@@ -322,8 +328,8 @@ export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[]
         Exclude<CurriculumNetworkFilter, "ALL">
       >
       ).flatMap((key) => loadNetworkRecords(key)),
-      ...loadJsonlAt(SECONDARY_CURRICULUM_PROD),
-      ...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD),
+      ...sanitizeCorpusRecords(loadJsonlAt(SECONDARY_CURRICULUM_PROD)),
+      ...sanitizeCorpusRecords(loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD)),
       ...educationDomainRecords("ALL"),
     ];
   }
@@ -378,7 +384,7 @@ function loadNetworkRecords(
   if (network === "POV") {
     secondaryRecords.push(...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD));
   }
-  const records = [...primaryRecords, ...secondaryRecords];
+  const records = sanitizeCorpusRecords([...primaryRecords, ...secondaryRecords]);
 
   return records.map((raw) => ({
     ...raw,
@@ -507,6 +513,20 @@ export function buildRecordHaystack(raw: RawRecord): string {
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+export function isGoLegendOrMetaRecord(raw: RawRecord): boolean {
+  const network = asString(raw.netwerk ?? raw.network).toUpperCase();
+  if (network !== "GO" && network !== "GO_NIEUW") {
+    return false;
+  }
+
+  const haystack = buildRecordHaystack(raw);
+  return GO_LEGEND_META_PATTERNS.some((pattern) => pattern.test(haystack));
+}
+
+function sanitizeCorpusRecords(records: RawRecord[]): RawRecord[] {
+  return records.filter((raw) => !isGoLegendOrMetaRecord(raw));
 }
 
 function recordHaystack(raw: RawRecord): string {
