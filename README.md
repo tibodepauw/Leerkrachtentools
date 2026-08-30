@@ -1,6 +1,11 @@
 <p align="center">
-  <img src="docs/assets/banner-wordmark.svg" alt="Leerkrachtentools" width="100%" />
+  <img src="docs/assets/banner-wordmark-gather.gif" alt="Leerkrachtentools" width="100%" />
 </p>
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-181%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
+[![Version](https://img.shields.io/badge/version-v5.11.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
 

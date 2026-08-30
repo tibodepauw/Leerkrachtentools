@@ -33,6 +33,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { detachClientUserStorage } from "@/lib/storage/clientUserSession";
 import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
+import { LoaderSettingsView } from "@/components/settings/LoaderSettingsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 
 interface AccountSettingsProps {
@@ -263,6 +264,8 @@ export function AccountSettings({
           </div>
 
           <SettingsView />
+
+          <LoaderSettingsView />
 
           <Card>
             <CardHeader>

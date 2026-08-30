@@ -2,7 +2,7 @@
 
 Playful witte Rubik Black letters op zwart, gedeeld met `docs/assets/banner-wordmark.svg` en `lib/wordmark/letters.ts`.
 
-**Status:** alleen preview — nog niet live in de app. Vergelijk varianten op `/dev/wordmark-loader` en keur er één goed voordat we `AppLoadingScreen` aanpassen.
+**Status:** Gather is live in `AppLoadingScreen`. Andere varianten zijn een fun-optie onder Instellingen → Laadscherm. Preview: `/dev/wordmark-loader`.
 
 ## Preview
 
