@@ -131,7 +131,7 @@ function ModuleNavButton({
             onClick={onOpen}
             aria-label={item.label}
             className={cn(
-              "relative mx-auto grid size-10 place-items-center rounded-full transition-colors",
+              "relative grid size-10 place-items-center rounded-full transition-colors",
               active
                 ? "bg-neutral-800 text-white"
                 : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100",
@@ -324,9 +324,19 @@ function SidebarContent({
           <div
             ref={scrollRef}
             onScroll={updateBottomFade}
-            className="h-full overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-track]:bg-transparent"
+            className={cn(
+              "h-full overflow-y-auto overscroll-contain",
+              collapsed
+                ? "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                : "[-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-neutral-800 [&::-webkit-scrollbar-track]:bg-transparent",
+            )}
           >
-            <nav className={cn("space-y-6 pb-4", collapsed ? "p-2" : "p-3")}>
+            <nav
+              className={cn(
+                "space-y-6 pb-4",
+                collapsed ? "flex flex-col items-center p-2" : "p-3",
+              )}
+            >
               {showActiveLesson ? (
                 collapsed ? (
                   <Tooltip>
@@ -336,7 +346,7 @@ function SidebarContent({
                         onClick={() => openModule("active-lesson")}
                         aria-label="Actieve les"
                         className={cn(
-                          "mx-auto grid size-10 place-items-center rounded-full transition-colors",
+                          "grid size-10 place-items-center rounded-full transition-colors",
                           !isSettings && activeModule === "active-lesson"
                             ? "bg-neutral-800 text-white"
                             : "text-neutral-300 hover:bg-neutral-900 hover:text-white",
@@ -370,7 +380,12 @@ function SidebarContent({
                       Gepind
                     </p>
                   ) : null}
-                  <div className={cn("space-y-1", collapsed && "space-y-2")}>
+                  <div
+                    className={cn(
+                      "space-y-1",
+                      collapsed && "flex w-full flex-col items-center space-y-2",
+                    )}
+                  >
                     {pinnedItems.map((item) => (
                       <ModuleNavButton
                         key={`pinned-${item.id}`}
@@ -392,7 +407,12 @@ function SidebarContent({
                       {section.label}
                     </p>
                   ) : null}
-                  <div className={cn("space-y-1", collapsed && "space-y-2")}>
+                  <div
+                    className={cn(
+                      "space-y-1",
+                      collapsed && "flex w-full flex-col items-center space-y-2",
+                    )}
+                  >
                     {section.items.map((item) => (
                       <ModuleNavButton
                         key={item.id}

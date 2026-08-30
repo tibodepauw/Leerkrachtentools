@@ -113,7 +113,7 @@ export function SidebarFeedback({
                 <button
                   type="button"
                   aria-label="Idee of feedback"
-                  className="mx-auto grid size-10 place-items-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
+                  className="grid size-10 place-items-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
                 >
                   <Lightbulb className="size-4" />
                 </button>
