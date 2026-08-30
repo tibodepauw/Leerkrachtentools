@@ -235,7 +235,7 @@
   height: 1.45em;
   max-width: 100%;
   margin-inline: auto;
-  font-size: clamp(0.5625rem, 7cqi, 1.75rem);
+  font-size: clamp(0.5rem, 5cqi, 1.5rem);
 }
 
 @media (prefers-reduced-motion: reduce) {

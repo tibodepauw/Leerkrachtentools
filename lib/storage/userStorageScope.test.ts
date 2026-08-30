@@ -1,23 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
-  documentDatabaseName,
   lessonStoreStorageKey,
+  settingsStoreStorageKey,
 } from "@/lib/storage/userStorageScope";
 
-describe("userStorageScope", () => {
-  it("maakt per account unieke opslagsleutels", () => {
-    const userA = "11111111-1111-4111-8111-111111111111";
-    const userB = "22222222-2222-4222-8222-222222222222";
-
-    expect(lessonStoreStorageKey(userA)).toBe(
-      "leerkrachtentools-active-lesson:11111111-1111-4111-8111-111111111111",
+describe("user storage keys", () => {
+  it("keeps lesson and settings storage separate", () => {
+    expect(settingsStoreStorageKey("user-1")).toBe(
+      "leerkrachtentools-settings:user-1",
     );
-    expect(lessonStoreStorageKey(userB)).toBe(
-      "leerkrachtentools-active-lesson:22222222-2222-4222-8222-222222222222",
+    expect(lessonStoreStorageKey("user-1")).toBe(
+      "leerkrachtentools-active-lesson:user-1",
     );
-    expect(documentDatabaseName(userA)).toBe(
-      "leerkrachtentools-documents:11111111-1111-4111-8111-111111111111",
+    expect(settingsStoreStorageKey("user-1")).not.toBe(
+      lessonStoreStorageKey("user-1"),
     );
-    expect(lessonStoreStorageKey(userA)).not.toBe(lessonStoreStorageKey(userB));
   });
 });

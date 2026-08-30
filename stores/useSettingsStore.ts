@@ -28,7 +28,7 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: "leerkrachtentools-settings",
       skipHydration: true,
-      storage: createJSONStorage(() => createUserScopedPersistStorage()),
+      storage: createJSONStorage(() => createUserScopedPersistStorage("settings")),
       partialize: (state) => ({
         enableLlmQueryRewriting: state.enableLlmQueryRewriting,
         loaderVariant: state.loaderVariant,

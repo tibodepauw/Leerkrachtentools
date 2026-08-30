@@ -393,7 +393,7 @@ export const useLessonStore = create<LessonStore>()(
     {
       name: "leerkrachtentools-active-lesson",
       skipHydration: true,
-      storage: createJSONStorage(() => createUserScopedPersistStorage()),
+      storage: createJSONStorage(() => createUserScopedPersistStorage("lesson")),
       partialize: (state) => ({
         lesson: state.lesson,
         activeModule: state.activeModule,

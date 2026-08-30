@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Play } from "lucide-react";
+import { Check, Play } from "lucide-react";
+import { toast } from "sonner";
 import { WordmarkLoader } from "@/components/shared/WordmarkLoader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,9 +25,23 @@ const PREVIEW_ANIMATION_MS = 3200;
 
 export function LoaderSettingsView() {
   const loaderVariant = useSettingsStore((state) => state.loaderVariant);
+  const settingsHydrated = useSettingsStore((state) => state.hydrated);
   const setLoaderVariant = useSettingsStore((state) => state.setLoaderVariant);
   const [playing, setPlaying] = useState(false);
   const [replayKey, setReplayKey] = useState(0);
+  const [savedFlash, setSavedFlash] = useState(false);
+
+  function saveLoaderVariant(value: WordmarkLoaderVariant) {
+    setLoaderVariant(value);
+    toast.success("Laadscherm-animatie opgeslagen.");
+    setSavedFlash(true);
+  }
+
+  useEffect(() => {
+    if (!savedFlash) return;
+    const timer = window.setTimeout(() => setSavedFlash(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [savedFlash]);
 
   useEffect(() => {
     if (!playing) return;
@@ -44,7 +59,8 @@ export function LoaderSettingsView() {
       <CardHeader>
         <CardTitle>Laadscherm</CardTitle>
         <CardDescription>
-          Standaard is Gather. Kies een andere wordmark-animatie, puur voor de fun.
+          Standaard is Gather. Kies een andere wordmark-animatie, puur voor de fun. Je keuze
+          wordt automatisch opgeslagen.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -61,7 +77,8 @@ export function LoaderSettingsView() {
           <div className="flex gap-2">
             <Select
               value={loaderVariant}
-              onValueChange={(value) => setLoaderVariant(value as WordmarkLoaderVariant)}
+              disabled={!settingsHydrated}
+              onValueChange={(value) => saveLoaderVariant(value as WordmarkLoaderVariant)}
             >
               <SelectTrigger id="settings-loader-variant" className="min-w-0 flex-1">
                 <SelectValue placeholder="Kies een animatie" />
@@ -92,6 +109,12 @@ export function LoaderSettingsView() {
                 ?.description
             }
           </p>
+          {savedFlash ? (
+            <p className="flex items-center gap-1.5 text-sm text-emerald-400">
+              <Check className="size-4" aria-hidden="true" />
+              Opgeslagen — zichtbaar bij de volgende volledige laadbeurt.
+            </p>
+          ) : null}
         </div>
       </CardContent>
     </Card>

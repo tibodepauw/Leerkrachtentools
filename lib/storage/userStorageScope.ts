@@ -15,6 +15,12 @@ export function getActiveUserId() {
   return activeUserId;
 }
 
+const SETTINGS_STORE_BASE_KEY = "leerkrachtentools-settings";
+
+export function settingsStoreStorageKey(userId: string) {
+  return `${SETTINGS_STORE_BASE_KEY}:${userId}`;
+}
+
 export function lessonStoreStorageKey(userId: string) {
   return `${LESSON_STORE_BASE_KEY}:${userId}`;
 }
