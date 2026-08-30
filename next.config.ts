@@ -70,10 +70,11 @@ const nextConfig: NextConfig = {
   async headers() {
     const securityHeaders = [
       { key: "X-Content-Type-Options", value: "nosniff" },
-      { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+      { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+      { key: "X-XSS-Protection", value: "1; mode=block" },
       {
         key: "Permissions-Policy",
-        value: "camera=(), geolocation=(), microphone=(self)",
+        value: "camera=(), microphone=(self), geolocation=()",
       },
     ];
 

@@ -213,6 +213,6 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 
 ## Releases
 
-Current version: **5.10.4**
+Current version: **5.11.0**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).

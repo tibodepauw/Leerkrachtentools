@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAnalysis } from "@/hooks/useAnalysis";
+import { useRagQueryAnalysis } from "@/hooks/useRagQueryAnalysis";
 import {
   formatGoalCopyText,
   formatGoalTitleParts,
@@ -352,8 +352,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     variant === "minimumdoel"
       ? `${variant}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
       : `${variant}:${resolvedNetwork}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
-  const { analyze, result, loading, error } =
-    useAnalysis<MatcherResult>(analysisScope);
+  const { analyzeRag, result, loading, error } =
+    useRagQueryAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
   const Icon = variant === "minimumdoel" ? Landmark : BookOpenCheck;
 
@@ -580,33 +580,39 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               <ModuleActionButton
                 disabled={actionDisabled}
                 onClick={() =>
-                  analyze(
-                    variant === "minimumdoel"
-                      ? "/api/rag-minimum-goals"
-                      : "/api/rag-curriculum",
+                  analyzeRag(
                     variant === "minimumdoel"
                       ? {
-                          goal: text,
+                          endpoint: "rag-minimum-goals",
                           educationLevel: educationLevelFilter,
-                          grade: lesson.grade,
-                          ageRange: lesson.ageRange,
-                          secondaryGrade: secondaryGradeFilter,
-                          secondaryFinality: secondaryFinalityFilter,
-                          domainDetail: domainDetailFilter,
-                          domainFinality: domainFinalityFilter,
-                          enableLlmQueryRewriting,
+                          body: {
+                            goal: text,
+                            educationLevel: educationLevelFilter,
+                            grade: lesson.grade,
+                            ageRange: lesson.ageRange,
+                            secondaryGrade: secondaryGradeFilter,
+                            secondaryFinality: secondaryFinalityFilter,
+                            domainDetail: domainDetailFilter,
+                            domainFinality: domainFinalityFilter,
+                            enableLlmQueryRewriting,
+                          },
                         }
                       : {
-                          goal: text,
-                          network: resolvedNetwork,
+                          endpoint: "rag-curriculum",
                           educationLevel: educationLevelFilter,
-                          grade: lesson.grade,
-                          ageRange: lesson.ageRange,
-                          secondaryGrade: secondaryGradeFilter,
-                          secondaryFinality: secondaryFinalityFilter,
-                          domainDetail: domainDetailFilter,
-                          domainFinality: domainFinalityFilter,
-                          enableLlmQueryRewriting,
+                          network: resolvedNetwork,
+                          body: {
+                            goal: text,
+                            network: resolvedNetwork,
+                            educationLevel: educationLevelFilter,
+                            grade: lesson.grade,
+                            ageRange: lesson.ageRange,
+                            secondaryGrade: secondaryGradeFilter,
+                            secondaryFinality: secondaryFinalityFilter,
+                            domainDetail: domainDetailFilter,
+                            domainFinality: domainFinalityFilter,
+                            enableLlmQueryRewriting,
+                          },
                         },
                   )
                 }

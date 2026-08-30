@@ -4,6 +4,21 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.11.0] - 2026-08-30
+
+### Added
+- **Client-side exact query cache** (`lib/rag/clientQueryCache.ts`): `sessionStorage`-cache voor RAG-zoekresultaten met sleutel `${educationLevel}:${network}:${normalizedQuery}`; hook `useRagQueryAnalysis`
+- SQLite index-optimalisatie via `lib/db/ensureIndexes.ts` (sessies + AI-gebruik op `user_id` / `created_at`)
+
+### Changed
+- Production security headers in `next.config.ts`: `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy: origin-when-cross-origin`, `Permissions-Policy`
+- RAG-zoekopdrachten in Leerplandoelen/Minimumdoelen gebruiken sessie-cache vóór API-call
+
+### Fixed
+- RAG-querycache wordt gewist bij logout, accountwissel en automatisch bij tab-herladen (`sessionStorage`)
+
+---
+
 ## [5.10.4] - 2026-08-30
 
 ### Added

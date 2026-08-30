@@ -3,6 +3,7 @@ import "server-only";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
+import { ensureDatabaseIndexes } from "@/lib/db/ensureIndexes";
 
 let database: Database.Database | null = null;
 
@@ -76,6 +77,7 @@ export function getDatabase() {
     CREATE INDEX IF NOT EXISTS user_ai_usage_user_created
       ON user_ai_usage(user_id, created_at);
   `);
+  ensureDatabaseIndexes(database);
   const userColumns = new Set(
     (
       database.prepare("PRAGMA table_info(users)").all() as Array<{

@@ -7,6 +7,7 @@ import {
   migrateLegacyLessonStorage,
   setActiveUserId,
 } from "@/lib/storage/userStorageScope";
+import { clearRagQueryCache } from "@/lib/rag/clientQueryCache";
 import {
   resetLessonStoreState,
   useLessonStore,
@@ -27,6 +28,7 @@ export function UserStorageScope({ userId, children }: UserStorageScopeProps) {
     async function activateUserStorage() {
       const previousUserId = useLessonStore.getState().storageUserId;
       if (previousUserId && previousUserId !== userId) {
+        clearRagQueryCache();
         resetLessonStoreState();
       }
 
