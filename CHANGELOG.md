@@ -4,6 +4,20 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.6] - 2026-08-30
+
+### Added
+- Onderwijsniveau-filter bij **Leerplandoelen** en **Minimumdoelen**
+- Keuzes voor alle niveaus, kleuteronderwijs, lager onderwijs en secundair onderwijs
+- Server-side filtering op leerjaar, fase, leeftijdsbereik en AHOVOKS-ijkpunt
+
+### Notes
+- De huidige lokale corpus bevat kleuter- en lager onderwijs. Secundair onderwijs
+  toont geen basisschoolresultaten en blijft leeg tot secundaire leerplannen zijn
+  geïndexeerd.
+
+---
+
 ## [5.8.5] - 2026-08-29
 
 ### Changed

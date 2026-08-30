@@ -42,8 +42,8 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 |--------|----------------|
 | **Doelverbeteraar** | Rewrites a selected lesson goal to Thomas More formulation rules. Shows rationale and term changes. Requires AI. |
 | **MC-DAS-SPM herkenner** | Classifies a goal as mental-cognitive (MC), dynamic-affective (DAS), or sensomotor/psychomotor (SPM) without rewriting it. Requires AI. |
-| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora (ZILL, OVSG, Op.stap, GO! Nieuw). Typo-tolerant matching, domain bonuses (math, nature, language, history, PE, ICT), optional semantic fallback when local search finds nothing. Target group gives a soft ranking boost without hiding other results. Top 5 cards with code, discipline, linked minimum goal, and copy/add actions. |
-| **Minimumdoelen** | Matches decreetal AHOVOKS minimum goals (4th grade checkpoint, 6th grade end goal, kindergarten K-codes). Numeric range awareness (e.g. "tot 20"), top 3 ranked results, same target-group soft boost. |
+| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora (ZILL, OVSG, Op.stap, GO! Nieuw). Filters by education network and level (kindergarten, primary, secondary). Typo-tolerant matching, domain bonuses, optional semantic fallback, and target-group ranking. |
+| **Minimumdoelen** | Matches decreetal AHOVOKS minimum goals (4th grade checkpoint, 6th grade end goal, kindergarten K-codes), with the same education-level filter. Numeric range awareness and top 3 ranked results. |
 
 Curriculum search is **retrieval only** (no generative AI in the matcher itself). Results come from indexed JSONL files shipped with or built for the deployment.
 
@@ -191,6 +191,6 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 
 ## Releases
 
-Current version: **5.8.5**
+Current version: **5.8.6**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).
