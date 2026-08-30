@@ -12,7 +12,7 @@ SC_LABELS: dict[str, str] = {
     "3": "Andere talen",
     "4": "Digitale competenties",
     "5": "Sociaal-relationele competenties",
-    "6": "Wiskunde – natuurwetenschappen – technologie en techniek (STEM)",
+    "6": "Wiskunde - natuurwetenschappen - technologie en techniek (STEM)",
     "7": "Burgerschapscompetenties",
     "8": "Cultureel bewustzijn",
     "9": "Historisch bewustzijn",

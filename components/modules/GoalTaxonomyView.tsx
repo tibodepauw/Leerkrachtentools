@@ -39,7 +39,7 @@ export function GoalTaxonomyView() {
   return (
     <ModuleShell
       moduleId="goal-taxonomy"
-      title="MC–DAS–SPM herkenner"
+      title="MC-DAS-SPM herkenner"
       description="Classificeert lesdoelen als MC, DAS of SPM zonder het doel te herschrijven."
       input={
         <ModuleInputLayout

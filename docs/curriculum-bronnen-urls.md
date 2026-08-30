@@ -21,7 +21,7 @@ terminal te tonen.
 - Ordeningskader ZILL (PDF)
 - Generieke doelen (PDF)
 - Leerplanpuzzel - doelenkaarten en leeruitkomsten (PDF)
-- Leerplanuitbreiding 0–2,5 jaar (PDF)
+- Leerplanuitbreiding 0-2,5 jaar (PDF)
 - Overzichtsfoto's en veldnamen (PDF)
 
 Het volledige ZILL-leerplan is **digitaal** en niet als één bulk-PDF beschikbaar.
@@ -187,14 +187,14 @@ genormaliseerde uitvoer staat in
 Scrape `onderwijsdoelen.be/resultaten` niet: de site sluit dat pad expliciet uit
 in `robots.txt`. Gebruik één van deze opties:
 
-**Optie A – officiële API (optioneel, sneller voor bulk):**
+**Optie A - officiële API (optioneel, sneller voor bulk):**
 
 ```bash
 export ONDERWIJSDOELEN_API_KEY="..."
 python3 scripts/fetch_secondary_minimum_goals.py
 ```
 
-**Optie B – publiek portaal (geen API-key, altijd beschikbaar):**
+**Optie B - publiek portaal (geen API-key, altijd beschikbaar):**
 
 ```bash
 pip install -r scripts/requirements-curriculum.txt
@@ -217,7 +217,7 @@ python3 scripts/fetch_secundair_full.py
 ```
 
 De uitvoer is `data/secundair/minimumdoelen_secundair.jsonl`. Records bevatten
-`graad`, `finaliteit`, `stroom`, `sleutelcompetentie_nr` (SC 1–16) en
+`graad`, `finaliteit`, `stroom`, `sleutelcompetentie_nr` (SC 1-16) en
 `gelinkt_minimumdoel`. Zonder lokale data-run gebruikt de app de fixtures in
 `test/fixtures/minimumdoelen-secundair.jsonl` en
 `test/fixtures/curriculum-secundair.jsonl`.

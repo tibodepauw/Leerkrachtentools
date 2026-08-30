@@ -4,6 +4,13 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.12] - 2026-08-30
+
+### Changed
+- Standaard sidebar-breedte vergroot van 256px naar 320px
+
+---
+
 ## [5.8.11] - 2026-08-30
 
 ### Changed
@@ -36,7 +43,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Publieke onderwijsdoelen.be-portaalscraper als fallback zonder
   `ONDERWIJSDOELEN_API_KEY` (Playwright + robots.txt-toegestane `/doelen`-routes)
 - Batch-script `scripts/fetch_secundair_full.py` en npm-script `fetch:secundair`
-- Gecommitte secundaire fixture-corpus in `test/fixtures/` (SC 1–16, graden,
+- Gecommitte secundaire fixture-corpus in `test/fixtures/` (SC 1-16, graden,
   finaliteiten) zodat RAG direct werkt zonder lokale data-run
 - Metadatavelden `sleutelcompetentie_nr` en `sleutelcompetentie` in secundaire
   JSONL-records
@@ -165,8 +172,8 @@ Stable release. The app is a full lesson-preparation workflow for Thomas More BA
 #### Input & goals
 - **Manual scanner** - AI extraction from publisher PDF/image
 - **Goal optimizer** - Thomas More goal rewriting (AI)
-- **MC–DAS–SPM classifier** - goal taxonomy labelling
-- Dynamic D1–D12 lesson goals (hide empty slots, add with +)
+- **MC-DAS-SPM classifier** - goal taxonomy labelling
+- Dynamic D1-D12 lesson goals (hide empty slots, add with +)
 - Structured **target group** selector (kindergarten → 6th grade, custom/grade class) with soft RAG ranking bonus (+0.15, never hard-filtered)
 
 #### Curriculum RAG
@@ -185,7 +192,7 @@ Stable release. The app is a full lesson-preparation workflow for Thomas More BA
 - Thomas More dialogue formatter
 - Didactic language check
 - Phase timing validation (configurable total lesson minutes)
-- Goal–activity alignment audit
+- Goal-activity alignment audit
 - Laevers engagement analysis
 - Full traffic-light audit
 

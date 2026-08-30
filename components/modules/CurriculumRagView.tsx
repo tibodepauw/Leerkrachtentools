@@ -563,12 +563,12 @@ function minimumGoalHelperText(
     : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking. ";
 
   if (level === "SECUNDAIR") {
-    return `${prefix}We tonen minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1–16).`;
+    return `${prefix}We tonen minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1-16).`;
   }
   if (level === "KLEUTER" || level === "LAGER") {
     return `${prefix}We tonen minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;
   }
-  return `${prefix}Basisonderwijs: minimumdoelen (4de, 6de, kleuter). Secundair: minimumdoelen per graad en SC 1–16.`;
+  return `${prefix}Basisonderwijs: minimumdoelen (4de, 6de, kleuter). Secundair: minimumdoelen per graad en SC 1-16.`;
 }
 
 function mapEducationNetwork(

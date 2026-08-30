@@ -101,7 +101,7 @@ class SecondaryMinimumGoalsParserTests(unittest.TestCase):
                     "onderwijsdoelenset": "Secundair onderwijs 1ste graad A-stroom - Wiskunde - Eindtermen",
                     "vlaamse_sleutelcompetentie": {
                         "nr": "6",
-                        "naam": "Wiskunde – natuurwetenschappen – technologie en techniek (STEM)",
+                        "naam": "Wiskunde - natuurwetenschappen - technologie en techniek (STEM)",
                     },
                     "onderwijsstructuur": {
                         "graad": "1ste graad",

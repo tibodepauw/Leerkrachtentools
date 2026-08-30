@@ -70,7 +70,7 @@ Zo blijft de UI voorspelbaar en kan je resultaten kopiëren of terug naar Actiev
 |--------|-----|----------------|
 | **Handleiding Scanner** | `/api/extract-manual` | Leest PDF/afbeelding/tekst en extraheert leergebied, onderdeel, onderwerp, doelgroep, materialen en ruwe uitgeverijdoelen. |
 | **Doelverbeteraar** | `/api/analyze-goals` | Beoordeelt of een D-doel al voldoende is; zo niet, herschrijft volgens Thomas More-criteria (concreet, meetbaar, “De leerlingen kunnen…”). |
-| **MC–DAS–SPM herkenner** | `/api/classify-goal-taxonomy` | Classificeert een doel als MC, DAS of SPM met uitleg - zonder het doel te herschrijven. |
+| **MC-DAS-SPM herkenner** | `/api/classify-goal-taxonomy` | Classificeert een doel als MC, DAS of SPM met uitleg - zonder het doel te herschrijven. |
 
 ### Lesvoorbereiding
 
@@ -86,13 +86,13 @@ Zo blijft de UI voorspelbaar en kan je resultaten kopiëren of terug naar Actiev
 |--------|-----|----------------|
 | **Doel-activiteit** | `/api/audit-alignment` | Per D-doel: is instructie, verwerking en afronding gedekt, gedeeltelijk of afwezig? |
 | **Betrokkenheid** | `/api/audit-engagement` | Analyseert zes Laevers-factoren (o.a. werkelijkheidsnabijheid, samen leren) met bewijs en suggestie. |
-| **Totale audit** | `/api/full-audit` | Stoplichtscore (0–100%) op meerdere criteria (doelen, taal, timing, alignering, betrokkenheid, …). |
+| **Totale audit** | `/api/full-audit` | Stoplichtscore (0-100%) op meerdere criteria (doelen, taal, timing, alignering, betrokkenheid, …). |
 
 ### Na de les
 
 | Module | API | Wat de AI doet |
 |--------|-----|----------------|
-| **Voice-reflectie** | `/api/transcribe-reflection` | Verwerkt tekst + optionele audio-opname; vult Pagina 5 van het lesvoorbereidingsformulier in (doelgerichtheid D1–D3, betrokkenheid, leerkrachtidentiteit). Stelt max. 2 vervolgvragen (Fase B). |
+| **Voice-reflectie** | `/api/transcribe-reflection` | Verwerkt tekst + optionele audio-opname; vult Pagina 5 van het lesvoorbereidingsformulier in (doelgerichtheid D1-D3, betrokkenheid, leerkrachtidentiteit). Stelt max. 2 vervolgvragen (Fase B). |
 
 ### Geen AI
 
@@ -142,7 +142,7 @@ Filters bij zoeken:
 
 - Alleen actieve records (`status: "active"`).
 - Bron: `minimumdoel` of `leerplandoel`.
-- Schooljaar (standaard 2025–2026).
+- Schooljaar (standaard 2025-2026).
 - Bij leerplandoelen: gekozen netwerk (ZILL / OVSG / GO).
 
 Score:

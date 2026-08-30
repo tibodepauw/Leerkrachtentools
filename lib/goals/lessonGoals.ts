@@ -11,7 +11,7 @@ const GOAL_IDS = Array.from(
 export function goalIdForIndex(index: number): LessonGoalId {
   const id = GOAL_IDS[index];
   if (!id) {
-    throw new RangeError(`Doelindex ${index} valt buiten D1–D${MAX_LESSON_GOALS}.`);
+    throw new RangeError(`Doelindex ${index} valt buiten D1-D${MAX_LESSON_GOALS}.`);
   }
   return id;
 }

@@ -47,7 +47,7 @@ export function mockSpellcheck(text: string) {
 export const mockTimingAdvice = {
   suggestions: [
     "Beperk de instructie tot 15 minuten en reserveer minstens 20 minuten voor zelfstandige verwerking.",
-    "Voorzie 5 minuten afronding om D1–D3 zichtbaar te evalueren.",
+    "Voorzie 5 minuten afronding om D1-D3 zichtbaar te evalueren.",
   ],
   rationale:
     "Een korte expliciete instructie en ruime oefentijd ondersteunen actieve verwerking.",
