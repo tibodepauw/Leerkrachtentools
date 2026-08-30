@@ -215,4 +215,144 @@
         rotate(var(--fr));
     }
   }
+
+  .wordmark-loader__letter--typewriter,
+  .wordmark-loader__letter--magnetic,
+  .wordmark-loader__letter--orbit,
+  .wordmark-loader__letter--shuffle,
+  .wordmark-loader__letter--breathe {
+    animation: wordmark-gather-reduced 0.4s ease-out var(--delay, 0ms) forwards;
+  }
+}
+
+.wordmark-loader__letter--typewriter {
+  opacity: 0;
+  animation: wordmark-typewriter 0.55s cubic-bezier(0.34, 1.25, 0.64, 1) var(--delay, 0ms)
+    forwards;
+}
+
+@keyframes wordmark-typewriter {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy) + 0.75em))
+      rotate(var(--fr)) scale(0.92);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy) - 0.08em))
+      rotate(var(--fr)) scale(1.04);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
+      scale(1);
+  }
+}
+
+.wordmark-loader__letter--magnetic {
+  opacity: 0.85;
+  animation: wordmark-magnetic 1.35s cubic-bezier(0.45, 0, 0.15, 1) var(--delay, 0ms) forwards;
+}
+
+@keyframes wordmark-magnetic {
+  0%,
+  42% {
+    opacity: 0.85;
+    transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) rotate(var(--sr));
+  }
+
+  58% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx) * 0.35), calc(-50% + var(--fy) * 0.35))
+      rotate(calc(var(--sr) * 0.4 + var(--fr) * 0.2));
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr));
+  }
+}
+
+.wordmark-loader__letter--orbit {
+  opacity: 0;
+  animation: wordmark-orbit 2.1s cubic-bezier(0.33, 1, 0.68, 1) var(--orbit-delay, 0ms) forwards;
+}
+
+@keyframes wordmark-orbit {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--ox)), calc(-50% + var(--oy))) rotate(var(--or))
+      scale(0.7);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  55% {
+    transform: translate(calc(-50% + var(--ox) * -0.85), calc(-50% + var(--oy) * -0.85))
+      rotate(calc(var(--or) + 180deg)) scale(1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
+      scale(1);
+  }
+}
+
+.wordmark-loader__letter--shuffle {
+  animation: wordmark-shuffle 1.65s cubic-bezier(0.4, 0, 0.2, 1) var(--delay, 0ms) forwards;
+}
+
+@keyframes wordmark-shuffle {
+  0%,
+  18% {
+    transform: translate(calc(-50% + var(--wx0)), calc(-50% + var(--wy0))) rotate(var(--wr0));
+  }
+
+  38%,
+  58% {
+    transform: translate(calc(-50% + var(--wx1)), calc(-50% + var(--wy1))) rotate(var(--wr1));
+  }
+
+  100% {
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr));
+  }
+}
+
+.wordmark-loader__letter--breathe {
+  opacity: 0;
+  animation:
+    wordmark-breathe-in 0.5s ease-out var(--delay, 0ms) forwards,
+    wordmark-breathe-loop 2.4s ease-in-out calc(var(--delay, 0ms) + 0.5s) infinite;
+}
+
+@keyframes wordmark-breathe-in {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
+      scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
+      scale(1);
+  }
+}
+
+@keyframes wordmark-breathe-loop {
+  0%,
+  100% {
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
+      scale(1);
+  }
+
+  50% {
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
+      scale(1.025);
+  }
 }
