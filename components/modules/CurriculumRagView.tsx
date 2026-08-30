@@ -37,22 +37,23 @@ import {
   networkBadgeLabel,
   sanitizeCurriculumText,
 } from "@/lib/rag/curriculumDisplay";
-import { preferenceToFilter } from "@/lib/lesson/educationLevelPreference";
+import { preferenceToFilter, EDUCATION_LEVEL_OPTIONS } from "@/lib/lesson/educationLevelPreference";
 import {
-  SECONDARY_FINALITY_FILTER_OPTIONS,
-  SECONDARY_GRADE_FILTER_OPTIONS,
-  secondaryGradeFilterFromLessonGrade,
-} from "@/lib/lesson/secondaryFilters";
+  domainFilterOptions,
+  domainSecondaryFinalityOptions,
+  supportsDomainDetailFilter,
+  supportsDomainFinalityFilter,
+} from "@/lib/lesson/domainFilters";
+import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilters";
 import { formatMinimumGoalCopy } from "@/lib/rag/minimumGoalCopy";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
+  DomainDetailFilter,
   EducationLevelFilter,
   EducationLevelPreference,
-  SecondaryFinalityFilter,
-  SecondaryGradeFilter,
 } from "@/types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -81,14 +82,7 @@ const NETWORK_OPTIONS: Array<{
   { value: "POV", label: "Provinciaal onderwijs · Secundair" },
 ];
 
-const EDUCATION_LEVEL_OPTIONS: Array<{
-  value: EducationLevelPreference;
-  label: string;
-}> = [
-  { value: "kleuteronderwijs", label: "Kleuteronderwijs" },
-  { value: "lager_onderwijs", label: "Lager onderwijs" },
-  { value: "secundair_onderwijs", label: "Secundair onderwijs" },
-];
+const EDUCATION_LEVEL_OPTIONS_UI = EDUCATION_LEVEL_OPTIONS;
 
 const variantCopy: Record<
   SearchVariant,
@@ -310,16 +304,23 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const setSecondaryGradeFilter = useLessonStore(
     (state) => state.setSecondaryGradeFilter,
   );
-  const setSecondaryFinalityFilter = useLessonStore(
-    (state) => state.setSecondaryFinalityFilter,
+  const setDomainDetailFilter = useLessonStore(
+    (state) => state.setDomainDetailFilter,
+  );
+  const setDomainFinalityFilter = useLessonStore(
+    (state) => state.setDomainFinalityFilter,
+  );
+  const domainDetailFilter = useLessonStore((state) => state.domainDetailFilter);
+  const domainFinalityFilter = useLessonStore(
+    (state) => state.domainFinalityFilter,
   );
   const educationLevelFilter = preferenceToFilter(educationLevel);
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${educationLevelFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
-      : `${variant}:${network}:${educationLevelFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
+      ? `${variant}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
+      : `${variant}:${network}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -341,7 +342,10 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 
   const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
   const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
-  const showSecondaryFilters = educationLevelFilter === "SECUNDAIR";
+  const showDomainDetailFilter = supportsDomainDetailFilter(educationLevelFilter);
+  const showDomainFinalityFilter = supportsDomainFinalityFilter(educationLevelFilter);
+  const detailFilterOptions = domainFilterOptions(educationLevelFilter);
+  const finalityFilterOptions = domainSecondaryFinalityOptions(educationLevelFilter);
 
   useEffect(() => {
     const mappedGrade = secondaryGradeFilterFromLessonGrade(lesson.grade);
@@ -372,10 +376,10 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               <div
                 className={
                   variant === "leerplandoel"
-                    ? showSecondaryFilters
+                    ? showDomainDetailFilter
                       ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
                       : "grid gap-4 sm:grid-cols-2"
-                    : showSecondaryFilters
+                    : showDomainDetailFilter
                       ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
                       : undefined
                 }
@@ -402,21 +406,31 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     </Select>
                   </div>
                 ) : null}
-                {showSecondaryFilters ? (
+                {showDomainDetailFilter ? (
                   <>
                     <div className="space-y-2">
-                      <Label>Graad</Label>
+                      <Label>
+                        {educationLevelFilter === "SECUNDAIR"
+                          ? "Graad"
+                          : educationLevelFilter === "BUBAO"
+                            ? "Type"
+                            : educationLevelFilter === "BUSO"
+                              ? "Opleidingsvorm"
+                              : educationLevelFilter === "DKO"
+                                ? "Graad"
+                                : "Filter"}
+                      </Label>
                       <Select
-                        value={secondaryGradeFilter}
+                        value={domainDetailFilter}
                         onValueChange={(value) =>
-                          setSecondaryGradeFilter(value as SecondaryGradeFilter)
+                          setDomainDetailFilter(value as DomainDetailFilter)
                         }
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {SECONDARY_GRADE_FILTER_OPTIONS.map((option) => (
+                          {detailFilterOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>
@@ -424,28 +438,28 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Finaliteit</Label>
-                      <Select
-                        value={secondaryFinalityFilter}
-                        onValueChange={(value) =>
-                          setSecondaryFinalityFilter(
-                            value as SecondaryFinalityFilter,
-                          )
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SECONDARY_FINALITY_FILTER_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {showDomainFinalityFilter ? (
+                      <div className="space-y-2">
+                        <Label>Finaliteit</Label>
+                        <Select
+                          value={domainFinalityFilter}
+                          onValueChange={(value) =>
+                            setDomainFinalityFilter(value as DomainDetailFilter)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {finalityFilterOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : null}
                   </>
                 ) : null}
                 <div className="space-y-2">
@@ -462,7 +476,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {EDUCATION_LEVEL_OPTIONS.map((option) => (
+                      {EDUCATION_LEVEL_OPTIONS_UI.map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
@@ -525,6 +539,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                           ageRange: lesson.ageRange,
                           secondaryGrade: secondaryGradeFilter,
                           secondaryFinality: secondaryFinalityFilter,
+                          domainDetail: domainDetailFilter,
+                          domainFinality: domainFinalityFilter,
                         }
                       : {
                           goal: text,
@@ -534,6 +550,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                           ageRange: lesson.ageRange,
                           secondaryGrade: secondaryGradeFilter,
                           secondaryFinality: secondaryFinalityFilter,
+                          domainDetail: domainDetailFilter,
+                          domainFinality: domainFinalityFilter,
                         },
                   )
                 }
@@ -623,6 +641,16 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 function networkOptionsForLevel(
   level: EducationLevelFilter,
 ): Array<{ value: CurriculumNetworkFilter; label: string }> {
+  if (
+    level === "BUBAO" ||
+    level === "BUSO" ||
+    level === "OKAN" ||
+    level === "DKO" ||
+    level === "VOLWASSENEN" ||
+    level === "HOGER"
+  ) {
+    return [{ value: "ALL", label: "AHOVOKS · Officiële onderwijsdoelen" }];
+  }
   if (level === "SECUNDAIR") {
     return NETWORK_OPTIONS.filter((option) =>
       ["ALL", "GO", "KOV", "POV", "OVSG"].includes(option.value),
@@ -632,7 +660,7 @@ function networkOptionsForLevel(
         : option,
     );
   }
-  if (level === "KLEUTER" || level === "LAGER") {
+  if (level === "BASISONDERWIJS" || level === "KLEUTER" || level === "LAGER") {
     return NETWORK_OPTIONS.filter((option) =>
       ["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "ZILL"].includes(option.value),
     );
@@ -651,7 +679,19 @@ function minimumGoalHelperText(
   if (level === "SECUNDAIR") {
     return `${prefix}We tonen minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1-16). Gebruik de graad- en finaliteitsfilters voor sterkere ranking.`;
   }
-  if (level === "KLEUTER" || level === "LAGER") {
+  if (level === "BUBAO") {
+    return `${prefix}We tonen ontwikkelingsdoelen en minimumdoelen voor buitengewoon basisonderwijs (per type).`;
+  }
+  if (level === "BUSO") {
+    return `${prefix}We tonen BuSO-doelen voor opleidingsvorm OV1, OV2 of OV3.`;
+  }
+  if (level === "OKAN") {
+    return `${prefix}We tonen OKAN-doelen (NT2 en integratie).`;
+  }
+  if (level === "DKO") {
+    return `${prefix}We tonen deeltijdse kunstonderwijsdoelen per graad en discipline.`;
+  }
+  if (level === "BASISONDERWIJS" || level === "KLEUTER" || level === "LAGER") {
     return `${prefix}We tonen minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;
   }
   return `${prefix}Basisonderwijs: minimumdoelen (4de, 6de, kleuter). Secundair: minimumdoelen per graad en SC 1-16.`;

@@ -2,10 +2,13 @@ import { ahovoksMetaFromGoal } from "@/lib/rag/ahovoksMinimumGoals";
 import { gradeOption } from "@/lib/lesson/targetGroup";
 import type {
   CurriculumSearchResult,
+  DomainDetailFilter,
+  EducationLevelFilter,
   LessonGrade,
   SecondaryFinalityFilter,
   SecondaryGradeFilter,
 } from "@/types";
+import { scoreDomainFilterBonus } from "@/lib/lesson/domainFilters";
 import { scoreSecondaryFilterBonus } from "@/lib/lesson/secondaryFilters";
 
 export const TARGET_GROUP_BONUS = 0.15;
@@ -15,6 +18,9 @@ export interface TargetGroupContext {
   ageRange?: string | null;
   secondaryGrade?: SecondaryGradeFilter;
   secondaryFinality?: SecondaryFinalityFilter;
+  domainDetail?: DomainDetailFilter;
+  domainFinality?: DomainDetailFilter;
+  educationLevel?: EducationLevelFilter;
 }
 
 type AgeBounds = { min: number; max: number };
@@ -188,11 +194,15 @@ export function applyTargetGroupRanking<T extends CurriculumSearchResult & { sco
     context.grade ||
     context.ageRange?.trim() ||
     (context.secondaryGrade && context.secondaryGrade !== "all") ||
-    (context.secondaryFinality && context.secondaryFinality !== "all");
+    (context.secondaryFinality && context.secondaryFinality !== "all") ||
+    (context.domainDetail && context.domainDetail !== "all") ||
+    (context.domainFinality && context.domainFinality !== "all");
 
   if (!hasContext) {
     return results;
   }
+
+  const educationLevel = context.educationLevel ?? "ALL";
 
   return [...results]
     .map((result) => ({
@@ -205,6 +215,14 @@ export function applyTargetGroupRanking<T extends CurriculumSearchResult & { sco
             {
               secondaryGrade: context.secondaryGrade,
               secondaryFinality: context.secondaryFinality,
+            },
+            result,
+          ) +
+          scoreDomainFilterBonus(
+            educationLevel,
+            {
+              domainDetail: context.domainDetail ?? context.secondaryGrade,
+              domainFinality: context.domainFinality ?? context.secondaryFinality,
             },
             result,
           ),

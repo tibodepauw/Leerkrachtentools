@@ -1,6 +1,6 @@
 {
   "name": "leerkrachtentools",
-  "version": "5.8.18",
+  "version": "5.8.19",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "fetch:secundair": "python3 scripts/fetch_secundair_full.py",
+    "fetch:all": "python3 scripts/fetch_all_curriculum.py",
+    "fetch:domains": "python3 scripts/fetch_onderwijsdoelen_domains.py",
     "export:secundair": "python3 scripts/export_secundair_zip.py"
   },
   "dependencies": {

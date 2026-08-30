@@ -10,13 +10,27 @@ export type CurriculumNetworkFilter =
   | "POV";
 export type EducationLevelFilter =
   | "ALL"
+  | "BASISONDERWIJS"
   | "KLEUTER"
   | "LAGER"
-  | "SECUNDAIR";
+  | "SECUNDAIR"
+  | "BUBAO"
+  | "BUSO"
+  | "OKAN"
+  | "DKO"
+  | "VOLWASSENEN"
+  | "HOGER";
 export type EducationLevelPreference =
-  | "kleuteronderwijs"
-  | "lager_onderwijs"
-  | "secundair_onderwijs";
+  | "alle_niveaus"
+  | "basisonderwijs"
+  | "secundair_onderwijs"
+  | "bubao"
+  | "buso"
+  | "okan"
+  | "dko"
+  | "volwassenenonderwijs"
+  | "hoger_onderwijs";
+export type DomainDetailFilter = "all" | string;
 export type GoalTaxonomy = "MC" | "DAS" | "SPM";
 export type ModuleId =
   | "active-lesson"
@@ -82,6 +96,9 @@ export interface TargetGroupSearchContext {
   ageRange?: string;
   secondaryGrade?: SecondaryGradeFilter;
   secondaryFinality?: SecondaryFinalityFilter;
+  domainDetail?: DomainDetailFilter;
+  domainFinality?: DomainDetailFilter;
+  educationLevel?: EducationLevelFilter;
 }
 
 export interface LessonGoal {

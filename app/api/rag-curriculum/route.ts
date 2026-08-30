@@ -34,9 +34,16 @@ const NETWORKS = new Set<CurriculumNetworkFilter>([
 ]);
 const EDUCATION_LEVELS = new Set<EducationLevelFilter>([
   "ALL",
+  "BASISONDERWIJS",
   "KLEUTER",
   "LAGER",
   "SECUNDAIR",
+  "BUBAO",
+  "BUSO",
+  "OKAN",
+  "DKO",
+  "VOLWASSENEN",
+  "HOGER",
 ]);
 
 type CurriculumSearchPayload = {
@@ -147,6 +154,8 @@ export async function POST(request: Request) {
       ageRange?: string;
       secondaryGrade?: TargetGroupSearchContext["secondaryGrade"];
       secondaryFinality?: TargetGroupSearchContext["secondaryFinality"];
+      domainDetail?: TargetGroupSearchContext["domainDetail"];
+      domainFinality?: TargetGroupSearchContext["domainFinality"];
     };
 
     const query = body.goal?.trim();
@@ -165,7 +174,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const educationLevel = body.educationLevel ?? "LAGER";
+    const educationLevel = body.educationLevel ?? "BASISONDERWIJS";
     if (!EDUCATION_LEVELS.has(educationLevel)) {
       return NextResponse.json(
         { error: "Selecteer een geldig onderwijsniveau." },
@@ -178,6 +187,9 @@ export async function POST(request: Request) {
       ageRange: body.ageRange?.trim() ?? "",
       secondaryGrade: body.secondaryGrade ?? "all",
       secondaryFinality: body.secondaryFinality ?? "all",
+      domainDetail: body.domainDetail ?? "all",
+      domainFinality: body.domainFinality ?? "all",
+      educationLevel,
     };
 
     let searchResult = await runCurriculumSearch(

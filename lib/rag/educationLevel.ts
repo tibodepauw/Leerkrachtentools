@@ -10,6 +10,15 @@ const KLEUTER_MAX_AGE = 6;
 const LAGER_MIN_AGE = 6;
 const LAGER_MAX_AGE = 12;
 
+const DOMAIN_LEVELS = new Set<EducationLevelFilter>([
+  "BUBAO",
+  "BUSO",
+  "OKAN",
+  "DKO",
+  "VOLWASSENEN",
+  "HOGER",
+]);
+
 function collectStrings(value: unknown, output: string[]): void {
   if (typeof value === "string") {
     output.push(value);
@@ -58,11 +67,27 @@ function explicitLevelText(raw: RawRecord): string {
     raw.niveau_onderwijs,
     raw.fase,
     raw.leerjaar_route,
+    raw.graad,
+    raw.finaliteit,
     raw.code,
   ]
     .filter((value): value is string => typeof value === "string")
     .join(" ")
     .toLocaleLowerCase("nl-BE");
+}
+
+function recordDomain(raw: RawRecord): EducationLevelFilter | "" {
+  const level = String(raw.onderwijsniveau ?? "").toUpperCase();
+  if (level === "SECUNDAIR") return "SECUNDAIR";
+  if (level === "BUBAO") return "BUBAO";
+  if (level === "BUSO") return "BUSO";
+  if (level === "OKAN") return "OKAN";
+  if (level === "DKO") return "DKO";
+  if (level === "VOLWASSENEN") return "VOLWASSENEN";
+  if (level === "HOGER") return "HOGER";
+  if (level === "KLEUTER") return "KLEUTER";
+  if (level === "LAGER") return "LAGER";
+  return "";
 }
 
 export function recordMatchesEducationLevel(
@@ -71,20 +96,40 @@ export function recordMatchesEducationLevel(
 ): boolean {
   if (level === "ALL") return true;
 
+  const domain = recordDomain(raw);
+  if (domain) {
+    if (level === "BASISONDERWIJS") {
+      return domain === "KLEUTER" || domain === "LAGER";
+    }
+    return domain === level;
+  }
+
   const text = explicitLevelText(raw);
   if (level === "SECUNDAIR") {
     if (text.includes("secundair")) {
       return true;
     }
-    if (
-      typeof raw.onderwijsniveau === "string" &&
-      raw.onderwijsniveau.toUpperCase() === "SECUNDAIR"
-    ) {
+    if (String(raw.onderwijsniveau ?? "").toUpperCase() === "SECUNDAIR") {
       return true;
     }
     return /\b(?:1ste|2de|3de|eerste|tweede|derde)\s+graad\b|finaliteit|[AB]-stroom/u.test(
       text,
     );
+  }
+
+  if (level === "BASISONDERWIJS") {
+    if (/\b(secundair|so|aso|tso|bso|kso|buitengewoon secundair)\b/u.test(text)) {
+      return false;
+    }
+    return (
+      /\b(kleuter|peuter|kleuterklas|\.kl\d*)\b/u.test(text) ||
+      /\b(lager onderwijs|leerjaar|\.gl\d*)\b/u.test(text) ||
+      ageRanges(raw).length > 0
+    );
+  }
+
+  if (DOMAIN_LEVELS.has(level)) {
+    return false;
   }
 
   if (/\b(secundair|so|aso|tso|bso|kso)\b/u.test(text)) {
@@ -131,6 +176,11 @@ export function resultMatchesEducationLevel(
 
   const minimumMeta = ahovoksMetaFromGoal(result.gelinktMinimumdoel);
   if (minimumMeta) {
+    if (level === "BASISONDERWIJS") {
+      return minimumMeta.ijkpunt === "kleuter" ||
+        minimumMeta.ijkpunt === "4de" ||
+        minimumMeta.ijkpunt === "6de";
+    }
     return level === "KLEUTER"
       ? minimumMeta.ijkpunt === "kleuter"
       : level === "LAGER"
@@ -148,10 +198,34 @@ export function resultMatchesEducationLevel(
     return true;
   }
 
+  if (DOMAIN_LEVELS.has(level)) {
+    const route = `${result.leerjaarRoute} ${result.discipline} ${result.titel}`.toLocaleLowerCase("nl-BE");
+    if (level === "BUBAO") {
+      return /\bbubao\b|buitengewoon bas|ontwikkelingsdoel|type\s*\d/u.test(route);
+    }
+    if (level === "BUSO") {
+      return /\bbuso\b|buitengewoon secundair|ov\s*[123]/u.test(route);
+    }
+    if (level === "OKAN") {
+      return /\bokan\b|onthaal|nt2|nieuwkom/u.test(route);
+    }
+    if (level === "DKO") {
+      return /\bdko\b|kunstonderwijs|beeld|muziek|dans/u.test(route);
+    }
+    if (level === "VOLWASSENEN") {
+      return /\bvolwassenen|basiseducatie|cvo/u.test(route);
+    }
+    if (level === "HOGER") {
+      return /\bhoger|lerarenopleiding|dlr|basiscompetentie/u.test(route);
+    }
+  }
+
   return recordMatchesEducationLevel(
     {
       onderwijsniveau: result.leerjaarRoute,
       code: result.code,
+      graad: result.leerjaarRoute,
+      finaliteit: result.leerjaarRoute,
     },
     level,
   );

@@ -92,9 +92,17 @@ function asString(value: unknown): string {
   return typeof value === "string" ? decodeHtmlEntities(value.trim()) : "";
 }
 
-function isSecondaryCorpusRecord(raw: RawRecord): boolean {
+function isDomainCorpusRecord(raw: RawRecord): boolean {
   const level = asString(raw.onderwijsniveau).toUpperCase();
-  return level === "SECUNDAIR" || level === "SECUNDAIR ONDERWIJS";
+  return (
+    level === "SECUNDAIR" ||
+    level === "BUBAO" ||
+    level === "BUSO" ||
+    level === "OKAN" ||
+    level === "DKO" ||
+    level === "VOLWASSENEN" ||
+    level === "HOGER"
+  );
 }
 
 function networkFromRaw(
@@ -109,7 +117,8 @@ function networkFromRaw(
   if (netwerk === "KOV") return "KOV";
   if (netwerk === "POV") return "POV";
   if (netwerk === "VLAANDEREN") return "VLAANDEREN";
-  if (!netwerk && isSecondaryCorpusRecord(raw) && asString(raw.code)) {
+  if (netwerk === "AHOVOKS") return "VLAANDEREN";
+  if (!netwerk && isDomainCorpusRecord(raw) && asString(raw.code)) {
     return "VLAANDEREN";
   }
   return null;
@@ -122,7 +131,7 @@ function normalizeMinimumGoal(raw: RawRecord) {
     const code = asString(record.code);
     const tekst = asString(record.tekst);
     const isSecondary =
-      isSecondaryCorpusRecord(raw) ||
+      isDomainCorpusRecord(raw) ||
       asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE") ===
         "secundair onderwijs";
     if (
@@ -140,7 +149,7 @@ function normalizeMinimumGoal(raw: RawRecord) {
     };
   }
 
-  if (!isSecondaryCorpusRecord(raw)) {
+  if (!isDomainCorpusRecord(raw)) {
     return null;
   }
 
@@ -160,7 +169,7 @@ function normalizeMinimumGoal(raw: RawRecord) {
 export function normalizeMinimumGoalCandidate(
   raw: RawRecord,
 ): CurriculumSearchResult | null {
-  const isSecondary = isSecondaryCorpusRecord(raw);
+  const isSecondary = isDomainCorpusRecord(raw);
   const minimum = normalizeMinimumGoal(raw);
   if (!minimum?.tekst) {
     return null;
@@ -294,6 +303,13 @@ export function collectMinimumGoalCandidates({
 
     const record = normalizeMinimumGoalCandidate(raw);
     if (!record || !resultMatchesEducationLevel(record, educationLevel)) {
+      continue;
+    }
+    if (
+      isDomainCorpusRecord(raw) &&
+      educationLevel !== "ALL" &&
+      asString(raw.onderwijsniveau).toUpperCase() !== educationLevel
+    ) {
       continue;
     }
 

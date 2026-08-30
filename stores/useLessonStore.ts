@@ -19,6 +19,7 @@ import {
 import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilters";
 import type {
   ActiveLesson,
+  DomainDetailFilter,
   EducationLevelPreference,
   EducationNetwork,
   LessonGoal,
@@ -61,6 +62,8 @@ interface LessonStore {
   educationLevel: EducationLevelPreference;
   secondaryGradeFilter: SecondaryGradeFilter;
   secondaryFinalityFilter: SecondaryFinalityFilter;
+  domainDetailFilter: DomainDetailFilter;
+  domainFinalityFilter: DomainDetailFilter;
   storageUserId: string | null;
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
@@ -72,6 +75,8 @@ interface LessonStore {
   setSecondaryFinalityFilter: (
     secondaryFinalityFilter: SecondaryFinalityFilter,
   ) => void;
+  setDomainDetailFilter: (domainDetailFilter: DomainDetailFilter) => void;
+  setDomainFinalityFilter: (domainFinalityFilter: DomainDetailFilter) => void;
   setField: <K extends keyof ActiveLesson>(
     key: K,
     value: ActiveLesson[K],
@@ -96,20 +101,34 @@ interface LessonStore {
 }
 
 const EDUCATION_LEVEL_PREFERENCES = new Set<EducationLevelPreference>([
-  "kleuteronderwijs",
-  "lager_onderwijs",
+  "alle_niveaus",
+  "basisonderwijs",
   "secundair_onderwijs",
+  "bubao",
+  "buso",
+  "okan",
+  "dko",
+  "volwassenenonderwijs",
+  "hoger_onderwijs",
 ]);
+
+const LEGACY_EDUCATION_LEVEL_MAP: Record<string, EducationLevelPreference> = {
+  kleuteronderwijs: "basisonderwijs",
+  lager_onderwijs: "basisonderwijs",
+};
 
 function normalizeEducationLevelPreference(
   persisted: EducationLevelPreference | string | undefined,
   fallback: EducationLevelPreference,
 ): EducationLevelPreference {
-  if (
-    typeof persisted === "string" &&
-    EDUCATION_LEVEL_PREFERENCES.has(persisted as EducationLevelPreference)
-  ) {
-    return persisted as EducationLevelPreference;
+  if (typeof persisted === "string") {
+    const mapped = LEGACY_EDUCATION_LEVEL_MAP[persisted];
+    if (mapped) {
+      return mapped;
+    }
+    if (EDUCATION_LEVEL_PREFERENCES.has(persisted as EducationLevelPreference)) {
+      return persisted as EducationLevelPreference;
+    }
   }
   return fallback;
 }
@@ -119,9 +138,11 @@ export function resetLessonStoreState() {
     lesson: initialLesson,
     activeModule: "manual-scanner",
     pinnedModules: [],
-    educationLevel: "lager_onderwijs",
+    educationLevel: "basisonderwijs",
     secondaryGradeFilter: "all",
     secondaryFinalityFilter: "all",
+    domainDetailFilter: "all",
+    domainFinalityFilter: "all",
     storageUserId: null,
     hydrated: false,
   });
@@ -133,9 +154,11 @@ export const useLessonStore = create<LessonStore>()(
       lesson: initialLesson,
       activeModule: "manual-scanner",
       pinnedModules: [],
-      educationLevel: "lager_onderwijs",
+      educationLevel: "basisonderwijs",
       secondaryGradeFilter: "all",
       secondaryFinalityFilter: "all",
+      domainDetailFilter: "all",
+      domainFinalityFilter: "all",
       storageUserId: null,
       hydrated: false,
       setHydrated: (hydrated) => set({ hydrated }),
@@ -148,21 +171,21 @@ export const useLessonStore = create<LessonStore>()(
             : [...state.pinnedModules, moduleId],
         })),
       setEducationLevel: (educationLevel) =>
-        set((state) => ({
+        set(() => ({
           educationLevel,
-          secondaryGradeFilter:
-            educationLevel === "secundair_onderwijs"
-              ? state.secondaryGradeFilter
-              : "all",
-          secondaryFinalityFilter:
-            educationLevel === "secundair_onderwijs"
-              ? state.secondaryFinalityFilter
-              : "all",
+          secondaryGradeFilter: "all",
+          secondaryFinalityFilter: "all",
+          domainDetailFilter: "all",
+          domainFinalityFilter: "all",
         })),
       setSecondaryGradeFilter: (secondaryGradeFilter) =>
         set({ secondaryGradeFilter }),
       setSecondaryFinalityFilter: (secondaryFinalityFilter) =>
         set({ secondaryFinalityFilter }),
+      setDomainDetailFilter: (domainDetailFilter) =>
+        set({ domainDetailFilter }),
+      setDomainFinalityFilter: (domainFinalityFilter) =>
+        set({ domainFinalityFilter }),
       setField: (key, value) =>
         set((state) => ({ lesson: { ...state.lesson, [key]: value } })),
       setTargetGroupSelection: ({ grade, customLabel, customAgeRange }) =>
@@ -329,6 +352,8 @@ export const useLessonStore = create<LessonStore>()(
         educationLevel: state.educationLevel,
         secondaryGradeFilter: state.secondaryGradeFilter,
         secondaryFinalityFilter: state.secondaryFinalityFilter,
+        domainDetailFilter: state.domainDetailFilter,
+        domainFinalityFilter: state.domainFinalityFilter,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<typeof currentState> | undefined;

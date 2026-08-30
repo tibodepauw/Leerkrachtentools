@@ -89,6 +89,18 @@ const SECONDARY_POV_CURRICULUM_PROD = path.join(
   "leerplannen_pov_secundair.jsonl",
 );
 
+const DOMAIN_CORPUS_PATHS: Array<{ level: EducationLevelFilter; path: string }> = [
+  { level: "OKAN", path: path.join(process.cwd(), "data", "okan", "onderwijsdoelen_okan.jsonl") },
+  { level: "BUBAO", path: path.join(process.cwd(), "data", "bubao", "onderwijsdoelen_bubao.jsonl") },
+  { level: "BUSO", path: path.join(process.cwd(), "data", "buso", "onderwijsdoelen_buso.jsonl") },
+  { level: "DKO", path: path.join(process.cwd(), "data", "dko", "onderwijsdoelen_dko.jsonl") },
+  {
+    level: "VOLWASSENEN",
+    path: path.join(process.cwd(), "data", "volwassenen", "onderwijsdoelen_volwassenen.jsonl"),
+  },
+  { level: "HOGER", path: path.join(process.cwd(), "data", "hoger", "onderwijsdoelen_hoger.jsonl") },
+];
+
 const MIN_CORPUS_MATCH_SCORE = 0.32;
 const MIN_LOCAL_SEARCH_SCORE = 0.1;
 const MIN_RELAXED_SEARCH_SCORE = 0.06;
@@ -174,6 +186,7 @@ export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[]
       ).flatMap((key) => loadNetworkRecords(key)),
       ...loadJsonlAt(SECONDARY_CURRICULUM_PROD),
       ...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD),
+      ...educationDomainRecords("ALL"),
     ];
   }
   return loadNetworkRecords(network);
@@ -181,6 +194,26 @@ export function recordsForNetwork(network: CurriculumNetworkFilter): RawRecord[]
 
 export function secondaryMinimumGoalRecords(): RawRecord[] {
   return loadJsonlAt(SECONDARY_MINIMUM_GOALS_PROD);
+}
+
+export function educationDomainRecords(
+  level: EducationLevelFilter = "ALL",
+): RawRecord[] {
+  const entries = DOMAIN_CORPUS_PATHS.flatMap(({ level: domainLevel, path: filePath }) => {
+    if (level !== "ALL" && level !== domainLevel) {
+      return [];
+    }
+    return loadJsonlAt(filePath);
+  });
+  return entries;
+}
+
+export function allMinimumGoalRecords(): RawRecord[] {
+  return [
+    ...recordsForNetwork("OPSTAP"),
+    ...secondaryMinimumGoalRecords(),
+    ...educationDomainRecords("ALL"),
+  ];
 }
 
 function loadNetworkRecords(
@@ -399,6 +432,7 @@ function normalizeRecord(
     asString(
       raw.leerjaar_route ??
         raw.fase ??
+        raw.graad ??
         (Array.isArray(leerjaren)
           ? leerjaren.map((item) => String(item)).join(", ")
           : ""),
