@@ -94,10 +94,14 @@ Local search indexes official goal corpora:
 | GO | GO! basisonderwijs vakleerplannen (9 subject books) |
 | GO! Nieuw | GO! basisonderwijs 12 doelensets |
 | Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen (lokaal) |
-| AHOVOKS-domeinen | OKAN, BuBaO, BuSO, DKO, volwassenenonderwijs en hoger onderwijs via onderwijsdoelen.be (lokaal) |
+| AHOVOKS-domeinen | Volledige doelencorpus via onderwijsdoelen.be (~24.000 doelen, lokaal): OKAN (onthaal), buitengewoon basisonderwijs (BuBaO), buitengewoon secundair (BuSO), deeltijds kunstonderwijs (DKO), volwassenenonderwijs, hoger onderwijs (lerarenopleiding) |
 | Vlaamse overheid | Officiële secundaire minimumdoelen (lokaal, via scripts) |
 
+Leerplandoelen doorzoekt koepelnetwerken (Op.stap, ZILL, KOV, …); minimumdoelen en AHOVOKS-domeinen (buitengewoon, kunst, OKAN, …) lopen via dezelfde onderwijsniveau-filter in de UI.
+
 Domain corpusdata (`data/okan/`, `data/bubao/`, …) en secundaire corpusdata (`data/secundair/`) worden **niet** in git opgenomen. Run de fetch-scripts lokaal; publiceer scraper-uitvoer niet op GitHub.
+
+**Wat wél in git mag:** scraper- en fetch-**code** onder `scripts/`, plus kleine **test-fixtures** in `test/fixtures/` (~100 KB snippets voor CI). Dat is geen volledige leerplancorpus; volledige JSONL/PDF-output hoort lokaal in `data/` te blijven.
 
 Maintenance scripts (optional, not required to run the app UI):
 

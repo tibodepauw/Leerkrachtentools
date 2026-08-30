@@ -6,9 +6,11 @@ describe("resolveTierFromEmail", () => {
     vi.unstubAllEnvs();
   });
 
-  it("kent admin toe aan het vaste beheerdersadres", () => {
-    expect(resolveTierFromEmail("r1058655@student.thomasmore.be")).toBe("admin");
-    expect(resolveTierFromEmail("tibo.depauw06@gmail.com")).toBe("admin");
+  it("kent admin toe via ADMIN_EMAILS allowlist", () => {
+    vi.stubEnv("ADMIN_EMAILS", "admin@example.com, owner@example.com");
+
+    expect(resolveTierFromEmail("admin@example.com")).toBe("admin");
+    expect(resolveTierFromEmail("owner@example.com")).toBe("admin");
   });
 
   it("kent student toe aan Thomas More adressen", () => {

@@ -3,7 +3,7 @@
 Haal alle Vlaamse onderwijsdoelen op voor OKAN, BuBaO, BuSO, DKO, VO en HO.
 
 Bronnen:
-  - Onderwijsdoelen API (publieke x-api-key via onderwijsdoelen.be/env.js)
+  - Onderwijsdoelen API (`ONDERWIJSDOELEN_API_KEY` in `.env.local`)
   - Optioneel: Playwright-portaaldatasets voor validatie
 
 Uitvoer per domein in data/{domein}/:

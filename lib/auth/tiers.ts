@@ -8,11 +8,6 @@ import {
 
 export { USER_TIERS, type UserTier, normalizeAccountTier };
 
-const DEFAULT_ADMIN_EMAILS = [
-  "r1058655@student.thomasmore.be",
-  "tibo.depauw06@gmail.com",
-];
-
 const THOMAS_MORE_DOMAINS = ["@student.thomasmore.be", "@thomasmore.be"];
 
 export const DAILY_SERVER_AI_LIMITS: Record<UserTier, number> = {
@@ -36,10 +31,7 @@ function parseEmailAllowlist(raw: string | undefined) {
 }
 
 function adminEmails() {
-  return new Set([
-    ...DEFAULT_ADMIN_EMAILS,
-    ...parseEmailAllowlist(process.env.ADMIN_EMAILS),
-  ]);
+  return parseEmailAllowlist(process.env.ADMIN_EMAILS);
 }
 
 function testerEmails() {

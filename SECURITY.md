@@ -13,10 +13,9 @@ Security fixes apply to the latest release on the `main` branch.
 
 If you discover a security issue, please report it responsibly. Do **not** open a public GitHub issue for vulnerabilities.
 
-**Preferred channels:**
+**Preferred channel:**
 
-1. [GitHub Security Advisories](https://github.com/tibodepauw/Leerkrachtentools/security/advisories/new) (private report)
-2. Email: [r1058655@student.thomasmore.be](mailto:r1058655@student.thomasmore.be)
+[GitHub Security Advisories](https://github.com/tibodepauw/Leerkrachtentools/security/advisories/new) (private report)
 
 Include a clear description, steps to reproduce, and impact if known. We aim to acknowledge reports within a few working days.
 

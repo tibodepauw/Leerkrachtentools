@@ -8,6 +8,8 @@ export const metadata = {
 };
 
 export default function PrivacyPage() {
+  const contactEmail = process.env.FEEDBACK_TO_EMAIL?.trim();
+
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 py-12 sm:py-20">
       <Button variant="ghost" asChild className="mb-6">
@@ -24,10 +26,19 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-2 font-semibold text-white">1. Verwerkingsverantwoordelijke</h2>
             <p>
-              Dit platform, Leerkrachtentools, wordt beheerd door Generative Labs (Tibo De Pauw). Voor vragen over de verwerking van je persoonsgegevens of het uitoefenen van je privacyrechten kun je contact opnemen via{" "}
-              <a href="mailto:r1058655@student.thomasmore.be" className="underline hover:text-white">
-                r1058655@student.thomasmore.be
-              </a>.
+              Dit platform, Leerkrachtentools, wordt beheerd door Generative Labs (Tibo De Pauw). Voor vragen over de verwerking van je persoonsgegevens of het uitoefenen van je privacyrechten kun je contact opnemen
+              {contactEmail ? (
+                <>
+                  {" "}
+                  via{" "}
+                  <a href={`mailto:${contactEmail}`} className="underline hover:text-white">
+                    {contactEmail}
+                  </a>
+                </>
+              ) : (
+                " via het feedbackformulier in de app"
+              )}
+              .
             </p>
           </section>
 

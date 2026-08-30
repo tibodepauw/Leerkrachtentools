@@ -7,7 +7,7 @@ Documentatie gegenereerd op basis van portaal- en API-onderzoek (augustus 2026).
 | Bron | URL | Toegang |
 |------|-----|---------|
 | Onderwijsdoelen portaal | https://www.onderwijsdoelen.be/ | Publiek (Angular SPA) |
-| Onderwijsdoelen API | https://onderwijs.api.vlaanderen.be/onderwijsdoelen/ | `x-api-key` header (publieke key in `env.js`) |
+| Onderwijsdoelen API | https://onderwijs.api.vlaanderen.be/onderwijsdoelen/ | `ONDERWIJSDOELEN_API_KEY` (niet in git) |
 | Onderwijsdoelen API 1.0 (Apigee) | https://onderwijs-vlaanderen-portaalov.apigee.io/ | `ONDERWIJSDOELEN_API_KEY` (optioneel) |
 | KOV BuBaO curriculum | https://pro.katholiekonderwijs.vlaanderen/curriculum-bubao/ | Publieke leerplannen |
 | Secundair leerplannen | GO!, KOV, OVSG, POV | Zie `docs/curriculum-bronnen-urls.md` |

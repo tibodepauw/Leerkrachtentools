@@ -1,9 +1,10 @@
-"""HTTP-client voor de publieke Onderwijsdoelen API (x-api-key uit env.js)."""
+"""HTTP-client voor de Onderwijsdoelen API (x-api-key via ONDERWIJSDOELEN_API_KEY)."""
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any, Iterable
@@ -15,27 +16,37 @@ from education_record_schema import normalize_api_goal_record
 logger = logging.getLogger("onderwijsdoelen_api_client")
 
 DEFAULT_API_BASE = "https://onderwijs.api.vlaanderen.be/onderwijsdoelen"
-DEFAULT_API_KEY = "A6mqb462KFhtYzGRG27o0bljP8G4AlDc"
 USER_AGENT = (
     "Leerkrachtentools-onderwijsdoelen/1.0 "
     "(publieke onderwijsdata; https://github.com/tibodepauw/Leerkrachtentools)"
 )
 
 
+def resolve_api_key(api_key: str | None = None) -> str:
+    key = (api_key or os.environ.get("ONDERWIJSDOELEN_API_KEY", "")).strip()
+    if not key:
+        raise ValueError(
+            "ONDERWIJSDOELEN_API_KEY ontbreekt. Zet de key in .env.local of "
+            "exporteer die voor fetch-scripts (zie docs/curriculum-bronnen-urls.md)."
+        )
+    return key
+
+
 def fetch_all_goals(
     *,
-    api_key: str = DEFAULT_API_KEY,
+    api_key: str | None = None,
     rows_per_page: int = 500,
     max_pages: int = 60,
     pause_seconds: float = 0.15,
 ) -> list[dict[str, Any]]:
+    resolved_key = resolve_api_key(api_key)
     collected: list[dict[str, Any]] = []
     for page in range(1, max_pages + 1):
         url = (
             f"{DEFAULT_API_BASE}/onderwijsdoel?"
             f"paginanr={page}&rijen_per_pagina={rows_per_page}"
         )
-        payload = _get_json(url, api_key)
+        payload = _get_json(url, resolved_key)
         members = payload.get("gegevens", {}).get("member", [])
         if not members:
             break
