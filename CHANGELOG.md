@@ -4,6 +4,16 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.8.9] - 2026-08-30
+
+### Added
+- Resizebare desktop-sidebar met sleep-handvat aan de rechterrand
+- Automatische icoon-modus wanneer de sidebar smaller dan ~140px wordt
+- Dubbelklik op het handvat om ingevouwen/uitgevouwen te schakelen
+- Breedte wordt per account opgeslagen in localStorage
+
+---
+
 ## [5.8.8] - 2026-08-30
 
 ### Added
