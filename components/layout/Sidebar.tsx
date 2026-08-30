@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/shared/ProfileAvatar";
+import { WordmarkLogo } from "@/components/shared/WordmarkLogo";
 import { tierBadgeLabel } from "@/components/shared/TierBadge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -302,9 +303,7 @@ function SidebarContent({
             </Tooltip>
           ) : (
             <div className="flex w-full min-w-0 items-center justify-between gap-2">
-              <p className="truncate text-sm font-black tracking-tight">
-                Leerkrachtentools
-              </p>
+              <WordmarkLogo size="sm" className="min-w-0 flex-1" />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
