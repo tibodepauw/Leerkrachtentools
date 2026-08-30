@@ -315,12 +315,16 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     (state) => state.domainFinalityFilter,
   );
   const educationLevelFilter = preferenceToFilter(educationLevel);
+  const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
+  const resolvedNetwork = visibleNetworks.some((option) => option.value === network)
+    ? network
+    : (visibleNetworks[0]?.value ?? "ALL");
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
   const analysisScope =
     variant === "minimumdoel"
       ? `${variant}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
-      : `${variant}:${network}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
+      : `${variant}:${resolvedNetwork}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyze, result, loading, error } =
     useAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -341,11 +345,19 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     : [];
 
   const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
-  const visibleNetworks = networkOptionsForLevel(educationLevelFilter);
   const showDomainDetailFilter = supportsDomainDetailFilter(educationLevelFilter);
   const showDomainFinalityFilter = supportsDomainFinalityFilter(educationLevelFilter);
   const detailFilterOptions = domainFilterOptions(educationLevelFilter);
   const finalityFilterOptions = domainSecondaryFinalityOptions(educationLevelFilter);
+
+  useEffect(() => {
+    const options = networkOptionsForLevel(educationLevelFilter);
+    setNetwork((current) =>
+      options.some((option) => option.value === current)
+        ? current
+        : (options[0]?.value ?? "ALL"),
+    );
+  }, [educationLevelFilter]);
 
   useEffect(() => {
     const mappedGrade = secondaryGradeFilterFromLessonGrade(lesson.grade);
@@ -387,23 +399,29 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 {variant === "leerplandoel" ? (
                   <div className="space-y-2">
                     <Label>Leerplan</Label>
-                    <Select
-                      value={network}
-                      onValueChange={(value) =>
-                        setNetwork(value as CurriculumNetworkFilter)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {visibleNetworks.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {visibleNetworks.length <= 1 ? (
+                      <p className="flex h-8 items-center rounded-lg border border-input bg-transparent px-2.5 text-sm text-neutral-200 dark:bg-input/30">
+                        {visibleNetworks[0]?.label ?? "Alle leerplannen"}
+                      </p>
+                    ) : (
+                      <Select
+                        value={resolvedNetwork}
+                        onValueChange={(value) =>
+                          setNetwork(value as CurriculumNetworkFilter)
+                        }
+                      >
+                        <SelectTrigger className="w-full min-w-0">
+                          <SelectValue placeholder="Kies een leerplan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {visibleNetworks.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 ) : null}
                 {showDomainDetailFilter ? (
@@ -544,7 +562,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                         }
                       : {
                           goal: text,
-                          network,
+                          network: resolvedNetwork,
                           educationLevel: educationLevelFilter,
                           grade: lesson.grade,
                           ageRange: lesson.ageRange,
