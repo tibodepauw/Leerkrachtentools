@@ -168,6 +168,23 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
       "y-as",
     ],
   },
+  {
+    pattern:
+      /broeikas|broeikaseffect|klimaatverandering|klimaat|opwarming|fossiel|brandstof|co2|milieu|duurzaam/i,
+    stems: [
+      "broeikas",
+      "broeikase",
+      "broeikaseffect",
+      "klimaat",
+      "klimaatverander",
+      "opwarming",
+      "fossiel",
+      "brandstof",
+      "energie",
+      "co2",
+      "milieu",
+    ],
+  },
 ];
 
 const CANONICAL_QUERY_TERMS: Array<{
@@ -256,6 +273,22 @@ const CANONICAL_QUERY_TERMS: Array<{
     canonical: "opstel",
     stems: ["opstel", "essay", "schrijfopdr", "schrijven", "schrijf"],
   },
+  {
+    canonical: "broeikaseffect",
+    stems: ["broeikas", "broeikase", "broeikaseffect", "klimaat", "opwarming"],
+  },
+  {
+    canonical: "klimaatverandering",
+    stems: ["klimaat", "klimaatverander", "milieu", "opwarming"],
+  },
+  {
+    canonical: "fossiele",
+    stems: ["fossiel", "brandstof", "brandstoffen", "energie", "co2"],
+  },
+  {
+    canonical: "brandstoffen",
+    stems: ["fossiel", "brandstof", "brandstoffen", "energie", "co2"],
+  },
 ];
 
 const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
@@ -317,6 +350,11 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
     pattern:
       /powerpoint|presentatie|presntatie|presenteren|spreekbeurt|slides|canva|digitaal|digitale media|computer|tablet|software|\bapp\b|voordragen|mondeling|toelichten|\bict\b|programm|prorgamm|coding|\bcode\b|algoritme|computationeel denken/i,
     discipline: "ICT",
+  },
+  {
+    pattern:
+      /broeikas|broeikaseffect|klimaatverandering|klimaat|opwarming|fossiel|brandstof|co2|milieu|duurzaam/i,
+    discipline: "Exacte wetenschappen",
   },
 ];
 
@@ -656,6 +694,58 @@ export function queryMatchesProgrammingTopic(query: string): boolean {
   );
 }
 
+export function queryMatchesClimateTopic(query: string): boolean {
+  return /broeikas|broeikaseffect|klimaatverandering|klimaat|opwarming|fossiel|brandstof|co2|milieu|duurzaam/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+export function scoreClimateMinimumGoalBonus(
+  query: string,
+  discipline: string,
+  code: string,
+  sleutelcompetentieNr = "",
+): number {
+  if (!queryMatchesClimateTopic(query)) {
+    return 0;
+  }
+
+  const combined = `${discipline} ${sleutelcompetentieNr}`.toLocaleLowerCase(
+    "nl-BE",
+  );
+  const codePrefix = code.trim().slice(0, 2);
+  let bonus = 0;
+
+  if (
+    sleutelcompetentieNr === "6" ||
+    codePrefix === "06" ||
+    combined.includes("exacte wetenschappen") ||
+    combined.includes("wiskunde, exacte")
+  ) {
+    bonus += 0.35;
+  }
+
+  if (
+    sleutelcompetentieNr === "9" ||
+    codePrefix === "09" ||
+    combined.includes("ruimtelijk bewustzijn") ||
+    combined.includes("aardrijkskunde")
+  ) {
+    bonus += 0.35;
+  }
+
+  if (sleutelcompetentieNr === "10" || codePrefix === "10") {
+    bonus += 0.22;
+  }
+
+  const minimumLower = normalizeQueryText(`${discipline} ${code}`);
+  if (/broeikas|klimaat|opwarming|fossiel|brandstof|milieu/i.test(minimumLower)) {
+    bonus += 0.12;
+  }
+
+  return bonus;
+}
+
 export function scoreCodePrefixBonus(query: string, code: string): number {
   const trimmedCode = code.trim();
   if (!trimmedCode) {
@@ -799,6 +889,25 @@ export function scoreDisciplineBonus(
       combined.includes("stem") ||
       combined.includes("techniek") ||
       combined.includes("wetenschap")
+    ) {
+      bonus += 0.22;
+    }
+  }
+
+  if (queryMatchesClimateTopic(query)) {
+    if (
+      combined.includes("exacte wetenschappen") ||
+      combined.includes("wiskunde, exacte") ||
+      combined.includes("natuurwetenschap") ||
+      combined.includes("aardrijkskunde") ||
+      combined.includes("ruimtelijk bewustzijn") ||
+      combined.includes("duurzaam")
+    ) {
+      bonus += 0.35;
+    } else if (
+      combined.includes("wetenschap") ||
+      combined.includes("techniek") ||
+      combined.includes("milieu")
     ) {
       bonus += 0.22;
     }

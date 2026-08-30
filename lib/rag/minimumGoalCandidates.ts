@@ -16,15 +16,19 @@ import {
 } from "@/lib/rag/curriculumCorpus";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
 import {
+  extractContentTokens,
   extractIndexTokens,
   normalizeQueryText,
+  scoreClimateMinimumGoalBonus,
+  tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
 import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
-import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
+import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
 
 type RawRecord = Record<string, unknown>;
 
 export const MINIMUM_GOAL_CANDIDATE_LIMIT = 50;
+export const MINIMUM_GOAL_OR_CANDIDATE_POOL = 30;
 
 const MINIMUM_GOAL_CORPUS_NETWORKS: Array<
   "OPSTAP" | "VLAANDEREN"
@@ -54,6 +58,15 @@ type MinimumGoalTokenIndex = {
 };
 
 let minimumGoalIndexCache: MinimumGoalTokenIndex | null = null;
+
+function isSecondaryMinimumGoalRaw(raw: RawRecord): boolean {
+  if (isDomainCorpusRecord(raw)) {
+    return true;
+  }
+  return asString(raw.onderwijsniveau)
+    .toLocaleLowerCase("nl-BE")
+    .includes("secundair");
+}
 
 function expandLookupTokens(tokens: Iterable<string>): Set<string> {
   const expanded = new Set<string>();
@@ -97,6 +110,8 @@ function minimumGoalHaystackFromRaw(raw: RawRecord): string {
     raw.ontwikkelveld,
     raw.subdomein,
     raw.toelichting,
+    raw.sleutelcompetentie,
+    raw.sleutelcompetentie_nr,
     ...leerlijnSteps,
   ]
     .filter(Boolean)
@@ -112,10 +127,39 @@ function buildMinimumGoalQueryTokens(query: string): Set<string> {
   for (const token of tokenizeMinimumGoalQuery(query)) {
     tokens.add(token);
   }
+  for (const token of tokenizeCurriculumQuery(query)) {
+    tokens.add(token);
+  }
   for (const token of extractIndexTokens(normalizeQueryText(query))) {
     tokens.add(token);
   }
   return expandLookupTokens(tokens);
+}
+
+function extractCoreKeywordsForOrRetrieval(query: string): Set<string> {
+  const keywords = new Set<string>();
+  for (const token of extractContentTokens(query)) {
+    if (token.length >= 4 || /\d/u.test(token) || token === "co2") {
+      keywords.add(token);
+    }
+  }
+  return keywords;
+}
+
+function addCandidateIndicesForTokens(
+  tokens: Iterable<string>,
+  index: MinimumGoalTokenIndex,
+  candidates: Set<number>,
+): void {
+  for (const token of tokens) {
+    const indices = index.tokenToRecordIndices.get(token);
+    if (!indices) {
+      continue;
+    }
+    for (const recordIndex of indices) {
+      candidates.add(recordIndex);
+    }
+  }
 }
 
 function isIndexedMinimumGoalRaw(raw: RawRecord): boolean {
@@ -172,16 +216,23 @@ function candidateIndicesFromMinimumGoalQuery(
   query: string,
   index: MinimumGoalTokenIndex,
 ): Set<number> {
-  const lookupTokens = buildMinimumGoalQueryTokens(query);
   const candidates = new Set<number>();
+  const lookupTokens = buildMinimumGoalQueryTokens(query);
+  addCandidateIndicesForTokens(lookupTokens, index, candidates);
 
-  for (const token of lookupTokens) {
-    const indices = index.tokenToRecordIndices.get(token);
-    if (!indices) {
-      continue;
-    }
-    for (const recordIndex of indices) {
-      candidates.add(recordIndex);
+  const coreKeywords = extractCoreKeywordsForOrRetrieval(query);
+  if (coreKeywords.size >= 2) {
+    for (const keyword of coreKeywords) {
+      addCandidateIndicesForTokens(
+        expandLookupTokens(new Set([keyword])),
+        index,
+        candidates,
+      );
+      addCandidateIndicesForTokens(
+        buildMinimumGoalQueryTokens(keyword),
+        index,
+        candidates,
+      );
     }
   }
 
@@ -277,7 +328,7 @@ function normalizeMinimumGoal(raw: RawRecord) {
     const code = asString(record.code);
     const tekst = asString(record.tekst);
     const isSecondary =
-      isDomainCorpusRecord(raw) ||
+      isSecondaryMinimumGoalRaw(raw) ||
       asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE") ===
         "secundair onderwijs";
     if (
@@ -295,7 +346,7 @@ function normalizeMinimumGoal(raw: RawRecord) {
     };
   }
 
-  if (!isDomainCorpusRecord(raw)) {
+  if (!isSecondaryMinimumGoalRaw(raw)) {
     return null;
   }
 
@@ -315,7 +366,7 @@ function normalizeMinimumGoal(raw: RawRecord) {
 export function normalizeMinimumGoalCandidate(
   raw: RawRecord,
 ): CurriculumSearchResult | null {
-  const isSecondary = isDomainCorpusRecord(raw);
+  const isSecondary = isSecondaryMinimumGoalRaw(raw);
   const minimum = normalizeMinimumGoal(raw);
   if (!minimum?.tekst) {
     return null;
@@ -379,19 +430,30 @@ function candidateHaystack(record: CurriculumSearchResult): string {
 function scoreMinimumGoalCandidate(
   query: string,
   record: CurriculumSearchResult,
+  raw?: RawRecord,
 ): { score: number; tokenMatches: number } {
-  const queryTokens = tokenizeMinimumGoalQuery(query);
+  const allQueryTokens = tokenizeMinimumGoalQuery(query);
+  const contentTokens = extractContentTokens(query);
+  const scoringTokens =
+    contentTokens.size >= 2 ? contentTokens : allQueryTokens;
   const haystack = candidateHaystack(record);
   const minimumText = record.gelinktMinimumdoel?.tekst ?? "";
-  const tokenMatches = countMinimumGoalTokenMatches(haystack, queryTokens);
+  const tokenMatches = countMinimumGoalTokenMatches(haystack, scoringTokens);
 
-  const minimumScore = scoreMinimumGoalOverlap(minimumText, queryTokens);
-  const leerplanScore = scoreMinimumGoalOverlap(record.titel, queryTokens);
-  const contextScore = scoreMinimumGoalOverlap(haystack, queryTokens);
+  const minimumScore = scoreMinimumGoalOverlap(minimumText, scoringTokens);
+  const leerplanScore = scoreMinimumGoalOverlap(record.titel, scoringTokens);
+  const contextScore = scoreMinimumGoalOverlap(haystack, scoringTokens);
 
   let score = Math.min(
     1,
     minimumScore * 0.5 + leerplanScore * 0.35 + contextScore * 0.15,
+  );
+
+  score += scoreClimateMinimumGoalBonus(
+    query,
+    record.discipline,
+    record.gelinktMinimumdoel?.code ?? "",
+    raw ? asString(raw.sleutelcompetentie_nr) : "",
   );
 
   const queryLower = normalizeQueryText(query);
@@ -427,6 +489,12 @@ export function collectMinimumGoalCandidates({
     return [];
   }
 
+  const coreKeywords = extractCoreKeywordsForOrRetrieval(query);
+  const useOrRetrieval = coreKeywords.size >= 2;
+  const preFilterLimit = useOrRetrieval
+    ? Math.max(limit, MINIMUM_GOAL_OR_CANDIDATE_POOL)
+    : limit;
+
   const index = getMinimumGoalTokenIndex();
   const candidateIndices = candidateIndicesFromMinimumGoalQuery(query, index);
   const indicesToScore =
@@ -457,18 +525,15 @@ export function collectMinimumGoalCandidates({
     }
 
     const record = normalizeMinimumGoalCandidate(raw);
-    if (!record || !resultMatchesEducationLevel(record, educationLevel)) {
-      continue;
-    }
-    if (
-      isDomainCorpusRecord(raw) &&
-      educationLevel !== "ALL" &&
-      asString(raw.onderwijsniveau).toUpperCase() !== educationLevel
-    ) {
+    if (!record || !recordMatchesEducationLevel(raw, educationLevel)) {
       continue;
     }
 
-    const { score, tokenMatches } = scoreMinimumGoalCandidate(query, record);
+    const { score, tokenMatches } = scoreMinimumGoalCandidate(
+      query,
+      record,
+      raw,
+    );
     if (
       tokenMatches < MIN_CANDIDATE_TOKEN_MATCHES &&
       score < MIN_CANDIDATE_SCORE
@@ -485,6 +550,7 @@ export function collectMinimumGoalCandidates({
         (left, right) =>
           right.score - left.score || right.tokenMatches - left.tokenMatches,
       )
+      .slice(0, preFilterLimit)
       .slice(0, limit)
       .map((entry) => ({ ...entry.record, score: entry.score })),
   );

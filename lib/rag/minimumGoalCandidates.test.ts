@@ -112,4 +112,54 @@ describe("minimumGoalCandidates", () => {
       candidates.some((item) => item.netwerk === "VLAANDEREN"),
     ).toBe(true);
   });
+
+  it("normaliseert secundaire records met onderwijsniveau secundair onderwijs", () => {
+    const record = normalizeMinimumGoalCandidate({
+      onderwijsniveau: "secundair onderwijs",
+      graad: "2de graad",
+      finaliteit: "doorstroomfinaliteit",
+      discipline: "Competenties met betrekking tot ruimtelijk bewustzijn",
+      sleutelcompetentie_nr: "9",
+      gelinkt_minimumdoel: {
+        code: "09.06",
+        tekst: "De leerlingen analyseren oorzaken en gevolgen van het versterkt broeikaseffect.",
+        type: "Eindtermen",
+      },
+      netwerk: "VLAANDEREN",
+    });
+
+    expect(record?.gelinktMinimumdoel?.code).toBe("09.06");
+    expect(record?.netwerk).toBe("VLAANDEREN");
+  });
+
+  it("haalt secundaire klimaatdoelen op bij lange zoekopdracht", () => {
+    const query =
+      "De leerlingen onderzoeken het broeikaseffect en het gebruik van fossiele brandstoffen in relatie tot klimaatverandering";
+    const candidates = collectMinimumGoalCandidates({
+      query,
+      educationLevel: "SECUNDAIR",
+      limit: 50,
+    });
+
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(
+      candidates.some((item) =>
+        item.gelinktMinimumdoel?.tekst?.toLocaleLowerCase("nl-BE").includes(
+          "broeikaseffect",
+        ),
+      ),
+    ).toBe(true);
+
+    const ranked = rankMinimumGoalResults(query, candidates, 3, {
+      educationLevel: "SECUNDAIR",
+    });
+    expect(ranked.length).toBeGreaterThan(0);
+    expect(
+      ranked.some((item) =>
+        item.gelinktMinimumdoel?.tekst?.toLocaleLowerCase("nl-BE").includes(
+          "broeikaseffect",
+        ),
+      ),
+    ).toBe(true);
+  });
 });
