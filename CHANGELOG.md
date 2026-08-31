@@ -7,7 +7,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ## [5.13.0] - 2026-08-31
 
 ### Added
-- **Krachtig Onderwijzen 1** regels voor Doelverbeteraar en MC-DAS-SPM herkenner (`lib/goals/ko1Rules.ts`, `lib/goals/goalSchemas.ts`)
+- **Regels voor een goed lesdoel** (Thomas More BALO) voor Doelverbeteraar en MC-DAS-SPM herkenner (`lib/goals/lessonGoalRules.ts`, `lib/goals/goalSchemas.ts`)
 - Zod-validatie: verboden werkwoorden, MC/DAS-aanhef, `subcategory` + `behaviorLevel` in taxonomie
 - `AGENTS.md` met stijlregels (geen em dash, sentence case, release-titels met ▬)
 

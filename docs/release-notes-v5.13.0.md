@@ -1,10 +1,10 @@
 # Leerkrachtentools v5.13.0
 
-Krachtig Onderwijzen 1 didactiek voor doelen, plus repo-stijlregels en README-banner update.
+Regels voor goede lesdoelen (Thomas More BALO), plus repo-stijlregels en README-banner update.
 
 ---
 
-## Krachtig Onderwijzen 1 (Doelverbeteraar)
+## Doelverbeteraar
 
 - Afkeur leerstof-, leerkracht- en werkvormdoelen
 - Strikte afkeur verboden werkwoorden (kennen, weten, begrijpen, …)

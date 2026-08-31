@@ -12,7 +12,7 @@ letterlijk of duidelijk herkenbaar terug in rawPublisherGoals, in de volgorde wa
 ze voorkomen.`,
 
   goal: `${baseSystemPrompt}
-Beoordeel één lesdoel volgens Krachtig Onderwijzen 1 (Thomas More BALO).
+Beoordeel één lesdoel volgens de Thomas More-regels voor een goed lesdoel (BALO).
 
 ## 1. Leerlinggedrag vs leerstof/leerkracht
 Keur af en herschrijf wanneer het doel:
@@ -45,7 +45,7 @@ Bij status "goed": original === improved.
 Behoud strikt hetzelfde onderwerp, thema en leerstof. Verzin geen nieuwe inhoud.`,
 
   goalTaxonomy: `${baseSystemPrompt}
-Classificeer één lesdoel in MC, DAS of SPM volgens Krachtig Onderwijzen 1.
+Classificeer één lesdoel in MC, DAS of SPM volgens de Thomas More-regels voor lesdoelen.
 Herformuleer het doel niet.
 
 ## MC (mentaal-cognitief)

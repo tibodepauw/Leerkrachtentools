@@ -8,7 +8,7 @@ import {
   usesMcOpening,
   validateDasImprovedGoal,
   validateMcImprovedGoal,
-} from "@/lib/goals/ko1Rules";
+} from "@/lib/goals/lessonGoalRules";
 
 export const goalDomainSchema = z.enum(["MC", "DAS", "spreek", "muzisch"]);
 
@@ -45,7 +45,7 @@ export const goalImprovementSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          'MC-doelen moeten starten met "De leerlingen kunnen..." volgens Krachtig Onderwijzen 1.',
+          'MC-doelen moeten starten met "De leerlingen kunnen..." volgens de Thomas More-regels voor een goed lesdoel.',
         path: ["improved"],
       });
     }
@@ -93,7 +93,7 @@ export function inferGoalDomainFromText(text: string): GoalDomain {
   return inferGoalDomain(text);
 }
 
-export function passesKo1ImprovedGoalChecks(
+export function passesImprovedGoalChecks(
   improved: string,
   goalDomain: GoalDomain,
 ) {

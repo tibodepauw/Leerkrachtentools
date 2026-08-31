@@ -2,7 +2,7 @@ import type { GoalTaxonomy } from "@/types";
 import {
   DAS_INDICATOR_PATTERN,
   SPM_INDICATOR_PATTERN,
-} from "@/lib/goals/ko1Rules";
+} from "@/lib/goals/lessonGoalRules";
 
 const TAXONOMY_DEFINITIONS: Record<
   GoalTaxonomy,

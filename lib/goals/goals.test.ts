@@ -6,11 +6,11 @@ import {
   isContentGoal,
   isLearningProcessGoal,
   isTeacherActivityGoal,
-} from "@/lib/goals/ko1Rules";
+} from "@/lib/goals/lessonGoalRules";
 import { classifyGoalTaxonomy } from "@/lib/goals/classifyTaxonomy";
 import { improveLessonGoal } from "@/lib/goals/improveGoal";
 
-describe("KO1 regels", () => {
+describe("regels voor een goed lesdoel", () => {
   it("herkent verboden werkwoorden", () => {
     expect(containsForbiddenVerb("De leerlingen kennen steden")).toBe(true);
     expect(containsForbiddenVerb("De leerlingen kunnen steden benoemen")).toBe(

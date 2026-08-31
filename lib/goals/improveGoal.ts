@@ -10,7 +10,7 @@ import {
   openGoalChecklist,
   replaceForbiddenVerbs,
   type GoalDomain,
-} from "@/lib/goals/ko1Rules";
+} from "@/lib/goals/lessonGoalRules";
 
 const CRITERIA_PATTERN =
   /\b(minstens|ten minste|maximaal|correct|zelfstandig|aan de hand van|met behulp van|in groep|individueel|steeds)\b/iu;
@@ -143,7 +143,7 @@ export function improveLessonGoal(original: string) {
       original: trimmed,
       improved: trimmed,
       rationale:
-        "Dit doel voldoet aan Krachtig Onderwijzen 1: observeerbaar leerlinggedrag, passende aanhef en geen verboden werkwoorden.",
+        "Dit doel voldoet aan de Thomas More-regels voor een goed lesdoel: observeerbaar leerlinggedrag, passende aanhef en geen verboden werkwoorden.",
       goalDomain,
       removedTerms,
       addedTerms,
@@ -232,7 +232,7 @@ export function improveLessonGoal(original: string) {
     original: trimmed,
     improved,
     rationale: buildIssueRationale(goalDomain, issues, splitRecommendation) ||
-      "Het doel werd herschreven volgens Krachtig Onderwijzen 1: observeerbaar leerlinggedrag, passende aanhef, verboden werkwoorden verwijderd.",
+      "Het doel werd herschreven volgens de Thomas More-regels voor een goed lesdoel: observeerbaar leerlinggedrag, passende aanhef, verboden werkwoorden verwijderd.",
     goalDomain,
     removedTerms: [...new Set(removedTerms)],
     addedTerms: [...new Set(addedTerms)],

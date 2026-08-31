@@ -1,4 +1,4 @@
-/** Krachtig Onderwijzen 1 (Thomas More BALO) didactic rules for lesson goals. */
+/** Thomas More BALO: didactic rules for well-formulated lesson goals. */
 
 export type GoalDomain = "MC" | "DAS" | "spreek" | "muzisch";
 
