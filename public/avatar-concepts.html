@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="nl" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Profielicon concepten ▬ Leerkrachtentools</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700;800;900&display=swap" rel="stylesheet" />
+<style>
+:root{--f:"Rubik",ui-sans-serif,system-ui,sans-serif;--bg:#000;--p:#0a0a0a;--b:#262626;--n7:#404040;--n8:#262626;--n9:#171717;--n95:#0a0a0a;--n5:#737373;--n4:#a3a3a3;--n3:#d4d4d4;--ac:#6366f1}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--n3);font-family:var(--f);-webkit-font-smoothing:antialiased}
+.page{max-width:1200px;margin:0 auto;padding:48px 24px 96px}
+h1{font-weight:900;font-size:28px;letter-spacing:-0.02em;color:#fff;margin:0 0 6px}
+.sub{color:var(--n5);font-size:14px;margin-bottom:32px;max-width:720px;line-height:1.55}
+.ctrl{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.btn{background:#fff;color:#000;border:none;border-radius:9999px;padding:8px 16px;font-family:var(--f);font-weight:700;font-size:13px;cursor:pointer}
+.btn:hover{opacity:.85}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+.card{background:var(--p);border:1px solid var(--b);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;position:relative}
+.ch{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.ct{font-weight:800;font-size:15px;color:#fff}
+.cn{font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--n5)}
+.cd{font-size:13px;line-height:1.55;color:var(--n4)}
+.pc{font-size:12px;line-height:1.55;color:var(--n5);border-top:1px solid var(--b);padding-top:12px}
+.pc b{color:var(--n3);font-weight:700}
+.st{display:flex;align-items:center;justify-content:center;gap:14px;padding:18px;border-radius:12px;background:var(--n95);border:1px solid var(--b);min-height:80px}
+.nm{font-size:14px;font-weight:600;color:#fff;line-height:1.1}
+.tr{font-size:12px;color:var(--n5)}
+.av{position:relative;flex:0 0 auto;width:36px;height:36px;border-radius:9999px;background:var(--n8);border:1px solid var(--n7);overflow:hidden}
+.av.lg{width:56px;height:56px}
+.L{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f);font-weight:900;color:#fff;line-height:1}
+.L.s{font-size:12px}.L.m{font-size:18px}.L.xs{font-size:7px}
+.av.lg .L.s{font-size:18px}.av.lg .L.m{font-size:26px}.av.lg .L.xs{font-size:10px}
+.badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:var(--ac);background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);padding:2px 7px;border-radius:9999px}
+</style>
+</head>
+<body>
+<div class="page">
+<h1>Profielicon concepten</h1>
+<p class="sub">Statische designs zonder animatie. Elk concept ziet er zichtbaar anders uit. Typ een naam om je eigen initialen te testen, of klik een preset. Concept 01 is de huidige standaard (Rubik Black).</p>
+<div class="ctrl">
+<input id="nameInput" type="text" placeholder="Typ een naam..." value="Tibo De Pauw" style="background:var(--n95);border:1px solid var(--b);border-radius:9999px;padding:8px 16px;color:#fff;font-family:var(--f);font-size:13px;min-width:180px" />
+<span style="font-size:12px;color:var(--n5)">Initialen: <b id="iniLabel" style="color:var(--n3)">TD</b></span>
+</div>
+<div class="ctrl" id="presets"></div>
+<div class="grid" id="grid"></div>
+</div>
+<script>
+const $=c=>{const d=document.createElement("div");d.className=c;return d;};
+const S=(c,t)=>{const s=document.createElement("span");s.className=c;s.textContent=t;return s;};
+const g=size=>size=="lg"?22:11;
+function initialsOf(name){
+  const parts=name.trim().split(/[\s._-]+/).filter(Boolean);
+  if(parts.length===0) return "L";
+  if(parts.length===1) return parts[0].slice(0,2).toUpperCase();
+  return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();
+}
+function lettersOf(name){return name.replace(/[^a-zA-Z]/g,"").slice(0,8).split("");}
+let CUR_NAME="Tibo De Pauw";
+let CUR_INI=null;
+function mk(size,txt,tf){const s=S("L "+(size=="lg"?"m":"s"),txt);s.style.transform=tf;return s;}
+function monoStatic(l,size){const a=$("av"+(size=="lg"?" lg":""));l.split("").forEach((c,i)=>{const s=S("L m",c);s.style.position="static";if(i>0)s.style.marginLeft=(size=="lg"?"4px":"3px");a.appendChild(s);});return a;}
+function gatherMono(l,size){const a=$("av"+(size=="lg"?" lg":""));const x=g(size);l.split("").forEach((c,i)=>{const dx=(i-(l.length-1)/2)*x;const dy=i%2?1:-1;const r=(i%2?1:-1)*12;a.appendChild(mk(size,c,`translate(${dx}px,${dy}px) rotate(${r}deg)`));});return a;}
+function nameRing(letters,mono,size){const a=$("av"+(size=="lg"?" lg":""));const r=size=="lg"?20:13;letters.forEach((c,i)=>{const ang=(i/letters.length)*360;const s=S("L xs",c);s.style.transform=`rotate(${ang}deg) translateX(${r}px) rotate(${-ang}deg)`;a.appendChild(s);});return a;}
+function spiralSnap(l,size){const a=$("av"+(size=="lg"?" lg":""));const x=g(size);l.split("").forEach((c,i)=>{const dx=(i-(l.length-1)/2)*x;const dy=i%2?3:-3;const r=(i%2?1:-1)*22;a.appendChild(mk(size,c,`translate(${dx}px,${dy}px) rotate(${r}deg)`));});return a;}
+function magneticPull(l,size){const a=$("av"+(size=="lg"?" lg":""));const x=size=="lg"?30:13;l.split("").forEach((c,i)=>{const dx=(i-(l.length-1)/2)*x;a.appendChild(mk(size,c,`translate(${dx}px,0) scale(1.08)`));});return a;}
+function orbitLock(l,size){const a=$("av"+(size=="lg"?" lg":""));const x=g(size);l.split("").forEach((c,i)=>{const dx=(i-(l.length-1)/2)*x;const r=(i%2?1:-1)*8;a.appendChild(mk(size,c,`translate(${dx}px,0) rotate(${r}deg)`));});return a;}
+function typewriterStamp(l,size){const a=$("av"+(size=="lg"?" lg":""));const x=g(size);l.split("").forEach((c,i)=>{const dx=(i-(l.length-1)/2)*x;const dy=i%2?2:-2;const r=(i%2?1:-1)*5;a.appendChild(mk(size,c,`translate(${dx}px,${dy}px) rotate(${r}deg)`));});return a;}
+function shuffleSort(l,size){const a=$("av"+(size=="lg"?" lg":""));const x=g(size);l.split("").forEach((c,i)=>{const dx=(i-(l.length-1)/2)*x;const dy=i%2?1:-1;const r=(i%2?1:-1)*6;a.appendChild(mk(size,c,`translate(${dx}px,${dy}px) rotate(${r}deg)`));});return a;}
+const concepts=[
+{num:"01",title:"Monogram (verfijnd) — STANDAARD",desc:"Initialen rechtop, gecentreerd, geen rotatie. Huidige implementatie.",pc:"+ minimaal, herkenbaar.<br>- vlak, geen speelsheid.",render:monoStatic},
+{num:"02",title:"Gather (gedraaid)",desc:"Initialen met tegengestelde rotatie (±12°) en lichte verticale offset. Gathered look met meer draaing.",pc:"+ speels, duidelijk gather-DNA.<br>- iets drukker.",render:gatherMono},
+{num:"03",title:"Name ring",desc:"Alle letters van de naam in een cirkel rond de rand. Toont de volledige naam.",pc:"+ toont volledige naam.<br>- klein, drukker.",render:nameRing},
+{num:"04",title:"Spiraal",desc:"Initialen met sterke tegengestelde rotatie (±22°) en diagonale offset.",pc:"+ uitgesproken, dynamisch.<br>- kan te scheef ogen.",render:spiralSnap},
+{num:"05",title:"Magnetisch",desc:"Initialen groter (scale 1.08) en dichter bij midden. Compact, aangetrokken gevoel.",pc:"+ compact, krachtig.<br>- subtiel verschil.",render:magneticPull},
+{num:"06",title:"Orbit (licht gedraaid)",desc:"Initialen met lichte tegengestelde rotatie (±8°).",pc:"+ rustig, gather-milder.<br>- subtieler dan 02.",render:orbitLock},
+{num:"07",title:"Trap (verticaal offset)",desc:"Initialen op verschillende hoogtes met lichte rotatie. Trap-gevoel.",pc:"+ duidelijk verschillend.<br>- minder symmetrisch.",render:typewriterStamp},
+{num:"08",title:"Shuffle (licht scheef)",desc:"Initialen met lichte rotatie (±6°) en minieme offset.",pc:"+ netjes, subtiel speels.<br>- verschil met 06 klein.",render:shuffleSort},
+];
+const grid=document.getElementById("grid");
+function buildCard(c){
+const ini=CUR_INI||initialsOf(CUR_NAME);const all=lettersOf(CUR_NAME);
+const card=$("card");const h=$("ch");h.appendChild(S("ct",c.title));h.appendChild(S("cn",c.num));card.appendChild(h);
+const st=$("st");const av=c.num==="03"?c.render(all,ini,"sm"):c.render(ini,"sm");st.appendChild(av);
+const info=document.createElement("div");info.appendChild(S("nm",CUR_NAME));info.appendChild(document.createElement("br"));info.appendChild(S("tr","Student"));st.appendChild(info);card.appendChild(st);
+const st2=$("st");const av2=c.num==="03"?c.render(all,ini,"lg"):c.render(ini,"lg");st2.appendChild(av2);st2.appendChild(S("tr","Groot (instellingen)"));card.appendChild(st2);
+const d=$("cd");d.innerHTML=c.desc;card.appendChild(d);
+const p=$("pc");p.innerHTML=c.pc;card.appendChild(p);
+if(c.num==="01"){const b=document.createElement("div");b.className="badge";b.textContent="Standaard";card.appendChild(b);}
+return card;
+}
+function render(){
+grid.innerHTML="";
+concepts.forEach(c=>grid.appendChild(buildCard(c)));
+document.getElementById("iniLabel").textContent=CUR_INI||initialsOf(CUR_NAME);
+}
+render();
+document.getElementById("nameInput").addEventListener("input",e=>{CUR_NAME=e.target.value||"L";CUR_INI=null;render();});
+const presets=[{n:"Tibo De Pauw",l:"TD"},{n:"Leerkrachtentools",l:"LT"},{n:"Tibo Lenaerts",l:"TL"},{n:"Anna Smit",l:"AS"},{n:"Max",l:"MA"},{n:"Eva Jans",l:"EJ"}];
+const pc=document.getElementById("presets");
+presets.forEach(p=>{
+const b=document.createElement("button");b.className="btn";b.style.fontSize="12px";b.style.padding="6px 12px";
+b.textContent=p.l+" · "+p.n;
+b.onclick=()=>{CUR_NAME=p.n;CUR_INI=p.l;document.getElementById("nameInput").value=p.n;render();};
+pc.appendChild(b);
+});
+</script>
+</body>
+</html>

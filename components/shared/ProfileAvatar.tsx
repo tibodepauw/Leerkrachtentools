@@ -26,6 +26,52 @@ function initials(name: string, email: string) {
     .join("");
 }
 
+function GatherInitials({
+  letters,
+  fallbackClassName,
+}: {
+  letters: string;
+  fallbackClassName?: string;
+}) {
+  const chars = letters.split("");
+  if (chars.length <= 1) {
+    return (
+      <span
+        className={cn(
+          "flex size-full items-center justify-center font-black text-white",
+          fallbackClassName,
+        )}
+      >
+        {letters}
+      </span>
+    );
+  }
+  return (
+    <>
+      {chars.map((char, i) => {
+        const step = 15;
+        const offset = (i - (chars.length - 1) / 2) * step;
+        const rotate = (i % 2 ? 1 : -1) * 12;
+        const dy = (i % 2 ? 1 : -1) * 2;
+        return (
+          <span
+            key={`${char}-${i}`}
+            className={cn(
+              "absolute inset-0 flex items-center justify-center font-black text-white",
+              fallbackClassName,
+            )}
+            style={{
+              transform: `translate(${offset}%, ${dy}%) rotate(${rotate}deg)`,
+            }}
+          >
+            {char}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 export function ProfileAvatar({
   email,
   displayName,
@@ -124,14 +170,10 @@ export function ProfileAvatar({
           draggable={false}
         />
       ) : (
-        <span
-          className={cn(
-            "flex size-full items-center justify-center font-black text-white",
-            fallbackClassName,
-          )}
-        >
-          {initials(displayName ?? "", email)}
-        </span>
+        <GatherInitials
+          letters={initials(displayName ?? "", email)}
+          fallbackClassName={fallbackClassName}
+        />
       )}
     </div>
   );
