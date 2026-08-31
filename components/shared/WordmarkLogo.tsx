@@ -12,7 +12,8 @@ interface WordmarkLogoProps {
   href?: string;
 }
 
-const CHAOS_ANIMATION_MS = 1150;
+/** Compact gather: 0.8s duration + last letter stagger (16 × 32ms). */
+const GATHER_ANIMATION_MS = 1350;
 
 export function WordmarkLogo({
   size = "md",
@@ -23,9 +24,8 @@ export function WordmarkLogo({
   const pathname = usePathname();
   const [playing, setPlaying] = useState(false);
   const [playKey, setPlayKey] = useState(0);
-  const [chaosSeed, setChaosSeed] = useState(0);
 
-  const finishChaos = useCallback(() => {
+  const finishGather = useCallback(() => {
     setPlaying(false);
     if (href && pathname !== href) {
       router.push(href);
@@ -34,13 +34,12 @@ export function WordmarkLogo({
 
   useEffect(() => {
     if (!playing) return;
-    const timer = window.setTimeout(finishChaos, CHAOS_ANIMATION_MS);
+    const timer = window.setTimeout(finishGather, GATHER_ANIMATION_MS);
     return () => window.clearTimeout(timer);
-  }, [playing, playKey, finishChaos]);
+  }, [playing, playKey, finishGather]);
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
-    setChaosSeed(Date.now());
     setPlayKey((value) => value + 1);
     setPlaying(true);
   }
@@ -48,8 +47,8 @@ export function WordmarkLogo({
   const logo = (
     <WordmarkLoader
       key={playKey}
-      variant={playing ? "chaos" : "static"}
-      chaosSeed={chaosSeed}
+      variant={playing ? "gather" : "static"}
+      compactAnimation
       className={cn("wordmark-logo", `wordmark-logo--${size}`)}
     />
   );

@@ -212,6 +212,11 @@
   height: 1.35em;
   font-weight: 900;
   color: #ffffff;
+  overflow: hidden;
+}
+
+.wordmark-loader--compact .wordmark-loader__letter--gather {
+  animation-duration: 0.8s;
 }
 
 .wordmark-logo--sm.wordmark-loader {
@@ -259,8 +264,7 @@
   .wordmark-loader__letter--magnetic,
   .wordmark-loader__letter--orbit,
   .wordmark-loader__letter--shuffle,
-  .wordmark-loader__letter--breathe,
-  .wordmark-loader__letter--chaos {
+  .wordmark-loader__letter--breathe {
     animation: wordmark-gather-reduced 0.4s ease-out var(--delay, 0ms) forwards;
   }
 }
@@ -394,40 +398,5 @@
   50% {
     transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
       scale(1.025);
-  }
-}
-
-/* Sidebar easter egg — letters burst outward then snap back */
-.wordmark-loader__letter--chaos {
-  animation: wordmark-chaos 1.05s cubic-bezier(0.34, 1.45, 0.64, 1) var(--delay, 0ms) forwards;
-}
-
-@keyframes wordmark-chaos {
-  0% {
-    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
-      scale(1);
-  }
-
-  22% {
-    transform: translate(calc(-50% + var(--fx) + var(--cx)), calc(-50% + var(--fy) + var(--cy)))
-      rotate(calc(var(--fr) + var(--cr))) scale(1.18);
-  }
-
-  48% {
-    transform: translate(
-        calc(-50% + var(--fx) - var(--cx) * 0.22),
-        calc(-50% + var(--fy) - var(--cy) * 0.22)
-      )
-      rotate(calc(var(--fr) - var(--cr) * 0.35)) scale(0.9);
-  }
-
-  72% {
-    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy)))
-      rotate(calc(var(--fr) + 3deg)) scale(1.05);
-  }
-
-  100% {
-    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy))) rotate(var(--fr))
-      scale(1);
   }
 }

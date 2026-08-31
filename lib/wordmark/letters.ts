@@ -34,8 +34,7 @@ export type WordmarkLoaderVariant =
   | "orbit"
   | "shuffle"
   | "breathe"
-  | "static"
-  | "chaos";
+  | "static";
 
 export const WORDMARK_LOADER_VARIANTS: {
   id: WordmarkLoaderVariant;
@@ -80,18 +79,6 @@ export const WORDMARK_LOADER_VARIANTS: {
   },
 ];
 
-/** Wild burst offset for sidebar easter-egg click (deterministic per seed). */
-export function chaosBurstOffset(index: number, seed: number) {
-  const mixed = (index + 1) * 7919 + seed * 9973;
-  const angle = ((mixed % 360) * Math.PI) / 180;
-  const radiusEm = 1.8 + (mixed % 7) * 0.55;
-  return {
-    xEm: Math.cos(angle) * radiusEm,
-    yEm: Math.sin(angle) * radiusEm,
-    rotateDeg: ((mixed % 11) - 5) * 18,
-  };
-}
-
 /** Deterministic scatter orbit for letter index (golden-angle spiral). */
 export function scatterOffset(index: number) {
   const angle = index * 2.399963;
@@ -100,6 +87,17 @@ export function scatterOffset(index: number) {
     xEm: Math.cos(angle) * radiusEm,
     yEm: Math.sin(angle) * radiusEm,
     rotateDeg: (index % 2 === 0 ? -1 : 1) * (18 + (index % 6) * 4),
+  };
+}
+
+/** Tighter gather scatter for compact sidebar wordmark (stays in frame). */
+export function compactScatterOffset(index: number) {
+  const angle = index * 2.399963;
+  const radiusEm = 2.1 + (index % 5) * 0.32;
+  return {
+    xEm: Math.cos(angle) * radiusEm,
+    yEm: Math.sin(angle) * radiusEm,
+    rotateDeg: (index % 2 === 0 ? -1 : 1) * (10 + (index % 6) * 3),
   };
 }
 

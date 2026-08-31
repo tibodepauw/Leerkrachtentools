@@ -2,7 +2,7 @@
 
 import type { CSSProperties } from "react";
 import {
-  chaosBurstOffset,
+  compactScatterOffset,
   orbitOffset,
   orbitRingOffset,
   scatterOffset,
@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 
 interface WordmarkLoaderProps {
   variant?: WordmarkLoaderVariant;
-  /** Reseeds chaos burst directions (sidebar easter egg). */
-  chaosSeed?: number;
+  /** Smaller gather motion for sidebar logo clicks. */
+  compactAnimation?: boolean;
   className?: string;
 }
 
@@ -27,27 +27,32 @@ const VARIANT_CLASS: Record<WordmarkLoaderVariant, string | false> = {
   shuffle: "wordmark-loader__letter--shuffle",
   breathe: "wordmark-loader__letter--breathe",
   static: false,
-  chaos: "wordmark-loader__letter--chaos",
 };
 
 export function WordmarkLoader({
   variant = "gather",
-  chaosSeed = 0,
+  compactAnimation = false,
   className,
 }: WordmarkLoaderProps) {
   return (
     <div
-      className={cn("wordmark-loader", className)}
+      className={cn(
+        "wordmark-loader",
+        compactAnimation && "wordmark-loader--compact",
+        className,
+      )}
       role="img"
       aria-label="Leerkrachtentools"
     >
       {WORDMARK_LETTERS.map((letter, index) => {
-        const scatter = scatterOffset(index);
+        const scatter = compactAnimation
+          ? compactScatterOffset(index)
+          : scatterOffset(index);
         const orbit = orbitOffset(index, letter, scatter);
         const ring = orbitRingOffset(index);
         const shuffle0 = shuffleSlotPosition(index, 0);
         const shuffle1 = shuffleSlotPosition(index, 1);
-        const chaos = chaosBurstOffset(index, chaosSeed);
+        const delayMs = compactAnimation ? index * 32 : index * 55;
 
         return (
           <span
@@ -73,10 +78,7 @@ export function WordmarkLoader({
                 "--wx1": `${shuffle1.xEm}em`,
                 "--wy1": `${shuffle1.yEm}em`,
                 "--wr1": `${shuffle1.rotateDeg}deg`,
-                "--cx": `${chaos.xEm}em`,
-                "--cy": `${chaos.yEm}em`,
-                "--cr": `${chaos.rotateDeg}deg`,
-                "--delay": `${index * 55}ms`,
+                "--delay": `${delayMs}ms`,
                 "--orbit-delay": `${600 + index * 90}ms`,
               } as CSSProperties
             }
