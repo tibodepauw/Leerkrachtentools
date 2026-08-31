@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildCorpusFaithfulnessIndex,
@@ -8,11 +10,16 @@ import {
 } from "@/lib/rag/ragBenchmark";
 import type { CurriculumSearchResult } from "@/types";
 
+const hasFullCorpus = existsSync(
+  path.join(process.cwd(), "data", "secundair", "leerplannen_secundair.jsonl"),
+);
+const codeThreshold = hasFullCorpus ? 100 : 50;
+
 describe("ragBenchmark", () => {
   it("indexeert corpus-codes voor faithfulness checks", () => {
     const index = buildCorpusFaithfulnessIndex();
-    expect(index.codes.size).toBeGreaterThan(100);
-    expect(index.titels.size).toBeGreaterThan(100);
+    expect(index.codes.size).toBeGreaterThan(codeThreshold);
+    expect(index.titels.size).toBeGreaterThan(codeThreshold);
   });
 
   it("weigert fragment-resultaten in faithfulness check", () => {

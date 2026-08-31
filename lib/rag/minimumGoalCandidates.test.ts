@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   collectMinimumGoalCandidates,
@@ -5,6 +7,10 @@ import {
   normalizeMinimumGoalCandidate,
 } from "@/lib/rag/minimumGoalCandidates";
 import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
+
+const hasSecundairData = existsSync(
+  path.join(process.cwd(), "data", "secundair", "minimumdoelen_secundair.jsonl"),
+);
 
 describe("minimumGoalCandidates", () => {
   it("slaat interne OVSG-codes over", () => {
@@ -132,7 +138,7 @@ describe("minimumGoalCandidates", () => {
     expect(record?.netwerk).toBe("VLAANDEREN");
   });
 
-  it("haalt secundaire klimaatdoelen op bij lange zoekopdracht", () => {
+  it.skipIf(!hasSecundairData)("haalt secundaire klimaatdoelen op bij lange zoekopdracht", () => {
     const query =
       "het broeikaseffect en de impact van fossiele brandstoffen op het klimaat";
     const candidates = collectMinimumGoalCandidates({
