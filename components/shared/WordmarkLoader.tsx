@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from "react";
 import {
+  chaosBurstOffset,
   orbitOffset,
   orbitRingOffset,
   scatterOffset,
@@ -13,6 +14,8 @@ import { cn } from "@/lib/utils";
 
 interface WordmarkLoaderProps {
   variant?: WordmarkLoaderVariant;
+  /** Reseeds chaos burst directions (sidebar easter egg). */
+  chaosSeed?: number;
   className?: string;
 }
 
@@ -24,9 +27,14 @@ const VARIANT_CLASS: Record<WordmarkLoaderVariant, string | false> = {
   shuffle: "wordmark-loader__letter--shuffle",
   breathe: "wordmark-loader__letter--breathe",
   static: false,
+  chaos: "wordmark-loader__letter--chaos",
 };
 
-export function WordmarkLoader({ variant = "gather", className }: WordmarkLoaderProps) {
+export function WordmarkLoader({
+  variant = "gather",
+  chaosSeed = 0,
+  className,
+}: WordmarkLoaderProps) {
   return (
     <div
       className={cn("wordmark-loader", className)}
@@ -39,6 +47,7 @@ export function WordmarkLoader({ variant = "gather", className }: WordmarkLoader
         const ring = orbitRingOffset(index);
         const shuffle0 = shuffleSlotPosition(index, 0);
         const shuffle1 = shuffleSlotPosition(index, 1);
+        const chaos = chaosBurstOffset(index, chaosSeed);
 
         return (
           <span
@@ -64,6 +73,9 @@ export function WordmarkLoader({ variant = "gather", className }: WordmarkLoader
                 "--wx1": `${shuffle1.xEm}em`,
                 "--wy1": `${shuffle1.yEm}em`,
                 "--wr1": `${shuffle1.rotateDeg}deg`,
+                "--cx": `${chaos.xEm}em`,
+                "--cy": `${chaos.yEm}em`,
+                "--cr": `${chaos.rotateDeg}deg`,
                 "--delay": `${index * 55}ms`,
                 "--orbit-delay": `${600 + index * 90}ms`,
               } as CSSProperties

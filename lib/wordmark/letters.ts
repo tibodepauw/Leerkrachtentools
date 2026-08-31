@@ -34,7 +34,8 @@ export type WordmarkLoaderVariant =
   | "orbit"
   | "shuffle"
   | "breathe"
-  | "static";
+  | "static"
+  | "chaos";
 
 export const WORDMARK_LOADER_VARIANTS: {
   id: WordmarkLoaderVariant;
@@ -78,6 +79,18 @@ export const WORDMARK_LOADER_VARIANTS: {
     description: "Referentie: eindlayout zonder beweging.",
   },
 ];
+
+/** Wild burst offset for sidebar easter-egg click (deterministic per seed). */
+export function chaosBurstOffset(index: number, seed: number) {
+  const mixed = (index + 1) * 7919 + seed * 9973;
+  const angle = ((mixed % 360) * Math.PI) / 180;
+  const radiusEm = 1.8 + (mixed % 7) * 0.55;
+  return {
+    xEm: Math.cos(angle) * radiusEm,
+    yEm: Math.sin(angle) * radiusEm,
+    rotateDeg: ((mixed % 11) - 5) * 18,
+  };
+}
 
 /** Deterministic scatter orbit for letter index (golden-angle spiral). */
 export function scatterOffset(index: number) {

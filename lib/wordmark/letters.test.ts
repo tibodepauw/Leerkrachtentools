@@ -1,24 +1,13 @@
 import { describe, expect, it } from "vitest";
-import {
-  orbitOffset,
-  scatterOffset,
-  WORDMARK_LETTERS,
-} from "@/lib/wordmark/letters";
+import { chaosBurstOffset } from "@/lib/wordmark/letters";
 
-describe("wordmark letters", () => {
-  it("spelt Leerkrachtentools in 17 glyphs", () => {
-    expect(WORDMARK_LETTERS.map((letter) => letter.char).join("")).toBe(
-      "Leerkrachtentools",
-    );
+describe("chaosBurstOffset", () => {
+  it("returns deterministic offsets for the same seed", () => {
+    expect(chaosBurstOffset(0, 42)).toEqual(chaosBurstOffset(0, 42));
+    expect(chaosBurstOffset(3, 42)).not.toEqual(chaosBurstOffset(0, 42));
   });
 
-  it("geeft deterministische scatter en orbit offsets", () => {
-    const final = WORDMARK_LETTERS[0];
-    const scatter = scatterOffset(0);
-    const orbit = orbitOffset(0, final, scatter);
-
-    expect(scatter.xEm).not.toBe(final.xEm);
-    expect(orbit.xEm).not.toBe(scatter.xEm);
-    expect(scatterOffset(0)).toEqual(scatterOffset(0));
+  it("changes direction when the seed changes", () => {
+    expect(chaosBurstOffset(2, 1)).not.toEqual(chaosBurstOffset(2, 2));
   });
 });
