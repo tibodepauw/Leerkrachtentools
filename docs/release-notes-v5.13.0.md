@@ -1,6 +1,6 @@
 # Leerkrachtentools v5.13.0
 
-Regels voor goede lesdoelen (Thomas More BALO), plus repo-stijlregels en README-banner update.
+Regels voor goede lesdoelen, plus repo-stijlregels en README-banner update.
 
 ---
 

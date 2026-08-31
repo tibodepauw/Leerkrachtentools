@@ -69,7 +69,7 @@ Zo blijft de UI voorspelbaar en kan je resultaten kopiëren of terug naar Actiev
 | Module | API | Wat de AI doet |
 |--------|-----|----------------|
 | **Handleiding Scanner** | `/api/extract-manual` | Leest PDF/afbeelding/tekst en extraheert leergebied, onderdeel, onderwerp, doelgroep, materialen en ruwe uitgeverijdoelen. |
-| **Doelverbeteraar** | `/api/analyze-goals` | Beoordeelt of een D-doel al voldoende is; zo niet, herschrijft volgens Thomas More-criteria (concreet, meetbaar, “De leerlingen kunnen…”). |
+| **Doelverbeteraar** | `/api/analyze-goals` | Beoordeelt of een D-doel al voldoende is; zo niet, herschrijft volgens de regels voor een goed lesdoel (concreet, meetbaar, “De leerlingen kunnen…”). |
 | **MC-DAS-SPM herkenner** | `/api/classify-goal-taxonomy` | Classificeert een doel als MC, DAS of SPM met uitleg - zonder het doel te herschrijven. |
 
 ### Lesvoorbereiding

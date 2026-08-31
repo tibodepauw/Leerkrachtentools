@@ -7,12 +7,12 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ## [5.13.0] - 2026-08-31
 
 ### Added
-- **Regels voor een goed lesdoel** (Thomas More BALO) voor Doelverbeteraar en MC-DAS-SPM herkenner (`lib/goals/lessonGoalRules.ts`, `lib/goals/goalSchemas.ts`)
+- **Regels voor een goed lesdoel** voor Doelverbeteraar en MC-DAS-SPM herkenner (`lib/goals/lessonGoalRules.ts`, `lib/goals/goalSchemas.ts`)
 - Zod-validatie: verboden werkwoorden, MC/DAS-aanhef, `subcategory` + `behaviorLevel` in taxonomie
 - `AGENTS.md` met stijlregels (geen em dash, sentence case, release-titels met ▬)
 
 ### Changed
-- System prompts voor `/api/analyze-goals` en `/api/classify-goal-taxonomy` uitgebreid per Thomas More BALO
+- System prompts voor `/api/analyze-goals` en `/api/classify-goal-taxonomy` uitgebreid met didactische lesdoelregels
 - README banner: afgeronde hoeken vergroot naar 24px (GIF/PNG opnieuw geëxporteerd)
 - Testcount: 207 tests
 

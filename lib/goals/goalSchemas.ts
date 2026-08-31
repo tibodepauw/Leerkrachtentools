@@ -45,7 +45,7 @@ export const goalImprovementSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          'MC-doelen moeten starten met "De leerlingen kunnen..." volgens de Thomas More-regels voor een goed lesdoel.',
+          'MC-doelen moeten starten met "De leerlingen kunnen..." volgens de regels voor een goed lesdoel.',
         path: ["improved"],
       });
     }

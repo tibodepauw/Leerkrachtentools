@@ -143,7 +143,7 @@ export function improveLessonGoal(original: string) {
       original: trimmed,
       improved: trimmed,
       rationale:
-        "Dit doel voldoet aan de Thomas More-regels voor een goed lesdoel: observeerbaar leerlinggedrag, passende aanhef en geen verboden werkwoorden.",
+        "Dit doel voldoet aan de regels voor een goed lesdoel: observeerbaar leerlinggedrag, passende aanhef en geen verboden werkwoorden.",
       goalDomain,
       removedTerms,
       addedTerms,
@@ -232,7 +232,7 @@ export function improveLessonGoal(original: string) {
     original: trimmed,
     improved,
     rationale: buildIssueRationale(goalDomain, issues, splitRecommendation) ||
-      "Het doel werd herschreven volgens de Thomas More-regels voor een goed lesdoel: observeerbaar leerlinggedrag, passende aanhef, verboden werkwoorden verwijderd.",
+      "Het doel werd herschreven volgens de regels voor een goed lesdoel: observeerbaar leerlinggedrag, passende aanhef, verboden werkwoorden verwijderd.",
     goalDomain,
     removedTerms: [...new Set(removedTerms)],
     addedTerms: [...new Set(addedTerms)],

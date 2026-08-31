@@ -40,9 +40,9 @@ npm run build
 
 `npm run lint` uses ESLint with the Next.js config. Fix new warnings in files you touch.
 
-## Didactic context (Thomas More)
+## Didactic context
 
-Several modules encode Thomas More teacher-training conventions. When changing goal-related logic, keep these in mind:
+Several modules encode teacher-training conventions for lesson preparation. When changing goal-related logic, keep these in mind:
 
 ### Lesson goal formulation (Doelverbeteraar)
 

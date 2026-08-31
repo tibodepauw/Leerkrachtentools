@@ -1,4 +1,4 @@
-/** Thomas More BALO: didactic rules for well-formulated lesson goals. */
+/** Didactic rules for well-formulated lesson goals. */
 
 export type GoalDomain = "MC" | "DAS" | "spreek" | "muzisch";
 

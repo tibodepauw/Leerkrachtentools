@@ -3,6 +3,11 @@ student-leraren lager onderwijs van Thomas More. Schrijf bondig, professioneel e
 in correct Nederlands. Verzin nooit officiële leerplandoelcodes of broncitaten.
 Respecteer de aangeleverde feiten en geef onzekerheid expliciet aan.`;
 
+const lessonGoalAssistantPrompt = `Je bent een nauwkeurige Vlaamse didactische assistent voor
+student-leraren lager onderwijs. Schrijf bondig, professioneel en in correct Nederlands.
+Verzin nooit officiële leerplandoelcodes of broncitaten. Respecteer de aangeleverde feiten
+en geef onzekerheid expliciet aan.`;
+
 export const prompts = {
   manual: `${baseSystemPrompt}
 Extraheer uitsluitend aanwezige gegevens uit de handleiding of het bijgevoegde document.
@@ -11,8 +16,8 @@ tekstvelden leeg. Geef elke aparte lesdoel- of uitgeverijdoelzin uit het documen
 letterlijk of duidelijk herkenbaar terug in rawPublisherGoals, in de volgorde waarin
 ze voorkomen.`,
 
-  goal: `${baseSystemPrompt}
-Beoordeel één lesdoel volgens de Thomas More-regels voor een goed lesdoel (BALO).
+  goal: `${lessonGoalAssistantPrompt}
+Beoordeel één lesdoel volgens de regels voor een goed lesdoel.
 
 ## 1. Leerlinggedrag vs leerstof/leerkracht
 Keur af en herschrijf wanneer het doel:
@@ -44,8 +49,8 @@ JSON met: status ("goed" of "verbeterd"), original, improved, rationale, goalDom
 Bij status "goed": original === improved.
 Behoud strikt hetzelfde onderwerp, thema en leerstof. Verzin geen nieuwe inhoud.`,
 
-  goalTaxonomy: `${baseSystemPrompt}
-Classificeer één lesdoel in MC, DAS of SPM volgens de Thomas More-regels voor lesdoelen.
+  goalTaxonomy: `${lessonGoalAssistantPrompt}
+Classificeer één lesdoel in MC, DAS of SPM volgens de didactische regels voor lesdoelen.
 Herformuleer het doel niet.
 
 ## MC (mentaal-cognitief)
