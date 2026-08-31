@@ -126,7 +126,7 @@ export function ProfileAvatar({
       ) : (
         <span
           className={cn(
-            "flex size-full items-center justify-center text-lg font-semibold text-white",
+            "flex size-full items-center justify-center font-black text-white",
             fallbackClassName,
           )}
         >

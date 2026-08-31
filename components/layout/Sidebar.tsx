@@ -461,7 +461,7 @@ function SidebarContent({
                     displayName={account.displayName}
                     profileImageUrl={account.profileImageUrl}
                     sizeClassName="size-8"
-                    fallbackClassName="text-[10px] font-semibold text-white"
+                    fallbackClassName="text-[10px] font-black text-white"
                   />
                 </Link>
               </TooltipTrigger>
@@ -483,7 +483,7 @@ function SidebarContent({
                 displayName={account.displayName}
                 profileImageUrl={account.profileImageUrl}
                 sizeClassName="size-9"
-                fallbackClassName="text-xs font-semibold text-white"
+                fallbackClassName="text-xs font-black text-white"
               />
               <div className="min-w-0 flex-1 leading-none">
                 <p className="truncate text-sm font-medium text-white">
