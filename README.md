@@ -1,6 +1,6 @@
 <p align="center">
   <img
-    src="docs/assets/banner-wordmark-gather.gif?v=3"
+    src="docs/assets/banner-wordmark-gather.gif?v=4"
     alt="Leerkrachtentools"
     width="100%"
   />

@@ -16,8 +16,9 @@ const CAPTURE_INTERVAL_MS = 40;
 const HOLD_SECONDS = 10;
 const OUTPUT_FPS = 20;
 const DEVICE_SCALE = 2;
-/** Display radius 16px → 32px at 2× capture before GIF downscale */
-const CORNER_RADIUS = 16 * DEVICE_SCALE;
+/** Display radius baked into PNG/GIF assets (px at 1200×360) */
+const DISPLAY_CORNER_RADIUS = 24;
+const CORNER_RADIUS = DISPLAY_CORNER_RADIUS * DEVICE_SCALE;
 
 rmSync(framesDir, { recursive: true, force: true });
 mkdirSync(framesDir, { recursive: true });
@@ -67,7 +68,7 @@ await applyRoundedCorners(pngOutput);
 const pngTemp = `${pngOutput}.tmp`;
 await sharp(pngOutput).resize(1200, 360).png().toFile(pngTemp);
 renameSync(pngTemp, pngOutput);
-console.log(`Wrote ${pngOutput} (${CORNER_RADIUS / DEVICE_SCALE}px rounded corners)`);
+console.log(`Wrote ${pngOutput} (${DISPLAY_CORNER_RADIUS}px rounded corners)`);
 
 // --- Animated GIF ---
 await page.goto(`${baseHost}/dev/wordmark-export?mode=gather&fresh=${Date.now()}`, {
