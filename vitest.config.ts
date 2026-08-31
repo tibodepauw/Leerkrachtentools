@@ -12,9 +12,10 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    pool: "threads",
     exclude: ["**/node_modules/**", "**/.next/**"],
     env: {
-      DATABASE_PATH: ":memory:",
+      DATABASE_PATH: "./test-leerkrachtentools.db",
       AUTH_SECRET: "test-auth-secret-with-at-least-32-characters",
     },
   },
