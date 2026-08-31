@@ -1,9 +1,8 @@
 <p align="center">
   <img
-    src="docs/assets/banner-wordmark-gather.gif?v=2"
+    src="docs/assets/banner-wordmark-gather.gif?v=3"
     alt="Leerkrachtentools"
     width="100%"
-    style="border-radius: 16px;"
   />
 </p>
 
