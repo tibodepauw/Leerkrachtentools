@@ -129,9 +129,6 @@ export function GoalOptimizerView() {
                         Split-advies: {result.data.splitRecommendation}
                       </p>
                     ) : null}
-                    <p className="text-neutral-500">
-                      Domein: {result.data.goalDomain}
-                    </p>
                   </CardContent>
                 </Card>
                 <Button
