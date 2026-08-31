@@ -3,6 +3,7 @@
     src="docs/assets/banner-wordmark-gather.gif?v=2"
     alt="Leerkrachtentools"
     width="100%"
+    style="border-radius: 16px;"
   />
 </p>
 
