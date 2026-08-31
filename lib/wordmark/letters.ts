@@ -90,14 +90,28 @@ export function scatterOffset(index: number) {
   };
 }
 
-/** Tighter gather scatter for compact sidebar wordmark (stays in frame). */
-export function compactScatterOffset(index: number) {
-  const angle = index * 2.399963;
-  const radiusEm = 2.1 + (index % 5) * 0.32;
+/** Tighter gather scatter anchored near each letter's final slot (sidebar logo). */
+export function compactGatherScatter(index: number, final: WordmarkLetter) {
+  const angle = index * 2.399963 + Math.PI * 0.2;
+  const radiusEm = 0.42 + (index % 4) * 0.14;
   return {
-    xEm: Math.cos(angle) * radiusEm,
-    yEm: Math.sin(angle) * radiusEm,
-    rotateDeg: (index % 2 === 0 ? -1 : 1) * (10 + (index % 6) * 3),
+    xEm: final.xEm + Math.cos(angle) * radiusEm,
+    yEm: final.yEm + Math.sin(angle) * radiusEm,
+    rotateDeg: final.rotateDeg + (index % 2 === 0 ? -1 : 1) * (10 + (index % 4) * 3),
+  };
+}
+
+/** Compact gather arc midpoint (smaller swing than full-screen gather). */
+export function compactGatherOrbit(
+  index: number,
+  final: WordmarkLetter,
+  scatter: { xEm: number; yEm: number; rotateDeg: number },
+) {
+  const swirl = index % 2 === 0 ? 1 : -1;
+  return {
+    xEm: scatter.xEm * 0.55 + final.xEm * 0.5 + swirl * 0.28,
+    yEm: scatter.yEm * 0.55 + final.yEm * 0.5 - swirl * 0.2,
+    rotateDeg: final.rotateDeg * 0.5 + scatter.rotateDeg * 0.4,
   };
 }
 

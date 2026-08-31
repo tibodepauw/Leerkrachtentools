@@ -283,7 +283,7 @@ function SidebarContent({
       <div className="flex h-full min-h-0 flex-col bg-neutral-950">
         <div
           className={cn(
-            "flex h-16 shrink-0 items-center border-b border-neutral-800",
+            "flex h-16 shrink-0 items-center overflow-visible border-b border-neutral-800",
             collapsed ? "justify-center px-2" : "px-5",
           )}
         >
@@ -302,8 +302,8 @@ function SidebarContent({
               <TooltipContent side="right">Zijbalk uitvouwen</TooltipContent>
             </Tooltip>
           ) : (
-            <div className="flex w-full min-w-0 items-center justify-between gap-2">
-              <WordmarkLogo size="sm" className="min-w-0 flex-1" />
+            <div className="flex w-full min-w-0 items-center justify-between gap-2 overflow-visible">
+              <WordmarkLogo size="sm" className="min-w-0 flex-1 overflow-visible" />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button

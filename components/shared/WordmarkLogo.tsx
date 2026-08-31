@@ -49,7 +49,11 @@ export function WordmarkLogo({
       key={playKey}
       variant={playing ? "gather" : "static"}
       compactAnimation
-      className={cn("wordmark-logo", `wordmark-logo--${size}`)}
+      className={cn(
+        "wordmark-logo",
+        `wordmark-logo--${size}`,
+        playing && "wordmark-logo--animating",
+      )}
     />
   );
 
@@ -62,7 +66,7 @@ export function WordmarkLogo({
       href={href}
       onClick={handleClick}
       className={cn(
-        "block min-w-0 cursor-pointer outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-neutral-600",
+        "block min-w-0 cursor-pointer overflow-visible outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-neutral-600",
         className,
       )}
       aria-label="Leerkrachtentools home"

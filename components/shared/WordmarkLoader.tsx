@@ -2,7 +2,8 @@
 
 import type { CSSProperties } from "react";
 import {
-  compactScatterOffset,
+  compactGatherOrbit,
+  compactGatherScatter,
   orbitOffset,
   orbitRingOffset,
   scatterOffset,
@@ -39,6 +40,7 @@ export function WordmarkLoader({
       className={cn(
         "wordmark-loader",
         compactAnimation && "wordmark-loader--compact",
+        compactAnimation && variant === "gather" && "wordmark-loader--compact-gather",
         className,
       )}
       role="img"
@@ -46,9 +48,11 @@ export function WordmarkLoader({
     >
       {WORDMARK_LETTERS.map((letter, index) => {
         const scatter = compactAnimation
-          ? compactScatterOffset(index)
+          ? compactGatherScatter(index, letter)
           : scatterOffset(index);
-        const orbit = orbitOffset(index, letter, scatter);
+        const orbit = compactAnimation
+          ? compactGatherOrbit(index, letter, scatter)
+          : orbitOffset(index, letter, scatter);
         const ring = orbitRingOffset(index);
         const shuffle0 = shuffleSlotPosition(index, 0);
         const shuffle1 = shuffleSlotPosition(index, 1);

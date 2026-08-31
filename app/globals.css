@@ -212,11 +212,48 @@
   height: 1.35em;
   font-weight: 900;
   color: #ffffff;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.wordmark-logo--animating.wordmark-loader {
+  height: 2em;
+  margin-block: -0.32em;
 }
 
 .wordmark-loader--compact .wordmark-loader__letter--gather {
   animation-duration: 0.8s;
+}
+
+.wordmark-loader--compact-gather .wordmark-loader__letter--gather {
+  animation-name: wordmark-gather-compact;
+}
+
+@keyframes wordmark-gather-compact {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy)))
+      rotate(var(--sr)) scale(0.72);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  58% {
+    transform: translate(calc(-50% + var(--mx)), calc(-50% + var(--my)))
+      rotate(var(--mr)) scale(1.04);
+  }
+
+  78% {
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy)))
+      rotate(calc(var(--fr) + 1.5deg)) scale(0.98);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fx)), calc(-50% + var(--fy)))
+      rotate(var(--fr)) scale(1);
+  }
 }
 
 .wordmark-logo--sm.wordmark-loader {
