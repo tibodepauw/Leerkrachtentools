@@ -31,11 +31,18 @@ function isStorageWarmForUser(userId: string): boolean {
 }
 
 export function UserStorageScope({ userId, children }: UserStorageScopeProps) {
+  if (typeof window !== "undefined") {
+    setActiveUserId(userId);
+  }
+
   const [readyUserId, setReadyUserId] = useState<string | null>(() =>
     isStorageWarmForUser(userId) ? userId : null,
   );
 
   useLayoutEffect(() => {
+    setActiveUserId(userId);
+    void useSettingsStore.persist.rehydrate();
+
     if (isStorageWarmForUser(userId)) {
       setReadyUserId(userId);
       return;

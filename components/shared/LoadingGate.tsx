@@ -4,10 +4,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { MinimalLoadingScreen } from "@/components/shared/MinimalLoadingScreen";
 import { initSplashSession } from "@/lib/loading/splashSession";
-import {
-  resolveLoadingIntent,
-  useLoadingPresentation,
-} from "@/hooks/useLoadingPresentation";
+import { useLoadingPresentation } from "@/hooks/useLoadingPresentation";
+import { useSplashHold } from "@/hooks/useSplashHold";
 
 interface LoadingGateProps {
   loading: boolean;
@@ -43,27 +41,30 @@ export function LoadingGate({
     setMounted(true);
   }, []);
 
-  // Keep first client render identical to SSR (always "quick" for auto).
-  const resolvedIntent =
-    intent === "auto" ? (mounted ? resolveLoadingIntent() : "quick") : intent;
+  const wantsAutoSplash = intent === "auto" || intent === "splash";
+  const { splashActive, splashFinished } = useSplashHold(
+    mounted && wantsAutoSplash,
+  );
 
-  const phase = useLoadingPresentation(loading, resolvedIntent);
-
-  if (phase === "content") {
-    return children;
-  }
+  const quickPhase = useLoadingPresentation(
+    mounted && splashFinished && !splashActive ? loading : false,
+  );
 
   if (!mounted) {
     return <LoadingPlaceholder />;
   }
 
-  if (phase === "hidden") {
+  if (splashActive) {
+    return <AppLoadingScreen label={label} />;
+  }
+
+  if (quickPhase === "hidden") {
     return <LoadingPlaceholder />;
   }
 
-  if (phase === "minimal") {
+  if (quickPhase === "minimal") {
     return <MinimalLoadingScreen label={label} />;
   }
 
-  return <AppLoadingScreen label={label} />;
+  return children;
 }

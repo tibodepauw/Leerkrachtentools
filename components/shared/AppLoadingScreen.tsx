@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import type { WordmarkLoaderVariant } from "@/lib/wordmark/letters";
 import { WordmarkLoader } from "@/components/shared/WordmarkLoader";
+import { readLoaderVariantFromStorage } from "@/lib/loading/readLoaderVariant";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 
 function subscribeToSettingsHydration(onStoreChange: () => void) {
@@ -23,6 +24,14 @@ function getSettingsHydratedSnapshot() {
   );
 }
 
+function resolveLoaderVariant(
+  hydrated: boolean,
+  storeVariant: WordmarkLoaderVariant,
+): WordmarkLoaderVariant {
+  if (hydrated) return storeVariant;
+  return readLoaderVariantFromStorage();
+}
+
 export function AppLoadingScreen({ label = "Interface laden…" }: { label?: string }) {
   const loaderVariant = useSettingsStore((state) => state.loaderVariant);
   const settingsHydrated = useSyncExternalStore(
@@ -30,7 +39,7 @@ export function AppLoadingScreen({ label = "Interface laden…" }: { label?: str
     getSettingsHydratedSnapshot,
     () => false,
   );
-  const variant: WordmarkLoaderVariant = settingsHydrated ? loaderVariant : "gather";
+  const variant = resolveLoaderVariant(settingsHydrated, loaderVariant);
 
   return (
     <div className="grid min-h-screen place-items-center bg-black px-4">
