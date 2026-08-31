@@ -1,21 +1,14 @@
-import type { WordmarkLoaderVariant } from "@/lib/wordmark/letters";
+import {
+  isLoaderVariantPreference,
+  type LoaderVariantPreference,
+} from "@/lib/loading/loaderVariantPreference";
 import {
   getActiveUserId,
   settingsStoreStorageKey,
 } from "@/lib/storage/userStorageScope";
 
-const VALID_VARIANTS = new Set<WordmarkLoaderVariant>([
-  "gather",
-  "typewriter",
-  "magnetic",
-  "orbit",
-  "shuffle",
-  "breathe",
-  "static",
-]);
-
 /** Read persisted loader choice before zustand rehydrate finishes (splash on reload). */
-export function readLoaderVariantFromStorage(): WordmarkLoaderVariant {
+export function readLoaderVariantFromStorage(): LoaderVariantPreference {
   if (typeof window === "undefined") return "gather";
 
   const userId = getActiveUserId();
@@ -27,9 +20,7 @@ export function readLoaderVariantFromStorage(): WordmarkLoaderVariant {
   try {
     const parsed = JSON.parse(raw) as { state?: { loaderVariant?: string } };
     const variant = parsed.state?.loaderVariant;
-    if (variant && VALID_VARIANTS.has(variant as WordmarkLoaderVariant)) {
-      return variant as WordmarkLoaderVariant;
-    }
+    if (isLoaderVariantPreference(variant)) return variant;
   } catch {
     // ignore corrupt storage
   }

@@ -1,45 +1,14 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import type { WordmarkLoaderVariant } from "@/lib/wordmark/letters";
+import { useState } from "react";
 import { WordmarkLoader } from "@/components/shared/WordmarkLoader";
+import { resolveLoaderVariantPreference } from "@/lib/loading/loaderVariantPreference";
 import { readLoaderVariantFromStorage } from "@/lib/loading/readLoaderVariant";
-import { useSettingsStore } from "@/stores/useSettingsStore";
-
-function subscribeToSettingsHydration(onStoreChange: () => void) {
-  if (useSettingsStore.persist.hasHydrated()) {
-    useSettingsStore.getState().setHydrated(true);
-    return () => {};
-  }
-
-  return useSettingsStore.persist.onFinishHydration(() => {
-    useSettingsStore.getState().setHydrated(true);
-    onStoreChange();
-  });
-}
-
-function getSettingsHydratedSnapshot() {
-  return (
-    useSettingsStore.getState().hydrated || useSettingsStore.persist.hasHydrated()
-  );
-}
-
-function resolveLoaderVariant(
-  hydrated: boolean,
-  storeVariant: WordmarkLoaderVariant,
-): WordmarkLoaderVariant {
-  if (hydrated) return storeVariant;
-  return readLoaderVariantFromStorage();
-}
 
 export function AppLoadingScreen({ label = "Interface laden…" }: { label?: string }) {
-  const loaderVariant = useSettingsStore((state) => state.loaderVariant);
-  const settingsHydrated = useSyncExternalStore(
-    subscribeToSettingsHydration,
-    getSettingsHydratedSnapshot,
-    () => false,
+  const [variant] = useState(() =>
+    resolveLoaderVariantPreference(readLoaderVariantFromStorage()),
   );
-  const variant = resolveLoaderVariant(settingsHydrated, loaderVariant);
 
   return (
     <div className="grid min-h-screen place-items-center bg-black px-4">

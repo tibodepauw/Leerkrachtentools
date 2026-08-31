@@ -37,4 +37,12 @@ describe("readLoaderVariantFromStorage", () => {
     localStorage.clear();
     expect(readLoaderVariantFromStorage()).toBe("gather");
   });
+
+  it("reads random preference from persisted settings storage", () => {
+    localStorage.setItem(
+      "leerkrachtentools-settings:user-1",
+      JSON.stringify({ state: { loaderVariant: "random" } }),
+    );
+    expect(readLoaderVariantFromStorage()).toBe("random");
+  });
 });

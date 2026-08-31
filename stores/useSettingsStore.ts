@@ -2,16 +2,16 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { WordmarkLoaderVariant } from "@/lib/wordmark/letters";
+import type { LoaderVariantPreference } from "@/lib/loading/loaderVariantPreference";
 import { createUserScopedPersistStorage } from "@/lib/storage/userScopedPersistStorage";
 
 interface SettingsStore {
   enableLlmQueryRewriting: boolean;
-  loaderVariant: WordmarkLoaderVariant;
+  loaderVariant: LoaderVariantPreference;
   hydrated: boolean;
   setHydrated: (hydrated: boolean) => void;
   setEnableLlmQueryRewriting: (enabled: boolean) => void;
-  setLoaderVariant: (variant: WordmarkLoaderVariant) => void;
+  setLoaderVariant: (variant: LoaderVariantPreference) => void;
 }
 
 export const useSettingsStore = create<SettingsStore>()(
