@@ -7,8 +7,8 @@
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-200%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
-[![Version](https://img.shields.io/badge/version-v5.12.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Tests](https://img.shields.io/badge/tests-207%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
+[![Version](https://img.shields.io/badge/version-v5.13.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 [![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
@@ -252,6 +252,6 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 
 ## Releases
 
-Current version: **5.12.0**
+Current version: **5.13.0**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).

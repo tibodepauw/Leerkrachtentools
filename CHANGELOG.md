@@ -4,6 +4,20 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.13.0] - 2026-08-31
+
+### Added
+- **Krachtig Onderwijzen 1** regels voor Doelverbeteraar en MC-DAS-SPM herkenner (`lib/goals/ko1Rules.ts`, `lib/goals/goalSchemas.ts`)
+- Zod-validatie: verboden werkwoorden, MC/DAS-aanhef, `subcategory` + `behaviorLevel` in taxonomie
+- `AGENTS.md` met stijlregels (geen em dash, sentence case, release-titels met ▬)
+
+### Changed
+- System prompts voor `/api/analyze-goals` en `/api/classify-goal-taxonomy` uitgebreid per Thomas More BALO
+- README banner: afgeronde hoeken vergroot naar 24px (GIF/PNG opnieuw geëxporteerd)
+- Testcount: 207 tests
+
+---
+
 ## [5.12.0] - 2026-08-31
 
 ### Added
