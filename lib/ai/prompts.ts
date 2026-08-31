@@ -12,23 +12,57 @@ letterlijk of duidelijk herkenbaar terug in rawPublisherGoals, in de volgorde wa
 ze voorkomen.`,
 
   goal: `${baseSystemPrompt}
-Beoordeel eerst eerlijk of één lesdoel volgens de Thomas More-regels al goed is.
-Een goed doel is enkelvoudig, bevat duidelijk observeerbaar leerlinggedrag en is
-voldoende concreet om achteraf te beoordelen. Het hoeft niet geforceerd langer
-te worden en niet elk doel heeft een getal, extra voorwaarde of extra criterium
-nodig. Voeg nooit willekeurige aantallen, criteria of inhoud toe.
-Als het doel al goed is: zet status op "goed", neem de invoer ongewijzigd over in
-original én improved, laat removedTerms en addedTerms leeg en leg bondig uit
-waarom het voldoet.
-Alleen bij een wezenlijk probleem zet je status op "verbeterd" en herschrijf je
-zo minimaal mogelijk. Behoud strikt hetzelfde onderwerp, thema en leerstof.
-Vermijd niet-observeerbare werkwoorden zoals kennen, begrijpen, weten en inzicht
-hebben. Geef het originele doel terug in original.`,
+Beoordeel één lesdoel volgens Krachtig Onderwijzen 1 (Thomas More BALO).
+
+## 1. Leerlinggedrag vs leerstof/leerkracht
+Keur af en herschrijf wanneer het doel:
+- leerstof beschrijft (bv. "Het begrip democratie") i.p.v. leerlinggedrag;
+- leerkrachtactiviteit beschrijft (bv. "De leerkracht laat...");
+- een leerproces/werkvorm beschrijft (bv. "De leerlingen kijken naar een film over..."),
+  tenzij die werkvorm zélf de getoetste leerinhoud is (bv. doelgericht samenwerken).
+
+## 2. Verboden werkwoorden (strikt verwijderen in improved)
+kennen, weten, inzien, begrijpen, verstaan, leren, onderzoeken, ervaren, ontdekken, bewust worden.
+Vervang door waarneembare werkwoorden: benoemen, aanduiden, opsommen, berekenen, vergelijken,
+schetsen, uitleggen, rangschikken, herkennen, beschrijven, toepassen.
+
+## 3. Geen dubbele doelen
+Split doelen met twee handelingen (bv. "aanduiden en benoemen") of behoud het hoogste gedragsniveau.
+Vermeld een korte splitRecommendation wanneer splitsen nodig is.
+
+## 4. Domeinspecifieke formulering (goalDomain)
+- MC (cognitief): "De leerlingen kunnen..." + conditie/context + leerinhoud + waarneembaar gedrag
+  + optioneel succescriterium.
+- DAS (dynamisch-affectief): laat "kunnen" weg. Gebruik: "De leerlingen durven / willen /
+  zijn bereid om / beleven plezier aan / tonen interesse voor / zijn / tonen...".
+- spreek (gematigd open): check Wat, Voor wie, Hoe (kanaal/vorm) en Waarom.
+- muzisch (gematigd open): check Rond (thema), Met (werkvorm) en Aan (bouwsteen/focus).
+
+## 5. Output
+JSON met: status ("goed" of "verbeterd"), original, improved, rationale, goalDomain
+(MC|DAS|spreek|muzisch), removedTerms, addedTerms, criteria, optioneel splitRecommendation.
+Bij status "goed": original === improved.
+Behoud strikt hetzelfde onderwerp, thema en leerstof. Verzin geen nieuwe inhoud.`,
 
   goalTaxonomy: `${baseSystemPrompt}
-Classificeer één lesdoel als MC (mentaal-cognitief), DAS (dynamisch-affectief)
-of SPM (sensomotorisch/psychomotorisch). Herformuleer het doel niet. Leg kort
-uit welke werkwoorden of activiteiten tot deze classificatie leiden.`,
+Classificeer één lesdoel in MC, DAS of SPM volgens Krachtig Onderwijzen 1.
+Herformuleer het doel niet.
+
+## MC (mentaal-cognitief)
+- Kennis: reproductie (geheugen vs inzicht).
+- Vaardigheden: productie (toepassen, analyseren, evalueren, creëren).
+
+## DAS (dynamisch-affectief)
+- Wilsaspect (attitudes, motieven), gevoelsaspect (emoties, welbevinden), sociale vaardigheden.
+- Onderscheid routinematig (extern/plicht) vs productief (verinnerlijkt waardenkader).
+
+## SPM (senso- en psychomotorisch)
+- Grove/fijne motoriek, doelgerichte psychomotoriek (pengreep, balvaardigheid), sensomotoriek.
+
+## Output (JSON)
+original, taxonomy (MC|DAS|SPM), subcategory, behaviorLevel (gedragsniveau), rationale
+(met didactische toelichting en classificatiereason), indicators (werkwoorden/signalen),
+definition (korte domeinomschrijving).`,
 
   dialogue: `${baseSystemPrompt}
 Zet alle interacties strikt om naar exact deze conventie:

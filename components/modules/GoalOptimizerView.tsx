@@ -17,9 +17,11 @@ interface GoalImprovementResult {
   original: string;
   improved: string;
   rationale: string;
+  goalDomain: "MC" | "DAS" | "spreek" | "muzisch";
   removedTerms: string[];
   addedTerms: string[];
   criteria: string[];
+  splitRecommendation?: string;
 }
 
 export function GoalOptimizerView() {
@@ -122,6 +124,14 @@ export function GoalOptimizerView() {
                         Toegevoegd: {result.data.addedTerms.join(", ")}
                       </p>
                     )}
+                    {result.data.splitRecommendation ? (
+                      <p className="text-neutral-500">
+                        Split-advies: {result.data.splitRecommendation}
+                      </p>
+                    ) : null}
+                    <p className="text-neutral-500">
+                      Domein: {result.data.goalDomain}
+                    </p>
                   </CardContent>
                 </Card>
                 <Button

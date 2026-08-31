@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  goalImprovementSchema,
+  goalTaxonomySchema,
+} from "@/lib/goals/goalSchemas";
+
+export { goalImprovementSchema, goalTaxonomySchema };
 
 export const manualExtractionSchema = z.object({
   learningArea: z.string(),
@@ -7,24 +13,6 @@ export const manualExtractionSchema = z.object({
   targetGroup: z.string(),
   materials: z.array(z.string()),
   rawPublisherGoals: z.array(z.string()).max(12),
-});
-
-export const goalImprovementSchema = z.object({
-  status: z.enum(["goed", "verbeterd"]),
-  original: z.string(),
-  improved: z.string(),
-  rationale: z.string(),
-  removedTerms: z.array(z.string()),
-  addedTerms: z.array(z.string()),
-  criteria: z.array(z.string()),
-});
-
-export const goalTaxonomySchema = z.object({
-  original: z.string(),
-  taxonomy: z.enum(["MC", "DAS", "SPM"]),
-  rationale: z.string(),
-  indicators: z.array(z.string()),
-  definition: z.string(),
 });
 
 export const goalAnalysisSchema = goalImprovementSchema.extend({

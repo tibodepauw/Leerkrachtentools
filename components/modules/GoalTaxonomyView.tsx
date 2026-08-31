@@ -16,6 +16,8 @@ import type { GoalTaxonomy } from "@/types";
 interface GoalTaxonomyResult {
   original: string;
   taxonomy: GoalTaxonomy;
+  subcategory: string;
+  behaviorLevel: string;
   rationale: string;
   indicators: string[];
   definition: string;
@@ -105,6 +107,10 @@ export function GoalTaxonomyView() {
             </Card>
             <Card>
               <CardContent className="space-y-3 text-sm">
+                <p className="font-medium text-neutral-200">{result.data.subcategory}</p>
+                <p className="text-neutral-400">
+                  Gedragsniveau: {result.data.behaviorLevel}
+                </p>
                 <p>{result.data.rationale}</p>
                 <p className="text-neutral-400">{result.data.definition}</p>
                 {result.data.indicators.length > 0 && (
