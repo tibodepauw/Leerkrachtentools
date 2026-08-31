@@ -70,7 +70,7 @@ export const WORDMARK_LOADER_VARIANTS: {
   {
     id: "breathe",
     name: "Breathe hold",
-    description: "Woord staat stil met subtiel ademen — handig als laden langer duurt dan de intro.",
+    description: "Woord staat stil met subtiel ademen, handig als laden langer duurt dan de intro.",
   },
   {
     id: "static",

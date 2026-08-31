@@ -15,7 +15,7 @@ interface LoadingGateProps {
   children: ReactNode;
 }
 
-/** SSR-safe placeholder — must match server + first client paint. */
+/** SSR-safe placeholder: must match server + first client paint. */
 function LoadingPlaceholder() {
   return <div className="min-h-screen bg-black" aria-hidden="true" />;
 }

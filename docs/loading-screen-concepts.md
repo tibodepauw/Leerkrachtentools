@@ -2,7 +2,7 @@
 
 Playful witte Rubik Black letters op zwart, gedeeld met `docs/assets/banner-wordmark.svg` en `lib/wordmark/letters.ts`.
 
-**Status:** Gather is live via `LoadingGate` on eerste site-load (volledige animatie ~2,5 s). Snelle navigatie (bv. instellingen) toont geen wordmark — alleen bij trage loads een kleine spinner na 320 ms. Andere varianten: Instellingen → Laadscherm.
+**Status:** Gather is live via `LoadingGate` on eerste site-load (volledige animatie ~2,5 s). Snelle navigatie (bv. instellingen) toont geen wordmark; alleen bij trage loads een kleine spinner na 320 ms. Andere varianten: Instellingen → Laadscherm.
 
 ## Preview
 
@@ -41,7 +41,7 @@ Open lokaal: [http://localhost:43123/dev/wordmark-loader](http://localhost:43123
 
 ## 5. Shuffle sort
 
-**Idee:** Letters staan in verkeerde volgorde, wisselen 2–3 swaps, eindigen correct.
+**Idee:** Letters staan in verkeerde volgorde, wisselen 2-3 swaps, eindigen correct.
 
 - Alleen horizontale beweging (via slot-posities)
 - Grappig voor didactische tool; minder elegant op mobiel
@@ -63,7 +63,7 @@ Open lokaal: [http://localhost:43123/dev/wordmark-loader](http://localhost:43123
 | `components/shared/WordmarkLoader.tsx` | Render + variant switch |
 | `app/dev/wordmark-loader/page.tsx` | Preview om te kiezen |
 | `app/globals.css` | `@keyframes wordmark-*` |
-| `components/shared/AppLoadingScreen.tsx` | Nog spinner — pas aan na goedkeuring |
+| `components/shared/AppLoadingScreen.tsx` | Nog spinner; pas aan na goedkeuring |
 
 Nieuwe variant toevoegen: extend `WordmarkLoaderVariant`, CSS keyframes, entry in `WORDMARK_LOADER_VARIANTS`.
 

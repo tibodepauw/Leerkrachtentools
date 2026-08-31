@@ -28,7 +28,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ### Security
 - Hardcoded API keys en admin-e-mails verwijderd uit publieke repo
-- `AGENTS.md` / `CLAUDE.md` verwijderd en toegevoegd aan `.gitignore`
+- `AGENTS.md` met stijlregels; optionele agent-bestanden (`CLAUDE.md`, `GEMINI.md`) blijven gitignored
 
 ---
 

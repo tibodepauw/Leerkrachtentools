@@ -127,7 +127,7 @@ export function LoaderSettingsView() {
           {savedFlash ? (
             <p className="flex items-center gap-1.5 text-sm text-emerald-400">
               <Check className="size-4" aria-hidden="true" />
-              Opgeslagen — zichtbaar bij de volgende volledige laadbeurt.
+              Opgeslagen: zichtbaar bij de volgende volledige laadbeurt.
             </p>
           ) : null}
         </div>

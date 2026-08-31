@@ -58,8 +58,7 @@ __pycache__/
 tmp_*
 curriculum_*.zip
 
-# AI agent instruction files — do not commit
-AGENTS.md
+# AI agent instruction files (optional local only)
 CLAUDE.md
 GEMINI.md
 .cursorrules

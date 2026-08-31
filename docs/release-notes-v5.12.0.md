@@ -25,7 +25,7 @@ Wordmark branding, slim laadscherm, sidebar easter egg en public-repo security c
 ## Security
 
 - Geen hardcoded secrets of persoonlijke admin-e-mails in de repo
-- Agent instruction files (`AGENTS.md`, `CLAUDE.md`) uit repo en `.gitignore`
+- Agent instruction files (`CLAUDE.md`, `GEMINI.md`) blijven lokaal; stijlregels staan in `AGENTS.md`
 
 ---
 
