@@ -24,7 +24,7 @@ function normalizeWhitespace(text: string) {
 }
 
 function normalizeMcSubject(text: string) {
-  let normalized = normalizeWhitespace(text);
+  const normalized = normalizeWhitespace(text);
 
   if (/^de leerlingen kunnen\b/iu.test(normalized)) {
     return capitalizeFirst(normalized);
