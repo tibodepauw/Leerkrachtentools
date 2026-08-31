@@ -4,6 +4,34 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.12.0] - 2026-08-31
+
+### Added
+- **Wordmark laadscherm** met Gather als standaard; varianten kiesbaar in Instellingen → Laadscherm (inclusief **Willekeurig**)
+- **Smart loading gate**: volledige wordmark-splash bij site load/reload; geen splash bij snelle navigatie (warme cache)
+- **Sidebar wordmark logo** (Rubik Black) met compacte Gather-animatie als easter egg bij klik
+- **README banner**: geanimeerde Gather-GIF + PNG, afgeronde hoeken ingebakken in assets
+- **Server-side module visibility** via env (`MODULES_ENABLED`, `USER_MODULE_GRANTS`, `USER_MODULE_DENIALS`)
+- Banner export scripts (`npm run export:banner`) vanuit production build
+
+### Changed
+- Handleiding Scanner ondersteunt dezelfde documenttypes als lesimport, plus afbeeldingen
+- Settings- en lesson-store gebruiken gescheiden localStorage-sleutels (loader-keuze blijft bewaard)
+- README badges en testcount bijgewerkt (200 tests)
+
+### Fixed
+- Custom loader-variant zichtbaar na page reload (splash hold + sync storage read)
+- LoadingGate hydration mismatch op `/settings`
+- Loader preview in instellingen: static preview, play-knop, geen overflow
+- Sidebar wordmark gather-animatie: geen clipping door onzichtbaar overflow-kader
+- README GIF zonder Next.js dev overlay (export vanuit production)
+
+### Security
+- Hardcoded API keys en admin-e-mails verwijderd uit publieke repo
+- `AGENTS.md` / `CLAUDE.md` verwijderd en toegevoegd aan `.gitignore`
+
+---
+
 ## [5.11.0] - 2026-08-30
 
 ### Added
