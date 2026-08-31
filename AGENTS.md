@@ -15,40 +15,46 @@ Do **not** use `—` (U+2014 em dash) or `–` (U+2013 en dash) anywhere in:
 
 | Context | Use |
 |--------|-----|
-| Release title separator | `▬` (U+25AC BLACK RECTANGLE), e.g. `v5.12.0 ▬ wordmark loader & smart splash` |
+| Release title separator | `▬` (U+25AC BLACK RECTANGLE), e.g. `v5.12.0 ▬ Wordmark loader & smart splash` |
 | Mid-sentence pause in UI/docs | comma, colon, or rewrite as two sentences |
 | Numeric ranges | hyphen-minus `-`, e.g. `2-3 swaps`, `250-300 ms` |
 
-## Sentence case only (never Title Case)
+## Sentence case (never Title Case)
 
-Headings, release titles, button labels, and descriptions use **sentence case**:
+**Title Case** = elk woord een hoofdletter (`Wordmark Loader & Smart Splash`). Dat willen we **niet**.
 
-- ✅ `wordmark loader & smart splash`
-- ✅ `client-side RAG cache & security headers`
-- ❌ `Wordmark Loader & Smart Splash`
-- ❌ `Client-Side RAG Cache & Security Headers`
+**Sentence case** = alleen het **eerste woord** van de zin of ondertitel krijgt een hoofdletter, plus **eigen namen** en **acroniemen**. Alle andere woorden blijven lowercase.
 
-Capitalize only:
+| | Voorbeeld |
+|---|-----------|
+| ✅ sentence case | `Wordmark loader & smart splash` |
+| ✅ sentence case | `Client-side RAG cache & security headers` |
+| ❌ Title Case | `Wordmark Loader & Smart Splash` |
+| ❌ Title Case | `Client-Side RAG Cache & Security Headers` |
 
-- The first word of a sentence or title fragment
-- Proper nouns (Leerkrachtentools, Thomas More, Gemini, GitHub, …)
-- Acronyms (RAG, API, LLM, BYOK, …)
+Wel hoofdletter:
 
-Module names in the sidebar may keep their established casing (e.g. "Handleiding Scanner") when that is the product label.
+- Eerste woord van zin, titel of ondertitel (ook het woord direct na `▬` in release-titels)
+- Eigen namen (Leerkrachtentools, Thomas More, Gemini, GitHub, …)
+- Acroniemen (RAG, API, LLM, BYOK, …)
+
+Geen hoofdletter op gewone zelfstandige naamwoorden midden in de zin (`loader`, `cache`, `sidebar`, …).
+
+Module labels in de sidebar mogen hun bestaande productnaam houden (bv. "Handleiding Scanner") als dat de afgesproken UI-naam is.
 
 ## GitHub release titles
 
 Every release needs a descriptive title:
 
 ```
-v{version} ▬ {short subtitle in sentence case}
+v{version} ▬ {Short subtitle in sentence case}
 ```
 
 Examples:
 
-- `v5.12.0 ▬ wordmark loader & smart splash`
-- `v5.11.0 ▬ client-side RAG cache & security headers`
-- `v5.10.4 ▬ lazy loading RAG corpora`
+- `v5.12.0 ▬ Wordmark loader & smart splash`
+- `v5.11.0 ▬ Client-side RAG cache & security headers`
+- `v5.10.4 ▬ Lazy loading RAG corpora`
 
 The tag stays `v5.12.0`; only the release **title** includes the subtitle after `▬`.
 
