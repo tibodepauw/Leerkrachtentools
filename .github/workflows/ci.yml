@@ -13,7 +13,7 @@ jobs:
       NODE_ENV: test
       CI: true
       AUTH_SECRET: "ci-dummy-auth-secret-for-github-actions-testing-32chars"
-      DATABASE_PATH: ":memory:"
+      DATABASE_PATH: "./test-leerkrachtentools.db"
       NEXT_TELEMETRY_DISABLED: 1
     steps:
       - name: Checkout

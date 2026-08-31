@@ -19,9 +19,13 @@ export function getDatabase() {
   if (database) return database;
 
   const filename = databasePath();
-  mkdirSync(path.dirname(filename), { recursive: true });
+  if (filename !== ":memory:") {
+    mkdirSync(path.dirname(filename), { recursive: true });
+  }
   database = new Database(filename);
-  database.pragma("journal_mode = WAL");
+  if (filename !== ":memory:") {
+    database.pragma("journal_mode = WAL");
+  }
   database.pragma("synchronous = NORMAL");
   database.pragma("foreign_keys = ON");
   database.pragma("busy_timeout = 5000");
