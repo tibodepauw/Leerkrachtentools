@@ -41,6 +41,7 @@ function GatherInitials({
           "flex size-full items-center justify-center font-black text-white",
           fallbackClassName,
         )}
+        style={{ transform: "rotate(-6deg)" }}
       >
         {letters}
       </span>
