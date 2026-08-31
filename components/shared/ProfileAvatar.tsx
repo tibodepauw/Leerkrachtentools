@@ -47,28 +47,24 @@ function GatherInitials({
     );
   }
   return (
-    <>
-      {chars.map((char, i) => {
-        const step = 15;
-        const offset = (i - (chars.length - 1) / 2) * step;
-        const rotate = (i % 2 ? 1 : -1) * 12;
-        const dy = (i % 2 ? 1 : -1) * 2;
-        return (
-          <span
-            key={`${char}-${i}`}
-            className={cn(
-              "absolute inset-0 flex items-center justify-center font-black text-white",
-              fallbackClassName,
-            )}
-            style={{
-              transform: `translate(${offset}%, ${dy}%) rotate(${rotate}deg)`,
-            }}
-          >
-            {char}
-          </span>
-        );
-      })}
-    </>
+    <div
+      className={cn(
+        "absolute inset-0 flex items-center justify-center font-black text-white",
+        fallbackClassName,
+      )}
+      style={{ gap: "0.3em" }}
+    >
+      {chars.map((char, i) => (
+        <span
+          key={`${char}-${i}`}
+          style={{
+            transform: `translateY(${i % 2 ? "0.04em" : "-0.04em"}) rotate(${i % 2 ? 12 : -12}deg)`,
+          }}
+        >
+          {char}
+        </span>
+      ))}
+    </div>
   );
 }
 
