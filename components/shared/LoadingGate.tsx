@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AppLoadingScreen } from "@/components/shared/AppLoadingScreen";
 import { MinimalLoadingScreen } from "@/components/shared/MinimalLoadingScreen";
-import {
-  initSplashSession,
-} from "@/lib/loading/splashSession";
+import { initSplashSession } from "@/lib/loading/splashSession";
 import {
   resolveLoadingIntent,
   useLoadingPresentation,
@@ -17,6 +15,11 @@ interface LoadingGateProps {
   intent?: "splash" | "quick" | "auto";
   label?: string;
   children: ReactNode;
+}
+
+/** SSR-safe placeholder — must match server + first client paint. */
+function LoadingPlaceholder() {
+  return <div className="min-h-screen bg-black" aria-hidden="true" />;
 }
 
 let splashSessionInitialized = false;
@@ -33,23 +36,29 @@ export function LoadingGate({
   label,
   children,
 }: LoadingGateProps) {
-  ensureSplashSession();
-
-  const resolvedIntent =
-    intent === "auto" ? resolveLoadingIntent() : intent;
-
-  const phase = useLoadingPresentation(loading, resolvedIntent);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     ensureSplashSession();
+    setMounted(true);
   }, []);
+
+  // Keep first client render identical to SSR (always "quick" for auto).
+  const resolvedIntent =
+    intent === "auto" ? (mounted ? resolveLoadingIntent() : "quick") : intent;
+
+  const phase = useLoadingPresentation(loading, resolvedIntent);
 
   if (phase === "content") {
     return children;
   }
 
+  if (!mounted) {
+    return <LoadingPlaceholder />;
+  }
+
   if (phase === "hidden") {
-    return <div className="min-h-screen bg-black" aria-hidden="true" />;
+    return <LoadingPlaceholder />;
   }
 
   if (phase === "minimal") {
@@ -57,9 +66,4 @@ export function LoadingGate({
   }
 
   return <AppLoadingScreen label={label} />;
-}
-
-export function useInitialSplashIntent(): "splash" | "quick" {
-  ensureSplashSession();
-  return resolveLoadingIntent();
 }
