@@ -58,6 +58,13 @@ __pycache__/
 tmp_*
 curriculum_*.zip
 
+# AI agent instruction files — do not commit
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.cursorrules
+.cursor/rules/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
