@@ -47,6 +47,21 @@ describe("huisstijl", () => {
     expect(bar).toMatch(/lt-chrome-title/);
   });
 
+  it("houdt hovertekst wit op een donkere tooltip", () => {
+    const tooltip = readFileSync("components/ui/tooltip.tsx", "utf8");
+    expect(tooltip).toMatch(/text-white/);
+    expect(tooltip).toMatch(/bg-neutral-950/);
+    expect(tooltip).not.toMatch(/text-background/);
+  });
+
+  it("toont zijbalk-pins alleen bij hover", () => {
+    const sidebar = readFileSync("components/layout/Sidebar.tsx", "utf8");
+    expect(sidebar).toMatch(/opacity-0 transition-all group-hover\/nav:opacity-100/);
+    expect(sidebar).not.toMatch(/pinned\s*\n?\s*\?\s*"text-white opacity-100/);
+    expect(sidebar).toMatch(/Vastzetten/);
+    expect(sidebar).not.toMatch(/Pin bovenaan/);
+  });
+
   it("toont de glow-wordmark op login", () => {
     const glow = css.slice(css.indexOf(".glow-wordmark {"));
     expect(glow).toMatch(/display:\s*block/);

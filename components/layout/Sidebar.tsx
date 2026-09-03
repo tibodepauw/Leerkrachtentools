@@ -174,7 +174,7 @@ function ModuleNavButton({
         onClick={onOpen}
         className={cn(
           "flex min-w-0 flex-1 items-center gap-3 rounded-full px-3 py-2 text-left text-sm transition-colors",
-          active ? "text-white" : "text-neutral-400 group-hover/nav:text-neutral-100",
+          active ? "text-white" : "text-neutral-400 group-hover/nav:text-white",
         )}
       >
         <item.icon className="size-4 shrink-0" />
@@ -185,24 +185,19 @@ function ModuleNavButton({
           <TooltipTrigger asChild>
             <button
               type="button"
-              aria-label={pinned ? "Losmaken uit zijbalk" : "Pin in zijbalk"}
+              aria-label={pinned ? "Losmaken" : "Vastzetten"}
               aria-pressed={pinned}
               onClick={(event) => {
                 event.stopPropagation();
                 onTogglePin();
               }}
-              className={cn(
-                "mr-1 grid size-7 shrink-0 place-items-center rounded-full transition-all focus-visible:opacity-100",
-                pinned
-                  ? "text-white opacity-100 hover:bg-neutral-800 hover:text-white"
-                  : "text-neutral-500 opacity-0 group-hover/nav:opacity-100 hover:bg-neutral-800 hover:text-neutral-300",
-              )}
+              className="mr-1 grid size-7 shrink-0 place-items-center rounded-full text-white opacity-0 transition-all group-hover/nav:opacity-100 hover:bg-neutral-800 focus-visible:opacity-100"
             >
               <Pin className={cn("size-3.5", pinned && "fill-current")} />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">
-            {pinned ? "Losmaken" : "Pin bovenaan"}
+            {pinned ? "Losmaken" : "Vastzetten"}
           </TooltipContent>
         </Tooltip>
       ) : null}
