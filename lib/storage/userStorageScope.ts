@@ -56,7 +56,44 @@ export async function migrateLegacyDocumentStorage(userId: string) {
 }
 
 function indexedDbHasEntries(dbName: string) {
-  return readAllIndexedDbEntries(dbName).then((entries) => entries.length > 0);
+  return new Promise<boolean>((resolve, reject) => {
+    const request = window.indexedDB.open(dbName, 1);
+
+    request.onerror = () => {
+      if (request.error?.name === "NotFoundError") {
+        resolve(false);
+        return;
+      }
+      reject(request.error ?? new Error("IndexedDB open failed."));
+    };
+
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains("documents")) {
+        database.createObjectStore("documents");
+      }
+    };
+
+    request.onsuccess = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains("documents")) {
+        database.close();
+        resolve(false);
+        return;
+      }
+
+      const transaction = database.transaction("documents", "readonly");
+      const countRequest = transaction.objectStore("documents").count();
+      countRequest.onerror = () => {
+        database.close();
+        reject(countRequest.error ?? new Error("IndexedDB count failed."));
+      };
+      countRequest.onsuccess = () => {
+        database.close();
+        resolve(countRequest.result > 0);
+      };
+    };
+  });
 }
 
 function readAllIndexedDbEntries(dbName: string) {

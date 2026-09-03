@@ -3,11 +3,7 @@
 import { useEffect } from "react";
 import { ActiveLessonBar } from "@/components/layout/ActiveLessonBar";
 import { AppShell } from "@/components/layout/AppShell";
-import {
-  ModuleAccessProvider,
-  useModuleAccess,
-} from "@/components/auth/ModuleAccessProvider";
-import { UserStorageScope } from "@/components/auth/UserStorageScope";
+import { useModuleAccess } from "@/components/auth/ModuleAccessProvider";
 import { LoadingGate } from "@/components/shared/LoadingGate";
 import { ModuleAccessDeniedCard } from "@/components/shared/ModuleShell";
 import { PreparationTextSync } from "@/components/shared/PreparationTextSync";
@@ -29,7 +25,6 @@ import { VoiceReflectionView } from "@/components/modules/VoiceReflectionView";
 import { useAppReady } from "@/hooks/useAppReady";
 import { getDefaultModuleFromAccessibleIds } from "@/lib/auth/moduleAccess";
 import { useLessonStore } from "@/stores/useLessonStore";
-import type { ModuleId } from "@/types";
 
 const modules = {
   "active-lesson": ActiveLessonView,
@@ -48,31 +43,23 @@ const modules = {
 };
 
 export function Dashboard({
-  userId,
   userEmail,
   displayName,
   profileImageUrl,
   tier,
-  accessibleModuleIds,
 }: {
-  userId: string;
   userEmail: string;
   displayName: string | null;
   profileImageUrl: string | null;
   tier: string;
-  accessibleModuleIds: ModuleId[];
 }) {
   return (
-    <UserStorageScope userId={userId}>
-      <ModuleAccessProvider tier={tier} accessibleModuleIds={accessibleModuleIds}>
-        <DashboardContent
-          userEmail={userEmail}
-          displayName={displayName}
-          profileImageUrl={profileImageUrl}
-          tier={tier}
-        />
-      </ModuleAccessProvider>
-    </UserStorageScope>
+    <DashboardContent
+      userEmail={userEmail}
+      displayName={displayName}
+      profileImageUrl={profileImageUrl}
+      tier={tier}
+    />
   );
 }
 
