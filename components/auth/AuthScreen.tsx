@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { LoadingGate } from "@/components/shared/LoadingGate";
 import { GlowWordmark } from "@/components/shared/GlowWordmark";
@@ -168,21 +169,28 @@ function AuthScreenContent() {
               <form onSubmit={verifyCode} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="code">Verificatiecode</Label>
-                  <Input
+                  <InputOTP
                     id="code"
+                    maxLength={6}
+                    value={code}
+                    onChange={(value) => setCode(value.replace(/\D/g, ""))}
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    pattern="[0-9]{6}"
-                    maxLength={6}
-                    required
-                    value={code}
-                    onChange={(event) =>
-                      setCode(event.target.value.replace(/\D/g, ""))
-                    }
-                    className="h-14 text-center font-mono text-2xl tracking-[0.4em]"
-                    placeholder="000000"
+                    pattern="[0-9]*"
                     autoFocus
-                  />
+                    aria-label="Verificatiecode van 6 cijfers"
+                    containerClassName="w-full"
+                  >
+                    <InputOTPGroup className="flex w-full justify-between gap-2 rounded-none">
+                      {Array.from({ length: 6 }, (_, index) => (
+                        <InputOTPSlot
+                          key={index}
+                          index={index}
+                          className="h-14 w-full flex-1 rounded-lg border border-input text-2xl font-semibold first:rounded-lg first:border-l last:rounded-lg"
+                        />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
                   {devCode && (
                     <p className="text-xs text-amber-400">
                       Lokale ontwikkelcode: {devCode}

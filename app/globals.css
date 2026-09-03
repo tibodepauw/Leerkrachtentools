@@ -646,6 +646,24 @@ html[data-visual-theme="huisstijl"] .auth-consent-choice a:hover {
   color: #ffffff;
 }
 
+html[data-visual-theme="huisstijl"] [data-slot="input-otp-slot"] {
+  height: 3.5rem;
+  border-radius: var(--gl-radius-tag);
+  border: 1px solid var(--gl-border);
+  background: var(--gl-surface);
+  color: var(--gl-text-main);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+html[data-visual-theme="huisstijl"] [data-slot="input-otp-slot"][data-active="true"] {
+  border-color: var(--gl-border-hover);
+  box-shadow: none;
+  outline: 2px solid var(--gl-text-main);
+  outline-offset: 3px;
+}
+
 .glow-wordmark {
   display: none;
 }

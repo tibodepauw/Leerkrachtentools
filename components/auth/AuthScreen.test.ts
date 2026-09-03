@@ -22,4 +22,9 @@ describe("AuthScreen markup", () => {
   it("zet de glow-outline wordmark onderaan", () => {
     expect(source).toContain("GlowWordmark");
   });
+
+  it("toont de verificatiecode in zes losse vakjes", () => {
+    expect(source).toContain("InputOTP");
+    expect(source).toContain("InputOTPSlot");
+  });
 });
