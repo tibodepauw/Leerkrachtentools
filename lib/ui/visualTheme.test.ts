@@ -19,10 +19,23 @@ describe("huisstijl", () => {
   it("zet kaartradius en pill-knoppen uit de brand kit", () => {
     expect(css).toMatch(/--gl-radius-card:\s*20px/);
     expect(css).toMatch(/--gl-radius-pill:\s*9999px/);
+    expect(css).toMatch(/--radius-pill:\s*var\(--gl-radius-pill\)/);
+    expect(css).toMatch(/--text-main:\s*var\(--gl-text-main\)/);
     expect(css).toMatch(/\[data-slot="button"\]/);
     expect(css).toMatch(/\[data-slot="card"\]/);
     expect(css).toMatch(
       /:is\(button, \[data-slot="button"\]\)\[data-variant="default"\][\s\S]*background:[\s\S]*!important/,
+    );
+  });
+
+  it("debounce't de leerplandoel-spinner met huisstijl-tokens", () => {
+    expect(css).toMatch(/border:\s*1\.5px solid var\(--border\)/);
+    expect(css).toMatch(/border-top-color:\s*var\(--text-main\)/);
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*\.curriculum-search-spinner \{[\s\S]*animation:\s*none/,
+    );
+    expect(css).toMatch(
+      /\.curriculum-search-action-wrap\[data-busy="true"\][\s\S]*cursor:\s*wait/,
     );
   });
 

@@ -3,13 +3,12 @@
 import {
   BookOpenCheck,
   Landmark,
-  Loader2,
   Plus,
 } from "lucide-react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { LessonGoalSelector } from "@/components/shared/LessonGoalSelector";
 import { ModuleErrorBoundary } from "@/components/shared/ModuleErrorBoundary";
-import { ModuleActionButton } from "@/components/shared/ModuleActionButton";
+import { BusySearchButton } from "@/components/shared/BusySearchButton";
 import { ModuleInputLayout } from "@/components/shared/ModuleInputLayout";
 import { EmptyOutput, ModuleShell } from "@/components/shared/ModuleShell";
 import {
@@ -97,6 +96,7 @@ const variantCopy: Record<
     title: string;
     description: string;
     action: string;
+    busyAction: string;
     empty: string;
   }
 > = {
@@ -105,6 +105,7 @@ const variantCopy: Record<
     description:
       "Zoekt in de leerplannen van koepels: Katholiek Onderwijs, GO!, OVSG en POV.",
     action: "Zoek leerplandoel",
+    busyAction: "Leerplandoelen zoeken...",
     empty: "Officiële doelkaarten met code, discipline en doelzin verschijnen hier.",
   },
   minimumdoel: {
@@ -112,6 +113,7 @@ const variantCopy: Record<
     description:
       "Zoekt Vlaamse minimumdoelen en AHOVOKS-doelen: basisonderwijs, secundair, BuBaO, BuSO, OKAN, DKO, volwassenen- en hoger onderwijs.",
     action: "Zoek minimumdoel",
+    busyAction: "Minimumdoelen zoeken...",
     empty:
       "Minimumdoelkaarten met code, graad of leerjaar en doelzin verschijnen hier na je zoekopdracht.",
   },
@@ -586,8 +588,12 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
           actions={
             <>
               {error ? <p className="text-sm text-red-400">{error}</p> : null}
-              <ModuleActionButton
+              <BusySearchButton
+                loading={loading}
                 disabled={actionDisabled}
+                idleLabel={copy.action}
+                busyLabel={copy.busyAction}
+                idleIcon={<Icon className="size-4" />}
                 onClick={() =>
                   analyzeRag(
                     variant === "minimumdoel"
@@ -625,14 +631,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                         },
                   )
                 }
-              >
-                {loading ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Icon className="size-4" />
-                )}
-                {copy.action}
-              </ModuleActionButton>
+              />
             </>
           }
         />

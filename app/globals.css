@@ -69,6 +69,8 @@
   --gl-card-from: #0e0e11;
   --gl-card-to: #08080a;
   --gl-radius-pill: 9999px;
+  --radius-pill: var(--gl-radius-pill);
+  --text-main: var(--gl-text-main);
   --gl-radius-tag: 8px;
   --gl-radius-card: 20px;
   --gl-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
@@ -622,6 +624,48 @@ header.sticky {
 :is(button, [data-slot="button"])[data-variant="default"]:hover {
   border-color: var(--gl-border-hover);
   filter: brightness(1.12);
+}
+
+.curriculum-search-action-wrap {
+  display: inline-flex;
+}
+
+.curriculum-search-action-wrap[data-busy="true"] {
+  cursor: wait;
+}
+
+.curriculum-search-action {
+  border-radius: var(--radius-pill) !important;
+  border-color: var(--border) !important;
+  color: var(--text-main) !important;
+}
+
+.curriculum-search-action-wrap[data-busy="true"] .curriculum-search-action:disabled {
+  pointer-events: auto;
+  cursor: wait;
+}
+
+.curriculum-search-spinner {
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  border-top-color: var(--text-main);
+  animation: curriculum-search-spin 0.7s linear infinite;
+}
+
+@keyframes curriculum-search-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curriculum-search-spinner {
+    animation: none;
+  }
 }
 
 :is(button, [data-slot="button"])[data-variant="outline"],
