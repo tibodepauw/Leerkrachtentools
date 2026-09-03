@@ -130,7 +130,7 @@ export function SidebarFeedback({
             </button>
           )}
         </DialogTrigger>
-        <DialogContent className="border-neutral-800 bg-neutral-950 p-6 sm:max-w-2xl">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-lg">Idee of feedback</DialogTitle>
             <DialogDescription>
@@ -162,10 +162,10 @@ export function SidebarFeedback({
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 placeholder="Beschrijf je idee, wat je mist, of wat niet goed werkt…"
-                rows={8}
+                rows={5}
                 maxLength={4000}
                 required
-                className="field-sizing-fixed min-h-[12rem] resize-y"
+                className="field-sizing-fixed min-h-32 resize-y"
               />
               <p className="text-xs text-neutral-500">
                 Minstens 10 tekens. Kies hieronder of je anoniem verstuurt.

@@ -73,7 +73,7 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
                 <span className="hidden sm:inline">Actieve lescontext</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+            <DialogContent className="sm:max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Actieve lescontext</DialogTitle>
                 <DialogDescription>

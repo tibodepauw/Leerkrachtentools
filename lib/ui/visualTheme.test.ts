@@ -25,4 +25,16 @@ describe("huisstijl overlay", () => {
     );
     expect(css).toMatch(/\.lt-app \{/);
   });
+
+  it("houdt de testversie-toggle onder dialogs", () => {
+    expect(css).toMatch(/\.visual-theme-toggle \{[\s\S]*?z-index:\s*40;/);
+  });
+});
+
+describe("dialogs", () => {
+  it("centreert kaders met inset in plaats van translate", () => {
+    const dialog = readFileSync("components/ui/dialog.tsx", "utf8");
+    expect(dialog).toMatch(/inset-4/);
+    expect(dialog).not.toMatch(/top-1\/2 left-1\/2/);
+  });
 });
