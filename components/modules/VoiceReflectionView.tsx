@@ -134,7 +134,7 @@ export function VoiceReflectionView() {
                 </CardContent>
               </Card>
               {questions.length > 0 && (
-                <Card className="border-orange-900/60">
+                <Card>
                   <CardHeader>
                     <Badge variant="outline" className="w-fit">Fase B · aanvullen</Badge>
                     <CardTitle className="text-sm">Nog {questions.length} gerichte vraag{questions.length > 1 ? "en" : ""}</CardTitle>
@@ -170,7 +170,7 @@ export function VoiceReflectionView() {
         isFinal && result ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Badge className="bg-emerald-700">Pagina 5 compleet</Badge>
+              <Badge variant="default">Pagina 5 compleet</Badge>
               <CopyButton value={copyValue} label="Kopieer reflectie" />
             </div>
             <Card>

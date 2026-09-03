@@ -80,9 +80,9 @@ export function GoalOptimizerView() {
         result ? (
           <div className="space-y-4">
             {isAlreadyGood ? (
-              <Card className="border-emerald-500/30 bg-emerald-500/5">
+              <Card>
                 <CardContent className="space-y-3 pt-5">
-                  <div className="flex items-center gap-2 text-emerald-300">
+                  <div className="flex items-center gap-2">
                     <CheckCircle2 className="size-5" />
                     <p className="font-medium">Dit doel is al goed</p>
                   </div>
@@ -98,11 +98,11 @@ export function GoalOptimizerView() {
                   <CardTitle className="text-sm">Visuele verbetering</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-red-400 line-through decoration-red-500/70">
+                  <p className="text-sm text-neutral-400 line-through">
                     {result.data.original}
                   </p>
                   <ArrowRight className="size-4 text-neutral-600" />
-                  <p className="text-sm leading-6 text-emerald-300">
+                  <p className="text-sm leading-6">
                     {result.data.improved}
                   </p>
                   <CopyButton value={result.data.improved} />

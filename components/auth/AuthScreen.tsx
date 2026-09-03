@@ -84,11 +84,11 @@ function AuthScreenContent() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.12),transparent_45%)]" />
       <GlowWordmark />
       <div className="relative z-10 w-full max-w-md">
-        <h1 className="mb-10 text-center text-4xl font-black tracking-[-0.06em] text-white sm:text-5xl">
+        <h1 className="mb-10 text-center text-4xl font-black tracking-[-0.06em] sm:text-5xl">
           Leerkrachtentools
         </h1>
 
-        <Card className="bg-neutral-950/90 shadow-2xl">
+        <Card>
           <CardHeader>
             <CardTitle className="text-xl font-extrabold">
               {step === "email"

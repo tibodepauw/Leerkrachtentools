@@ -35,7 +35,6 @@ import { detachClientUserStorage } from "@/lib/storage/clientUserSession";
 import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
 import { LoaderSettingsView } from "@/components/settings/LoaderSettingsView";
 import { SettingsView } from "@/components/settings/SettingsView";
-import { VisualThemeSettingsView } from "@/components/settings/VisualThemeSettingsView";
 
 interface AccountSettingsProps {
   userId: string;
@@ -265,8 +264,6 @@ export function AccountSettings({
           </div>
 
           <SettingsView />
-
-          <VisualThemeSettingsView />
 
           <LoaderSettingsView />
 

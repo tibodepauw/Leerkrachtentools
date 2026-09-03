@@ -1,33 +1,32 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { isVisualTheme, parseVisualTheme } from "@/lib/ui/visualTheme";
 
-describe("visualTheme", () => {
-  it("kent alleen classic en huisstijl", () => {
-    expect(isVisualTheme("classic")).toBe(true);
-    expect(isVisualTheme("huisstijl")).toBe(true);
-    expect(isVisualTheme("dark")).toBe(false);
-  });
-
-  it("valt terug op classic bij onbekende waarden", () => {
-    expect(parseVisualTheme(null)).toBe("classic");
-    expect(parseVisualTheme("nope")).toBe("classic");
-    expect(parseVisualTheme("huisstijl")).toBe("huisstijl");
-  });
-});
-
-describe("huisstijl overlay", () => {
+describe("huisstijl", () => {
   const css = readFileSync("app/globals.css", "utf8");
+  const layout = readFileSync("app/layout.tsx", "utf8");
 
-  it("zet geen position relative op alle body-kinderen", () => {
-    expect(css).not.toMatch(
-      /body\s*>\s*\*:not\(\.visual-theme-toggle\)/,
-    );
-    expect(css).toMatch(/\.lt-app \{/);
+  it("is het vaste design, niet een optionele overlay", () => {
+    expect(css).not.toMatch(/data-visual-theme/);
+    expect(css).not.toMatch(/visual-theme-toggle/);
+    expect(layout).not.toMatch(/theme=huisstijl|lt-visual-theme|VisualThemeProvider/);
   });
 
-  it("houdt de testversie-toggle onder dialogs", () => {
-    expect(css).toMatch(/\.visual-theme-toggle \{[\s\S]*?z-index:\s*40;/);
+  it("houdt pagina-inhoud boven het raster zonder portals te breken", () => {
+    expect(css).toMatch(/\.lt-app \{/);
+    expect(layout).toMatch(/lt-app/);
+  });
+
+  it("zet kaartradius en pill-knoppen uit de brand kit", () => {
+    expect(css).toMatch(/--gl-radius-card:\s*20px/);
+    expect(css).toMatch(/--gl-radius-pill:\s*9999px/);
+    expect(css).toMatch(/\[data-slot="button"\]/);
+    expect(css).toMatch(/\[data-slot="card"\]/);
+  });
+
+  it("toont de glow-wordmark op login", () => {
+    const glow = css.slice(css.indexOf(".glow-wordmark {"));
+    expect(glow).toMatch(/display:\s*block/);
+    expect(glow.slice(0, 80)).not.toMatch(/display:\s*none/);
   });
 });
 

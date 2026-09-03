@@ -195,7 +195,7 @@ function GoalCard({
               Gekoppeld minimumdoel
             </p>
             {result.gelinktMinimumdoel.code ? (
-              <p className="mt-2 font-mono text-xs font-bold text-emerald-300/90">
+              <p className="mt-2 font-mono text-xs font-bold">
                 {sanitizeCurriculumText(result.gelinktMinimumdoel.code)}
               </p>
             ) : null}
@@ -253,22 +253,12 @@ function MinimumGoalCard({
   }
 
   return (
-    <Card
-      className={
-        isBestMatch
-          ? "border-emerald-700/60 bg-emerald-950/10 ring-1 ring-emerald-900/40"
-          : "border-emerald-900/40 bg-emerald-950/5"
-      }
-    >
+    <Card>
       <CardHeader className="space-y-3 pb-3">
         <div className="flex flex-wrap items-center gap-2">
-          {isBestMatch ? (
-            <Badge className="bg-emerald-700 text-white hover:bg-emerald-700">
-              Beste match #{rank}
+            <Badge variant={isBestMatch ? "default" : "outline"}>
+              {isBestMatch ? `Beste match #${rank}` : `Alternatief #${rank}`}
             </Badge>
-          ) : (
-            <Badge variant="outline">Alternatief #{rank}</Badge>
-          )}
           <Badge variant="secondary">{ijkpuntLabel}</Badge>
           {result.discipline ? (
             <span className="text-xs font-medium text-neutral-300">
@@ -643,7 +633,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
             {results.length > 0 ? (
               <div className="space-y-3">
                 {variant === "leerplandoel" && result.data.networkFallbackNotice ? (
-                  <Card className="border-amber-900/50 bg-amber-950/20">
+                  <Card>
                     <CardContent className="py-4 text-sm leading-6 text-amber-100/90">
                       {result.data.networkFallbackNotice}
                     </CardContent>
@@ -680,7 +670,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 )}
               </div>
             ) : (
-              <Card className="border-orange-900/60">
+              <Card>
                 <CardContent className="py-6">
                   <Badge variant="outline">
                     {variant === "minimumdoel"

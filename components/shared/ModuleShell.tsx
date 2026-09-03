@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export function ModuleAccessDeniedCard({ tier }: { tier: string }) {
   return (
     <div className="mx-auto w-full max-w-[720px] p-4 lg:p-6">
-      <Card className="border-neutral-800 bg-neutral-950">
+      <Card>
         <CardContent className="flex flex-col items-center gap-4 px-6 py-12 text-center">
           <div className="grid size-12 place-items-center rounded-full border border-neutral-800 bg-neutral-900">
             <Lock className="size-5 text-neutral-400" />

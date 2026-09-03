@@ -20,7 +20,7 @@ export function ActiveLessonPrepHint() {
   if (needsPreparationTextSync(lesson)) {
     const documentName = lesson.preparationDocument?.fileName ?? "je document";
     return (
-      <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 p-3 text-sm text-sky-50">
+      <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-sm text-neutral-100">
         <p>
           Je lesvoorbereiding{" "}
           <span className="font-medium">{documentName}</span> staat klaar in
@@ -33,7 +33,7 @@ export function ActiveLessonPrepHint() {
   const title = lesson.topic.trim() || "zonder titel";
 
   return (
-    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-50">
+    <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-sm text-neutral-100">
       <p>
         Je actieve les <span className="font-medium">{title}</span> is
         herkend, maar er staat nog geen lesvoorbereidingstekst klaar.

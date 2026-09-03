@@ -71,21 +71,18 @@ export class ModuleErrorBoundary extends Component<
 
     return (
       <div className="mx-auto w-full max-w-[1500px] p-4 lg:p-6">
-        <Card
-          role="alert"
-          className="border-amber-500/40 bg-amber-950/20"
-        >
+        <Card role="alert">
           <CardHeader className="gap-3">
             <div className="flex items-start gap-3">
               <AlertTriangle
-                className="mt-0.5 size-5 shrink-0 text-amber-400"
+                className="mt-0.5 size-5 shrink-0"
                 aria-hidden
               />
               <div className="space-y-1">
-                <CardTitle className="text-lg text-amber-50">
+                <CardTitle className="text-lg">
                   {this.props.moduleName} kon niet worden geladen
                 </CardTitle>
-                <CardDescription className="text-sm leading-6 text-amber-100/80">
+                <CardDescription className="text-sm leading-6">
                   {networkIssue
                     ? "De verbinding met de server is onderbroken of duurde te lang."
                     : "Er trad een onverwachte fout op in deze module. Je lesgegevens in de actieve les blijven bewaard."}
