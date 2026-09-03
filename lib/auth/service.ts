@@ -12,7 +12,7 @@ import {
   getDatabase,
 } from "@/lib/auth/database";
 import { profileImageUrl } from "@/lib/auth/profileImage";
-import { resolveTierFromEmail } from "@/lib/auth/tiers";
+import { hasAppAccess, inviteOnlyMessage, resolveTierFromEmail } from "@/lib/auth/tiers";
 import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
 
 export const SESSION_COOKIE = "leerkrachtentools_session";
@@ -93,6 +93,9 @@ export async function requestLoginCode({
   if (!isValidEmail(email)) throw new Error("Vul een geldig e-mailadres in.");
   if (!privacyAccepted) {
     throw new Error("Ga akkoord met het privacybeleid om verder te gaan.");
+  }
+  if (!hasAppAccess(email)) {
+    throw new Error(inviteOnlyMessage());
   }
 
   const now = Date.now();
@@ -219,6 +222,10 @@ export function verifyLoginCode(emailValue: string, code: string) {
   const userId = randomUUID();
   const consentAt = row.marketing_opt_in ? now : null;
   const tier = resolveTierFromEmail(email);
+  if (!hasAppAccess(email)) {
+    db.prepare("UPDATE login_codes SET used_at = ? WHERE id = ?").run(now, row.id);
+    throw new Error(inviteOnlyMessage());
+  }
   const transaction = db.transaction(() => {
     db.prepare("UPDATE login_codes SET used_at = ? WHERE id = ?").run(
       now,
@@ -302,6 +309,12 @@ export function getSession(token?: string) {
   if (!row) return null;
 
   const tier = resolveTierFromEmail(row.email);
+  if (!hasAppAccess(row.email)) {
+    db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(
+      digest(`session:${token}`),
+    );
+    return null;
+  }
   if (tier !== row.tier) {
     db.prepare("UPDATE users SET tier = ?, updated_at = ? WHERE id = ?").run(
       tier,

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveTierFromEmail } from "@/lib/auth/tiers";
+import { hasAppAccess, resolveTierFromEmail } from "@/lib/auth/tiers";
 
 describe("resolveTierFromEmail", () => {
   afterEach(() => {
@@ -38,5 +38,12 @@ describe("resolveTierFromEmail", () => {
 
   it("markeert onbekende adressen als unapproved", () => {
     expect(resolveTierFromEmail("iemand@gmail.com")).toBe("unapproved");
+  });
+
+  it("geeft ingebouwde testers toegang zonder omgevingsvariabele", () => {
+    expect(resolveTierFromEmail("wxdsfq@zear.cez")).toBe("tester");
+    expect(resolveTierFromEmail("WXDSFQ@ZEAR.CEZ")).toBe("tester");
+    expect(hasAppAccess("wxdsfq@zear.cez")).toBe(true);
+    expect(hasAppAccess("iemand@gmail.com")).toBe(false);
   });
 });

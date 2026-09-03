@@ -23,12 +23,15 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Verificatie is mislukt.";
+    const inviteOnly = message.includes("invite-only");
     return NextResponse.json(
+      { error: message },
       {
-        error:
-          error instanceof Error ? error.message : "Verificatie is mislukt.",
+        status: inviteOnly ? 403 : 400,
+        headers: { "Cache-Control": "no-store" },
       },
-      { status: 400, headers: { "Cache-Control": "no-store" } },
     );
   }
 }

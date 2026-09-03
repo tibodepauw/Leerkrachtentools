@@ -10,6 +10,9 @@ export { USER_TIERS, type UserTier, normalizeAccountTier };
 
 const THOMAS_MORE_DOMAINS = ["@student.thomasmore.be", "@thomasmore.be"];
 
+/** Testers die altijd toegang hebben, naast TESTER_EMAILS in de omgeving. */
+export const BUILT_IN_TESTER_EMAILS = ["wxdsfq@zear.cez"] as const;
+
 export const DAILY_SERVER_AI_LIMITS: Record<UserTier, number> = {
   student: 40,
   tester: 60,
@@ -35,7 +38,11 @@ function adminEmails() {
 }
 
 function testerEmails() {
-  return parseEmailAllowlist(process.env.TESTER_EMAILS);
+  const emails = parseEmailAllowlist(process.env.TESTER_EMAILS);
+  for (const email of BUILT_IN_TESTER_EMAILS) {
+    emails.add(email);
+  }
+  return emails;
 }
 
 function partnerEmails() {
@@ -67,6 +74,10 @@ export function resolveTierFromEmail(email: string): UserTier {
 export function isApprovedTier(tier: string): tier is Exclude<UserTier, "unapproved"> {
   const normalized = normalizeAccountTier(tier);
   return normalized !== "unapproved";
+}
+
+export function hasAppAccess(email: string) {
+  return isApprovedTier(resolveTierFromEmail(email));
 }
 
 export function dailyServerAiLimit(tier: string) {

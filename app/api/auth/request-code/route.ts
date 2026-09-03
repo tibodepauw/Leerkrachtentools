@@ -29,10 +29,11 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message : "Code aanvragen is mislukt.";
     const rateLimited =
       message.includes("Te veel") || message.includes("Wacht één minuut");
+    const inviteOnly = message.includes("invite-only");
     return NextResponse.json(
       { error: message },
       {
-        status: rateLimited ? 429 : 400,
+        status: inviteOnly ? 403 : rateLimited ? 429 : 400,
         headers: { "Cache-Control": "no-store" },
       },
     );
