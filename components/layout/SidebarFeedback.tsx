@@ -149,7 +149,7 @@ export function SidebarFeedback({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="idea">Idee voor een nieuwe tool</SelectItem>
+                  <SelectItem value="idea">Idee</SelectItem>
                   <SelectItem value="feedback">Algemene feedback</SelectItem>
                   <SelectItem value="bug">Bug of probleem</SelectItem>
                 </SelectContent>
