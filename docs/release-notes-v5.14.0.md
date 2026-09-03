@@ -19,7 +19,9 @@ Huisstijl is nu het vaste ontwerp. Nieuwe GitHub-banner en invite-only login.
 
 ## GitHub banner
 
-- Nieuwe animatie: gradient-titel plus glow-outline op het raster
+- Gather-animatie behouden
+- Huisstijl-raster op de achtergrond
+- Gradient op de letters (wit naar grijs)
 - Bestand: `docs/assets/banner-huisstijl.gif`
 
 ## UI

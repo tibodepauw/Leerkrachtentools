@@ -5,16 +5,16 @@ import { chromium } from "playwright";
 import sharp from "sharp";
 
 const baseHost = process.env.WORDMARK_EXPORT_URL ?? "http://127.0.0.1:43123";
-const framesDir = path.join("/tmp", "wordmark-huisstijl-frames");
+const framesDir = path.join("/tmp", "wordmark-gather-frames");
 const pngOutput = path.join("docs", "assets", "banner-huisstijl.png");
 const gifOutput = path.join("docs", "assets", "banner-huisstijl.gif");
 
-/** Glow sweep across the outline wordmark. */
-const ANIMATION_MS = 2400;
-const SETTLE_MS = 200;
-const CAPTURE_INTERVAL_MS = 80;
-const HOLD_SECONDS = 2;
-const OUTPUT_FPS = 12;
+/** Last letter: 16×55ms stagger + 1450ms duration ≈ 2.33s */
+const ANIMATION_MS = 2600;
+const SETTLE_MS = 500;
+const CAPTURE_INTERVAL_MS = 40;
+const HOLD_SECONDS = 10;
+const OUTPUT_FPS = 20;
 const DEVICE_SCALE = 2;
 /** Display radius baked into PNG/GIF assets (px at 1200×360) */
 const DISPLAY_CORNER_RADIUS = 20;
@@ -89,7 +89,7 @@ renameSync(pngTemp, pngOutput);
 console.log(`Wrote ${pngOutput} (${DISPLAY_CORNER_RADIUS}px rounded corners)`);
 
 // --- Animated GIF ---
-await page.goto(`${baseHost}/wordmark-export?mode=sweep&fresh=${Date.now()}`, {
+await page.goto(`${baseHost}/wordmark-export?mode=gather&fresh=${Date.now()}`, {
   waitUntil: "networkidle",
 });
 await waitForFonts();
@@ -138,8 +138,8 @@ execFileSync(
       "scale=1200:360:flags=lanczos",
       "format=rgba",
       "split[s0][s1]",
-      "[s0]palettegen=max_colors=96:reserve_transparent=1:stats_mode=diff[p]",
-      "[s1][p]paletteuse=dither=bayer:bayer_scale=3:diff_mode=rectangle:alpha_threshold=128",
+      "[s0]palettegen=max_colors=255:reserve_transparent=1:stats_mode=full[p]",
+      "[s1][p]paletteuse=dither=sierra2_4a:alpha_threshold=128",
     ].join(","),
     gifOutput,
   ],

@@ -13,7 +13,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ### Changed
 - Generative Labs huisstijl is het vaste ontwerp van de app (geen Testversie-schakelaar meer)
-- GitHub README-banner opnieuw gemaakt in die huisstijl: raster, gradient-titel, glow-outline (nieuw bestand `banner-huisstijl.gif`)
+- GitHub README-banner: Gather-animatie op het huisstijl-raster, met gradient op de letters
 - Sidebar-sectielabels iets groter
 - Kaartradius 20px overal, ook op geneste kaarten
 

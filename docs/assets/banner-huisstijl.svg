@@ -1,54 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="bannerTitle bannerDesc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="bannerTitle">
   <title id="bannerTitle">Leerkrachtentools</title>
-  <desc id="bannerDesc">Lesvoorbereiding zonder gedoe</desc>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@600;900&amp;display=swap");
-    .title {
+    @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@900&amp;display=swap");
+    .letter {
       font-family: "Rubik", sans-serif;
       font-weight: 900;
-      font-size: 74px;
-      letter-spacing: -0.06em;
-    }
-    .outline {
-      font-family: "Rubik", sans-serif;
-      font-weight: 900;
-      font-size: 118px;
-      letter-spacing: -0.04em;
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.28);
-      stroke-width: 1.6;
-    }
-    .sub {
-      font-family: "Rubik", sans-serif;
-      font-weight: 600;
-      font-size: 20px;
-      fill: #8e8e93;
-      letter-spacing: -0.02em;
+      font-size: 72px;
+      fill: url(#hsTitle);
+      text-anchor: middle;
+      dominant-baseline: middle;
     }
   </style>
   <defs>
     <pattern id="hsGrid" width="32" height="32" patternUnits="userSpaceOnUse">
-      <circle cx="1" cy="1" r="1.2" fill="rgba(255,255,255,0.18)"/>
+      <circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.1)"/>
     </pattern>
-    <radialGradient id="hsGridFade" cx="50%" cy="30%" r="80%">
-      <stop offset="55%" stop-color="white"/>
+    <radialGradient id="hsGridFade" cx="50%" cy="25%" r="80%">
+      <stop offset="60%" stop-color="white"/>
       <stop offset="100%" stop-color="black"/>
     </radialGradient>
     <mask id="hsGridMask">
       <rect width="1200" height="360" fill="url(#hsGridFade)"/>
     </mask>
-    <radialGradient id="hsWash" cx="50%" cy="0%" r="70%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.14)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
     <linearGradient id="hsTitle" x1="0" y1="0" x2="0" y2="1">
       <stop offset="30%" stop-color="#ffffff"/>
       <stop offset="100%" stop-color="#71717a"/>
-    </linearGradient>
-    <linearGradient id="hsShine" x1="0%" y1="0%" x2="45%" y2="0%">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
-      <stop offset="25%" stop-color="#ffffff" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
     <clipPath id="hsRound">
       <rect width="1200" height="360" rx="20" ry="20"/>
@@ -57,10 +33,22 @@
   <g clip-path="url(#hsRound)">
     <rect width="1200" height="360" fill="#000000"/>
     <rect width="1200" height="360" fill="url(#hsGrid)" mask="url(#hsGridMask)"/>
-    <rect width="1200" height="360" fill="url(#hsWash)"/>
-    <text class="outline" x="600" y="268" text-anchor="middle">Leerkrachtentools</text>
-    <text class="outline" x="600" y="268" text-anchor="middle" stroke="url(#hsShine)" stroke-width="2">Leerkrachtentools</text>
-    <text class="title" x="600" y="168" text-anchor="middle" fill="url(#hsTitle)">Leerkrachtentools</text>
-    <text class="sub" x="600" y="214" text-anchor="middle">Lesvoorbereiding zonder gedoe</text>
+    <text class="letter" x="191.98" y="187.49" transform="rotate(-5.5 191.98 187.49)">L</text>
+    <text class="letter" x="243.02" y="172.51" transform="rotate(5.5 243.02 172.51)">e</text>
+    <text class="letter" x="294.00" y="187.49" transform="rotate(-4.5 294.00 187.49)">e</text>
+    <text class="letter" x="344.98" y="172.51" transform="rotate(5 344.98 172.51)">r</text>
+    <text class="letter" x="396.02" y="189.00" transform="rotate(-5.5 396.02 189.00)">k</text>
+    <text class="letter" x="447.00" y="172.51" transform="rotate(4.5 447.00 172.51)">r</text>
+    <text class="letter" x="497.98" y="187.49" transform="rotate(-5 497.98 187.49)">a</text>
+    <text class="letter" x="549.02" y="172.51" transform="rotate(5.5 549.02 172.51)">c</text>
+    <text class="letter" x="600.00" y="180.00" transform="rotate(0 600.00 180.00)">h</text>
+    <text class="letter" x="650.98" y="189.00" transform="rotate(-5 650.98 189.00)">t</text>
+    <text class="letter" x="702.02" y="172.51" transform="rotate(5.5 702.02 172.51)">e</text>
+    <text class="letter" x="753.00" y="187.49" transform="rotate(-5.5 753.00 187.49)">n</text>
+    <text class="letter" x="803.98" y="172.51" transform="rotate(4.5 803.98 172.51)">t</text>
+    <text class="letter" x="855.02" y="189.00" transform="rotate(-5 855.02 189.00)">o</text>
+    <text class="letter" x="906.00" y="172.51" transform="rotate(5.5 906.00 172.51)">o</text>
+    <text class="letter" x="956.98" y="187.49" transform="rotate(-4.5 956.98 187.49)">l</text>
+    <text class="letter" x="1008.02" y="180.00" transform="rotate(5 1008.02 180.00)">s</text>
   </g>
 </svg>

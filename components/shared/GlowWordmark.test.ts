@@ -14,9 +14,8 @@ describe("GlowWordmark", () => {
     expect(source).toContain("glow-wordmark__glow");
   });
 
-  it("veegt de glow op login niet automatisch heen en weer", () => {
+  it("veegt de glow niet automatisch heen en weer", () => {
     const source = readFileSync(new URL("./GlowWordmark.tsx", import.meta.url), "utf8");
-    expect(source).toContain("autoSweep = false");
-    expect(source).toMatch(/if \(autoSweep\) \{/);
+    expect(source).not.toContain("requestAnimationFrame");
   });
 });

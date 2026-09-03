@@ -193,12 +193,19 @@
   }
 }
 
+.wordmark-export-root .wordmark-loader {
+  position: relative;
+  z-index: 1;
+  width: 68rem;
+  height: 7rem;
+  font-size: 4.5rem;
+}
+
 .wordmark-export-canvas {
   position: relative;
   display: flex;
   height: 360px;
   width: 1200px;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
@@ -209,38 +216,22 @@
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1.2px, transparent 1.2px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, #000 60%, transparent 100%);
   pointer-events: none;
 }
 
-.wordmark-export-canvas::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% -20%, rgba(255, 255, 255, 0.14), transparent 48%);
-  pointer-events: none;
-}
-
-.wordmark-export-title {
-  position: relative;
-  z-index: 2;
-  margin: 0;
-  font-size: 4.6rem;
-  font-weight: 900;
-  line-height: 0.95;
-  letter-spacing: -0.06em;
-}
-
-.wordmark-export-subtitle {
-  position: relative;
-  z-index: 2;
-  margin: 1rem 0 0;
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--gl-text-muted);
+.wordmark-export-canvas .wordmark-loader__letter {
+  background-image: linear-gradient(
+    180deg,
+    var(--gl-text-title) 30%,
+    var(--gl-title-stop) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Compact wordmark for sidebar etc. */
@@ -756,36 +747,6 @@ aside {
   max-height: min(36vh, 280px);
   pointer-events: auto;
   user-select: none;
-}
-
-.glow-wordmark--banner {
-  inset: auto 0 -6% 0;
-  z-index: 1;
-  height: 72%;
-  max-height: none;
-  aspect-ratio: auto;
-  pointer-events: none;
-}
-
-.glow-wordmark--banner .glow-wordmark__base {
-  stroke: rgba(255, 255, 255, 0.28);
-  stroke-width: 2.4px;
-}
-
-.glow-wordmark--banner .glow-wordmark__shine {
-  opacity: 1;
-  stroke-width: 2.8px;
-}
-
-.glow-wordmark--banner .glow-wordmark__glow {
-  stroke-width: 3.4px;
-}
-
-.glow-wordmark--banner .glow-wordmark__ambient {
-  width: 420px;
-  height: 160px;
-  filter: blur(36px);
-  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.22), transparent 70%);
 }
 
 .glow-wordmark__ambient {

@@ -2,17 +2,15 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { GlowWordmark } from "@/components/shared/GlowWordmark";
+import { WordmarkLoader } from "@/components/shared/WordmarkLoader";
 
 function WordmarkExportCanvas() {
   const searchParams = useSearchParams();
-  const mode = searchParams.get("mode") ?? "sweep";
+  const mode = searchParams.get("mode") ?? "gather";
 
   return (
     <div id="wordmark-export" className="wordmark-export-canvas">
-      <GlowWordmark layout="banner" autoSweep={mode !== "static"} />
-      <h1 className="wordmark-export-title">Leerkrachtentools</h1>
-      <p className="wordmark-export-subtitle">Lesvoorbereiding zonder gedoe</p>
+      <WordmarkLoader variant={mode === "static" ? "static" : "gather"} />
     </div>
   );
 }
