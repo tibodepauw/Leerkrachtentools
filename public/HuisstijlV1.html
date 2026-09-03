@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generative Labs - Huisstijl</title>
+    <script>
+        (function () {
+            try {
+                var lang = localStorage.getItem('gl-lang');
+                if (lang !== 'en' && lang !== 'nl') lang = null;
+                if (!lang) {
+                    var list = (navigator.languages || [navigator.language || '']).map(function (l) { return String(l).toLowerCase(); });
+                    var tz = '';
+                    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
+                    var hasNl = list.some(function (l) { return l === 'nl' || l.indexOf('nl-') === 0; });
+                    var primary = list[0] || '';
+                    if (hasNl) lang = 'nl';
+                    else if (tz === 'Europe/Amsterdam') lang = 'nl';
+                    else if (tz === 'Europe/Brussels' && primary.indexOf('fr') !== 0 && primary.indexOf('de') !== 0) lang = 'nl';
+                    else lang = 'en';
+                }
+                document.documentElement.lang = lang;
+            } catch (err) { /* ignore */ }
+        })();
+    </script>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,400;0,600;0,700;0,900;1,900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #0a0a0c;
+            --surface-card: #0e0e11;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.22);
+            --text-main: #f4f4f5;
+            --text-muted: #8e8e93;
+            --title-stop: #71717a;
+            --text-title: #ffffff;
+            --text-pill: #a1a1aa;
+            --btn-primary-from: #242429;
+            --btn-primary-to: #131316;
+            --btn-primary-border: rgba(255, 255, 255, 0.14);
+            --btn-primary-inset: rgba(255, 255, 255, 0.18);
+            --btn-ghost-bg: rgba(255, 255, 255, 0.04);
+            --tag-bg: rgba(255, 255, 255, 0.06);
+            --card-from: #0e0e11;
+            --card-to: #08080a;
+            --wrapper-bg: rgba(255, 255, 255, 0.04);
+            --shadow-deep: 0 24px 60px rgba(0, 0, 0, 0.7);
+            --radius-pill: 9999px;
+            --radius-tag: 8px;
+            --radius-card: 20px;
+            --font: "Rubik", sans-serif;
+            --island-bg: rgba(14, 14, 17, 0.72);
+            --grid-dot: rgba(255, 255, 255, 0.1);
+            --glow: rgba(255, 255, 255, 0.22);
+            --inset-soft: rgba(255, 255, 255, 0.12);
+            --wordmark-stroke: rgba(255, 255, 255, 0.07);
+            --wordmark-ambient: rgba(255, 255, 255, 0.15);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            font-weight: 400;
+            line-height: 1.6;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        :focus-visible {
+            outline: 2px solid var(--text-main);
+            outline-offset: 3px;
+        }
+        .bg-grid {
+            position: fixed; inset: 0;
+            background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+            background-size: 32px 32px;
+            mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, var(--bg) 60%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, var(--bg) 60%, transparent 100%);
+            pointer-events: none; z-index: 0;
+        }
+        .header-wrapper {
+            position: fixed; top: 22px; left: 0; right: 0;
+            display: flex; justify-content: center; padding: 0 16px; z-index: 50;
+        }
+        .floating-island {
+            width: 100%; max-width: 760px;
+            background: var(--island-bg);
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--border); border-radius: var(--radius-pill);
+            padding: 8px 8px 8px 22px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 var(--inset-soft);
+        }
+        .logo {
+            font-weight: 900; font-size: 15px; letter-spacing: -0.04em;
+            color: var(--text-main); text-decoration: none; line-height: 1.15;
+        }
+        .logo--lg { font-size: 22px; }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+        .lang-switch {
+            display: inline-flex; align-items: center;
+            background: var(--btn-ghost-bg); border: 1px solid var(--border);
+            border-radius: var(--radius-pill); padding: 2px 4px; gap: 2px;
+        }
+        .lang-btn {
+            background: transparent; border: none; color: var(--text-muted);
+            font-size: 13px; font-weight: 600; padding: 4px 11px;
+            border-radius: var(--radius-pill); cursor: pointer; transition: color 0.15s ease, background 0.15s ease;
+        }
+        .lang-btn.active { background: var(--tag-bg); color: var(--text-title); }
+        .lang-btn:hover:not(.active) { color: var(--text-main); }
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            font-size: 13px; font-weight: 600; text-decoration: none;
+            padding: 8px 16px; border-radius: var(--radius-pill); transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, filter 0.2s ease;
+            cursor: pointer;
+        }
+        .btn svg.btn-icon { width: 13px; height: 13px; flex: none; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+        .btn-primary {
+            background: linear-gradient(180deg, var(--btn-primary-from) 0%, var(--btn-primary-to) 100%);
+            color: var(--text-main); border: 1px solid var(--btn-primary-border);
+            box-shadow: inset 0 1px 0 var(--btn-primary-inset), 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+        .btn-primary:hover {
+            border-color: var(--border-hover);
+            filter: brightness(1.12);
+            box-shadow: inset 0 1px 0 var(--btn-primary-inset), var(--shadow-deep);
+        }
+        .btn-secondary { background: var(--btn-ghost-bg); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { border-color: var(--border-hover); background: var(--tag-bg); }
+        .btn-large { padding: 8px 24px; font-size: 14px; }
+
+        .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 120px 24px 80px; }
+        .page-kicker { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+        .page-title {
+            font-weight: 900; font-size: clamp(2.2rem, 5vw, 3.6rem); letter-spacing: -0.04em; line-height: 1.1;
+            background: linear-gradient(180deg, var(--text-title) 30%, var(--title-stop) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+            margin-bottom: 16px;
+        }
+        .page-lead { color: var(--text-muted); max-width: 560px; font-size: 16px; font-weight: 400; margin-bottom: 36px; }
+        .toc {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 56px;
+        }
+        .toc a {
+            font-size: 13px; font-weight: 600; color: var(--text-muted); text-decoration: none;
+            border: 1px solid var(--border); padding: 5px 12px; border-radius: var(--radius-pill);
+        }
+        .toc a:hover { color: var(--text-title); border-color: var(--border-hover); }
+        .section { margin-bottom: 72px; }
+        .section h2 {
+            font-size: 22px; font-weight: 700; letter-spacing: -0.03em;
+            color: var(--text-main); margin-bottom: 8px; line-height: 1.15;
+        }
+        .hint { font-size: 14px; font-weight: 400; color: var(--text-muted); margin-bottom: 20px; max-width: 640px; }
+        .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+        .swatch {
+            border: 1px solid var(--border); border-radius: var(--radius-card); overflow: hidden; background: var(--surface-card);
+        }
+        .swatch-chip { height: 72px; }
+        .swatch-chip--bg { background: var(--bg); }
+        .swatch-chip--surface { background: var(--surface); }
+        .swatch-chip--surface-card { background: var(--surface-card); }
+        .swatch-chip--text-main { background: var(--text-main); }
+        .swatch-chip--text-muted { background: var(--text-muted); }
+        .swatch-chip--title-stop { background: var(--title-stop); }
+        .swatch-meta { padding: 8px 16px 16px; }
+        .swatch-meta strong { display: block; font-size: 13px; font-weight: 600; }
+        .swatch-meta code { font-size: 13px; font-weight: 400; color: var(--text-muted); font-family: var(--font); }
+        .type-stack { display: grid; gap: 16px; }
+        .type-row {
+            border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px 20px;
+            background: linear-gradient(180deg, var(--card-from) 0%, var(--card-to) 100%);
+        }
+        .type-row .lab { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+        .t-black { font-weight: 900; font-size: 32px; letter-spacing: -0.04em; line-height: 1.15; }
+        .t-bold { font-weight: 700; font-size: 22px; letter-spacing: -0.03em; }
+        .t-semi { font-weight: 600; font-size: 13px; }
+        .t-body { font-weight: 400; font-size: 16px; color: var(--text-muted); }
+        .t-grad {
+            font-weight: 900; font-size: 28px; letter-spacing: -0.04em; line-height: 1.15;
+            background: linear-gradient(180deg, var(--text-title) 30%, var(--title-stop) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .row--stack { margin-bottom: 16px; }
+        .logo-row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-end; margin-bottom: 16px; }
+        .logo-row .row { margin-top: 8px; }
+        .spot-card-wrapper {
+            position: relative; max-width: 680px; width: 100%;
+            border-radius: var(--radius-card); background: var(--wrapper-bg); padding: 1px;
+            overflow: hidden;
+        }
+        .spot-card-wrapper::before {
+            content: ""; position: absolute; inset: -1px; border-radius: var(--radius-card);
+            background: radial-gradient(400px circle at var(--card-mouse-x, 30%) var(--card-mouse-y, 0%), var(--glow), transparent 45%);
+            pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .spot-card-wrapper:hover::before { opacity: 1; }
+        .project-card {
+            background: linear-gradient(180deg, var(--card-from) 0%, var(--card-to) 100%);
+            border-radius: var(--radius-card); padding: 32px; position: relative; z-index: 1;
+            box-shadow: var(--shadow-deep);
+        }
+        .project-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+        .project-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; color: var(--text-main); }
+        .project-tag {
+            font-size: 12px; font-weight: 600; color: var(--text-main);
+            background: var(--tag-bg); border: 1px solid var(--border);
+            padding: 4px 11px; border-radius: var(--radius-pill);
+        }
+        .project-desc { font-size: 14px; font-weight: 400; color: var(--text-muted); line-height: 1.65; margin-bottom: 24px; }
+        .project-features { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+        .feature-pill {
+            font-size: 12px; font-weight: 600; color: var(--text-pill);
+            background: var(--btn-ghost-bg); border: 1px solid var(--border);
+            padding: 5px 12px; border-radius: var(--radius-tag);
+        }
+        .project-actions { display: flex; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border); padding-top: 20px; }
+        .copy-block { margin-top: 24px; }
+        .copy-email { display: inline-flex; align-items: center; gap: 8px; }
+        .copy-email a { color: var(--text-main); text-decoration: none; font-weight: 600; font-size: 14px; }
+        .copy-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 28px; height: 28px; padding: 0; border: 1px solid var(--border);
+            border-radius: var(--radius-tag); background: var(--btn-ghost-bg); color: var(--text-muted); cursor: pointer;
+        }
+        .copy-btn:hover, .copy-btn.is-copied { color: var(--text-title); border-color: var(--border-hover); background: var(--tag-bg); }
+        .copy-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .copy-btn .copy-icon--done { display: none; }
+        .copy-btn.is-copied .copy-icon--default { display: none; }
+        .copy-btn.is-copied .copy-icon--done { display: block; }
+        .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .rule { border: 1px solid var(--border); border-radius: var(--radius-card); padding: 16px 20px; background: var(--surface-card); }
+        .rule h3 { font-size: 14px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 8px; color: var(--text-main); }
+        .rule p { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+        .emblem {
+            width: 72px; height: 72px; border-radius: var(--radius-card); display: block;
+            box-shadow: var(--shadow-deep);
+        }
+        .wordmark-demo {
+            position: relative; width: 100%; overflow: hidden; aspect-ratio: 1720 / 190;
+            border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--bg);
+            user-select: none; cursor: default;
+        }
+        .wordmark-glow-ambient {
+            position: absolute; width: 320px; height: 140px;
+            background: radial-gradient(ellipse at center, var(--wordmark-ambient), transparent 70%);
+            filter: blur(40px); pointer-events: none; opacity: 0;
+            transform: translate(-50%, -50%); transition: opacity 0.25s ease; z-index: 1;
+        }
+        .wordmark-svg {
+            width: 100%; height: auto; display: block; position: relative; z-index: 2; overflow: visible;
+        }
+        .wordmark-text-base,
+        .wordmark-static-shine,
+        .wordmark-text-glow {
+            font-family: var(--font); font-weight: 900; font-size: 280px;
+            letter-spacing: 0; fill: transparent;
+        }
+        .wordmark-text-base { stroke: var(--wordmark-stroke); stroke-width: 1.5px; }
+        .wordmark-static-shine {
+            stroke: url(#kitStaticShine); stroke-width: 1.8px; pointer-events: none; opacity: 0.85;
+        }
+        .wordmark-text-glow {
+            stroke: url(#kitStrokeGlow); stroke-width: 2.2px; pointer-events: none;
+        }
+        .gather-text {
+            font-weight: 900; font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+            line-height: 1.15; letter-spacing: -0.04em; cursor: pointer; user-select: none;
+            margin: 8px 0 8px;
+        }
+        .gather-text__word { display: inline-block; white-space: nowrap; padding: 0.06em 0 0.12em; }
+        .gather-text__letter {
+            display: inline-block; line-height: 1.15; padding: 0.08em 0.02em 0.12em;
+            background: linear-gradient(180deg, var(--text-title) 30%, var(--title-stop) 100%);
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+            transform: translate(calc(var(--fx, 0em) + var(--px, 0px)), calc(var(--fy, 0em) + var(--py, 0px))) rotate(calc(var(--fr, 0deg) + var(--pr, 0deg)));
+        }
+        .gather-text__letter--gather {
+            opacity: 0;
+            animation: gather 1.45s cubic-bezier(0.34, 1.15, 0.54, 1) var(--delay, 0ms) forwards;
+        }
+        @keyframes gather {
+            0% { opacity: 0; transform: translate(var(--sx), var(--sy)) rotate(var(--sr)) scale(0.45); }
+            18% { opacity: 1; }
+            58% { transform: translate(var(--mx), var(--my)) rotate(var(--mr)) scale(1.06); }
+            78% { transform: translate(var(--fx), var(--fy)) rotate(calc(var(--fr) + 2deg)) scale(0.97); }
+            100% { opacity: 1; transform: translate(var(--fx), var(--fy)) rotate(var(--fr)) scale(1); }
+        }
+        .geo-list { display: grid; gap: 8px; }
+        .geo-item {
+            display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+            border: 1px solid var(--border); border-radius: var(--radius-card);
+            padding: 16px 20px; background: var(--surface-card);
+        }
+        .geo-item p { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+        .geo-item strong { display: block; font-size: 14px; font-weight: 700; letter-spacing: -0.03em; color: var(--text-main); margin-bottom: 4px; }
+        .geo-sample { flex: none; }
+        .geo-sample--pill {
+            width: 72px; height: 24px; border-radius: var(--radius-pill);
+            border: 1px solid var(--border); background: var(--btn-ghost-bg);
+        }
+        .geo-sample--tag {
+            width: 72px; height: 24px; border-radius: var(--radius-tag);
+            border: 1px solid var(--border); background: var(--btn-ghost-bg);
+        }
+        .geo-sample--card {
+            width: 72px; height: 40px; border-radius: var(--radius-card);
+            border: 1px solid var(--border); background: linear-gradient(180deg, var(--card-from) 0%, var(--card-to) 100%);
+        }
+        .form-demo {
+            max-width: 480px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            padding: 24px;
+            background: linear-gradient(180deg, var(--card-from) 0%, var(--card-to) 100%);
+            box-shadow: var(--shadow-deep);
+        }
+        .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .field label { font-size: 13px; font-weight: 600; color: var(--text-main); }
+        .field input,
+        .field textarea {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-tag);
+            color: var(--text-main);
+            font-family: var(--font);
+            font-size: 16px;
+            font-weight: 400;
+            padding: 8px 16px;
+            width: 100%;
+        }
+        .field textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+        .field input::placeholder,
+        .field textarea::placeholder { color: var(--text-muted); opacity: 1; }
+        .field input:hover,
+        .field textarea:hover { border-color: var(--border-hover); }
+        .form-note { font-size: 14px; font-weight: 400; color: var(--text-muted); margin-top: 16px; }
+        .form-note[hidden] { display: none; }
+        footer {
+            position: relative; z-index: 5; padding: 24px;
+            border-top: 1px solid var(--border); background: var(--bg); text-align: center;
+        }
+        .footer-copy { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+        .code {
+            font-family: var(--font);
+            font-size: 13px; font-weight: 400; color: var(--text-muted);
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-tag); padding: 16px; display: block; overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        @media (max-width: 700px) {
+            .rules { grid-template-columns: 1fr; }
+            .header-right .btn-secondary { display: none; }
+            .wrap { padding: 108px 16px 64px; }
+            .wordmark-text-base { stroke: var(--border-hover); stroke-width: 2.2px; }
+            .wordmark-static-shine { opacity: 1; stroke-width: 2.6px; }
+            .wordmark-text-glow { stroke-width: 3px; }
+            .wordmark-glow-ambient {
+                width: 240px; height: 110px; filter: blur(28px);
+                background: radial-gradient(ellipse at center, var(--glow), transparent 70%);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .gather-text__letter--gather { animation: none; opacity: 1; }
+            .spot-card-wrapper::before { opacity: 0 !important; }
+            .wordmark-glow-ambient { opacity: 0 !important; }
+            .wordmark-text-glow { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid" aria-hidden="true"></div>
+    <div class="header-wrapper">
+        <header class="floating-island">
+            <a href="index.html" class="logo">generativelabs.be</a>
+            <div class="header-right">
+                <nav class="lang-switch" aria-label="Language">
+                    <button type="button" class="lang-btn active" id="btn-nl" onclick="setLanguage('nl')">NL</button>
+                    <button type="button" class="lang-btn" id="btn-en" onclick="setLanguage('en')">EN</button>
+                </nav>
+                <a href="index.html" class="btn btn-secondary" data-text="back">Naar de site</a>
+                <a href="mailto:info@generativelabs.be" class="btn btn-primary" data-text="contact_btn">Contact</a>
+            </div>
+        </header>
+    </div>
+
+    <main class="wrap">
+        <p class="page-kicker" data-text="kicker">Huisstijl</p>
+        <h1 class="page-title" data-text="title">Generative Labs, in onderdelen</h1>
+        <p class="page-lead" data-text="lead">Referentie voor kleur, type, knoppen, kaarten en motion. Nieuwe schermen volgen deze tokens en geometrie. De publieke site blijft een apart oppervlak.</p>
+        <nav class="toc" aria-label="On this page">
+            <a href="#principes" data-text="nav_pr">Principes</a>
+            <a href="#logo" data-text="nav_logo">Logo</a>
+            <a href="#kleur" data-text="nav_color">Kleur</a>
+            <a href="#type" data-text="nav_type">Type</a>
+            <a href="#knoppen" data-text="nav_btn">Knoppen</a>
+            <a href="#pills" data-text="nav_pills">Pills</a>
+            <a href="#kaart" data-text="nav_card">Kaart</a>
+            <a href="#geometrie" data-text="nav_geo">Geometrie</a>
+            <a href="#formulier" data-text="nav_form">Formulier</a>
+            <a href="#titel" data-text="nav_title">Gather</a>
+            <a href="#wordmark" data-text="nav_wm">Wordmark</a>
+        </nav>
+
+        <section class="section" id="principes">
+            <h2 data-text="pr_h">Principes</h2>
+            <p class="hint" data-text="pr_p">Zwart, wit en grijs. Alleen Rubik. Geen extra kleuren, geen emoji, geen em dashes, geen unicode-pijlen. Weinig ruis, veel contrast, pill-knoppen en een muis-glow op kaarten.</p>
+            <div class="rules">
+                <article class="rule">
+                    <h3 data-text="do_h">Doen</h3>
+                    <p data-text="do_p">Monochroom. Rubik 400 voor body, 600 voor knoppen en tags, 700 voor sectie- en kaarttitels, 900 voor display en logo. Witte glow als accent, nooit een merkkleur. Gather-letterfysica, spot-card muisglow en functionele micro-interacties blijven staan.</p>
+                </article>
+                <article class="rule">
+                    <h3 data-text="dont_h">Niet doen</h3>
+                    <p data-text="dont_p">Geen paars, blauw, indigo, groen of oranje. Geen tweede font. Geen emoji. Geen em dash. Geen interne AI-termen of vage marketingtaal. Geen willekeurige radii of inline hex. Geen pulserende CTA's, zwevende illustraties, rondtollende iconen of automatische carrousels.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="logo">
+            <h2 data-text="logo_h">Logo en embleem</h2>
+            <p class="hint" data-text="logo_p">Wordmark in de header: generativelabs.be in Rubik Black, letter-spacing -0.04em. Favicon: een G in dezelfde verticale wit-grijs gradient, op zwart.</p>
+            <div class="logo-row">
+                <img class="emblem" src="/favicon-512.png" alt="Generative Labs mark">
+                <div>
+                    <div class="logo logo--lg">generativelabs.be</div>
+                    <div class="row">
+                        <a class="btn btn-primary" href="/generative-labs-g.png" download="generative-labs-g.png" data-text="dl_png">Download PNG</a>
+                        <a class="btn btn-secondary" href="/favicon.svg" download="generative-labs-g.svg" data-text="dl_svg">SVG</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="kleur">
+            <h2 data-text="color_h">Kleur</h2>
+            <p class="hint" data-text="color_p">Alles hangt aan CSS-variabelen. Geen inline hex in markup. Achtergrond is puur zwart. Tekst is bijna-wit. Muted is koel grijs. Randen zijn wit op 8%.</p>
+            <div class="swatches">
+                <div class="swatch"><div class="swatch-chip swatch-chip--bg"></div><div class="swatch-meta"><strong>--bg</strong><code>#000000</code></div></div>
+                <div class="swatch"><div class="swatch-chip swatch-chip--surface"></div><div class="swatch-meta"><strong>--surface</strong><code>#0a0a0c</code></div></div>
+                <div class="swatch"><div class="swatch-chip swatch-chip--surface-card"></div><div class="swatch-meta"><strong>--surface-card</strong><code>#0e0e11</code></div></div>
+                <div class="swatch"><div class="swatch-chip swatch-chip--text-main"></div><div class="swatch-meta"><strong>--text-main</strong><code>#f4f4f5</code></div></div>
+                <div class="swatch"><div class="swatch-chip swatch-chip--text-muted"></div><div class="swatch-meta"><strong>--text-muted</strong><code>#8e8e93</code></div></div>
+                <div class="swatch"><div class="swatch-chip swatch-chip--title-stop"></div><div class="swatch-meta"><strong>--title-stop</strong><code>#71717a</code></div></div>
+            </div>
+        </section>
+
+        <section class="section" id="type">
+            <h2 data-text="type_h">Typografie</h2>
+            <p class="hint" data-text="type_p">Alleen Rubik. Black 900 voor display en logo. Bold 700 voor sectie- en kaarttitels. Semibold 600 voor knoppen en badges. Regular 400 voor body. Titels mogen een verticale gradient van wit naar --title-stop hebben.</p>
+            <div class="type-stack">
+                <div class="type-row"><div class="lab">Rubik Black 900, display</div><div class="t-black">Intelligente digitale producten</div></div>
+                <div class="type-row"><div class="lab">Gradient fill, 900</div><div class="t-grad">Website in aanbouw</div></div>
+                <div class="type-row"><div class="lab">Rubik Bold 700, sectie en kaart</div><div class="t-bold">Leerkrachtentools.be</div></div>
+                <div class="type-row"><div class="lab">Rubik Semibold 600, knop</div><div class="t-semi">Contacteer ons</div></div>
+                <div class="type-row"><div class="lab">Rubik Regular 400, body</div><div class="t-body">Voor vragen of contact kan je ons rechtstreeks bereiken via e-mail.</div></div>
+            </div>
+        </section>
+
+        <section class="section" id="knoppen">
+            <h2 data-text="btn_h">Knoppen</h2>
+            <p class="hint" data-text="btn_p">Altijd pill, border-radius 9999px. Primary heeft een donkere verticale gradient en een inset highlight. Secondary is ghost. Externe links krijgen een SVG-pijl, nooit een unicode-teken.</p>
+            <div class="row row--stack">
+                <a href="#" class="btn btn-primary">Contact</a>
+                <a href="#" class="btn btn-secondary">Leerkrachtentools <svg class="btn-icon" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 10.5 L10.5 3.5"/><path d="M4.5 3.5 H10.5 V9.5"/></svg></a>
+                <a href="#" class="btn btn-primary btn-large">Naar leerkrachtentools.be <svg class="btn-icon" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 10.5 L10.5 3.5"/><path d="M4.5 3.5 H10.5 V9.5"/></svg></a>
+                <a href="#" class="btn btn-secondary btn-large">Contacteer voor prijzen en toegang</a>
+            </div>
+            <code class="code">.btn .btn-primary
+.btn .btn-secondary
+.btn.btn-large</code>
+        </section>
+
+        <section class="section" id="pills">
+            <h2 data-text="pills_h">Pills en tags</h2>
+            <p class="hint" data-text="pills_p">Feature-pills zijn rechthoekig met 8px afronding. Status-tags zijn volledig rond. De taalwisselaar is een mini-pill in de header.</p>
+            <div class="row row--stack">
+                <span class="feature-pill">Doelkoppeling</span>
+                <span class="feature-pill">Op.stap, ZILL, GO!, OVSG en meer!</span>
+                <span class="feature-pill">Volledige minimumdoelen dekking</span>
+                <span class="feature-pill">Doelenverbeteraar</span>
+                <span class="project-tag">Release</span>
+                <div class="lang-switch" aria-hidden="true">
+                    <button class="lang-btn active" type="button" tabindex="-1">NL</button>
+                    <button class="lang-btn" type="button" tabindex="-1">EN</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="kaart">
+            <h2 data-text="card_h">Projectkaart</h2>
+            <p class="hint" data-text="card_p">Spot-wrapper van 20px met 1px padding en muis-glow. Binnenkaart met verticale gradient. Titel 700, status-tag rechts, body muted, feature-pills, actieregel met border-top. Schaduw is diep en donker.</p>
+            <article class="spot-card-wrapper" id="demoCard">
+                <div class="project-card">
+                    <header class="project-header">
+                        <h3 class="project-title">Leerkrachtentools.be</h3>
+                        <span class="project-tag">Release</span>
+                    </header>
+                    <p class="project-desc" data-text="card_desc">Privé platform, API en audits op aanvraag om efficiënter lessen voor te bereiden, en om lesdoelen te koppelen aan minimumdoelen en leerplandoelen.</p>
+                    <div class="project-features">
+                        <span class="feature-pill">Doelkoppeling</span>
+                        <span class="feature-pill">Doelenverbeteraar</span>
+                    </div>
+                    <div class="project-actions">
+                        <a href="https://leerkrachtentools.be" target="_blank" rel="noopener" class="btn btn-primary btn-large">Naar leerkrachtentools.be <svg class="btn-icon" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 10.5 L10.5 3.5"/><path d="M4.5 3.5 H10.5 V9.5"/></svg></a>
+                        <a href="mailto:info@generativelabs.be" class="btn btn-secondary btn-large" data-text="card_mail">Contacteer ons</a>
+                    </div>
+                </div>
+            </article>
+            <div class="copy-block">
+                <p class="hint" data-text="copy_p">E-mailregel met copy-knop.</p>
+                <span class="copy-email">
+                    <a href="mailto:info@generativelabs.be">info@generativelabs.be</a>
+                    <button type="button" class="copy-btn" id="copyEmailBtn" aria-label="Kopieer e-mailadres">
+                        <svg class="copy-icon--default" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <svg class="copy-icon--done" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 L9 17 L4 12"/></svg>
+                    </button>
+                </span>
+            </div>
+        </section>
+
+        <section class="section" id="geometrie">
+            <h2 data-text="geo_h">Geometrie</h2>
+            <p class="hint" data-text="geo_p">Drie radii, verder niets. Geen 6, 10, 12 of 14 pixels op hoeken.</p>
+            <div class="geo-list">
+                <div class="geo-item">
+                    <div>
+                        <strong>--radius-pill, 9999px</strong>
+                        <p data-text="geo_pill">Knoppen, status-tags, header-island, taalwisselaar.</p>
+                    </div>
+                    <div class="geo-sample geo-sample--pill" aria-hidden="true"></div>
+                </div>
+                <div class="geo-item">
+                    <div>
+                        <strong>--radius-tag, 8px</strong>
+                        <p data-text="geo_tag">Feature-pills, formuliervelden, codeblokken.</p>
+                    </div>
+                    <div class="geo-sample geo-sample--tag" aria-hidden="true"></div>
+                </div>
+                <div class="geo-item">
+                    <div>
+                        <strong>--radius-card, 20px</strong>
+                        <p data-text="geo_card">Kaarten, wrappers, swatches, embleem.</p>
+                    </div>
+                    <div class="geo-sample geo-sample--card" aria-hidden="true"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="formulier">
+            <h2 data-text="form_h">Formulier en focus</h2>
+            <p class="hint" data-text="form_p">Elk veld heeft een permanent label, gekoppeld via for en id. Placeholder is geen vervanging. Tab naar een veld of knop toont een focus-ring.</p>
+            <form class="form-demo" id="demoForm" action="#" method="post">
+                <div class="field">
+                    <label for="demo-name" data-text="label_name">Naam</label>
+                    <input id="demo-name" name="name" type="text" autocomplete="name" placeholder="Jan Peeters">
+                </div>
+                <div class="field">
+                    <label for="demo-email" data-text="label_email">E-mail</label>
+                    <input id="demo-email" name="email" type="email" autocomplete="email" placeholder="jan@school.be">
+                </div>
+                <div class="field">
+                    <label for="demo-message" data-text="label_message">Bericht</label>
+                    <textarea id="demo-message" name="message" placeholder="Waarover mogen we contact opnemen?"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" data-text="form_send">Verstuur</button>
+                <p class="form-note" id="formNote" hidden data-text="form_ok">Dit is een demo. Er wordt niets verstuurd.</p>
+            </form>
+        </section>
+
+        <section class="section" id="titel">
+            <h2 data-text="title_h">Signatuur: gather-tekst</h2>
+            <p class="hint" data-text="title_p">Kern van de merkidentiteit. Nooit verwijderen, vereenvoudigen of rechtzetten tot een statische h1, tenzij daar expliciet om wordt gevraagd. Klik speelt de gather. Muis duwt letters licht weg. Alleen bij prefers-reduced-motion staan de letters meteen op hun eindpositie, nog steeds scheef.</p>
+            <h3 class="gather-text" id="heroTitle">Intelligente digitale producten</h3>
+            <div class="rules copy-block">
+                <article class="rule">
+                    <h3 data-text="gather_span_h">Per letter een span</h3>
+                    <p data-text="gather_span_p">Elke letter leeft in .gather-text__letter met --fx, --fy, --fr, --sx, --sy, --sr, --mx, --my, --mr. De JavaScript-fysica via requestAnimationFrame en de gather bij klik blijven altijd behouden.</p>
+                </article>
+                <article class="rule">
+                    <h3 data-text="gather_tilt_h">Asymmetrie is verplicht</h3>
+                    <p data-text="gather_tilt_p">Lichte rotatie van 2 tot 6 graden per letter. Niet recht trekken. Reduced motion zet de letters op die eindpositie, zonder gather of muisfysica.</p>
+                </article>
+            </div>
+            <code class="code copy-block">.gather-text
+.gather-text__letter
+--fx --fy --fr
+--sx --sy --sr
+--mx --my --mr</code>
+        </section>
+
+        <section class="section" id="wordmark">
+            <h2 data-text="wm_h">Achtergrond-wordmark</h2>
+            <p class="hint" data-text="wm_p">Drie lagen, zoals op de live site: een dunne outline, een vaste glans op de linkercurve, en een muisglow die de stroke volgt. Beweeg over de letters. Op de live site is de onderste helft afgesneden tegen de footer. Hier dezelfde crop als voorbeeld.</p>
+            <div class="wordmark-demo" id="wordmarkDemo">
+                <div class="wordmark-glow-ambient" id="wordmarkAmbient" aria-hidden="true"></div>
+                <svg class="wordmark-svg" viewBox="0 0 1720 380" preserveAspectRatio="xMidYMin slice" aria-hidden="true">
+                    <defs>
+                        <radialGradient id="kitMouseLight" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="var(--text-title)" stop-opacity="1" />
+                            <stop offset="60%" stop-color="var(--text-title)" stop-opacity="0.3" />
+                            <stop offset="100%" stop-color="var(--text-title)" stop-opacity="0" />
+                        </radialGradient>
+                        <mask id="kitGlowMask">
+                            <circle id="kitMaskFollower" cx="-500" cy="-500" r="180" fill="url(#kitMouseLight)" />
+                        </mask>
+                        <linearGradient id="kitStrokeGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="var(--text-title)" stop-opacity="0.4" />
+                            <stop offset="50%" stop-color="var(--text-title)" stop-opacity="1" />
+                            <stop offset="100%" stop-color="var(--text-title)" stop-opacity="0.4" />
+                        </linearGradient>
+                        <linearGradient id="kitStaticShine" x1="0%" y1="0%" x2="45%" y2="0%">
+                            <stop offset="0%" stop-color="var(--text-title)" stop-opacity="0.9" />
+                            <stop offset="25%" stop-color="var(--text-title)" stop-opacity="0.4" />
+                            <stop offset="100%" stop-color="var(--text-title)" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <text x="50%" y="78%" text-anchor="middle" class="wordmark-text-base">Generative</text>
+                    <text x="50%" y="78%" text-anchor="middle" class="wordmark-static-shine">Generative</text>
+                    <text x="50%" y="78%" text-anchor="middle" class="wordmark-text-glow" mask="url(#kitGlowMask)">Generative</text>
+                </svg>
+            </div>
+            <div class="rules copy-block">
+                <article class="rule">
+                    <h3 data-text="wm_layers_h">Drie lagen</h3>
+                    <p data-text="wm_layers_p">.wordmark-text-base is de rustige outline. .wordmark-static-shine is de vaste glans links. .wordmark-text-glow volgt de muis via een SVG-mask. Dat is goedgekeurde merkmotion, geen zwevende illustratie.</p>
+                </article>
+                <article class="rule">
+                    <h3 data-text="wm_motion_h">Muis en reduced motion</h3>
+                    <p data-text="wm_motion_p">Op desktop volgt de glow de cursor. Zonder hover veegt de glow langzaam over de letters. Bij prefers-reduced-motion blijven alleen outline en vaste glans over.</p>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p class="footer-copy">© 2026 Generative Labs. <span data-text="footer_rights">Alle rechten voorbehouden.</span></p>
+    </footer>
+
+    <script>
+        const translations = {
+            nl: {
+                back: "Naar de site",
+                contact_btn: "Contact",
+                kicker: "Huisstijl",
+                title: "Generative Labs, in onderdelen",
+                lead: "Referentie voor kleur, type, knoppen, kaarten en motion. Nieuwe schermen volgen deze tokens en geometrie. De publieke site blijft een apart oppervlak.",
+                nav_pr: "Principes", nav_logo: "Logo", nav_color: "Kleur", nav_type: "Type",
+                nav_btn: "Knoppen", nav_pills: "Pills", nav_card: "Kaart", nav_geo: "Geometrie", nav_form: "Formulier", nav_title: "Gather", nav_wm: "Wordmark",
+                pr_h: "Principes",
+                pr_p: "Zwart, wit en grijs. Alleen Rubik. Geen extra kleuren, geen emoji, geen em dashes, geen unicode-pijlen. Weinig ruis, veel contrast, pill-knoppen en een muis-glow op kaarten.",
+                do_h: "Doen", do_p: "Monochroom. Rubik 400 voor body, 600 voor knoppen en tags, 700 voor sectie- en kaarttitels, 900 voor display en logo. Witte glow als accent, nooit een merkkleur. Gather-letterfysica, spot-card muisglow en functionele micro-interacties blijven staan.",
+                dont_h: "Niet doen", dont_p: "Geen paars, blauw, indigo, groen of oranje. Geen tweede font. Geen emoji. Geen em dash. Geen interne AI-termen of vage marketingtaal. Geen willekeurige radii of inline hex. Geen pulserende CTA's, zwevende illustraties, rondtollende iconen of automatische carrousels.",
+                logo_h: "Logo en embleem",
+                logo_p: "Wordmark in de header: generativelabs.be in Rubik Black, letter-spacing -0.04em. Favicon: een G in dezelfde verticale wit-grijs gradient, op zwart.",
+                dl_png: "Download PNG",
+                dl_svg: "SVG",
+                color_h: "Kleur",
+                color_p: "Alles hangt aan CSS-variabelen. Geen inline hex in markup. Achtergrond is puur zwart. Tekst is bijna-wit. Muted is koel grijs. Randen zijn wit op 8%.",
+                type_h: "Typografie",
+                type_p: "Alleen Rubik. Black 900 voor display en logo. Bold 700 voor sectie- en kaarttitels. Semibold 600 voor knoppen en badges. Regular 400 voor body. Titels mogen een verticale gradient van wit naar --title-stop hebben.",
+                btn_h: "Knoppen",
+                btn_p: "Altijd pill, border-radius 9999px. Primary heeft een donkere verticale gradient en een inset highlight. Secondary is ghost. Externe links krijgen een SVG-pijl, nooit een unicode-teken.",
+                pills_h: "Pills en tags",
+                pills_p: "Feature-pills zijn rechthoekig met 8px afronding. Status-tags zijn volledig rond. De taalwisselaar is een mini-pill in de header.",
+                card_h: "Projectkaart",
+                card_p: "Spot-wrapper van 20px met 1px padding en muis-glow. Binnenkaart met verticale gradient. Titel 700, status-tag rechts, body muted, feature-pills, actieregel met border-top. Schaduw is diep en donker.",
+                card_desc: "Privé platform, API en audits op aanvraag om efficiënter lessen voor te bereiden, en om lesdoelen te koppelen aan minimumdoelen en leerplandoelen.",
+                card_mail: "Contacteer ons",
+                copy_p: "E-mailregel met copy-knop.",
+                geo_h: "Geometrie",
+                geo_p: "Drie radii, verder niets. Geen 6, 10, 12 of 14 pixels op hoeken.",
+                geo_pill: "Knoppen, status-tags, header-island, taalwisselaar.",
+                geo_tag: "Feature-pills, formuliervelden, codeblokken.",
+                geo_card: "Kaarten, wrappers, swatches, embleem.",
+                form_h: "Formulier en focus",
+                form_p: "Elk veld heeft een permanent label, gekoppeld via for en id. Placeholder is geen vervanging. Tab naar een veld of knop toont een focus-ring.",
+                label_name: "Naam",
+                label_email: "E-mail",
+                label_message: "Bericht",
+                form_send: "Verstuur",
+                form_ok: "Dit is een demo. Er wordt niets verstuurd.",
+                title_h: "Signatuur: gather-tekst",
+                title_p: "Kern van de merkidentiteit. Nooit verwijderen, vereenvoudigen of rechtzetten tot een statische h1, tenzij daar expliciet om wordt gevraagd. Klik speelt de gather. Muis duwt letters licht weg. Alleen bij prefers-reduced-motion staan de letters meteen op hun eindpositie, nog steeds scheef.",
+                gather_span_h: "Per letter een span",
+                gather_span_p: "Elke letter leeft in .gather-text__letter met --fx, --fy, --fr, --sx, --sy, --sr, --mx, --my, --mr. De JavaScript-fysica via requestAnimationFrame en de gather bij klik blijven altijd behouden.",
+                gather_tilt_h: "Asymmetrie is verplicht",
+                gather_tilt_p: "Lichte rotatie van 2 tot 6 graden per letter. Niet recht trekken. Reduced motion zet de letters op die eindpositie, zonder gather of muisfysica.",
+                wm_h: "Achtergrond-wordmark",
+                wm_p: "Drie lagen, zoals op de live site: een dunne outline, een vaste glans op de linkercurve, en een muisglow die de stroke volgt. Beweeg over de letters. Op de live site is de onderste helft afgesneden tegen de footer. Hier dezelfde crop als voorbeeld.",
+                wm_layers_h: "Drie lagen",
+                wm_layers_p: ".wordmark-text-base is de rustige outline. .wordmark-static-shine is de vaste glans links. .wordmark-text-glow volgt de muis via een SVG-mask. Dat is goedgekeurde merkmotion, geen zwevende illustratie.",
+                wm_motion_h: "Muis en reduced motion",
+                wm_motion_p: "Op desktop volgt de glow de cursor. Zonder hover veegt de glow langzaam over de letters. Bij prefers-reduced-motion blijven alleen outline en vaste glans over.",
+                footer_rights: "Alle rechten voorbehouden."
+            },
+            en: {
+                back: "To the site",
+                contact_btn: "Contact",
+                kicker: "Brand",
+                title: "Generative Labs, in parts",
+                lead: "A reference for colour, type, buttons, cards and motion. New screens follow these tokens and this geometry. The public site stays a separate surface.",
+                nav_pr: "Principles", nav_logo: "Logo", nav_color: "Colour", nav_type: "Type",
+                nav_btn: "Buttons", nav_pills: "Pills", nav_card: "Card", nav_geo: "Geometry", nav_form: "Form", nav_title: "Gather", nav_wm: "Wordmark",
+                pr_h: "Principles",
+                pr_p: "Black, white and grey. Rubik only. No extra colours, no emoji, no em dashes, no unicode arrows. Little noise, high contrast, pill buttons and a mouse glow on cards.",
+                do_h: "Do", do_p: "Monochrome. Rubik 400 for body, 600 for buttons and tags, 700 for section and card titles, 900 for display and logo. White glow as accent, never a brand colour. Gather-letter physics, the spot-card mouse glow, and functional micro-interactions stay.",
+                dont_h: "Don't", dont_p: "No purple, blue, indigo, green or orange. No second font. No emoji. No em dash. No internal AI terms or vague marketing language. No arbitrary radii or inline hex. No pulsing CTAs, floating illustrations, spinning icons, or automatic carousels.",
+                logo_h: "Logo and mark",
+                logo_p: "Header wordmark: generativelabs.be in Rubik Black, letter-spacing -0.04em. Favicon: a G with the same white-to-grey vertical gradient on black.",
+                dl_png: "Download PNG",
+                dl_svg: "SVG",
+                color_h: "Colour",
+                color_p: "Everything sits on CSS variables. No inline hex in markup. Background is pure black. Text is near-white. Muted is cool grey. Borders are white at 8%.",
+                type_h: "Typography",
+                type_p: "Rubik only. Black 900 for display and logo. Bold 700 for section and card titles. Semibold 600 for buttons and badges. Regular 400 for body. Titles may use a vertical gradient from white to --title-stop.",
+                btn_h: "Buttons",
+                btn_p: "Always a pill, border-radius 9999px. Primary has a dark vertical gradient and an inset highlight. Secondary is ghost. External links get an SVG arrow, never a unicode character.",
+                pills_h: "Pills and tags",
+                pills_p: "Feature pills are rectangles with 8px rounding. Status tags are fully round. The language switch is a mini-pill in the header.",
+                card_h: "Project card",
+                card_p: "Spot wrapper at 20px with 1px padding and a mouse glow. Inner card with a vertical gradient. Title 700, status tag on the right, muted body, feature pills, action row with a top border. Shadow is deep and dark.",
+                card_desc: "Private platform, API, and audits on request for efficient lesson preparation, linking lesson goals with minimum goals and curriculum standards.",
+                card_mail: "Contact us",
+                copy_p: "Email row with copy button.",
+                geo_h: "Geometry",
+                geo_p: "Three radii, nothing else. No 6, 10, 12 or 14 pixels on corners.",
+                geo_pill: "Buttons, status tags, header island, language switch.",
+                geo_tag: "Feature pills, form fields, code blocks.",
+                geo_card: "Cards, wrappers, swatches, mark.",
+                form_h: "Form and focus",
+                form_p: "Every field has a permanent label, linked with for and id. A placeholder is not a substitute. Tab to a field or button to see the focus ring.",
+                label_name: "Name",
+                label_email: "Email",
+                label_message: "Message",
+                form_send: "Send",
+                form_ok: "This is a demo. Nothing is sent.",
+                title_h: "Signature: gather text",
+                title_p: "Core of the brand. Never remove it, simplify it, or flatten it into a static h1 unless that is asked for explicitly. Click plays the gather. The mouse nudges letters away. Only with prefers-reduced-motion do the letters sit at once on their end position, still tilted.",
+                gather_span_h: "One span per letter",
+                gather_span_p: "Each letter lives in .gather-text__letter with --fx, --fy, --fr, --sx, --sy, --sr, --mx, --my, --mr. The JavaScript physics via requestAnimationFrame and the gather on click always stay.",
+                gather_tilt_h: "Asymmetry is required",
+                gather_tilt_p: "A light rotation of 2 to 6 degrees per letter. Do not straighten. Reduced motion places the letters on that end position, without gather or mouse physics.",
+                wm_h: "Background wordmark",
+                wm_p: "Three layers, as on the live site: a thin outline, a fixed shine on the left curve, and a mouse glow that follows the stroke. Move over the letters. On the live site the bottom half is clipped against the footer. Here the same crop as the example.",
+                wm_layers_h: "Three layers",
+                wm_layers_p: ".wordmark-text-base is the quiet outline. .wordmark-static-shine is the fixed shine on the left. .wordmark-text-glow follows the mouse through an SVG mask. That is approved brand motion, not a floating cliche.",
+                wm_motion_h: "Mouse and reduced motion",
+                wm_motion_p: "On desktop the glow follows the cursor. Without hover the glow sweeps slowly across the letters. With prefers-reduced-motion only the outline and fixed shine remain.",
+                footer_rights: "All rights reserved."
+            }
+        };
+
+        const LANG_KEY = 'gl-lang';
+        const heroTitle = document.getElementById('heroTitle');
+        let currentLang = 'nl';
+        let gatherPlaying = false;
+        const GOLDEN_ANGLE = 2.399963;
+        let physicsLetters = [];
+        let physicsMouse = { x: 0, y: 0, inside: false };
+        let physicsRaf = 0;
+
+        function guessLang() {
+            const list = (navigator.languages && navigator.languages.length ? Array.from(navigator.languages) : [navigator.language || '']).map((l) => String(l).toLowerCase());
+            const hasNl = list.some((l) => l === 'nl' || l.startsWith('nl-'));
+            let tz = '';
+            try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (err) {}
+            const primary = list[0] || '';
+            if (hasNl) return 'nl';
+            if (tz === 'Europe/Amsterdam') return 'nl';
+            if (tz === 'Europe/Brussels' && !primary.startsWith('fr') && !primary.startsWith('de')) return 'nl';
+            return 'en';
+        }
+        function readSavedLang() {
+            try {
+                const saved = localStorage.getItem(LANG_KEY);
+                if (saved === 'en' || saved === 'nl') return saved;
+            } catch (err) {}
+            return guessLang();
+        }
+        function scatterOffset(i) {
+            const angle = i * GOLDEN_ANGLE;
+            const radiusEm = 4.2 + (i % 5) * 0.8;
+            return { xEm: Math.cos(angle) * radiusEm, yEm: Math.sin(angle) * radiusEm, rotateDeg: (i % 2 === 0 ? -1 : 1) * (18 + (i % 6) * 4) };
+        }
+        function mountTitle(text, play) {
+            if (!heroTitle) return;
+            heroTitle.replaceChildren();
+            let n = 0;
+            String(text).split(/(\s+)/).forEach((token) => {
+                if (/^\s+$/.test(token)) { heroTitle.appendChild(document.createTextNode(' ')); return; }
+                const word = document.createElement('span');
+                word.className = 'gather-text__word';
+                Array.from(token).forEach((char) => {
+                    const i = n++;
+                    const final = { xEm: 0, yEm: i % 2 === 0 ? 0.04 : -0.04, rotateDeg: (i % 2 === 0 ? -1 : 1) * (3.5 + (i % 4) * 0.8) };
+                    const scatter = scatterOffset(i);
+                    const swirl = i % 2 === 0 ? 1 : -1;
+                    const span = document.createElement('span');
+                    span.className = 'gather-text__letter' + (play ? ' gather-text__letter--gather' : '');
+                    span.textContent = char;
+                    span.style.setProperty('--fx', final.xEm + 'em');
+                    span.style.setProperty('--fy', final.yEm + 'em');
+                    span.style.setProperty('--fr', final.rotateDeg + 'deg');
+                    span.style.setProperty('--sx', scatter.xEm + 'em');
+                    span.style.setProperty('--sy', scatter.yEm + 'em');
+                    span.style.setProperty('--sr', scatter.rotateDeg + 'deg');
+                    span.style.setProperty('--mx', (scatter.xEm * 0.35 + swirl * 1.2) + 'em');
+                    span.style.setProperty('--my', (scatter.yEm * 0.35 - swirl * 0.8) + 'em');
+                    span.style.setProperty('--mr', (final.rotateDeg * 0.45 + scatter.rotateDeg * 0.25) + 'deg');
+                    span.style.setProperty('--delay', (i * 55) + 'ms');
+                    word.appendChild(span);
+                });
+                heroTitle.appendChild(word);
+            });
+        }
+        function enablePhysics() {
+            if (!heroTitle || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            physicsLetters = Array.from(heroTitle.querySelectorAll('.gather-text__letter')).map((el) => {
+                el.classList.remove('gather-text__letter--gather');
+                return { el, x: 0, y: 0, r: 0, vx: 0, vy: 0, vr: 0 };
+            });
+            if (physicsRaf) return;
+            const tick = () => {
+                physicsRaf = requestAnimationFrame(tick);
+                if (gatherPlaying) return;
+                physicsLetters.forEach((p) => {
+                    let ax = -0.14 * p.x, ay = -0.14 * p.y, ar = -0.14 * p.r;
+                    if (physicsMouse.inside) {
+                        const box = p.el.getBoundingClientRect();
+                        const dx = box.left + box.width / 2 - physicsMouse.x;
+                        const dy = box.top + box.height / 2 - physicsMouse.y;
+                        const dist = Math.hypot(dx, dy) || 1;
+                        if (dist < 110) {
+                            const t = 1 - dist / 110;
+                            ax += (dx / dist) * 20 * t * t;
+                            ay += (dy / dist) * 20 * t * t;
+                            ar += (dx >= 0 ? 1 : -1) * t * 8;
+                        }
+                    }
+                    p.vx = (p.vx + ax) * 0.76;
+                    p.vy = (p.vy + ay) * 0.76;
+                    p.vr = (p.vr + ar) * 0.76;
+                    p.x = Math.max(-12, Math.min(12, p.x + p.vx));
+                    p.y = Math.max(-10, Math.min(10, p.y + p.vy));
+                    p.r = Math.max(-5, Math.min(5, p.r + p.vr * 0.2));
+                    p.el.style.setProperty('--px', p.x.toFixed(2) + 'px');
+                    p.el.style.setProperty('--py', p.y.toFixed(2) + 'px');
+                    p.el.style.setProperty('--pr', p.r.toFixed(2) + 'deg');
+                });
+            };
+            physicsRaf = requestAnimationFrame(tick);
+        }
+        function playGather() {
+            if (!heroTitle || gatherPlaying) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                mountTitle(currentLang === 'en' ? 'Intelligent digital products' : 'Intelligente digitale producten', false);
+                return;
+            }
+            gatherPlaying = true;
+            physicsLetters = [];
+            mountTitle(currentLang === 'en' ? 'Intelligent digital products' : 'Intelligente digitale producten', true);
+            const n = 28;
+            window.setTimeout(() => { gatherPlaying = false; enablePhysics(); }, 1450 + n * 55);
+        }
+        function setLanguage(lang, opts) {
+            opts = opts || {};
+            if (lang !== 'nl' && lang !== 'en') lang = 'nl';
+            currentLang = lang;
+            if (opts.persist !== false) {
+                try { localStorage.setItem(LANG_KEY, lang); } catch (err) {}
+            }
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-text]').forEach((el) => {
+                const key = el.getAttribute('data-text');
+                if (translations[lang] && translations[lang][key]) el.textContent = translations[lang][key];
+            });
+            document.getElementById('btn-nl').classList.toggle('active', lang === 'nl');
+            document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+            const copyBtn = document.getElementById('copyEmailBtn');
+            if (copyBtn) copyBtn.setAttribute('aria-label', lang === 'en' ? 'Copy email address' : 'Kopieer e-mailadres');
+            if (heroTitle && !gatherPlaying) {
+                mountTitle(lang === 'en' ? 'Intelligent digital products' : 'Intelligente digitale producten', false);
+                enablePhysics();
+            }
+        }
+
+        setLanguage(readSavedLang(), { persist: false });
+        if (heroTitle) {
+            playGather();
+            heroTitle.addEventListener('click', playGather);
+            heroTitle.addEventListener('mousemove', (e) => { physicsMouse.inside = true; physicsMouse.x = e.clientX; physicsMouse.y = e.clientY; });
+            heroTitle.addEventListener('mouseleave', () => { physicsMouse.inside = false; });
+        }
+        const demoCard = document.getElementById('demoCard');
+        if (demoCard) {
+            demoCard.addEventListener('mousemove', (e) => {
+                const r = demoCard.getBoundingClientRect();
+                demoCard.style.setProperty('--card-mouse-x', (e.clientX - r.left) + 'px');
+                demoCard.style.setProperty('--card-mouse-y', (e.clientY - r.top) + 'px');
+            });
+        }
+        const copyBtn = document.getElementById('copyEmailBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async () => {
+                try { await navigator.clipboard.writeText('info@generativelabs.be'); } catch (err) {}
+                copyBtn.classList.add('is-copied');
+                window.setTimeout(() => copyBtn.classList.remove('is-copied'), 1800);
+            });
+        }
+        const demoForm = document.getElementById('demoForm');
+        const formNote = document.getElementById('formNote');
+        if (demoForm && formNote) {
+            demoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                formNote.hidden = false;
+            });
+        }
+
+        const wordmarkDemo = document.getElementById('wordmarkDemo');
+        const maskFollower = document.getElementById('kitMaskFollower');
+        const wordmarkAmbient = document.getElementById('wordmarkAmbient');
+        if (wordmarkDemo && maskFollower && wordmarkAmbient) {
+            const applyWordmarkGlow = (x, y, rect) => {
+                maskFollower.setAttribute('cx', String((x / rect.width) * 1720));
+                maskFollower.setAttribute('cy', String((y / rect.height) * 190));
+                wordmarkAmbient.style.left = x + 'px';
+                wordmarkAmbient.style.top = y + 'px';
+                wordmarkAmbient.style.opacity = '1';
+            };
+            wordmarkDemo.addEventListener('mousemove', (e) => {
+                const rect = wordmarkDemo.getBoundingClientRect();
+                applyWordmarkGlow(e.clientX - rect.left, e.clientY - rect.top, rect);
+            });
+            wordmarkDemo.addEventListener('touchmove', (e) => {
+                const t = e.touches[0];
+                if (!t) return;
+                const rect = wordmarkDemo.getBoundingClientRect();
+                applyWordmarkGlow(t.clientX - rect.left, t.clientY - rect.top, rect);
+            }, { passive: true });
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const noHover = window.matchMedia('(ho
+            ver: none)').matches;
+            if (!noHover) {
+                wordmarkDemo.addEventListener('mouseleave', () => {
+                    maskFollower.setAttribute('cx', '-500');
+                    maskFollower.setAttribute('cy', '-500');
+                    wordmarkAmbient.style.opacity = '0';
+                });
+            } else if (!reduceMotion) {
+                const sweep = (now) => {
+                    const rect = wordmarkDemo.getBoundingClientRect();
+                    if (rect.width > 0) {
+                        const cycle = (now / 3800) % 1;
+                        const u = cycle < 0.5 ? cycle * 2 : 2 - cycle * 2;
+                        applyWordmarkGlow(rect.width * (0.1 + u * 0.8), rect.height * 0.7, rect);
+                    }
+                    requestAnimationFrame(sweep);
+                };
+                requestAnimationFrame(sweep);
+            }
+        }
+    </script>
+</body>
+</html>

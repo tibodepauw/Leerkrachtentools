@@ -437,3 +437,219 @@
       scale(1.025);
   }
 }
+
+/* Generative Labs huisstijl overlay. Classic design stays default. */
+html[data-visual-theme="huisstijl"] {
+  --gl-bg: #000000;
+  --gl-surface: #0a0a0c;
+  --gl-surface-card: #0e0e11;
+  --gl-border: rgba(255, 255, 255, 0.08);
+  --gl-border-hover: rgba(255, 255, 255, 0.22);
+  --gl-text-main: #f4f4f5;
+  --gl-text-muted: #8e8e93;
+  --gl-title-stop: #71717a;
+  --gl-text-title: #ffffff;
+  --gl-text-pill: #a1a1aa;
+  --gl-btn-from: #242429;
+  --gl-btn-to: #131316;
+  --gl-btn-border: rgba(255, 255, 255, 0.14);
+  --gl-btn-inset: rgba(255, 255, 255, 0.18);
+  --gl-ghost: rgba(255, 255, 255, 0.04);
+  --gl-tag: rgba(255, 255, 255, 0.06);
+  --gl-card-from: #0e0e11;
+  --gl-card-to: #08080a;
+  --gl-radius-pill: 9999px;
+  --gl-radius-tag: 8px;
+  --gl-radius-card: 20px;
+  --gl-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  --background: #000000;
+  --foreground: #f4f4f5;
+  --card: #0e0e11;
+  --card-foreground: #f4f4f5;
+  --popover: #0e0e11;
+  --popover-foreground: #f4f4f5;
+  --primary: #f4f4f5;
+  --primary-foreground: #0a0a0c;
+  --secondary: #0e0e11;
+  --secondary-foreground: #f4f4f5;
+  --muted: #0e0e11;
+  --muted-foreground: #8e8e93;
+  --accent: #0e0e11;
+  --accent-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #f4f4f5;
+  --sidebar: #0a0a0c;
+  --sidebar-foreground: #f4f4f5;
+  --sidebar-accent: #0e0e11;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --radius: 1.25rem;
+}
+
+html[data-visual-theme="huisstijl"] body {
+  background: var(--gl-bg);
+  color: var(--gl-text-main);
+}
+
+html[data-visual-theme="huisstijl"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, #000 60%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[data-visual-theme="huisstijl"] body > *:not(.visual-theme-toggle) {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-visual-theme="huisstijl"] :focus-visible {
+  outline: 2px solid var(--gl-text-main);
+  outline-offset: 3px;
+}
+
+html[data-visual-theme="huisstijl"] .bg-black,
+html[data-visual-theme="huisstijl"] .bg-neutral-950,
+html[data-visual-theme="huisstijl"] .bg-neutral-900 {
+  background-color: var(--gl-surface) !important;
+}
+
+html[data-visual-theme="huisstijl"] .min-h-screen.bg-black {
+  background-color: var(--gl-bg) !important;
+}
+
+html[data-visual-theme="huisstijl"] .border-neutral-800,
+html[data-visual-theme="huisstijl"] .border-neutral-700 {
+  border-color: var(--gl-border) !important;
+}
+
+html[data-visual-theme="huisstijl"] .text-neutral-500,
+html[data-visual-theme="huisstijl"] .text-neutral-400 {
+  color: var(--gl-text-muted) !important;
+}
+
+html[data-visual-theme="huisstijl"] .rounded-xl,
+html[data-visual-theme="huisstijl"] .rounded-lg {
+  border-radius: var(--gl-radius-card) !important;
+}
+
+html[data-visual-theme="huisstijl"] h1 {
+  letter-spacing: -0.04em;
+  background: linear-gradient(180deg, var(--gl-text-title) 30%, var(--gl-title-stop) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+html[data-visual-theme="huisstijl"] [data-slot="card"] {
+  background: linear-gradient(180deg, var(--gl-card-from) 0%, var(--gl-card-to) 100%);
+  border-radius: var(--gl-radius-card);
+  box-shadow: var(--gl-shadow);
+}
+
+html[data-visual-theme="huisstijl"] [data-slot="button"] {
+  border-radius: var(--gl-radius-pill) !important;
+  font-weight: 600;
+}
+
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="default"] {
+  background: linear-gradient(180deg, var(--gl-btn-from) 0%, var(--gl-btn-to) 100%);
+  color: var(--gl-text-main);
+  border: 1px solid var(--gl-btn-border);
+  box-shadow: inset 0 1px 0 var(--gl-btn-inset), 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="default"]:hover {
+  border-color: var(--gl-border-hover);
+  filter: brightness(1.12);
+}
+
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="outline"],
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="secondary"],
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="ghost"] {
+  background: var(--gl-ghost);
+  color: var(--gl-text-main);
+  border: 1px solid var(--gl-border);
+}
+
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="outline"]:hover,
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="secondary"]:hover,
+html[data-visual-theme="huisstijl"] [data-slot="button"][data-variant="ghost"]:hover {
+  border-color: var(--gl-border-hover);
+  background: var(--gl-tag);
+}
+
+html[data-visual-theme="huisstijl"] input:not([type="checkbox"]):not([type="radio"]),
+html[data-visual-theme="huisstijl"] textarea,
+html[data-visual-theme="huisstijl"] [data-slot="input"] {
+  background: var(--gl-surface);
+  border: 1px solid var(--gl-border);
+  border-radius: var(--gl-radius-tag);
+  color: var(--gl-text-main);
+}
+
+html[data-visual-theme="huisstijl"] aside {
+  background: var(--gl-surface) !important;
+  border-color: var(--gl-border) !important;
+}
+
+.visual-theme-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  background: rgba(14, 14, 17, 0.88);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.visual-theme-toggle__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e8e93;
+  white-space: nowrap;
+}
+
+.visual-theme-toggle__switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.visual-theme-toggle__switch button {
+  border: 0;
+  background: transparent;
+  color: #8e8e93;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.visual-theme-toggle__switch button.is-active {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+@media (max-width: 700px) {
+  .visual-theme-toggle {
+    left: 16px;
+    right: 16px;
+    justify-content: space-between;
+  }
+}
