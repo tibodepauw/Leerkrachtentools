@@ -29,8 +29,16 @@ describe("huisstijl", () => {
     expect(glow.slice(0, 80)).not.toMatch(/display:\s*none/);
   });
 
-  it("geeft de GitHub-banner het huisstijl-raster", () => {
+  it("geeft de GitHub-banner het huisstijl-raster, gradient-titel en glow-wordmark", () => {
     expect(css).toMatch(/\.wordmark-export-canvas::before/);
+    expect(css).toMatch(/\.wordmark-export-title/);
+    expect(css).toMatch(/\.glow-wordmark--banner/);
+    const page = readFileSync("app/wordmark-export/page.tsx", "utf8");
+    expect(page).toMatch(/GlowWordmark/);
+    expect(page).not.toMatch(/WordmarkLoader/);
+    const readme = readFileSync("README.md", "utf8");
+    expect(readme).toMatch(/banner-huisstijl\.gif/);
+    expect(readme).not.toMatch(/banner-wordmark-gather/);
   });
 });
 

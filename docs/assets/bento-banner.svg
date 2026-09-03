@@ -54,7 +54,7 @@
 
     <rect x="804" y="168" width="376" height="104" rx="20" fill="url(#cardFill)" stroke="rgba(255,255,255,0.08)"/>
     <text x="992" y="220" class="tb" font-size="28" text-anchor="middle" dominant-baseline="middle">
-      <tspan x="992" dy="-0.55em">221</tspan>
+      <tspan x="992" dy="-0.55em">224</tspan>
       <tspan x="992" dy="1.1em" class="tm" font-size="18">Passing tests</tspan>
     </text>
 

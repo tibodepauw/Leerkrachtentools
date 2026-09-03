@@ -1,6 +1,6 @@
 export interface WordmarkLetter {
   char: string;
-  /** Offset from word center in em (matches banner-wordmark.svg at 96px) */
+  /** Offset from word center in em (matches the README wordmark layout) */
   xEm: number;
   yEm: number;
   rotateDeg: number;

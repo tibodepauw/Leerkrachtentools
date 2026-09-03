@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="360" viewBox="0 0 1200 360" role="img" aria-labelledby="bannerTitle bannerDesc">
+  <title id="bannerTitle">Leerkrachtentools</title>
+  <desc id="bannerDesc">Lesvoorbereiding zonder gedoe</desc>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Rubik:wght@600;900&amp;display=swap");
+    .title {
+      font-family: "Rubik", sans-serif;
+      font-weight: 900;
+      font-size: 74px;
+      letter-spacing: -0.06em;
+    }
+    .outline {
+      font-family: "Rubik", sans-serif;
+      font-weight: 900;
+      font-size: 118px;
+      letter-spacing: -0.04em;
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.28);
+      stroke-width: 1.6;
+    }
+    .sub {
+      font-family: "Rubik", sans-serif;
+      font-weight: 600;
+      font-size: 20px;
+      fill: #8e8e93;
+      letter-spacing: -0.02em;
+    }
+  </style>
+  <defs>
+    <pattern id="hsGrid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1.2" fill="rgba(255,255,255,0.18)"/>
+    </pattern>
+    <radialGradient id="hsGridFade" cx="50%" cy="30%" r="80%">
+      <stop offset="55%" stop-color="white"/>
+      <stop offset="100%" stop-color="black"/>
+    </radialGradient>
+    <mask id="hsGridMask">
+      <rect width="1200" height="360" fill="url(#hsGridFade)"/>
+    </mask>
+    <radialGradient id="hsWash" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.14)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+    <linearGradient id="hsTitle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="30%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#71717a"/>
+    </linearGradient>
+    <linearGradient id="hsShine" x1="0%" y1="0%" x2="45%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="25%" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="hsRound">
+      <rect width="1200" height="360" rx="20" ry="20"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#hsRound)">
+    <rect width="1200" height="360" fill="#000000"/>
+    <rect width="1200" height="360" fill="url(#hsGrid)" mask="url(#hsGridMask)"/>
+    <rect width="1200" height="360" fill="url(#hsWash)"/>
+    <text class="outline" x="600" y="268" text-anchor="middle">Leerkrachtentools</text>
+    <text class="outline" x="600" y="268" text-anchor="middle" stroke="url(#hsShine)" stroke-width="2">Leerkrachtentools</text>
+    <text class="title" x="600" y="168" text-anchor="middle" fill="url(#hsTitle)">Leerkrachtentools</text>
+    <text class="sub" x="600" y="214" text-anchor="middle">Lesvoorbereiding zonder gedoe</text>
+  </g>
+</svg>

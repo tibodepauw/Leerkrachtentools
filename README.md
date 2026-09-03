@@ -1,14 +1,14 @@
 <p align="center">
   <img
-    src="docs/assets/banner-wordmark-gather.gif?v=5"
+    src="docs/assets/banner-huisstijl.gif"
     alt="Leerkrachtentools"
     width="100%"
   />
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-221%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
-[![Version](https://img.shields.io/badge/version-v5.13.1-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Tests](https://img.shields.io/badge/tests-224%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
+[![Version](https://img.shields.io/badge/version-v5.14.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 [![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
@@ -252,6 +252,6 @@ Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite data
 
 ## Releases
 
-Current version: **5.13.1**
+Current version: **5.14.0**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).

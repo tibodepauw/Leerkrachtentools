@@ -4,6 +4,25 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.14.0] - 2026-09-03
+
+### Added
+- Invite-only login met eenmalige e-mailcode in zes aparte vakken
+- Glow-outline wordmark op het inlogscherm
+- Pin-animatie: tools schuiven vanuit hun sectie omhoog naar Gepind
+
+### Changed
+- Generative Labs huisstijl is het vaste ontwerp van de app (geen Testversie-schakelaar meer)
+- GitHub README-banner opnieuw gemaakt in die huisstijl: raster, gradient-titel, glow-outline (nieuw bestand `banner-huisstijl.gif`)
+- Sidebar-sectielabels iets groter
+- Kaartradius 20px overal, ook op geneste kaarten
+
+### Fixed
+- Actieve lescontext en feedbackkaders openden als een strook onderaan in plaats van een gecentreerd dialoogvenster
+- Stippenraster verdween achter ondoorzichtige zwarte pagina-achtergronden
+
+---
+
 ## [5.13.1] - 2026-08-31
 
 ### Changed
