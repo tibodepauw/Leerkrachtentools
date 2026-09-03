@@ -646,6 +646,110 @@ html[data-visual-theme="huisstijl"] .auth-consent-choice a:hover {
   color: #ffffff;
 }
 
+.glow-wordmark {
+  display: none;
+}
+
+html[data-visual-theme="huisstijl"] .glow-wordmark {
+  display: block;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  aspect-ratio: 1720 / 190;
+  max-height: min(28vh, 220px);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.glow-wordmark__ambient {
+  position: absolute;
+  width: 320px;
+  height: 140px;
+  background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.15), transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.25s ease;
+  z-index: 1;
+}
+
+.glow-wordmark__svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+}
+
+.glow-wordmark__base,
+.glow-wordmark__shine,
+.glow-wordmark__glow {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 168px;
+  letter-spacing: -0.04em;
+  fill: transparent;
+}
+
+.glow-wordmark__base {
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 1.5px;
+}
+
+.glow-wordmark__shine {
+  stroke-width: 1.8px;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.glow-wordmark__glow {
+  stroke-width: 2.2px;
+  pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .glow-wordmark__base {
+    stroke: rgba(255, 255, 255, 0.22);
+    stroke-width: 2.2px;
+  }
+
+  .glow-wordmark__shine {
+    opacity: 1;
+    stroke-width: 2.6px;
+  }
+
+  .glow-wordmark__glow {
+    stroke-width: 3px;
+  }
+
+  .glow-wordmark__ambient {
+    width: 240px;
+    height: 110px;
+    filter: blur(28px);
+    background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.22), transparent 70%);
+  }
+
+  .glow-wordmark__base,
+  .glow-wordmark__shine,
+  .glow-wordmark__glow {
+    font-size: 132px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-wordmark__ambient {
+    opacity: 0 !important;
+  }
+
+  .glow-wordmark__glow {
+    display: none;
+  }
+}
+
 .visual-theme-toggle {
   position: fixed;
   right: 16px;

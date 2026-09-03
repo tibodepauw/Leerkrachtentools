@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingGate } from "@/components/shared/LoadingGate";
+import { GlowWordmark } from "@/components/shared/GlowWordmark";
 import { useClientMounted } from "@/hooks/useAppReady";
 
 export function AuthScreen() {
@@ -80,7 +81,8 @@ function AuthScreenContent() {
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-black px-4 py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(255,255,255,0.12),transparent_45%)]" />
-      <div className="relative w-full max-w-md">
+      <GlowWordmark />
+      <div className="relative z-10 w-full max-w-md">
         <h1 className="mb-10 text-center text-4xl font-black tracking-[-0.06em] text-white sm:text-5xl">
           Leerkrachtentools
         </h1>

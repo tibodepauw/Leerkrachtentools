@@ -18,4 +18,8 @@ describe("AuthScreen markup", () => {
     expect(source).not.toContain("bg-white text-black");
     expect(source).not.toContain('data-checked="true"');
   });
+
+  it("zet de glow-outline wordmark onderaan", () => {
+    expect(source).toContain("GlowWordmark");
+  });
 });
