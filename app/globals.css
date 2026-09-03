@@ -517,7 +517,7 @@ body::before {
   --tw-ring-offset-shadow: 0 0 #0000;
 }
 
-.bg-black:not([data-slot="card"]),
+.bg-black:not([data-slot="card"]):not(.min-h-screen),
 .bg-neutral-950:not([data-slot="card"]),
 .bg-neutral-900:not([data-slot="card"]) {
   background-color: var(--gl-surface) !important;
@@ -532,7 +532,12 @@ body::before {
   background-color: var(--gl-tag) !important;
 }
 
-.min-h-screen.bg-black {
+.min-h-screen.bg-black,
+.lt-app {
+  background-color: transparent !important;
+}
+
+html body {
   background-color: var(--gl-bg) !important;
 }
 
@@ -567,7 +572,7 @@ h1 {
 [data-slot="card"] {
   background: linear-gradient(180deg, var(--gl-card-from) 0%, var(--gl-card-to) 100%);
   border: 1px solid var(--gl-border);
-  border-radius: var(--gl-radius-card);
+  border-radius: var(--gl-radius-card) !important;
   overflow: hidden;
   background-clip: padding-box;
   box-shadow: var(--gl-shadow);
