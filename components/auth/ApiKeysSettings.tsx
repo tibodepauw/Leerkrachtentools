@@ -160,8 +160,8 @@ export function ApiKeysSettings() {
     setApiKey("");
     toast.success(
       payload.enabled
-        ? "Eigen API-keys opgeslagen en actief."
-        : "Eigen API-keys uitgeschakeld.",
+        ? "API-keys opgeslagen en actief."
+        : "API-keys uitgeschakeld.",
     );
   }
 
@@ -169,7 +169,7 @@ export function ApiKeysSettings() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Eigen API-keys</CardTitle>
+          <CardTitle>API-keys</CardTitle>
           <CardDescription>Laden…</CardDescription>
         </CardHeader>
         <CardContent>
@@ -183,7 +183,7 @@ export function ApiKeysSettings() {
     <Card>
       <CardHeader>
         <CardTitle>
-          Eigen API-keys
+          API-keys
         </CardTitle>
         <CardDescription>
           Gebruik je eigen provider voor testen. Standaard uit - dan worden de
@@ -195,7 +195,7 @@ export function ApiKeysSettings() {
           <div className="flex items-center justify-between gap-4 rounded-lg border border-neutral-800 p-3">
             <div>
               <Label htmlFor="use-own-keys" className="text-sm font-medium">
-                Eigen API-keys gebruiken
+                API-keys gebruiken
               </Label>
               <p className="text-xs text-neutral-500">
                 Keys worden versleuteld opgeslagen en nooit volledig getoond.
