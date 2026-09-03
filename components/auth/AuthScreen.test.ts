@@ -13,4 +13,9 @@ describe("AuthScreen markup", () => {
     expect(source).not.toMatch(/Toestemming[\s\S]{0,80}uppercase/);
     expect(source).not.toMatch(/uppercase tracking-\[0\.14em\]/);
   });
+
+  it("kleurt bij vinken alleen de checkbox, niet de hele rij", () => {
+    expect(source).not.toContain("bg-white text-black");
+    expect(source).not.toContain('data-checked="true"');
+  });
 });

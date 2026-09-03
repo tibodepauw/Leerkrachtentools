@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingGate } from "@/components/shared/LoadingGate";
 import { useClientMounted } from "@/hooks/useAppReady";
-import { cn } from "@/lib/utils";
 
 export function AuthScreen() {
   const mounted = useClientMounted();
@@ -125,13 +124,6 @@ function AuthScreenContent() {
                     id="privacy"
                     checked={privacyAccepted}
                     onCheckedChange={setPrivacyAccepted}
-                    checkedClassName="border-white bg-white text-black"
-                    uncheckedClassName="border-neutral-800 bg-neutral-950 text-neutral-100 hover:border-neutral-600"
-                    checkboxClassName={
-                      privacyAccepted
-                        ? "border-black data-[state=checked]:bg-black data-[state=checked]:text-white"
-                        : undefined
-                    }
                     label={
                       <>
                         <span className="font-semibold">Verplicht:</span> ik ga akkoord met het{" "}
@@ -140,12 +132,7 @@ function AuthScreenContent() {
                   >
                     <Link
                       href="/privacy"
-                      className={cn(
-                        "underline underline-offset-2",
-                        privacyAccepted
-                          ? "text-black hover:text-neutral-700"
-                          : "text-white hover:text-neutral-200",
-                      )}
+                      className="text-white underline underline-offset-2 hover:text-neutral-200"
                       target="_blank"
                     >
                       privacybeleid
@@ -157,8 +144,6 @@ function AuthScreenContent() {
                     id="marketing"
                     checked={marketingOptIn}
                     onCheckedChange={setMarketingOptIn}
-                    checkedClassName="border-neutral-500 bg-neutral-900 text-white"
-                    uncheckedClassName="border-neutral-800 bg-neutral-950 text-neutral-300 hover:border-neutral-600"
                     label={
                       <>
                         <span className="font-semibold">Optioneel:</span> houd mij op de hoogte van het uitgebreidere project.
@@ -241,34 +226,22 @@ function ConsentChoice({
   id,
   checked,
   onCheckedChange,
-  checkedClassName,
-  uncheckedClassName,
-  checkboxClassName,
   label,
   children,
 }: {
   id: string;
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
-  checkedClassName: string;
-  uncheckedClassName: string;
-  checkboxClassName?: string;
   label: ReactNode;
   children?: ReactNode;
 }) {
   return (
-    <div
-      data-checked={checked ? "true" : "false"}
-      className={cn(
-        "auth-consent-choice flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
-        checked ? checkedClassName : uncheckedClassName,
-      )}
-    >
+    <div className="auth-consent-choice flex w-full items-start gap-3 rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-3 text-left text-neutral-100 hover:border-neutral-600">
       <Checkbox
         id={id}
         checked={checked}
         onCheckedChange={(value) => onCheckedChange(value === true)}
-        className={cn("mt-0.5", checkboxClassName)}
+        className="mt-0.5"
       />
       <p className="flex-1 text-sm leading-6">
         <Label htmlFor={id} className="contents cursor-pointer font-normal">

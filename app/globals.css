@@ -638,19 +638,7 @@ html[data-visual-theme="huisstijl"] .auth-consent-choice:hover {
   border-color: var(--gl-border-hover);
 }
 
-html[data-visual-theme="huisstijl"] .auth-consent-choice[data-checked="true"] {
-  background: var(--gl-tag);
-  border-color: var(--gl-border-hover);
-  color: var(--gl-text-main);
-}
-
-html[data-visual-theme="huisstijl"] .auth-consent-choice[data-checked="true"] [data-slot="checkbox"] {
-  border-color: var(--gl-text-main);
-  background: var(--gl-text-main);
-  color: var(--gl-bg);
-}
-
-html[data-visual-theme="huisstijl"] .auth-consent-choice[data-checked="true"] a {
+html[data-visual-theme="huisstijl"] .auth-consent-choice a {
   color: var(--gl-text-main);
 }
 
