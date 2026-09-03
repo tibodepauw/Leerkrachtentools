@@ -11,18 +11,18 @@ function WordmarkExportCanvas() {
   return (
     <div
       id="wordmark-export"
-      className="flex h-[360px] w-[1200px] items-center justify-center bg-black"
+      className="wordmark-export-canvas"
     >
       <WordmarkLoader variant={mode === "static" ? "static" : "gather"} />
     </div>
   );
 }
 
-/** Minimal black canvas for README banner export scripts (Playwright + Rubik). */
+/** Public black canvas for README banner export (Playwright + Rubik). */
 export default function WordmarkExportPage() {
   return (
-    <Suspense fallback={<div className="h-[360px] w-[1200px] bg-black" />}>
-      <div className="wordmark-export-root bg-black">
+    <Suspense fallback={<div className="wordmark-export-canvas" />}>
+      <div className="wordmark-export-root">
         <WordmarkExportCanvas />
       </div>
     </Suspense>

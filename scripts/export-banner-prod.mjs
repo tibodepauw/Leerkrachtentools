@@ -48,7 +48,7 @@ const server = spawn("npx", ["next", "start", "-p", port], {
 });
 
 try {
-  await waitForServer(`${baseUrl}/dev/wordmark-export?mode=static`);
+  await waitForServer(`${baseUrl}/wordmark-export?mode=static`);
   process.env.WORDMARK_EXPORT_URL = baseUrl;
   await run("node", ["scripts/export-banner-assets.mjs"], {
     env: { ...process.env, WORDMARK_EXPORT_URL: baseUrl },

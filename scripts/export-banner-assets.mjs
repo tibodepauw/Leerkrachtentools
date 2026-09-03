@@ -17,7 +17,7 @@ const HOLD_SECONDS = 10;
 const OUTPUT_FPS = 20;
 const DEVICE_SCALE = 2;
 /** Display radius baked into PNG/GIF assets (px at 1200×360) */
-const DISPLAY_CORNER_RADIUS = 24;
+const DISPLAY_CORNER_RADIUS = 20;
 const CORNER_RADIUS = DISPLAY_CORNER_RADIUS * DEVICE_SCALE;
 
 rmSync(framesDir, { recursive: true, force: true });
@@ -31,16 +31,31 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 
-await page.addStyleTag({
-  content: `
+await context.addInitScript(() => {
+  const css = `
     nextjs-portal,
     [data-nextjs-badge-root],
     [data-nextjs-toast],
+    [data-nextjs-dialog],
+    [data-nextjs-dev-overlay],
     [data-nextjs-dev-tools-button],
+    [data-nextjs-error-overlay],
     #__next-build-watcher {
       display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
     }
-  `,
+  `;
+  const inject = () => {
+    if (document.getElementById("lt-export-hide-overlay")) return;
+    const style = document.createElement("style");
+    style.id = "lt-export-hide-overlay";
+    style.textContent = css;
+    document.documentElement.appendChild(style);
+  };
+  inject();
+  document.addEventListener("DOMContentLoaded", inject);
 });
 
 async function waitForFonts() {
@@ -49,6 +64,9 @@ async function waitForFonts() {
 }
 
 async function screenshotCanvas(targetPath) {
+  await page.evaluate(() => {
+    document.querySelectorAll("nextjs-portal").forEach((node) => node.remove());
+  });
   await page.locator("#wordmark-export").screenshot({ path: targetPath });
   const { width, height } = await sharp(targetPath).metadata();
   if (width !== 1200 * DEVICE_SCALE || height !== 360 * DEVICE_SCALE) {
@@ -59,7 +77,7 @@ async function screenshotCanvas(targetPath) {
 }
 
 // --- Static PNG ---
-await page.goto(`${baseHost}/dev/wordmark-export?mode=static`, {
+await page.goto(`${baseHost}/wordmark-export?mode=static`, {
   waitUntil: "networkidle",
 });
 await waitForFonts();
@@ -71,7 +89,7 @@ renameSync(pngTemp, pngOutput);
 console.log(`Wrote ${pngOutput} (${DISPLAY_CORNER_RADIUS}px rounded corners)`);
 
 // --- Animated GIF ---
-await page.goto(`${baseHost}/dev/wordmark-export?mode=gather&fresh=${Date.now()}`, {
+await page.goto(`${baseHost}/wordmark-export?mode=gather&fresh=${Date.now()}`, {
   waitUntil: "networkidle",
 });
 await waitForFonts();

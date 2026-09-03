@@ -12,16 +12,36 @@
     .letter {
       font-family: "Rubik", sans-serif;
       font-weight: 900;
-      fill: #ffffff;
+      fill: url(#titleGrad);
       font-size: 96px;
       text-anchor: middle;
       dominant-baseline: middle;
     }
   </style>
 
-  <rect width="1200" height="360" fill="#000000"/>
+  <defs>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="30%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#71717a"/>
+    </linearGradient>
+    <pattern id="hsGrid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="rgba(255,255,255,0.1)"/>
+    </pattern>
+    <radialGradient id="hsGridFade" cx="50%" cy="25%" r="80%">
+      <stop offset="60%" stop-color="white"/>
+      <stop offset="100%" stop-color="black"/>
+    </radialGradient>
+    <mask id="hsGridMask">
+      <rect width="1200" height="360" fill="url(#hsGridFade)"/>
+    </mask>
+    <clipPath id="hsRound">
+      <rect width="1200" height="360" rx="20" ry="20"/>
+    </clipPath>
+  </defs>
 
-  <!-- centered: x = 600 + (index - 8) * 68, min gap ~12px between glyphs -->
+  <g clip-path="url(#hsRound)">
+    <rect width="1200" height="360" fill="#000000"/>
+    <rect width="1200" height="360" fill="url(#hsGrid)" mask="url(#hsGridMask)"/>
   <text class="letter" transform="translate(56 188) rotate(-5.5)">L</text>
   <text class="letter" transform="translate(124 168) rotate(5.5)">e</text>
   <text class="letter" transform="translate(192 188) rotate(-4.5)">e</text>
@@ -39,4 +59,5 @@
   <text class="letter" transform="translate(1008 168) rotate(5.5)">o</text>
   <text class="letter" transform="translate(1076 188) rotate(-4.5)">l</text>
   <text class="letter" transform="translate(1144 178) rotate(5)">s</text>
+  </g>
 </svg>

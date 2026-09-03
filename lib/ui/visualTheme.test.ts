@@ -28,6 +28,10 @@ describe("huisstijl", () => {
     expect(glow).toMatch(/display:\s*block/);
     expect(glow.slice(0, 80)).not.toMatch(/display:\s*none/);
   });
+
+  it("geeft de GitHub-banner het huisstijl-raster", () => {
+    expect(css).toMatch(/\.wordmark-export-canvas::before/);
+  });
 });
 
 describe("dialogs", () => {

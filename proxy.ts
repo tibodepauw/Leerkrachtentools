@@ -9,6 +9,7 @@ const PUBLIC_API_PATHS = new Set([
 
 function isPublicPath(pathname: string) {
   if (pathname === "/" || pathname === "/privacy") return true;
+  if (pathname.startsWith("/wordmark-export")) return true;
   if (PUBLIC_API_PATHS.has(pathname)) return true;
   if (pathname.startsWith("/_next/")) return true;
   if (pathname === "/favicon.ico") return true;

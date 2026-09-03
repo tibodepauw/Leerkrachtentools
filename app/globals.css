@@ -199,6 +199,27 @@
   font-size: 4.5rem;
 }
 
+.wordmark-export-canvas {
+  position: relative;
+  display: flex;
+  height: 360px;
+  width: 1200px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000000;
+}
+
+.wordmark-export-canvas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, #000 60%, transparent 100%);
+  pointer-events: none;
+}
+
 /* Compact wordmark for sidebar etc. */
 .wordmark-logo.wordmark-loader {
   width: 12em;

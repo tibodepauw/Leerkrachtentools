@@ -1,13 +1,13 @@
 <p align="center">
   <img
-    src="docs/assets/banner-wordmark-gather.gif?v=4"
+    src="docs/assets/banner-wordmark-gather.gif?v=5"
     alt="Leerkrachtentools"
     width="100%"
   />
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-207%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
+[![Tests](https://img.shields.io/badge/tests-221%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
 [![Version](https://img.shields.io/badge/version-v5.13.1-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 [![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 

@@ -1,6 +1,6 @@
 # Loading screen concepten (wordmark)
 
-Playful witte Rubik Black letters op zwart, gedeeld met `docs/assets/banner-wordmark.svg` en `lib/wordmark/letters.ts`.
+Playful Rubik Black letters on black, with the huisstijl dotted grid. Shared with `docs/assets/banner-wordmark.svg` and `lib/wordmark/letters.ts`.
 
 **Status:** Gather is live via `LoadingGate` on eerste site-load (volledige animatie ~2,5 s). Snelle navigatie (bv. instellingen) toont geen wordmark; alleen bij trage loads een kleine spinner na 320 ms. Andere varianten: Instellingen → Laadscherm.
 
