@@ -98,16 +98,11 @@ export function LessonGoalSelector({
             </Button>
           ) : null}
         </div>
-        {visibleGoals.length > 0 ? (
-          <p className="text-xs text-neutral-500">
-            {visibleGoals.length} doel{visibleGoals.length === 1 ? "" : "en"}{" "}
-            actief via handleiding of Actieve les.
-          </p>
-        ) : (
+        {visibleGoals.length === 0 ? (
           <p className="text-xs text-neutral-500">
             Nog geen doelen. Voeg er een toe met + of upload een handleiding.
           </p>
-        )}
+        ) : null}
       </div>
       <div className="overflow-visible">
         <Textarea
