@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -39,6 +39,10 @@ import { useModuleAccess } from "@/components/auth/ModuleAccessProvider";
 import { useSidebarLayout } from "@/hooks/useSidebarLayout";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { SidebarFeedback } from "@/components/layout/SidebarFeedback";
+import {
+  excludePinnedModules,
+  runSidebarPinTransition,
+} from "@/lib/ui/sidebarPin";
 import type { ModuleId } from "@/types";
 
 const sections = [
@@ -112,6 +116,7 @@ function ModuleNavButton({
   pinned,
   collapsed,
   pinnable = true,
+  pinMotion = false,
   onOpen,
   onTogglePin,
 }: {
@@ -120,9 +125,15 @@ function ModuleNavButton({
   pinned: boolean;
   collapsed: boolean;
   pinnable?: boolean;
+  pinMotion?: boolean;
   onOpen: () => void;
   onTogglePin: () => void;
 }) {
+  const motionStyle: CSSProperties | undefined =
+    pinMotion && !collapsed
+      ? { viewTransitionName: `lt-mod-${item.id}` }
+      : undefined;
+
   if (collapsed) {
     return (
       <Tooltip>
@@ -131,6 +142,7 @@ function ModuleNavButton({
             type="button"
             onClick={onOpen}
             aria-label={item.label}
+            style={motionStyle}
             className={cn(
               "relative grid size-10 place-items-center rounded-full transition-colors",
               active
@@ -151,6 +163,7 @@ function ModuleNavButton({
 
   return (
     <div
+      style={motionStyle}
       className={cn(
         "group/nav flex w-full items-center gap-1 rounded-full pr-1 transition-colors",
         active ? "bg-neutral-800" : "hover:bg-neutral-900",
@@ -179,10 +192,10 @@ function ModuleNavButton({
                 onTogglePin();
               }}
               className={cn(
-                "mr-1 grid size-7 shrink-0 place-items-center rounded-full opacity-0 transition-all group-hover/nav:opacity-100 focus-visible:opacity-100",
+                "mr-1 grid size-7 shrink-0 place-items-center rounded-full transition-all focus-visible:opacity-100",
                 pinned
-                  ? "text-white hover:bg-neutral-800 hover:text-white"
-                  : "text-neutral-500 hover:bg-neutral-800 hover:text-neutral-300",
+                  ? "text-white opacity-100 hover:bg-neutral-800 hover:text-white"
+                  : "text-neutral-500 opacity-0 group-hover/nav:opacity-100 hover:bg-neutral-800 hover:text-neutral-300",
               )}
             >
               <Pin className={cn("size-3.5", pinned && "fill-current")} />
@@ -212,10 +225,12 @@ function SidebarContent({
   account,
   collapsed,
   onNavigate,
+  pinMotion = false,
 }: {
   account: AccountSummary;
   collapsed: boolean;
   onNavigate?: () => void;
+  pinMotion?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -237,7 +252,10 @@ function SidebarContent({
   const visibleSections = sections
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => canAccessModule(item.id)),
+      items: excludePinnedModules(
+        section.items.filter((item) => canAccessModule(item.id)),
+        pinnedModules,
+      ),
     }))
     .filter((section) => section.items.length > 0);
   const showActiveLesson = canAccessModule("active-lesson");
@@ -271,6 +289,14 @@ function SidebarContent({
       observer.disconnect();
     };
   }, [collapsed]);
+
+  function togglePin(moduleId: ModuleId) {
+    if (!pinMotion || collapsed) {
+      togglePinnedModule(moduleId);
+      return;
+    }
+    runSidebarPinTransition(() => togglePinnedModule(moduleId));
+  }
 
   function openModule(moduleId: ModuleId) {
     setActiveModule(moduleId);
@@ -388,13 +414,14 @@ function SidebarContent({
                   >
                     {pinnedItems.map((item) => (
                       <ModuleNavButton
-                        key={`pinned-${item.id}`}
+                        key={item.id}
                         item={item}
                         active={!isSettings && activeModule === item.id}
                         pinned
                         collapsed={collapsed}
+                        pinMotion={pinMotion}
                         onOpen={() => openModule(item.id)}
-                        onTogglePin={() => togglePinnedModule(item.id)}
+                        onTogglePin={() => togglePin(item.id)}
                       />
                     ))}
                   </div>
@@ -418,10 +445,11 @@ function SidebarContent({
                         key={item.id}
                         item={item}
                         active={!isSettings && activeModule === item.id}
-                        pinned={pinnedModules.includes(item.id)}
+                        pinned={false}
                         collapsed={collapsed}
+                        pinMotion={pinMotion}
                         onOpen={() => openModule(item.id)}
-                        onTogglePin={() => togglePinnedModule(item.id)}
+                        onTogglePin={() => togglePin(item.id)}
                       />
                     ))}
                   </div>
@@ -537,7 +565,7 @@ export function Sidebar({ account }: { account: AccountSummary }) {
           !isResizing && "transition-[width] duration-200 ease-out",
         )}
       >
-        <SidebarContent account={account} collapsed={collapsed} />
+        <SidebarContent account={account} collapsed={collapsed} pinMotion />
         <SidebarResizeHandle />
       </aside>
       <div className="fixed left-3 top-3 z-50 lg:hidden">
