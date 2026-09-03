@@ -44,11 +44,11 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
   const canAddGoal = lesson.goals.length < MAX_LESSON_GOALS;
 
   return (
-    <header className="sticky top-0 z-20 border-b border-neutral-800 bg-black/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 border-b border-neutral-800 backdrop-blur-xl">
       <div className="flex min-h-16 items-center justify-between gap-3 px-4 pl-16 lg:px-6">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-medium">
+            <p className="lt-chrome-title truncate text-sm">
               {lesson.topic || "Nieuwe les"}
             </p>
           </div>

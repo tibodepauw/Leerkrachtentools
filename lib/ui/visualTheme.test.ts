@@ -21,6 +21,17 @@ describe("huisstijl", () => {
     expect(css).toMatch(/--gl-radius-pill:\s*9999px/);
     expect(css).toMatch(/\[data-slot="button"\]/);
     expect(css).toMatch(/\[data-slot="card"\]/);
+    expect(css).toMatch(
+      /:is\(button, \[data-slot="button"\]\)\[data-variant="default"\][\s\S]*background:[\s\S]*!important/,
+    );
+  });
+
+  it("houdt de lesbalk doorzichtig zodat het raster zichtbaar blijft", () => {
+    expect(css).toMatch(/header\.sticky/);
+    expect(css).toMatch(/\.lt-chrome-title/);
+    const bar = readFileSync("components/layout/ActiveLessonBar.tsx", "utf8");
+    expect(bar).not.toMatch(/bg-black\/90/);
+    expect(bar).toMatch(/lt-chrome-title/);
   });
 
   it("toont de glow-wordmark op login", () => {

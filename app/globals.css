@@ -594,34 +594,48 @@ h1 {
   --tw-ring-offset-shadow: 0 0 #0000;
 }
 
-[data-slot="button"] {
+header.sticky {
+  background-color: color-mix(in srgb, var(--gl-bg) 48%, transparent) !important;
+  border-bottom-color: var(--gl-border) !important;
+}
+
+.lt-chrome-title {
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  background: linear-gradient(180deg, var(--gl-text-title) 30%, var(--gl-title-stop) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+:is(button, [data-slot="button"])[data-variant] {
   border-radius: var(--gl-radius-pill) !important;
   font-weight: 600;
 }
 
-[data-slot="button"][data-variant="default"] {
-  background: linear-gradient(180deg, var(--gl-btn-from) 0%, var(--gl-btn-to) 100%);
-  color: var(--gl-text-main);
-  border: 1px solid var(--gl-btn-border);
+:is(button, [data-slot="button"])[data-variant="default"] {
+  background: linear-gradient(180deg, var(--gl-btn-from) 0%, var(--gl-btn-to) 100%) !important;
+  color: var(--gl-text-main) !important;
+  border: 1px solid var(--gl-btn-border) !important;
   box-shadow: inset 0 1px 0 var(--gl-btn-inset), 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
-[data-slot="button"][data-variant="default"]:hover {
+:is(button, [data-slot="button"])[data-variant="default"]:hover {
   border-color: var(--gl-border-hover);
   filter: brightness(1.12);
 }
 
-[data-slot="button"][data-variant="outline"],
-[data-slot="button"][data-variant="secondary"],
-[data-slot="button"][data-variant="ghost"] {
+:is(button, [data-slot="button"])[data-variant="outline"],
+:is(button, [data-slot="button"])[data-variant="secondary"],
+:is(button, [data-slot="button"])[data-variant="ghost"] {
   background: var(--gl-ghost);
   color: var(--gl-text-main);
   border: 1px solid var(--gl-border);
 }
 
-[data-slot="button"][data-variant="outline"]:hover,
-[data-slot="button"][data-variant="secondary"]:hover,
-[data-slot="button"][data-variant="ghost"]:hover {
+:is(button, [data-slot="button"])[data-variant="outline"]:hover,
+:is(button, [data-slot="button"])[data-variant="secondary"]:hover,
+:is(button, [data-slot="button"])[data-variant="ghost"]:hover {
   border-color: var(--gl-border-hover);
   background: var(--gl-tag);
 }
