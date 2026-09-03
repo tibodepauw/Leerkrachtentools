@@ -376,7 +376,7 @@ function SidebarContent({
               {pinnedItems.length > 0 ? (
                 <section>
                   {!collapsed ? (
-                    <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-600">
+                    <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-600">
                       Gepind
                     </p>
                   ) : null}
@@ -403,7 +403,7 @@ function SidebarContent({
               {visibleSections.map((section) => (
                 <section key={section.label}>
                   {!collapsed ? (
-                    <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-neutral-600">
+                    <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-neutral-600">
                       {section.label}
                     </p>
                   ) : null}
