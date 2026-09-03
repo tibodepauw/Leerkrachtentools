@@ -575,14 +575,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                         .join(" · ")
                     : "Doelgroep en schooljaar instelbaar via Actieve les."}
                 </p>
-              ) : (
-                <p className="text-xs text-neutral-500">
-                  {minimumGoalHelperText(
-                    educationLevelFilter,
-                    lesson.displayTargetGroup,
-                  )}
-                </p>
-              )}
+              ) : null}
             </div>
           }
           actions={
@@ -729,35 +722,6 @@ function networkOptionsForLevel(
       option.value,
     ),
   );
-}
-
-function minimumGoalHelperText(
-  level: EducationLevelFilter,
-  targetGroup?: string,
-): string {
-  const prefix = targetGroup
-    ? `Doelgroep: ${targetGroup} - leeftijdsspecifieke doelen krijgen een zachte bonus, maar blijven altijd zichtbaar. `
-    : "Stel een doelgroep in via Actieve les voor leeftijdsgerichte ranking. ";
-
-  if (level === "SECUNDAIR") {
-    return `${prefix}We tonen minimumdoelen per graad, finaliteit (doorstroom, dubbel, arbeidsmarkt) en sleutelcompetentie (SC 1-16). Gebruik de graad- en finaliteitsfilters voor sterkere ranking.`;
-  }
-  if (level === "BUBAO") {
-    return `${prefix}We tonen ontwikkelingsdoelen en minimumdoelen voor buitengewoon basisonderwijs (per type).`;
-  }
-  if (level === "BUSO") {
-    return `${prefix}We tonen BuSO-doelen voor opleidingsvorm OV1, OV2 of OV3.`;
-  }
-  if (level === "OKAN") {
-    return `${prefix}We tonen OKAN-doelen (NT2 en integratie).`;
-  }
-  if (level === "DKO") {
-    return `${prefix}We tonen deeltijdse kunstonderwijsdoelen per graad en discipline.`;
-  }
-  if (level === "BASISONDERWIJS" || level === "KLEUTER" || level === "LAGER") {
-    return `${prefix}We tonen minimumdoelen op vaste ijkpunten: 4de leerjaar, 6de leerjaar of kleuter (K-codes).`;
-  }
-  return `${prefix}Basisonderwijs: minimumdoelen (4de, 6de, kleuter). Secundair: minimumdoelen per graad en SC 1-16.`;
 }
 
 export function CurriculumRagView() {
