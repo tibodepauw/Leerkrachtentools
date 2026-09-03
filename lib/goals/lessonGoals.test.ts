@@ -3,6 +3,7 @@ import {
   buildGoalsFromPublisher,
   filledGoals,
   goalIdForIndex,
+  nextGoalId,
   trimTrailingEmptyGoals,
 } from "@/lib/goals/lessonGoals";
 
@@ -67,5 +68,14 @@ describe("lessonGoals", () => {
         { id: "D3", text: "  " },
       ]),
     ).toEqual([{ id: "D1", text: "Doel één" }]);
+  });
+
+  it("kiest het eerste vrije D-nummer, ook na een gat in het midden", () => {
+    expect(
+      nextGoalId([
+        { id: "D1", text: "Doel één" },
+        { id: "D3", text: "Doel drie" },
+      ]),
+    ).toBe("D2");
   });
 });

@@ -16,6 +16,10 @@ import {
   migrateLessonTargetGroup,
   resolveTargetGroupFields,
 } from "@/lib/lesson/targetGroup";
+import {
+  mapEducationNetworkToCurriculumFilter,
+  remapCurriculumNetworkForLevel,
+} from "@/lib/lesson/curriculumNetwork";
 import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilters";
 import type {
   ActiveLesson,
@@ -160,15 +164,6 @@ function normalizeCurriculumNetworkFilter(
   return fallback;
 }
 
-function mapEducationNetworkToCurriculumFilter(
-  network: EducationNetwork,
-): CurriculumNetworkFilter {
-  if (network === "GO") {
-    return "GO_NIEUW";
-  }
-  return network;
-}
-
 export function resetLessonStoreState() {
   useLessonStore.setState({
     lesson: initialLesson,
@@ -198,6 +193,7 @@ export const useLessonStore = create<LessonStore>()(
       domainFinalityFilter: "all",
       curriculumNetworkFilter: mapEducationNetworkToCurriculumFilter(
         initialLesson.educationNetwork,
+        "basisonderwijs",
       ),
       storageUserId: null,
       hydrated: false,
@@ -220,6 +216,10 @@ export const useLessonStore = create<LessonStore>()(
                 secondaryFinalityFilter: "all",
                 domainDetailFilter: "all",
                 domainFinalityFilter: "all",
+                curriculumNetworkFilter: remapCurriculumNetworkForLevel(
+                  state.curriculumNetworkFilter,
+                  educationLevel,
+                ),
               },
         ),
       setSecondaryGradeFilter: (secondaryGradeFilter) =>
@@ -292,7 +292,11 @@ export const useLessonStore = create<LessonStore>()(
             return state;
           }
 
-          createdId = nextGoalId(trimmed);
+          const nextId = nextGoalId(trimmed);
+          if (!nextId) {
+            return state;
+          }
+          createdId = nextId;
           return {
             lesson: {
               ...state.lesson,
@@ -306,10 +310,13 @@ export const useLessonStore = create<LessonStore>()(
       replaceGoalText: (index, text) =>
         set((state) => {
           const previousText = state.lesson.goals[index]?.text.trim() ?? "";
+          const preparation = state.lesson.lessonPreparation;
           const lessonPreparation =
-            previousText && state.lesson.lessonPreparation.includes(previousText)
-              ? state.lesson.lessonPreparation.replaceAll(previousText, text)
-              : state.lesson.lessonPreparation;
+            previousText &&
+            preparation.includes(previousText) &&
+            preparation.split(previousText).length === 2
+              ? preparation.replace(previousText, text)
+              : preparation;
 
           return {
             lesson: {
@@ -324,8 +331,15 @@ export const useLessonStore = create<LessonStore>()(
       setActiveGoal: (text, taxonomy) =>
         set((state) => {
           const trimmed = trimTrailingEmptyGoals(state.lesson.goals);
+          if (trimmed.length >= MAX_LESSON_GOALS) {
+            return state;
+          }
+          const id = nextGoalId(trimmed);
+          if (!id) {
+            return state;
+          }
           const newGoal: LessonGoal = {
-            id: nextGoalId(trimmed),
+            id,
             text,
             taxonomy,
           };
@@ -379,6 +393,7 @@ export const useLessonStore = create<LessonStore>()(
           lesson: { ...state.lesson, educationNetwork },
           curriculumNetworkFilter: mapEducationNetworkToCurriculumFilter(
             educationNetwork,
+            state.educationLevel,
           ),
         })),
       clearSession: () => {

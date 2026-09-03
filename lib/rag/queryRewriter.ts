@@ -10,7 +10,9 @@ const rewriteSchema = z.object({
   disciplineHint: z.string(),
 });
 
-export type QueryRewriteResult = z.infer<typeof rewriteSchema>;
+export type QueryRewriteResult = z.infer<typeof rewriteSchema> & {
+  usedLlm: boolean;
+};
 
 const REWRITE_SYSTEM_PROMPT =
   "Herschrijf de zoekopdracht van de leerkracht naar een verrijkte zoekterm voor RAG-retrieval in Vlaamse leerplannen. Bepaal de discipline/vak en onderwijssynoniemen. Geef enkel een JSON-object terug: { expandedQuery: string, disciplineHint: string }.";
@@ -18,7 +20,7 @@ const REWRITE_SYSTEM_PROMPT =
 export async function rewriteRagQuery(query: string): Promise<QueryRewriteResult> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey?.trim()) {
-    return { expandedQuery: query, disciplineHint: "" };
+    return { expandedQuery: query, disciplineHint: "", usedLlm: false };
   }
 
   const google = createGoogleGenerativeAI({ apiKey });
@@ -40,9 +42,10 @@ export async function rewriteRagQuery(query: string): Promise<QueryRewriteResult
     return {
       expandedQuery: parsed.expandedQuery.trim() || query,
       disciplineHint: parsed.disciplineHint.trim(),
+      usedLlm: true,
     };
   } catch {
-    return { expandedQuery: query, disciplineHint: "" };
+    return { expandedQuery: query, disciplineHint: "", usedLlm: false };
   }
 }
 

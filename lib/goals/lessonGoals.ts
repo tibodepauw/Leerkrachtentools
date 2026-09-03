@@ -36,8 +36,9 @@ export function filledGoals(goals: LessonGoal[]): LessonGoal[] {
   return goals.filter((goal) => goal.text.trim());
 }
 
-export function nextGoalId(goals: LessonGoal[]): LessonGoalId {
-  return goalIdForIndex(trimTrailingEmptyGoals(goals).length);
+export function nextGoalId(goals: LessonGoal[]): LessonGoalId | null {
+  const used = new Set(goals.map((goal) => goal.id));
+  return GOAL_IDS.find((id) => !used.has(id)) ?? null;
 }
 
 export function buildGoalsFromPublisher(

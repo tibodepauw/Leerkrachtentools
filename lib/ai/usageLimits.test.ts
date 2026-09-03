@@ -4,6 +4,7 @@ import {
   countRecentServerAiUsage,
   evaluateServerAiAccess,
   recordServerAiUsage,
+  tryReserveServerAiUsage,
 } from "@/lib/ai/usageLimits";
 
 function seedUser(userId: string, tier: string) {
@@ -61,5 +62,20 @@ describe("server AI usage limits", () => {
       expect(access.status).toBe(429);
       expect(access.message).toContain("40");
     }
+  });
+
+  it("reserveert een slot atomair zodat parallelle calls de limiet niet overschrijden", () => {
+    seedUser(userId, "student");
+    const now = Date.now();
+    for (let index = 0; index < 39; index += 1) {
+      recordServerAiUsage(userId, now);
+    }
+
+    const first = tryReserveServerAiUsage(userId, 40, now);
+    const second = tryReserveServerAiUsage(userId, 40, now);
+
+    expect(first.ok).toBe(true);
+    expect(second.ok).toBe(false);
+    expect(countRecentServerAiUsage(userId, now)).toBe(40);
   });
 });

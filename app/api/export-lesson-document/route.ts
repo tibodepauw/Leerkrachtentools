@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/guard";
 import { exportLessonDocument } from "@/lib/documents/exportLessonDocument";
 import { LESSON_DOCUMENT_MAX_BYTES } from "@/lib/documents/supportedFormats";
+import { publicErrorMessage } from "@/lib/http/clientError";
 import type { LessonExportPayload } from "@/types";
 
 export const runtime = "nodejs";
@@ -101,9 +102,10 @@ export async function POST(request: Request) {
         error:
           error instanceof z.ZodError
             ? "De lesvoorbereiding bevat ongeldige gegevens."
-            : error instanceof Error
-              ? error.message
-              : "Het Word-document kon niet worden gemaakt.",
+            : publicErrorMessage(
+                error,
+                "Het Word-document kon niet worden gemaakt.",
+              ),
       },
       { status: 400 },
     );

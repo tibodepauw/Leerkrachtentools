@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import {
   sessionFromRequest,
   unauthorizedResponse,
@@ -15,10 +14,11 @@ import { runStructured } from "@/lib/ai/router";
 import { dialogueSchema } from "@/lib/ai/schemas";
 import {
   checkServerAiAccess,
+  runWithServerAiQuota,
   serverAiAccessDeniedResponse,
-  trackServerAiUsageIfNeeded,
 } from "@/lib/ai/serverAccess";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
+import { publicErrorMessage } from "@/lib/http/clientError";
 import {
   dialoguePromptForStyle,
   formatDialogueInstruction,
@@ -57,15 +57,21 @@ export async function POST(request: Request) {
   try {
     const input = formatDialogueRequestSchema.parse(await request.json());
 
-    const result = await runStructured({
-      schema: dialogueSchema,
-      system: dialoguePromptForStyle(input.style),
-      prompt: formatDialogueInstruction(input.style, input.content),
-      mock: { formatted: "", interventions: 0 },
-      preferredProvider: "google",
-      allowLocalMock: false,
-      userAiConfig,
-    });
+    const tracked = await runWithServerAiQuota(access, session.id, () =>
+      runStructured({
+        schema: dialogueSchema,
+        system: dialoguePromptForStyle(input.style),
+        prompt: formatDialogueInstruction(input.style, input.content),
+        mock: { formatted: "", interventions: 0 },
+        preferredProvider: "google",
+        allowLocalMock: false,
+        userAiConfig,
+      }),
+    );
+    if (!tracked.ok) {
+      return tracked.response;
+    }
+    const result = tracked.result;
 
     const formatted =
       input.style === "thomas-more"
@@ -79,11 +85,6 @@ export async function POST(request: Request) {
       throw new Error("De modeluitvoer kon niet strikt worden gevalideerd.");
     }
 
-    trackServerAiUsageIfNeeded({
-      userId: session.id,
-      usesServerQuota: access.usesServerQuota,
-      provider: result.provider,
-    });
     return NextResponse.json({
       ...result,
       data: { ...result.data, formatted },
@@ -91,12 +92,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof z.ZodError
-            ? error.issues[0]?.message ?? "Ongeldige invoer."
-            : error instanceof Error
-              ? error.message
-              : "Formattering is mislukt.",
+        error: publicErrorMessage(error, "Formattering is mislukt."),
       },
       { status: 400 },
     );

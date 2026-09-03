@@ -24,12 +24,15 @@ import { useAnalysis } from "@/hooks/useAnalysis";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { resolveReflectionMediaType } from "@/lib/ai/audioMediaType";
 import type { ReflectionDraft } from "@/types";
+import { setIndexedValue } from "@/lib/ui/indexedValues";
 import { useLessonStore } from "@/stores/useLessonStore";
 
 async function blobToBase64(blob: Blob) {
-  return await new Promise<string>((resolve) => {
+  return await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = () =>
+      reject(new Error("De opname kon niet worden gelezen."));
     reader.readAsDataURL(blob);
   });
 }
@@ -38,6 +41,7 @@ export function VoiceReflectionView() {
   const lesson = useLessonStore((state) => state.lesson);
   const [content, setContent] = useState("");
   const [answers, setAnswers] = useState<string[]>([]);
+  const [recorderError, setRecorderError] = useState("");
   const recorder = useAudioRecorder();
   const { analyze, result, setResult, loading, error } =
     useAnalysis<ReflectionDraft>();
@@ -129,7 +133,21 @@ export function VoiceReflectionView() {
                   {recorder.recording ? (
                     <Button variant="destructive" size="icon" onClick={recorder.stop} aria-label="Stop opname"><Square className="size-4" /></Button>
                   ) : (
-                    <Button variant="outline" size="icon" onClick={recorder.start} aria-label="Start opname"><Mic className="size-4" /></Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setRecorderError("");
+                        void recorder.start().catch(() => {
+                          setRecorderError(
+                            "Microfoon is niet beschikbaar. Controleer de toestemming in je browser.",
+                          );
+                        });
+                      }}
+                      aria-label="Start opname"
+                    >
+                      <Mic className="size-4" />
+                    </Button>
                   )}
                 </CardContent>
               </Card>
@@ -143,7 +161,19 @@ export function VoiceReflectionView() {
                     {questions.map((question, index) => (
                       <div key={question} className="space-y-2">
                         <Label htmlFor={`answer-${index}`}>{question}</Label>
-                        <Input id={`answer-${index}`} value={answers[index] ?? ""} onChange={(event) => setAnswers((current) => current.map((value, answerIndex) => answerIndex === index ? event.target.value : value).concat(current.length <= index ? [event.target.value] : []))} />
+                        <Input
+                          id={`answer-${index}`}
+                          value={answers[index] ?? ""}
+                          onChange={(event) =>
+                            setAnswers((current) =>
+                              setIndexedValue(
+                                current,
+                                index,
+                                event.target.value,
+                              ),
+                            )
+                          }
+                        />
                       </div>
                     ))}
                     <Button onClick={complete} disabled={answers.filter(Boolean).length < questions.length}>Verwerk antwoorden</Button>
@@ -154,6 +184,9 @@ export function VoiceReflectionView() {
           }
           actions={
             <>
+              {recorderError ? (
+                <p className="text-sm text-red-400">{recorderError}</p>
+              ) : null}
               {error && <p className="text-sm text-red-400">{error}</p>}
               <ModuleActionButton
                 disabled={actionDisabled}

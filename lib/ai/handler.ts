@@ -12,9 +12,10 @@ import type { ProviderName } from "@/lib/ai/providers";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
 import {
   checkServerAiAccess,
+  runWithServerAiQuota,
   serverAiAccessDeniedResponse,
-  trackServerAiUsageIfNeeded,
 } from "@/lib/ai/serverAccess";
+import { publicErrorMessage } from "@/lib/http/clientError";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
 
 type InputRecord = Record<string, unknown>;
@@ -84,31 +85,26 @@ export function createAnalysisHandler<T>({
         );
       }
 
-      const result = await runStructured({
-        schema,
-        system,
-        prompt: buildPrompt(input),
-        mock: buildMock(input),
-        preferredProvider: preferred,
-        allowLocalMock: !requireAi,
-        userAiConfig,
-        maxOutputTokens,
-      });
-      trackServerAiUsageIfNeeded({
-        userId: session.id,
-        usesServerQuota: access.usesServerQuota,
-        provider: result.provider,
-      });
-      return NextResponse.json(result);
+      const tracked = await runWithServerAiQuota(access, session.id, () =>
+        runStructured({
+          schema,
+          system,
+          prompt: buildPrompt(input),
+          mock: buildMock(input),
+          preferredProvider: preferred,
+          allowLocalMock: !requireAi,
+          userAiConfig,
+          maxOutputTokens,
+        }),
+      );
+      if (!tracked.ok) {
+        return tracked.response;
+      }
+      return NextResponse.json(tracked.result);
     } catch (error) {
       return NextResponse.json(
         {
-          error:
-            error instanceof z.ZodError
-              ? error.issues[0]?.message ?? "Ongeldige invoer."
-              : error instanceof Error
-                ? error.message
-                : "De analyse kon niet worden uitgevoerd.",
+          error: publicErrorMessage(error, "De analyse kon niet worden uitgevoerd."),
         },
         { status: 400 },
       );

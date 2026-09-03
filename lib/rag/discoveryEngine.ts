@@ -176,7 +176,8 @@ function buildQuery(query: string, network?: CurriculumNetworkFilter): string {
   if (!network || network === "ALL") {
     return query;
   }
-  return `${network} ${query}`;
+  const pathHint = NETWORK_PATH[network];
+  return pathHint ? `${query} ${pathHint}` : `${network} ${query}`;
 }
 
 function matchesNetwork(

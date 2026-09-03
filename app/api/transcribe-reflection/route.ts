@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import {
   sessionFromRequest,
   unauthorizedResponse,
@@ -12,10 +11,11 @@ import { runStructured } from "@/lib/ai/router";
 import { reflectionSchema } from "@/lib/ai/schemas";
 import {
   checkServerAiAccess,
+  runWithServerAiQuota,
   serverAiAccessDeniedResponse,
-  trackServerAiUsageIfNeeded,
 } from "@/lib/ai/serverAccess";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
+import { publicErrorMessage } from "@/lib/http/clientError";
 
 export const runtime = "nodejs";
 
@@ -51,43 +51,38 @@ export async function POST(request: Request) {
     const input = reflectionRequestSchema.parse(await request.json());
     const goals = input.goals ?? [];
 
-    const result = await runStructured({
-      schema: reflectionSchema,
-      system: prompts.reflection,
-      prompt: `Lesdoelen:\n${goals.join("\n")}\n\nTranscript en eerdere antwoorden:\n${input.content?.trim() ?? ""}`,
-      mock: {
-        goals: [],
-        engagement: [],
-        teacherIdentity: "",
-        followUpQuestions: [],
-      },
-      preferredProvider: "google",
-      allowLocalMock: false,
-      userAiConfig,
-      file:
-        input.audioData && input.mediaType
-          ? {
-              data: input.audioData,
-              mediaType: input.mediaType,
-              filename: "reflectie-opname.webm",
-            }
-          : undefined,
-    });
-    trackServerAiUsageIfNeeded({
-      userId: session.id,
-      usesServerQuota: access.usesServerQuota,
-      provider: result.provider,
-    });
-    return NextResponse.json(result);
+    const tracked = await runWithServerAiQuota(access, session.id, () =>
+      runStructured({
+        schema: reflectionSchema,
+        system: prompts.reflection,
+        prompt: `Lesdoelen:\n${goals.join("\n")}\n\nTranscript en eerdere antwoorden:\n${input.content?.trim() ?? ""}`,
+        mock: {
+          goals: [],
+          engagement: [],
+          teacherIdentity: "",
+          followUpQuestions: [],
+        },
+        preferredProvider: "google",
+        allowLocalMock: false,
+        userAiConfig,
+        file:
+          input.audioData && input.mediaType
+            ? {
+                data: input.audioData,
+                mediaType: input.mediaType,
+                filename: "reflectie-opname.webm",
+              }
+            : undefined,
+      }),
+    );
+    if (!tracked.ok) {
+      return tracked.response;
+    }
+    return NextResponse.json(tracked.result);
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof z.ZodError
-            ? error.issues[0]?.message ?? "Ongeldige invoer."
-            : error instanceof Error
-              ? error.message
-              : "Reflectie is mislukt.",
+        error: publicErrorMessage(error, "Reflectie is mislukt."),
       },
       { status: 400 },
     );

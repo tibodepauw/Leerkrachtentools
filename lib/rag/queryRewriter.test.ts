@@ -16,6 +16,7 @@ describe("queryRewriter", () => {
       buildSearchQueryFromRewrite("functie grafiek", {
         expandedQuery: "eerstegraadsfunctie grafiek snijpunt",
         disciplineHint: "Wiskunde",
+        usedLlm: false,
       }),
     ).toBe("eerstegraadsfunctie grafiek snijpunt Wiskunde");
   });
@@ -27,6 +28,7 @@ describe("queryRewriter", () => {
     const result = await resolveRagSearchQuery("vage zoekterm", true);
     expect(result.searchQuery).toBe("vage zoekterm");
     expect(result.rewrite?.expandedQuery).toBe("vage zoekterm");
+    expect(result.rewrite?.usedLlm).toBe(false);
 
     if (originalKey) {
       process.env.GOOGLE_GENERATIVE_AI_API_KEY = originalKey;

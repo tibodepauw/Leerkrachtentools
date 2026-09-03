@@ -52,6 +52,7 @@ import {
 import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilters";
 import { formatMinimumGoalCopy } from "@/lib/rag/minimumGoalCopy";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
+import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import type {
@@ -152,7 +153,6 @@ function GoalCard({
 
   function handleAddToLesson() {
     onAddToLesson(goalCopy);
-    toast.success("Doel toegevoegd aan actieve les");
   }
 
   return (
@@ -249,7 +249,6 @@ function MinimumGoalCard({
 
   function handleAddToLesson() {
     onAddToLesson(minimumCopy);
-    toast.success("Minimumdoel toegevoegd aan actieve les");
   }
 
   return (
@@ -341,6 +340,17 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     "Alle leerplannen";
   const { goals, selectedId, setSelectedId, text, setText, addGoal } =
     useSelectedLessonGoal();
+  const setActiveGoal = useLessonStore((state) => state.setActiveGoal);
+  const lessonGoals = useLessonStore((state) => state.lesson.goals);
+
+  function addGoalToLesson(goalText: string) {
+    if (filledGoals(lessonGoals).length >= MAX_LESSON_GOALS) {
+      toast.error(`Je kunt maximaal ${MAX_LESSON_GOALS} doelen in de actieve les zetten.`);
+      return;
+    }
+    setActiveGoal(goalText);
+    toast.success("Doel toegevoegd aan actieve les");
+  }
   const analysisScope =
     variant === "minimumdoel"
       ? `${variant}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
@@ -656,7 +666,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     <MinimumGoalCard
                       key={`${goalResult.gelinktMinimumdoel?.code}-${index}`}
                       result={goalResult}
-                      onAddToLesson={setText}
+                      onAddToLesson={addGoalToLesson}
                       rank={index + 1}
                       isBestMatch={index === 0}
                     />
@@ -664,7 +674,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     <GoalCard
                       key={`${goalResult.code}-${goalResult.titel}-${index}`}
                       result={goalResult}
-                      onAddToLesson={setText}
+                      onAddToLesson={addGoalToLesson}
                     />
                   ),
                 )}

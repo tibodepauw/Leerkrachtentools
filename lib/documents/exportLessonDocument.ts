@@ -292,6 +292,20 @@ function defaultExportFileName(topic: string) {
   return `lesvoorbereiding-${safeTopic || "export"}.docx`;
 }
 
+export function sanitizeDownloadFileName(name: string) {
+  const base = name.replace(/^.*[/\\]/, "").replace(/[\r\n"]/g, "");
+  const cleaned = base
+    .replace(/[^\w.\- ()à-ÿ]+/giu, "-")
+    .replace(/^-|-$/gu, "")
+    .slice(0, 120);
+  if (!cleaned) {
+    return "lesvoorbereiding.docx";
+  }
+  return cleaned.toLowerCase().endsWith(".docx")
+    ? cleaned
+    : `${cleaned}.docx`;
+}
+
 export async function exportLessonDocument(
   lesson: LessonExportPayload,
   sourceBuffer?: Buffer,
@@ -307,7 +321,7 @@ export async function exportLessonDocument(
     if (extension === "docx") {
       return {
         buffer: await patchLessonDocx(sourceBuffer, lesson),
-        fileName: sourceFileName,
+        fileName: sanitizeDownloadFileName(sourceFileName),
         exportMode: "patched-source" as const,
       };
     }

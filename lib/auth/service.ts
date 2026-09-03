@@ -94,9 +94,6 @@ export async function requestLoginCode({
   if (!privacyAccepted) {
     throw new Error("Ga akkoord met het privacybeleid om verder te gaan.");
   }
-  if (!hasAppAccess(email)) {
-    throw new Error(inviteOnlyMessage());
-  }
 
   const now = Date.now();
   const db = getDatabase();
@@ -126,6 +123,7 @@ export async function requestLoginCode({
     throw new Error("Wacht één minuut voordat je een nieuwe code aanvraagt.");
   }
 
+  const allowed = hasAppAccess(email);
   const code = String(randomInt(100_000, 1_000_000));
   db.prepare(
     "UPDATE login_codes SET used_at = ? WHERE email = ? AND used_at IS NULL",
@@ -144,6 +142,16 @@ export async function requestLoginCode({
     now + CODE_TTL,
     now,
   );
+
+  if (!allowed) {
+    db.prepare(
+      "UPDATE login_codes SET used_at = ? WHERE email = ? AND used_at IS NULL",
+    ).run(now, email);
+    return {
+      email,
+      expiresInSeconds: CODE_TTL / 1000,
+    };
+  }
 
   try {
     await sendVerificationEmail(email, code);
@@ -227,10 +235,14 @@ export function verifyLoginCode(emailValue: string, code: string) {
     throw new Error(inviteOnlyMessage());
   }
   const transaction = db.transaction(() => {
-    db.prepare("UPDATE login_codes SET used_at = ? WHERE id = ?").run(
-      now,
-      row.id,
-    );
+    const consumed = db
+      .prepare(
+        "UPDATE login_codes SET used_at = ? WHERE id = ? AND used_at IS NULL",
+      )
+      .run(now, row.id);
+    if (consumed.changes !== 1) {
+      throw new Error("De code is verlopen. Vraag een nieuwe code aan.");
+    }
     db.prepare(
       `INSERT INTO users
         (id, email, tier, email_verified_at, marketing_opt_in, marketing_consent_at, privacy_accepted_at, created_at, updated_at)

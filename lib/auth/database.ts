@@ -80,6 +80,15 @@ export function getDatabase() {
 
     CREATE INDEX IF NOT EXISTS user_ai_usage_user_created
       ON user_ai_usage(user_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS feedback_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS feedback_events_user_created
+      ON feedback_events(user_id, created_at);
   `);
   ensureDatabaseIndexes(database);
   const userColumns = new Set(

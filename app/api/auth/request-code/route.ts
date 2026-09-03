@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import {
-  hashRequestIp,
-  requestLoginCode,
-} from "@/lib/auth/service";
+import { hashRequestIp, requestLoginCode } from "@/lib/auth/service";
+import { publicErrorMessage } from "@/lib/http/clientError";
+import { clientIpFromRequest } from "@/lib/http/requestIp";
 
 export const runtime = "nodejs";
 
@@ -13,27 +12,23 @@ export async function POST(request: Request) {
       marketingOptIn?: boolean;
       privacyAccepted?: boolean;
     };
-    const forwarded = request.headers.get("x-forwarded-for");
-    const ip = forwarded?.split(",")[0]?.trim() || "unknown";
     const result = await requestLoginCode({
       email: body.email ?? "",
       marketingOptIn: body.marketingOptIn === true,
       privacyAccepted: body.privacyAccepted === true,
-      ipHash: hashRequestIp(ip),
+      ipHash: hashRequestIp(clientIpFromRequest(request)),
     });
     return NextResponse.json(result, {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Code aanvragen is mislukt.";
+    const message = publicErrorMessage(error, "Code aanvragen is mislukt.");
     const rateLimited =
       message.includes("Te veel") || message.includes("Wacht één minuut");
-    const inviteOnly = message.includes("invite-only");
     return NextResponse.json(
       { error: message },
       {
-        status: inviteOnly ? 403 : rateLimited ? 429 : 400,
+        status: rateLimited ? 429 : 400,
         headers: { "Cache-Control": "no-store" },
       },
     );

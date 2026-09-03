@@ -30,4 +30,15 @@ describe("useLessonStore RAG filters", () => {
 
     expect(useLessonStore.getState().curriculumNetworkFilter).toBe("OPSTAP");
   });
+
+  it("mapt GO! naar GO_NIEUW in basisonderwijs en naar GO in secundair", () => {
+    useLessonStore.getState().setNetwork("GO");
+    expect(useLessonStore.getState().curriculumNetworkFilter).toBe("GO_NIEUW");
+
+    useLessonStore.getState().setEducationLevel("secundair_onderwijs");
+    expect(useLessonStore.getState().curriculumNetworkFilter).toBe("GO");
+
+    useLessonStore.getState().setEducationLevel("basisonderwijs");
+    expect(useLessonStore.getState().curriculumNetworkFilter).toBe("GO_NIEUW");
+  });
 });

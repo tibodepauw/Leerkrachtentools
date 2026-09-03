@@ -9,6 +9,7 @@ import {
 } from "@/lib/ai/userCredentials";
 import { listProviderModels } from "@/lib/ai/listModels";
 import type { ProviderName } from "@/lib/ai/providers";
+import { publicErrorMessage } from "@/lib/http/clientError";
 
 export async function POST(request: Request) {
   const session = sessionFromRequest(request);
@@ -63,10 +64,10 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Modellen konden niet worden opgehaald.",
+        error: publicErrorMessage(
+          error,
+          "Modellen konden niet worden opgehaald.",
+        ),
       },
       { status: 400 },
     );

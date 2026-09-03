@@ -39,7 +39,6 @@ export function proxy(request: NextRequest) {
   return NextResponse.redirect(loginUrl);
 }
 
-export const proxyConfig = {
+export const config = {
   matcher: ["/settings/:path*", "/dev/:path*", "/api/:path*"],
-  runtime: "nodejs",
 };

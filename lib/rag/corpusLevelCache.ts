@@ -414,6 +414,10 @@ export function secondaryMinimumGoalRecords(): RawRecord[] {
   return loadJsonlAt(SECONDARY_MINIMUM_GOALS_PROD);
 }
 
+export function isPovCorpusAvailable(): boolean {
+  return existsSync(SECONDARY_POV_CURRICULUM_PROD);
+}
+
 export function resetCorpusLevelCache(): void {
   for (const level of [...levelCache.keys()]) {
     unloadCorpusLevel(level);

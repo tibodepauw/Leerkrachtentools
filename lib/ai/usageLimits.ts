@@ -48,6 +48,36 @@ export function recordServerAiUsage(userId: string, now = Date.now()) {
     .run(userId, now);
 }
 
+export function tryReserveServerAiUsage(
+  userId: string,
+  limit: number,
+  now = Date.now(),
+): { ok: true; id: number; used: number } | { ok: false; used: number } {
+  const db = getDatabase();
+  return db.transaction(() => {
+    const used = countRecentServerAiUsage(userId, now);
+    if (used >= limit) {
+      return { ok: false as const, used };
+    }
+    const inserted = db
+      .prepare(
+        "INSERT INTO user_ai_usage (user_id, created_at) VALUES (?, ?)",
+      )
+      .run(userId, now);
+    return {
+      ok: true as const,
+      id: Number(inserted.lastInsertRowid),
+      used,
+    };
+  })();
+}
+
+export function releaseServerAiUsage(id: number) {
+  getDatabase()
+    .prepare("DELETE FROM user_ai_usage WHERE id = ?")
+    .run(id);
+}
+
 export function usesOwnAiKeys(userAiConfig: UserAiConfig | null) {
   return Boolean(userAiConfig && userAiConfigHasCredentials(userAiConfig));
 }

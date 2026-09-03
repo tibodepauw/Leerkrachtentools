@@ -3,6 +3,7 @@ import {
   SESSION_COOKIE,
   verifyLoginCode,
 } from "@/lib/auth/service";
+import { publicErrorMessage } from "@/lib/http/clientError";
 
 export const runtime = "nodejs";
 
@@ -23,8 +24,7 @@ export async function POST(request: Request) {
     });
     return response;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Verificatie is mislukt.";
+    const message = publicErrorMessage(error, "Verificatie is mislukt.");
     const inviteOnly = message.includes("invite-only");
     return NextResponse.json(
       { error: message },

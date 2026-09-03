@@ -12,7 +12,10 @@ import {
   resetLessonStoreState,
   useLessonStore,
 } from "@/stores/useLessonStore";
-import { useSettingsStore } from "@/stores/useSettingsStore";
+import {
+  resetSettingsStoreState,
+  useSettingsStore,
+} from "@/stores/useSettingsStore";
 
 interface UserStorageScopeProps {
   userId: string;
@@ -55,6 +58,7 @@ export function UserStorageScope({ userId, children }: UserStorageScopeProps) {
       if (previousUserId && previousUserId !== userId) {
         clearRagQueryCache();
         resetLessonStoreState();
+        resetSettingsStoreState();
       }
 
       setActiveUserId(userId);

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 import {
   sessionFromRequest,
   unauthorizedResponse,
@@ -12,10 +11,11 @@ import { runStructured } from "@/lib/ai/router";
 import { manualExtractionSchema } from "@/lib/ai/schemas";
 import {
   checkServerAiAccess,
+  runWithServerAiQuota,
   serverAiAccessDeniedResponse,
-  trackServerAiUsageIfNeeded,
 } from "@/lib/ai/serverAccess";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
+import { publicErrorMessage } from "@/lib/http/clientError";
 
 export const runtime = "nodejs";
 
@@ -61,47 +61,41 @@ Laat velden leeg wanneer informatie ontbreekt. Formuleer ruwe uitgeverijdoelen n
         }`
       : `Geplakte handleidingtekst:\n${input.content?.trim() ?? ""}`;
 
-    const result = await runStructured({
-      schema: manualExtractionSchema,
-      system: prompts.manual,
-      prompt,
-      mock: {
-        learningArea: "",
-        component: "",
-        topic: "",
-        targetGroup: "",
-        materials: [],
-        rawPublisherGoals: [],
-      },
-      preferredProvider: "google",
-      allowLocalMock: false,
-      userAiConfig,
-      file:
-        input.fileData && input.mediaType
-          ? {
-              data: input.fileData,
-              mediaType: input.mediaType,
-              filename: input.fileName,
-            }
-          : undefined,
-    });
+    const tracked = await runWithServerAiQuota(access, session.id, () =>
+      runStructured({
+        schema: manualExtractionSchema,
+        system: prompts.manual,
+        prompt,
+        mock: {
+          learningArea: "",
+          component: "",
+          topic: "",
+          targetGroup: "",
+          materials: [],
+          rawPublisherGoals: [],
+        },
+        preferredProvider: "google",
+        allowLocalMock: false,
+        userAiConfig,
+        file:
+          input.fileData && input.mediaType
+            ? {
+                data: input.fileData,
+                mediaType: input.mediaType,
+                filename: input.fileName,
+              }
+            : undefined,
+      }),
+    );
+    if (!tracked.ok) {
+      return tracked.response;
+    }
 
-    trackServerAiUsageIfNeeded({
-      userId: session.id,
-      usesServerQuota: access.usesServerQuota,
-      provider: result.provider,
-    });
-
-    return NextResponse.json(result);
+    return NextResponse.json(tracked.result);
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof z.ZodError
-            ? error.issues[0]?.message ?? "Ongeldige invoer."
-            : error instanceof Error
-              ? error.message
-              : "Extractie is mislukt.",
+        error: publicErrorMessage(error, "Extractie is mislukt."),
       },
       { status: 400 },
     );

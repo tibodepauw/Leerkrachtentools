@@ -5,6 +5,7 @@ import { useAnalysis, type AnalysisResponse } from "@/hooks/useAnalysis";
 import {
   readRagQueryCache,
   writeRagQueryCache,
+  type RagQueryCacheScope,
   type RagQueryEndpoint,
 } from "@/lib/rag/clientQueryCache";
 import type { CurriculumNetworkFilter, EducationLevelFilter } from "@/types";
@@ -24,11 +25,21 @@ export function useRagQueryAnalysis<T>(scopeKey: string) {
     async (params: RagAnalyzeParams): Promise<AnalysisResponse<T> | null> => {
       const query = String(params.body.goal ?? "").trim();
       const network = params.network ?? "-";
+      const scope: RagQueryCacheScope = {
+        grade: String(params.body.grade ?? ""),
+        ageRange: String(params.body.ageRange ?? ""),
+        secondaryGrade: String(params.body.secondaryGrade ?? ""),
+        secondaryFinality: String(params.body.secondaryFinality ?? ""),
+        domainDetail: String(params.body.domainDetail ?? ""),
+        domainFinality: String(params.body.domainFinality ?? ""),
+        enableLlmQueryRewriting: params.body.enableLlmQueryRewriting === true,
+      };
       const cached = readRagQueryCache<T>(
         params.endpoint,
         params.educationLevel,
         network,
         query,
+        scope,
       );
 
       if (cached) {
@@ -49,6 +60,7 @@ export function useRagQueryAnalysis<T>(scopeKey: string) {
           network,
           query,
           payload,
+          scope,
         );
       }
       return payload;

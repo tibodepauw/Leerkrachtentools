@@ -44,4 +44,9 @@ describe("corpusLevelCache", () => {
     expect(getActiveCorpusLevels().length).toBeLessThanOrEqual(2);
     expect(getActiveCorpusLevels()).toContain("OKAN");
   });
+
+  it("houdt ALL als apart zoekniveau, niet als alias van basisonderwijs", () => {
+    expect(resolveCorpusLevel("ALL", "ALL")).toBe("BASISONDERWIJS");
+    expect(resolveCorpusLevel("ALL", "OVSG")).toBe("BASISONDERWIJS");
+  });
 });

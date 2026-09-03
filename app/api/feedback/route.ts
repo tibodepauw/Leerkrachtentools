@@ -3,7 +3,9 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { assertFeedbackRateLimit } from "@/lib/feedback/rateLimit";
 import { sendFeedbackEmail } from "@/lib/feedback/sendFeedback";
+import { publicErrorMessage } from "@/lib/http/clientError";
 
 export async function POST(request: Request) {
   const session = sessionFromRequest(request);
@@ -16,6 +18,8 @@ export async function POST(request: Request) {
       activeModule?: string;
       anonymous?: boolean;
     };
+
+    assertFeedbackRateLimit(session.id);
 
     await sendFeedbackEmail({
       fromEmail: session.email,
@@ -30,14 +34,14 @@ export async function POST(request: Request) {
       message: "Bedankt! Je feedback is doorgestuurd.",
     });
   } catch (error) {
+    const message = publicErrorMessage(
+      error,
+      "Feedback versturen is mislukt.",
+    );
+    const rateLimited = message.includes("recent al meerdere");
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Feedback versturen is mislukt.",
-      },
-      { status: 400 },
+      { error: message },
+      { status: rateLimited ? 429 : 400 },
     );
   }
 }

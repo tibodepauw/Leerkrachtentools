@@ -12,6 +12,7 @@ import {
   searchLocalCorpus,
   searchMinimumGoals,
   tokenize,
+  isStandaloneSecundairMinimumGoal,
 } from "@/lib/rag/curriculumCorpus";
 import type { DiscoveryHit } from "@/lib/rag/discoveryEngine";
 
@@ -198,5 +199,24 @@ describe("curriculumCorpus matching", () => {
     expect(zillOnly).toHaveLength(0);
     expect(ahovoks.length).toBeGreaterThanOrEqual(1);
     expect(ahovoks[0]?.netwerk).toBe("AHOVOKS");
+  });
+});
+
+describe("secundair corpusfilter", () => {
+  it("herkent losse minimumdoelen zonder netwerk, ook met niveau SECUNDAIR", () => {
+    expect(
+      isStandaloneSecundairMinimumGoal({
+        onderwijsniveau: "SECUNDAIR",
+        titel: "De leerlingen analyseren klimaatverandering.",
+        netwerk: "",
+      }),
+    ).toBe(true);
+    expect(
+      isStandaloneSecundairMinimumGoal({
+        onderwijsniveau: "secundair onderwijs",
+        titel: "De leerlingen analyseren klimaatverandering.",
+        netwerk: "GO",
+      }),
+    ).toBe(false);
   });
 });

@@ -37,3 +37,11 @@ export const useSettingsStore = create<SettingsStore>()(
     },
   ),
 );
+
+export function resetSettingsStoreState() {
+  useSettingsStore.setState({
+    enableLlmQueryRewriting: false,
+    loaderVariant: "gather",
+    hydrated: false,
+  });
+}

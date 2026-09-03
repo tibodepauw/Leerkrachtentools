@@ -23,7 +23,6 @@ import {
   getCorpusForLevel as getCorpusRecordsForLevel,
   registerCorpusLevelUnloadListener,
   resolveCorpusLevel,
-  secondaryMinimumGoalRecords,
   type CorpusLevel,
   SECONDARY_CURRICULUM_PROD,
   SECONDARY_POV_CURRICULUM_PROD,
@@ -123,12 +122,15 @@ function corpusIndexKey(
   network: CurriculumNetworkFilter,
   educationLevel: EducationLevelFilter,
 ): string {
+  if (educationLevel === "ALL") {
+    return `ALL:${network}`;
+  }
   return `${resolveCorpusLevel(educationLevel, network)}:${network}`;
 }
 
 registerCorpusLevelUnloadListener((level) => {
   for (const key of [...corpusIndexCache.keys()]) {
-    if (key.startsWith(`${level}:`)) {
+    if (key.startsWith(`${level}:`) || key.startsWith("ALL:")) {
       corpusIndexCache.delete(key);
     }
   }
@@ -241,10 +243,27 @@ export function filterByAbsoluteMinScore<T extends { score: number }>(
   return results;
 }
 
+const ALL_SEARCH_LEVELS: EducationLevelFilter[] = [
+  "BASISONDERWIJS",
+  "SECUNDAIR",
+  "BUBAO",
+  "BUSO",
+  "OKAN",
+  "DKO",
+  "VOLWASSENEN",
+  "HOGER",
+];
+
 export function recordsForNetwork(
   network: CurriculumNetworkFilter,
   educationLevel: EducationLevelFilter = "ALL",
 ): RawRecord[] {
+  if (educationLevel === "ALL") {
+    return ALL_SEARCH_LEVELS.flatMap((level) =>
+      recordsForNetwork(network, level),
+    );
+  }
+
   const corpusLevel = resolveCorpusLevel(educationLevel, network);
 
   if (corpusLevel === "BASISONDERWIJS") {
@@ -285,13 +304,17 @@ export function recordsForNetwork(
   return domainRecords.filter((raw) => recordMatchesNetwork(raw, network));
 }
 
-function isStandaloneSecundairMinimumGoal(raw: RawRecord): boolean {
+export function isStandaloneSecundairMinimumGoal(raw: RawRecord): boolean {
   if (raw.gelinkt_minimumdoel || raw.leerlijn || raw.inhouden) {
     return false;
   }
-  return asString(raw.onderwijsniveau)
-    .toLocaleLowerCase("nl-BE")
-    .includes("secundair onderwijs");
+  const niveau = asString(raw.onderwijsniveau).toLocaleLowerCase("nl-BE");
+  const isSecundair =
+    niveau === "secundair" || niveau.includes("secundair");
+  if (!isSecundair) {
+    return false;
+  }
+  return !asString(raw.netwerk ?? raw.network);
 }
 
 export function educationDomainRecords(
@@ -315,6 +338,11 @@ export function educationDomainRecords(
 export function allMinimumGoalRecords(
   educationLevel: EducationLevelFilter = "ALL",
 ): RawRecord[] {
+  if (educationLevel === "ALL") {
+    return ALL_SEARCH_LEVELS.flatMap((level) =>
+      allMinimumGoalRecords(level),
+    );
+  }
   const corpusLevel = resolveCorpusLevel(educationLevel);
   if (corpusLevel === "BASISONDERWIJS") {
     return recordsForNetwork("OPSTAP", educationLevel);

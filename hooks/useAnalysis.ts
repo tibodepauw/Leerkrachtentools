@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export interface AnalysisResponse<T> {
   data: T;
@@ -17,6 +17,7 @@ export function useAnalysis<T>(scopeKey?: string) {
   >({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const requestIdRef = useRef(0);
 
   const setResult = useCallback(
     (payload: AnalysisResponse<T> | null) => {
@@ -30,6 +31,8 @@ export function useAnalysis<T>(scopeKey?: string) {
 
   async function analyze(url: string, body: Record<string, unknown>) {
     const cacheKey = scopeKey;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
     setError("");
     try {
@@ -41,6 +44,9 @@ export function useAnalysis<T>(scopeKey?: string) {
       const payload = (await response.json()) as
         | AnalysisResponse<T>
         | { error?: string };
+      if (requestId !== requestIdRef.current) {
+        return null;
+      }
       if (response.status === 401) {
         window.location.reload();
         throw new Error("Je sessie is verlopen.");
@@ -58,12 +64,17 @@ export function useAnalysis<T>(scopeKey?: string) {
       }
       return payload;
     } catch (caught) {
+      if (requestId !== requestIdRef.current) {
+        return null;
+      }
       setError(
         caught instanceof Error ? caught.message : "De analyse is mislukt.",
       );
       return null;
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }
 

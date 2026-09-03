@@ -11,6 +11,7 @@ import {
   resolveCurriculumNetwork,
 } from "@/lib/lesson/educationLevelPreference";
 import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
+import { isPovCorpusAvailable } from "@/lib/rag/corpusLevelCache";
 import {
   CURRICULUM_TOP_N,
   isStructuredResult,
@@ -20,7 +21,8 @@ import {
   searchLocalCorpus,
 } from "@/lib/rag/curriculumCorpus";
 import { applyTargetGroupRanking } from "@/lib/rag/targetGroupBonus";
-import { resolveRagSearchQuery } from "@/lib/rag/queryRewriter";
+import { publicErrorMessage } from "@/lib/http/clientError";
+import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
@@ -134,6 +136,11 @@ async function runCurriculumSearch(
       ? `${merged.length} officiële leerplandoel${merged.length === 1 ? "" : "en"} uit ${networkLabel}.`
       : "Geen match in de officiële doelencorpus. Probeer een andere formulering of selecteer een ander netwerk.";
 
+  if (network === "POV" && !isPovCorpusAvailable()) {
+    corpusNotice =
+      "POV-leerplannen zijn lokaal nog niet opgehaald. Draai `npm run fetch:secundair` om de corpus te laden.";
+  }
+
   if (semanticFallback && merged.length > 0) {
     corpusNotice = `${merged.length} semantisch passende leerplandoel${merged.length === 1 ? "" : "en"} via Discovery Engine (geen exacte token-match).`;
   }
@@ -174,6 +181,12 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    if (query.length > 10_000) {
+      return NextResponse.json(
+        { error: "Het lesdoel is te lang." },
+        { status: 400 },
+      );
+    }
 
     const requestedNetwork = body.network ?? "ALL";
     if (!NETWORKS.has(requestedNetwork)) {
@@ -203,10 +216,12 @@ export async function POST(request: Request) {
       educationLevel,
     };
 
-    const { searchQuery, rewrite } = await resolveRagSearchQuery(
+    const { searchQuery, rewrite } = await resolveTrackedRagSearchQuery({
       query,
-      body.enableLlmQueryRewriting === true,
-    );
+      enableLlmQueryRewriting: body.enableLlmQueryRewriting === true,
+      userId: session.id,
+      tier: session.tier,
+    });
 
     let searchResult = await runCurriculumSearch(
       searchQuery,
@@ -260,10 +275,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Doelenzoekopdracht mislukt.",
+        error: publicErrorMessage(error, "Doelenzoekopdracht mislukt."),
       },
       { status: 500 },
     );

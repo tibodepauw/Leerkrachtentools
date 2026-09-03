@@ -13,8 +13,18 @@ export type CachedRagQueryResult<T> = {
   fallbackErrors: string[];
 };
 
+export type RagQueryCacheScope = {
+  grade?: string;
+  ageRange?: string;
+  secondaryGrade?: string;
+  secondaryFinality?: string;
+  domainDetail?: string;
+  domainFinality?: string;
+  enableLlmQueryRewriting?: boolean;
+};
+
 const STORAGE_KEY = "leerkrachtentools-rag-query-cache";
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 type StoredRagQueryCache = {
   version: number;
@@ -34,8 +44,18 @@ export function buildRagQueryCacheKey(
   educationLevel: EducationLevelFilter,
   network: CurriculumNetworkFilter | "-",
   query: string,
+  scope: RagQueryCacheScope = {},
 ): string {
-  return `${educationLevel}:${network}:${normalizeCachedQuery(query)}`;
+  const scopeKey = [
+    scope.grade ?? "",
+    scope.ageRange ?? "",
+    scope.secondaryGrade ?? "",
+    scope.secondaryFinality ?? "",
+    scope.domainDetail ?? "",
+    scope.domainFinality ?? "",
+    scope.enableLlmQueryRewriting ? "1" : "0",
+  ].join("|");
+  return `${educationLevel}:${network}:${normalizeCachedQuery(query)}:${scopeKey}`;
 }
 
 function endpointPrefix(endpoint: RagQueryEndpoint): string {
@@ -47,8 +67,9 @@ export function buildRagQueryStorageKey(
   educationLevel: EducationLevelFilter,
   network: CurriculumNetworkFilter | "-",
   query: string,
+  scope: RagQueryCacheScope = {},
 ): string {
-  return `${endpointPrefix(endpoint)}:${buildRagQueryCacheKey(educationLevel, network, query)}`;
+  return `${endpointPrefix(endpoint)}:${buildRagQueryCacheKey(educationLevel, network, query, scope)}`;
 }
 
 function readStore(): StoredRagQueryCache {
@@ -88,6 +109,7 @@ export function readRagQueryCache<T>(
   educationLevel: EducationLevelFilter,
   network: CurriculumNetworkFilter | "-",
   query: string,
+  scope: RagQueryCacheScope = {},
 ): CachedRagQueryResult<T> | null {
   const normalized = normalizeCachedQuery(query);
   if (!normalized) {
@@ -99,6 +121,7 @@ export function readRagQueryCache<T>(
     educationLevel,
     network,
     normalized,
+    scope,
   );
   const entry = readStore().entries[key];
   if (!entry) {
@@ -114,6 +137,7 @@ export function writeRagQueryCache<T>(
   network: CurriculumNetworkFilter | "-",
   query: string,
   payload: CachedRagQueryResult<T>,
+  scope: RagQueryCacheScope = {},
 ): void {
   const normalized = normalizeCachedQuery(query);
   if (!normalized) {
@@ -122,7 +146,7 @@ export function writeRagQueryCache<T>(
 
   const store = readStore();
   store.entries[
-    buildRagQueryStorageKey(endpoint, educationLevel, network, normalized)
+    buildRagQueryStorageKey(endpoint, educationLevel, network, normalized, scope)
   ] = payload;
   writeStore(store);
 }

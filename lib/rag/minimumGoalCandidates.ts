@@ -60,10 +60,13 @@ type MinimumGoalTokenIndex = {
   tokenToRecordIndices: Map<string, number[]>;
 };
 
-const minimumGoalIndexCache = new Map<CorpusLevel, MinimumGoalTokenIndex>();
+type MinimumGoalIndexKey = CorpusLevel | "ALL";
+
+const minimumGoalIndexCache = new Map<MinimumGoalIndexKey, MinimumGoalTokenIndex>();
 
 registerCorpusLevelUnloadListener((level) => {
   minimumGoalIndexCache.delete(level);
+  minimumGoalIndexCache.delete("ALL");
 });
 
 function isSecondaryMinimumGoalRaw(raw: RawRecord): boolean {
@@ -195,11 +198,19 @@ function isIndexedMinimumGoalRaw(raw: RawRecord): boolean {
   );
 }
 
+function minimumGoalIndexKey(
+  educationLevel: EducationLevelFilter,
+): MinimumGoalIndexKey {
+  return educationLevel === "ALL"
+    ? "ALL"
+    : resolveCorpusLevel(educationLevel);
+}
+
 function getMinimumGoalTokenIndex(
   educationLevel: EducationLevelFilter = "ALL",
 ): MinimumGoalTokenIndex {
-  const corpusLevel = resolveCorpusLevel(educationLevel);
-  const cached = minimumGoalIndexCache.get(corpusLevel);
+  const cacheKey = minimumGoalIndexKey(educationLevel);
+  const cached = minimumGoalIndexCache.get(cacheKey);
   if (cached) {
     return cached;
   }
@@ -229,7 +240,7 @@ function getMinimumGoalTokenIndex(
   }
 
   const built = { records, tokenToRecordIndices };
-  minimumGoalIndexCache.set(corpusLevel, built);
+  minimumGoalIndexCache.set(cacheKey, built);
   return built;
 }
 
@@ -242,7 +253,7 @@ export function warmMinimumGoalTokenIndex(
 export function rebuildMinimumGoalTokenIndex(
   educationLevel: EducationLevelFilter = "BASISONDERWIJS",
 ): void {
-  minimumGoalIndexCache.delete(resolveCorpusLevel(educationLevel));
+  minimumGoalIndexCache.delete(minimumGoalIndexKey(educationLevel));
   getMinimumGoalTokenIndex(educationLevel);
 }
 

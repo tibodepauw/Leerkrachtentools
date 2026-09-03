@@ -46,7 +46,7 @@ describe("clientQueryCache", () => {
       "optellen tot twintig",
     );
     expect(buildRagQueryCacheKey("LAGER", "OPSTAP", "Optellen tot 20")).toBe(
-      "LAGER:OPSTAP:optellen tot 20",
+      "LAGER:OPSTAP:optellen tot 20:||||||0",
     );
   });
 
@@ -90,6 +90,52 @@ describe("clientQueryCache", () => {
         "optellen tot 20",
       )?.data.goal,
     ).toBe("B");
+  });
+
+  it("houdt cache-sleutels uit elkaar per graadfilter", () => {
+    writeRagQueryCache(
+      "rag-curriculum",
+      "SECUNDAIR",
+      "GO",
+      "klimaat",
+      {
+        data: { goal: "graad1" },
+        provider: "jsonl-corpus",
+        fallbackErrors: [],
+      },
+      { secondaryGrade: "1ste_graad" },
+    );
+    writeRagQueryCache(
+      "rag-curriculum",
+      "SECUNDAIR",
+      "GO",
+      "klimaat",
+      {
+        data: { goal: "graad2" },
+        provider: "jsonl-corpus",
+        fallbackErrors: [],
+      },
+      { secondaryGrade: "2de_graad" },
+    );
+
+    expect(
+      readRagQueryCache<{ goal: string }>(
+        "rag-curriculum",
+        "SECUNDAIR",
+        "GO",
+        "klimaat",
+        { secondaryGrade: "1ste_graad" },
+      )?.data.goal,
+    ).toBe("graad1");
+    expect(
+      readRagQueryCache<{ goal: string }>(
+        "rag-curriculum",
+        "SECUNDAIR",
+        "GO",
+        "klimaat",
+        { secondaryGrade: "2de_graad" },
+      )?.data.goal,
+    ).toBe("graad2");
   });
 
   it("wist cache volledig bij clearRagQueryCache", () => {

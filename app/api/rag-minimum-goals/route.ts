@@ -21,7 +21,8 @@ import {
   rankMinimumGoalResults,
 } from "@/lib/rag/minimumGoalRanking";
 import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
-import { resolveRagSearchQuery } from "@/lib/rag/queryRewriter";
+import { publicErrorMessage } from "@/lib/http/clientError";
+import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
 import type {
   CurriculumSearchResult,
   EducationLevelFilter,
@@ -97,6 +98,12 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    if (query.length > 10_000) {
+      return NextResponse.json(
+        { error: "Het lesdoel is te lang." },
+        { status: 400 },
+      );
+    }
 
     const educationLevel = body.educationLevel ?? "BASISONDERWIJS";
     if (!EDUCATION_LEVELS.has(educationLevel)) {
@@ -106,10 +113,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { searchQuery, rewrite } = await resolveRagSearchQuery(
+    const { searchQuery, rewrite } = await resolveTrackedRagSearchQuery({
       query,
-      body.enableLlmQueryRewriting === true,
-    );
+      enableLlmQueryRewriting: body.enableLlmQueryRewriting === true,
+      userId: session.id,
+      tier: session.tier,
+    });
 
     const localCandidates = collectMinimumGoalCandidates({
       query: searchQuery,
@@ -183,10 +192,10 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Minimumdoelenzoekopdracht mislukt.",
+        error: publicErrorMessage(
+          error,
+          "Minimumdoelenzoekopdracht mislukt.",
+        ),
       },
       { status: 500 },
     );

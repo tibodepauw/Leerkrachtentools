@@ -4,6 +4,7 @@ import {
   __testables,
   exportLessonDocument,
   patchLessonDocx,
+  sanitizeDownloadFileName,
 } from "@/lib/documents/exportLessonDocument";
 
 const sampleLesson = {
@@ -101,6 +102,13 @@ describe("exportLessonDocument", () => {
     expect(xml).toContain("Lesvoorbereiding export");
     expect(xml).toContain("Leergebied: Nederlands");
     expect(xml).toContain("De leerlingen kunnen een nieuw doel uit de app schrijven.");
+  });
+
+  it("stript pad- en headertekens uit downloadnamen", () => {
+    expect(sanitizeDownloadFileName("../../etc/passwd")).toBe("passwd.docx");
+    expect(sanitizeDownloadFileName('les\r\n"inject".docx')).toBe(
+      "lesinject.docx",
+    );
   });
 
   it("valideert niet-docx uploads en valt terug op generieke export", async () => {
