@@ -559,23 +559,6 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 onTextChange={setText}
                 onAddGoal={addGoal}
               />
-
-              {variant === "leerplandoel" ? (
-                <p className="text-xs text-neutral-500">
-                  {lesson.displayTargetGroup || lesson.referenceSchoolYear
-                    ? [
-                        lesson.displayTargetGroup
-                          ? `Doelgroep: ${lesson.displayTargetGroup}`
-                          : null,
-                        lesson.referenceSchoolYear
-                          ? `Referentie: ${lesson.referenceSchoolYear}`
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")
-                    : "Doelgroep en schooljaar instelbaar via Actieve les."}
-                </p>
-              ) : null}
             </div>
           }
           actions={
