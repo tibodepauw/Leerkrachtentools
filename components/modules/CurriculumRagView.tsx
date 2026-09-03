@@ -688,9 +688,11 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               </Card>
             )}
 
-            <p className="text-xs leading-5 text-neutral-500">
-              {result.data.corpusNotice}
-            </p>
+            {variant === "minimumdoel" && results.length === 0 ? null : (
+              <p className="text-xs leading-5 text-neutral-500">
+                {result.data.corpusNotice}
+              </p>
+            )}
           </div>
         ) : (
           <EmptyOutput>{copy.empty}</EmptyOutput>
