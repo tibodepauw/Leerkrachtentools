@@ -204,7 +204,7 @@ function AuthScreenContent() {
                   disabled={loading || code.length !== 6}
                 >
                   {loading && <Loader2 className="size-4 animate-spin" />}
-                  Veilig inloggen
+                  Inloggen
                 </Button>
                 <Button
                   type="button"
