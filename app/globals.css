@@ -675,8 +675,8 @@ html[data-visual-theme="huisstijl"] .glow-wordmark {
   bottom: 0;
   z-index: 0;
   overflow: hidden;
-  aspect-ratio: 1720 / 190;
-  max-height: min(28vh, 220px);
+  aspect-ratio: 1720 / 260;
+  max-height: min(36vh, 280px);
   pointer-events: auto;
   user-select: none;
 }

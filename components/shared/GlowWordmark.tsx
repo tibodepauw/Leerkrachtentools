@@ -7,7 +7,7 @@ export const GLOW_WORDMARK_TEXT = "Leerkrachtentools";
 
 const VIEW_WIDTH = 1720;
 const VIEW_HEIGHT = 380;
-const CROP_HEIGHT = 190;
+const CROP_HEIGHT = 260;
 
 export function GlowWordmark({ className }: { className?: string }) {
   const reactId = useId().replace(/:/g, "");
@@ -29,9 +29,6 @@ export function GlowWordmark({ className }: { className?: string }) {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduceMotion) return;
 
-    let hovering = false;
-    let frame = 0;
-
     const applyGlow = (x: number, y: number, rect: DOMRect) => {
       if (rect.width <= 0 || rect.height <= 0) return;
       mask.setAttribute("cx", String((x / rect.width) * VIEW_WIDTH));
@@ -48,7 +45,6 @@ export function GlowWordmark({ className }: { className?: string }) {
     };
 
     const onMove = (clientX: number, clientY: number) => {
-      hovering = true;
       const rect = root.getBoundingClientRect();
       applyGlow(clientX - rect.left, clientY - rect.top, rect);
     };
@@ -60,32 +56,14 @@ export function GlowWordmark({ className }: { className?: string }) {
       onMove(touch.clientX, touch.clientY);
     };
 
-    const sweep = (now: number) => {
-      if (!hovering) {
-        const rect = root.getBoundingClientRect();
-        if (rect.width > 0) {
-          const cycle = (now / 3800) % 1;
-          const u = cycle < 0.5 ? cycle * 2 : 2 - cycle * 2;
-          applyGlow(rect.width * (0.1 + u * 0.8), rect.height * 0.7, rect);
-        }
-      }
-      frame = window.requestAnimationFrame(sweep);
-    };
-
-    const onLeave = () => {
-      hovering = false;
-    };
-
     root.addEventListener("mousemove", onMouseMove);
     root.addEventListener("touchmove", onTouchMove, { passive: true });
-    root.addEventListener("mouseleave", onLeave);
-    frame = window.requestAnimationFrame(sweep);
+    root.addEventListener("mouseleave", hideGlow);
 
     return () => {
-      window.cancelAnimationFrame(frame);
       root.removeEventListener("mousemove", onMouseMove);
       root.removeEventListener("touchmove", onTouchMove);
-      root.removeEventListener("mouseleave", onLeave);
+      root.removeEventListener("mouseleave", hideGlow);
       hideGlow();
     };
   }, []);
@@ -130,7 +108,7 @@ export function GlowWordmark({ className }: { className?: string }) {
         </defs>
         <text
           x="50%"
-          y="78%"
+          y="52%"
           textAnchor="middle"
           className="glow-wordmark__base"
         >
@@ -138,7 +116,7 @@ export function GlowWordmark({ className }: { className?: string }) {
         </text>
         <text
           x="50%"
-          y="78%"
+          y="52%"
           textAnchor="middle"
           className="glow-wordmark__shine"
           stroke={`url(#${staticShineId})`}
@@ -147,7 +125,7 @@ export function GlowWordmark({ className }: { className?: string }) {
         </text>
         <text
           x="50%"
-          y="78%"
+          y="52%"
           textAnchor="middle"
           className="glow-wordmark__glow"
           stroke={`url(#${strokeGlowId})`}

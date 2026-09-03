@@ -13,4 +13,9 @@ describe("GlowWordmark", () => {
     expect(source).toContain("glow-wordmark__shine");
     expect(source).toContain("glow-wordmark__glow");
   });
+
+  it("veegt de glow niet automatisch heen en weer", () => {
+    const source = readFileSync(new URL("./GlowWordmark.tsx", import.meta.url), "utf8");
+    expect(source).not.toContain("requestAnimationFrame");
+  });
 });
