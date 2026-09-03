@@ -88,7 +88,7 @@ function AuthScreenContent() {
           Leerkrachtentools
         </h1>
 
-        <Card className="border-neutral-800 bg-neutral-950/90 shadow-2xl">
+        <Card className="bg-neutral-950/90 shadow-2xl">
           <CardHeader>
             <CardTitle className="text-xl font-extrabold">
               {step === "email"
