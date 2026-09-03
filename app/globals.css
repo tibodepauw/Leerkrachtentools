@@ -507,7 +507,10 @@ html[data-visual-theme="huisstijl"] body::before {
   z-index: 0;
 }
 
-html[data-visual-theme="huisstijl"] body > *:not(.visual-theme-toggle) {
+/* Keep page content above the dotted grid. Do not target body > *,
+   because Radix portals overlay/content as direct body children and
+   must stay position: fixed (otherwise dialogs drop to the bottom). */
+html[data-visual-theme="huisstijl"] .lt-app {
   position: relative;
   z-index: 1;
 }
@@ -515,6 +518,39 @@ html[data-visual-theme="huisstijl"] body > *:not(.visual-theme-toggle) {
 html[data-visual-theme="huisstijl"] :focus-visible {
   outline: 2px solid var(--gl-text-main);
   outline-offset: 3px;
+}
+
+html[data-visual-theme="huisstijl"] :is(
+    [data-slot="dialog-content"],
+    [data-slot="sheet-content"],
+    [data-slot="alert-dialog-content"]
+  ):focus,
+html[data-visual-theme="huisstijl"] :is(
+    [data-slot="dialog-content"],
+    [data-slot="sheet-content"],
+    [data-slot="alert-dialog-content"]
+  ):focus-visible {
+  outline: none;
+}
+
+html[data-visual-theme="huisstijl"] :is(
+    [data-slot="dialog-overlay"],
+    [data-slot="sheet-overlay"],
+    [data-slot="alert-dialog-overlay"]
+  ) {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+html[data-visual-theme="huisstijl"] :is(
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"]
+  ) {
+  border: 1px solid var(--gl-border);
+  border-radius: var(--gl-radius-card);
+  background: linear-gradient(180deg, var(--gl-card-from) 0%, var(--gl-card-to) 100%);
+  box-shadow: var(--gl-shadow);
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
 }
 
 html[data-visual-theme="huisstijl"] .bg-black,

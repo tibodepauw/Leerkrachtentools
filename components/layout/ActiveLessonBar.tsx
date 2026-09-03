@@ -64,9 +64,13 @@ export function ActiveLessonBar({ userEmail }: { userEmail: string }) {
           </span>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="default"
+                size="sm"
+                aria-label="Actieve lescontext"
+              >
                 <SlidersHorizontal className="size-4" />
-                <span className="hidden sm:inline">Actieve les</span>
+                <span className="hidden sm:inline">Actieve lescontext</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">

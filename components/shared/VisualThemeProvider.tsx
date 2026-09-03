@@ -86,7 +86,7 @@ export function VisualThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <VisualThemeContext.Provider value={value}>
-      {children}
+      <div className="lt-app">{children}</div>
       <VisualThemeToggle />
     </VisualThemeContext.Provider>
   );
