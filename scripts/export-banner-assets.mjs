@@ -13,7 +13,7 @@ const gifOutput = path.join("docs", "assets", "banner-huisstijl.gif");
 const ANIMATION_MS = 2600;
 const SETTLE_MS = 500;
 const CAPTURE_INTERVAL_MS = 40;
-const HOLD_SECONDS = 10;
+const HOLD_SECONDS = 2;
 const OUTPUT_FPS = 20;
 const DEVICE_SCALE = 2;
 /** Display radius baked into PNG/GIF assets (px at 1200×360) */
@@ -138,8 +138,8 @@ execFileSync(
       "scale=1200:360:flags=lanczos",
       "format=rgba",
       "split[s0][s1]",
-      "[s0]palettegen=max_colors=255:reserve_transparent=1:stats_mode=full[p]",
-      "[s1][p]paletteuse=dither=sierra2_4a:alpha_threshold=128",
+      "[s0]palettegen=max_colors=128:reserve_transparent=1:stats_mode=full[p]",
+      "[s1][p]paletteuse=dither=none:alpha_threshold=128",
     ].join(","),
     gifOutput,
   ],
@@ -155,15 +155,49 @@ function frameName(index) {
 }
 
 async function applyRoundedCorners(filePath) {
-  const image = sharp(filePath);
-  const { width, height } = await image.metadata();
+  const { width, height } = await sharp(filePath).metadata();
+  const backdrop = await sharp(Buffer.from(huisstijlBackdropSvg(width, height)))
+    .resize(width, height)
+    .png()
+    .toBuffer();
+  const withGrid = await sharp(filePath)
+    .ensureAlpha()
+    .composite([{ input: backdrop, blend: "lighten" }])
+    .png()
+    .toBuffer();
   const mask = Buffer.from(
     `<svg width="${width}" height="${height}"><rect x="0" y="0" width="${width}" height="${height}" rx="${CORNER_RADIUS}" ry="${CORNER_RADIUS}" fill="white"/></svg>`,
   );
-  const rounded = await image
-    .ensureAlpha()
+  const rounded = await sharp(withGrid)
     .composite([{ input: mask, blend: "dest-in" }])
     .png()
     .toBuffer();
   await sharp(rounded).toFile(filePath);
+}
+
+function huisstijlBackdropSvg(width, height) {
+  const scale = width / 1200;
+  const cell = 32 * scale;
+  const radius = 1.35 * scale;
+  return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hsGrid" width="${cell}" height="${cell}" patternUnits="userSpaceOnUse">
+      <circle cx="${radius}" cy="${radius}" r="${radius}" fill="rgba(255,255,255,0.2)"/>
+    </pattern>
+    <radialGradient id="hsFade" cx="50%" cy="28%" r="80%">
+      <stop offset="55%" stop-color="white"/>
+      <stop offset="100%" stop-color="black"/>
+    </radialGradient>
+    <mask id="hsMask">
+      <rect width="${width}" height="${height}" fill="url(#hsFade)"/>
+    </mask>
+    <radialGradient id="hsWash" cx="50%" cy="0%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="${width}" height="${height}" fill="#000000"/>
+  <rect width="${width}" height="${height}" fill="url(#hsWash)"/>
+  <rect width="${width}" height="${height}" fill="url(#hsGrid)" mask="url(#hsMask)"/>
+</svg>`;
 }

@@ -42,6 +42,8 @@ describe("huisstijl", () => {
 
   it("geeft de GitHub-banner het huisstijl-raster en een gradient op de Gather-letters", () => {
     expect(css).toMatch(/\.wordmark-export-canvas::before/);
+    expect(css).toMatch(/\.wordmark-export-canvas::after/);
+    expect(css).toMatch(/radial-gradient\(rgba\(255, 255, 255, 0\.2\)/);
     expect(css).toMatch(/\.wordmark-export-canvas \.wordmark-loader__letter/);
     expect(css).toMatch(/-webkit-background-clip:\s*text/);
     const page = readFileSync("app/wordmark-export/page.tsx", "utf8");
