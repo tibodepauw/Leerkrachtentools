@@ -15,7 +15,7 @@ const SETTLE_MS = 500;
 const CAPTURE_INTERVAL_MS = 40;
 const HOLD_SECONDS = 2;
 const OUTPUT_FPS = 20;
-const DEVICE_SCALE = 2;
+const DEVICE_SCALE = 1;
 /** Display radius baked into PNG/GIF assets (px at 1200×360) */
 const DISPLAY_CORNER_RADIUS = 20;
 const CORNER_RADIUS = DISPLAY_CORNER_RADIUS * DEVICE_SCALE;
@@ -83,9 +83,11 @@ await page.goto(`${baseHost}/wordmark-export?mode=static`, {
 await waitForFonts();
 await screenshotCanvas(pngOutput);
 await applyRoundedCorners(pngOutput);
-const pngTemp = `${pngOutput}.tmp`;
-await sharp(pngOutput).resize(1200, 360).png().toFile(pngTemp);
-renameSync(pngTemp, pngOutput);
+if ((await sharp(pngOutput).metadata()).width !== 1200) {
+  const pngTemp = `${pngOutput}.tmp`;
+  await sharp(pngOutput).resize(1200, 360, { kernel: "nearest" }).png().toFile(pngTemp);
+  renameSync(pngTemp, pngOutput);
+}
 console.log(`Wrote ${pngOutput} (${DISPLAY_CORNER_RADIUS}px rounded corners)`);
 
 // --- Animated GIF ---
@@ -135,7 +137,7 @@ execFileSync(
     "0",
     "-vf",
     [
-      "scale=1200:360:flags=lanczos",
+      "scale=1200:360:flags=neighbor",
       "format=rgba",
       "split[s0][s1]",
       "[s0]palettegen=max_colors=128:reserve_transparent=1:stats_mode=full[p]",
@@ -155,49 +157,15 @@ function frameName(index) {
 }
 
 async function applyRoundedCorners(filePath) {
-  const { width, height } = await sharp(filePath).metadata();
-  const backdrop = await sharp(Buffer.from(huisstijlBackdropSvg(width, height)))
-    .resize(width, height)
-    .png()
-    .toBuffer();
-  const withGrid = await sharp(filePath)
-    .ensureAlpha()
-    .composite([{ input: backdrop, blend: "lighten" }])
-    .png()
-    .toBuffer();
+  const image = sharp(filePath);
+  const { width, height } = await image.metadata();
   const mask = Buffer.from(
     `<svg width="${width}" height="${height}"><rect x="0" y="0" width="${width}" height="${height}" rx="${CORNER_RADIUS}" ry="${CORNER_RADIUS}" fill="white"/></svg>`,
   );
-  const rounded = await sharp(withGrid)
+  const rounded = await image
+    .ensureAlpha()
     .composite([{ input: mask, blend: "dest-in" }])
     .png()
     .toBuffer();
   await sharp(rounded).toFile(filePath);
-}
-
-function huisstijlBackdropSvg(width, height) {
-  const scale = width / 1200;
-  const cell = 32 * scale;
-  const radius = 1.35 * scale;
-  return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <pattern id="hsGrid" width="${cell}" height="${cell}" patternUnits="userSpaceOnUse">
-      <circle cx="${radius}" cy="${radius}" r="${radius}" fill="rgba(255,255,255,0.2)"/>
-    </pattern>
-    <radialGradient id="hsFade" cx="50%" cy="28%" r="80%">
-      <stop offset="55%" stop-color="white"/>
-      <stop offset="100%" stop-color="black"/>
-    </radialGradient>
-    <mask id="hsMask">
-      <rect width="${width}" height="${height}" fill="url(#hsFade)"/>
-    </mask>
-    <radialGradient id="hsWash" cx="50%" cy="0%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,255,255,0.12)"/>
-      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-    </radialGradient>
-  </defs>
-  <rect width="${width}" height="${height}" fill="#000000"/>
-  <rect width="${width}" height="${height}" fill="url(#hsWash)"/>
-  <rect width="${width}" height="${height}" fill="url(#hsGrid)" mask="url(#hsMask)"/>
-</svg>`;
 }

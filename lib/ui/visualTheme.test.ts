@@ -40,12 +40,12 @@ describe("huisstijl", () => {
     expect(glow.slice(0, 80)).not.toMatch(/display:\s*none/);
   });
 
-  it("geeft de GitHub-banner het huisstijl-raster en een gradient op de Gather-letters", () => {
-    expect(css).toMatch(/\.wordmark-export-canvas::before/);
-    expect(css).toMatch(/\.wordmark-export-canvas::after/);
-    expect(css).toMatch(/radial-gradient\(rgba\(255, 255, 255, 0\.2\)/);
+  it("geeft de GitHub-banner hetzelfde raster als de website", () => {
+    expect(css).toMatch(/body::before,\s*\n\.wordmark-export-canvas::before/);
+    expect(css).toMatch(/radial-gradient\(rgba\(255, 255, 255, 0\.1\) 1px, transparent 1px\)/);
+    expect(css).toMatch(/ellipse 80% 65% at 50% 25%/);
+    expect(css).not.toMatch(/\.wordmark-export-canvas::after/);
     expect(css).toMatch(/\.wordmark-export-canvas \.wordmark-loader__letter/);
-    expect(css).toMatch(/-webkit-background-clip:\s*text/);
     const page = readFileSync("app/wordmark-export/page.tsx", "utf8");
     expect(page).toMatch(/WordmarkLoader/);
     expect(page).not.toMatch(/GlowWordmark/);

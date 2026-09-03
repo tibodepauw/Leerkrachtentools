@@ -1,6 +1,6 @@
 <p align="center">
   <img
-    src="docs/assets/banner-huisstijl.gif?v=7"
+    src="docs/assets/banner-huisstijl.gif?v=8"
     alt="Leerkrachtentools"
     width="100%"
   />

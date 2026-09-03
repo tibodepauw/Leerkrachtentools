@@ -212,24 +212,6 @@
   background: #000000;
 }
 
-.wordmark-export-canvas::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.2) 1.35px, transparent 1.35px);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse 85% 75% at 50% 28%, #000 55%, transparent 100%);
-  pointer-events: none;
-}
-
-.wordmark-export-canvas::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% -20%, rgba(255, 255, 255, 0.12), transparent 48%);
-  pointer-events: none;
-}
-
 .wordmark-export-canvas .wordmark-loader__letter {
   background-image: linear-gradient(
     180deg,
@@ -481,15 +463,24 @@ body {
   color: var(--gl-text-main);
 }
 
-body::before {
+body::before,
+.wordmark-export-canvas::before {
   content: "";
-  position: fixed;
   inset: 0;
   background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 32px 32px;
   mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, #000 60%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 65% at 50% 25%, #000 60%, transparent 100%);
   pointer-events: none;
+}
+
+body::before {
+  position: fixed;
   z-index: 0;
+}
+
+.wordmark-export-canvas::before {
+  position: absolute;
 }
 
 /* Keep page content above the dotted grid. Do not target body > *,
