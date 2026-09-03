@@ -182,8 +182,7 @@ export function ApiKeysSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <KeyRound className="size-5" />
+        <CardTitle>
           Eigen API-keys
         </CardTitle>
         <CardDescription>
