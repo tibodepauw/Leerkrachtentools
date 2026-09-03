@@ -7,9 +7,18 @@ const PUBLIC_API_PATHS = new Set([
   "/api/auth/logout",
 ]);
 
+function isPublicPath(pathname: string) {
+  if (pathname === "/" || pathname === "/privacy") return true;
+  if (PUBLIC_API_PATHS.has(pathname)) return true;
+  if (pathname.startsWith("/_next/")) return true;
+  if (pathname === "/favicon.ico") return true;
+  if (/\.(?:html|ico|png|jpg|svg|txt|xml|woff2?)$/i.test(pathname)) return true;
+  return false;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (PUBLIC_API_PATHS.has(pathname)) {
+  if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
 
