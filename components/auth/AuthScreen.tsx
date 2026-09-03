@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -116,75 +116,55 @@ function AuthScreenContent() {
                   />
                 </div>
 
-                <div className="space-y-3 rounded-xl border border-neutral-800 bg-black p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">
+                <div className="auth-consent space-y-3 rounded-xl border border-neutral-800 bg-black p-4">
+                  <p className="auth-consent-label text-[13px] font-semibold text-neutral-100">
                     Toestemming
                   </p>
 
-                  <button
-                    type="button"
-                    onClick={() => setPrivacyAccepted((current) => !current)}
-                    className={cn(
-                      "flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+                  <ConsentChoice
+                    id="privacy"
+                    checked={privacyAccepted}
+                    onCheckedChange={setPrivacyAccepted}
+                    checkedClassName="border-white bg-white text-black"
+                    uncheckedClassName="border-neutral-800 bg-neutral-950 text-neutral-100 hover:border-neutral-600"
+                    checkboxClassName={
                       privacyAccepted
-                        ? "border-white bg-white text-black"
-                        : "border-neutral-800 bg-neutral-950 text-neutral-100 hover:border-neutral-600",
-                    )}
+                        ? "border-black data-[state=checked]:bg-black data-[state=checked]:text-white"
+                        : undefined
+                    }
+                    label={
+                      <>
+                        <span className="font-semibold">Verplicht:</span> ik ga akkoord met het{" "}
+                      </>
+                    }
                   >
-                    <Checkbox
-                      id="privacy"
-                      checked={privacyAccepted}
-                      onCheckedChange={(checked) =>
-                        setPrivacyAccepted(checked === true)
-                      }
+                    <Link
+                      href="/privacy"
                       className={cn(
-                        "mt-0.5 pointer-events-none",
-                        privacyAccepted && "border-black data-[state=checked]:bg-black",
+                        "underline underline-offset-2",
+                        privacyAccepted
+                          ? "text-black hover:text-neutral-700"
+                          : "text-white hover:text-neutral-200",
                       )}
-                      tabIndex={-1}
-                    />
-                    <span className="text-sm leading-6">
-                      <span className="font-semibold">Verplicht:</span> ik ga akkoord met het{" "}
-                      <Link
-                        href="/privacy"
-                        className={cn(
-                          "underline underline-offset-2",
-                          privacyAccepted
-                            ? "text-black hover:text-neutral-700"
-                            : "text-white hover:text-neutral-200",
-                        )}
-                        target="_blank"
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        privacybeleid
-                      </Link>
-                      .
-                    </span>
-                  </button>
+                      target="_blank"
+                    >
+                      privacybeleid
+                    </Link>
+                    .
+                  </ConsentChoice>
 
-                  <button
-                    type="button"
-                    onClick={() => setMarketingOptIn((current) => !current)}
-                    className={cn(
-                      "flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
-                      marketingOptIn
-                        ? "border-neutral-500 bg-neutral-900 text-white"
-                        : "border-neutral-800 bg-neutral-950 text-neutral-300 hover:border-neutral-600",
-                    )}
-                  >
-                    <Checkbox
-                      id="marketing"
-                      checked={marketingOptIn}
-                      onCheckedChange={(checked) =>
-                        setMarketingOptIn(checked === true)
-                      }
-                      className="mt-0.5 pointer-events-none"
-                      tabIndex={-1}
-                    />
-                    <span className="text-sm leading-6">
-                      <span className="font-semibold">Optioneel:</span> houd mij op de hoogte van het uitgebreidere project.
-                    </span>
-                  </button>
+                  <ConsentChoice
+                    id="marketing"
+                    checked={marketingOptIn}
+                    onCheckedChange={setMarketingOptIn}
+                    checkedClassName="border-neutral-500 bg-neutral-900 text-white"
+                    uncheckedClassName="border-neutral-800 bg-neutral-950 text-neutral-300 hover:border-neutral-600"
+                    label={
+                      <>
+                        <span className="font-semibold">Optioneel:</span> houd mij op de hoogte van het uitgebreidere project.
+                      </>
+                    }
+                  />
                 </div>
 
                 {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
@@ -254,5 +234,48 @@ function AuthScreenContent() {
         </p>
       </div>
     </main>
+  );
+}
+
+function ConsentChoice({
+  id,
+  checked,
+  onCheckedChange,
+  checkedClassName,
+  uncheckedClassName,
+  checkboxClassName,
+  label,
+  children,
+}: {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  checkedClassName: string;
+  uncheckedClassName: string;
+  checkboxClassName?: string;
+  label: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div
+      data-checked={checked ? "true" : "false"}
+      className={cn(
+        "auth-consent-choice flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
+        checked ? checkedClassName : uncheckedClassName,
+      )}
+    >
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+        className={cn("mt-0.5", checkboxClassName)}
+      />
+      <p className="flex-1 text-sm leading-6">
+        <Label htmlFor={id} className="contents cursor-pointer font-normal">
+          {label}
+        </Label>
+        {children}
+      </p>
+    </div>
   );
 }
