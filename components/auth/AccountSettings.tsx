@@ -295,7 +295,7 @@ export function AccountSettings({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3 rounded-lg border border-neutral-800 p-3 text-sm">
-                <ShieldCheck className="size-5 text-emerald-400" />
+                <ShieldCheck className="size-5 text-white" />
                 E-mailadres geverifieerd
               </div>
               <Button variant="outline" onClick={logout}>
