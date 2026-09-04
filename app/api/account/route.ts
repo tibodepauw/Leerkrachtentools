@@ -6,6 +6,7 @@ import {
 import { getDatabase } from "@/lib/auth/database";
 import { deleteProfileImageFile } from "@/lib/auth/profileImage";
 import { SESSION_COOKIE } from "@/lib/auth/service";
+import { getSessionCookieOptions } from "@/lib/auth/cookies";
 
 export async function DELETE(request: Request) {
   const session = sessionFromRequest(request);
@@ -27,12 +28,10 @@ export async function DELETE(request: Request) {
     database.prepare("DELETE FROM users WHERE id = ?").run(session.id);
   })();
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(SESSION_COOKIE, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  response.cookies.set(
+    SESSION_COOKIE,
+    "",
+    getSessionCookieOptions({ maxAge: 0 }),
+  );
   return response;
 }

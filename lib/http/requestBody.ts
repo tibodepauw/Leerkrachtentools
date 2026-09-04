@@ -14,17 +14,16 @@ export function assertContentLength(request: Request, maxBytes: number) {
   }
 }
 
-export async function readJsonBody(
+export async function readBodyBuffer(
   request: Request,
   maxBytes: number,
-): Promise<unknown> {
+): Promise<Uint8Array> {
   assertContentLength(request, maxBytes);
-  if (!request.body) return {};
+  if (!request.body) return new Uint8Array();
 
   const reader = request.body.getReader();
-  const decoder = new TextDecoder();
   let total = 0;
-  let text = "";
+  const chunks: Uint8Array[] = [];
 
   while (true) {
     const { done, value } = await reader.read();
@@ -34,8 +33,23 @@ export async function readJsonBody(
       await reader.cancel();
       throw new RequestBodyTooLargeError();
     }
-    text += decoder.decode(value, { stream: true });
+    chunks.push(value);
   }
-  text += decoder.decode();
+
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
+export async function readJsonBody(
+  request: Request,
+  maxBytes: number,
+): Promise<unknown> {
+  const body = await readBodyBuffer(request, maxBytes);
+  const text = new TextDecoder().decode(body);
   return JSON.parse(text || "{}") as unknown;
 }

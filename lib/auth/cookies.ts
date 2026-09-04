@@ -1,3 +1,17 @@
+type SessionCookieLifetime =
+  | { expires: Date; maxAge?: never }
+  | { maxAge: number; expires?: never };
+
+export function getSessionCookieOptions(lifetime: SessionCookieLifetime) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    ...lifetime,
+  };
+}
+
 export function safeDecodeURIComponent(value: string | undefined) {
   if (!value) return undefined;
 

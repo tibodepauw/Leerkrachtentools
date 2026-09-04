@@ -44,6 +44,41 @@ describe("web security", () => {
     ).toBe(true);
   });
 
+  it("weigert mutaties zonder Origin in productie", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "https://tools.example.be");
+
+    expect(
+      isSameOriginMutation(
+        new Request("https://tools.example.be/api/account", {
+          method: "DELETE",
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("vergelijkt Origin met de genormaliseerde APP_ORIGIN", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "https://tools.example.be/config/path");
+
+    expect(
+      isSameOriginMutation(
+        new Request("https://internal.example/api/account", {
+          method: "PATCH",
+          headers: { origin: "https://tools.example.be" },
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      isSameOriginMutation(
+        new Request("https://internal.example/api/account", {
+          method: "PATCH",
+          headers: { origin: "https://evil.example" },
+        }),
+      ),
+    ).toBe(false);
+  });
+
   it("laat lokale previewpoorten alleen buiten productie toe", () => {
     const request = new Request("http://localhost:3000/api/auth/request-code", {
       method: "POST",

@@ -14,9 +14,11 @@ import {
   saveProfileImageFile,
 } from "@/lib/auth/profileImage";
 import { publicErrorMessage } from "@/lib/http/clientError";
-import { assertContentLength } from "@/lib/http/requestBody";
+import { readBodyBuffer } from "@/lib/http/requestBody";
 
 export const runtime = "nodejs";
+const PROFILE_IMAGE_REQUEST_MAX_BYTES =
+  PROFILE_IMAGE_MAX_BYTES + 128_000;
 
 function currentProfileImage(userId: string) {
   return getDatabase()
@@ -54,8 +56,18 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
-    assertContentLength(request, PROFILE_IMAGE_MAX_BYTES + 128_000);
-    const formData = await request.formData();
+    const rawBody = await readBodyBuffer(
+      request,
+      PROFILE_IMAGE_REQUEST_MAX_BYTES,
+    );
+    const headers = new Headers(request.headers);
+    headers.delete("content-length");
+    headers.delete("transfer-encoding");
+    const formData = await new Request(request.url, {
+      method: "POST",
+      headers,
+      body: rawBody,
+    }).formData();
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
@@ -66,7 +78,12 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const nextPath = saveProfileImageFile(session.id, file.name, buffer);
+    const nextPath = saveProfileImageFile(
+      session.id,
+      file.name,
+      buffer,
+      file.type,
+    );
     const updatedAt = Date.now();
 
     const previous = currentProfileImage(session.id);

@@ -41,10 +41,25 @@ export function mimeTypeForProfileImage(relativePath: string) {
 }
 
 export function profileImageAbsolutePath(relativePath: string) {
-  return path.join(profileImageDirectory(), relativePath);
+  if (
+    path.basename(relativePath) !== relativePath ||
+    !/^[a-z0-9_-]+\.(?:jpe?g|png|webp|gif)$/iu.test(relativePath)
+  ) {
+    throw new Error("Ongeldig profielfotopad.");
+  }
+
+  const directory = path.resolve(profileImageDirectory());
+  const resolved = path.resolve(directory, relativePath);
+  if (!resolved.startsWith(`${directory}${path.sep}`)) {
+    throw new Error("Ongeldig profielfotopad.");
+  }
+  return resolved;
 }
 
 export function profileImageFileName(userId: string, fileName: string) {
+  if (!/^[a-z0-9_-]+$/iu.test(userId)) {
+    throw new Error("Ongeldige gebruikers-ID.");
+  }
   const extension = profileImageExtension(fileName);
   return `${userId}.${extension === "jpeg" ? "jpg" : extension}`;
 }
@@ -80,8 +95,9 @@ export function saveProfileImageFile(
   userId: string,
   fileName: string,
   buffer: Buffer,
+  mimeType?: string,
 ) {
-  if (!isSupportedProfileImage(fileName)) {
+  if (!isSupportedProfileImage(fileName, mimeType)) {
     throw new Error("Ondersteunde formaten: JPG, PNG, WEBP en GIF.");
   }
 
@@ -105,7 +121,7 @@ export function saveProfileImageFile(
     }
   }
 
-  writeFileSync(path.join(directory, nextFileName), buffer);
+  writeFileSync(profileImageAbsolutePath(nextFileName), buffer);
   return nextFileName;
 }
 

@@ -4,6 +4,7 @@ import {
   SESSION_COOKIE,
   verifyLoginCode,
 } from "@/lib/auth/service";
+import { getSessionCookieOptions } from "@/lib/auth/cookies";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { clientIpFromRequest } from "@/lib/http/requestIp";
 import { readJsonBody } from "@/lib/http/requestBody";
@@ -31,13 +32,11 @@ export async function POST(request: Request) {
       { user: result.user },
       { headers: { "Cache-Control": "no-store" } },
     );
-    response.cookies.set(SESSION_COOKIE, result.sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      expires: result.expiresAt,
-    });
+    response.cookies.set(
+      SESSION_COOKIE,
+      result.sessionToken,
+      getSessionCookieOptions({ expires: result.expiresAt }),
+    );
     return response;
   } catch (error) {
     const message = publicErrorMessage(error, "Verificatie is mislukt.");

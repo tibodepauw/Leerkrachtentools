@@ -27,10 +27,17 @@ export function isSameOriginMutation(request: Request) {
   if (fetchSite === "cross-site") return false;
 
   const origin = request.headers.get("origin");
-  if (!origin) return true;
+  if (!origin) return process.env.NODE_ENV !== "production";
 
   const configuredOrigin = process.env.APP_ORIGIN?.trim();
-  if (configuredOrigin) return origin === configuredOrigin;
+  if (configuredOrigin) {
+    try {
+      return origin === new URL(configuredOrigin).origin;
+    } catch {
+      return false;
+    }
+  }
+  if (process.env.NODE_ENV === "production") return false;
 
   const requestUrl = new URL(request.url);
   let originUrl: URL;
