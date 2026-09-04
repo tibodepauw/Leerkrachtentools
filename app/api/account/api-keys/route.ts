@@ -67,6 +67,15 @@ export async function PATCH(request: Request) {
   }
   if (
     provider === "cloudflare" &&
+    (!/^@[\w.-]+\/[\w./-]+$/u.test(model) || model.includes(".."))
+  ) {
+    return NextResponse.json(
+      { error: "Kies een geldig Cloudflare-model." },
+      { status: 400 },
+    );
+  }
+  if (
+    provider === "cloudflare" &&
     cloudflareAccountId &&
     !/^[a-f0-9]{32}$/iu.test(cloudflareAccountId)
   ) {

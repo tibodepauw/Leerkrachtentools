@@ -5,8 +5,18 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import { exportLessonDocument } from "@/lib/documents/exportLessonDocument";
-import { LESSON_DOCUMENT_MAX_BYTES } from "@/lib/documents/supportedFormats";
+import {
+  hasValidLessonDocumentSignature,
+  lessonDocumentExtension,
+  LESSON_DOCUMENT_MAX_BYTES,
+} from "@/lib/documents/supportedFormats";
+import { assertSafeZipArchive } from "@/lib/documents/extractText";
 import { publicErrorMessage } from "@/lib/http/clientError";
+import {
+  assertContentLength,
+  readJsonBody,
+} from "@/lib/http/requestBody";
+import { withRequestConcurrency } from "@/lib/http/rateLimit";
 import type { LessonExportPayload } from "@/types";
 
 export const runtime = "nodejs";
@@ -28,14 +38,17 @@ const exportSchema = z.object({
     .max(12),
   totalMinutes: z.number().min(1).max(240),
   educationNetwork: z.enum(["ZILL", "OVSG", "GO"]),
-  lessonPreparation: z.string().max(500_000),
+  lessonPreparation: z.string().max(200_000),
 });
 
 async function readExportInput(request: Request) {
+  assertContentLength(request, LESSON_DOCUMENT_MAX_BYTES + 1_000_000);
   const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
 
   if (contentType.includes("application/json")) {
-    const lesson = exportSchema.parse(await request.json()) as LessonExportPayload;
+    const lesson = exportSchema.parse(
+      await readJsonBody(request, 1_000_000),
+    ) as LessonExportPayload;
     return {
       lesson,
       sourceBuffer: undefined,
@@ -61,9 +74,20 @@ async function readExportInput(request: Request) {
 
     if (sourceDocument instanceof File && sourceDocument.size > 0) {
       if (sourceDocument.size > LESSON_DOCUMENT_MAX_BYTES) {
-        throw new Error("Het bronbestand mag maximaal 15 MB zijn.");
+        throw new Error("Het bronbestand mag maximaal 8 MB zijn.");
+      }
+      if (lessonDocumentExtension(sourceDocument.name) !== "docx") {
+        throw new Error("Het bronbestand voor export moet een DOCX-bestand zijn.");
       }
       sourceBuffer = Buffer.from(await sourceDocument.arrayBuffer());
+      if (
+        !hasValidLessonDocumentSignature(sourceBuffer, sourceDocument.name)
+      ) {
+        throw new Error(
+          "De bestandsinhoud komt niet overeen met een DOCX-bestand.",
+        );
+      }
+      await assertSafeZipArchive(sourceBuffer);
       sourceFileName = sourceDocument.name;
     }
 
@@ -81,11 +105,13 @@ export async function POST(request: Request) {
 
   try {
     const { lesson, sourceBuffer, sourceFileName } = await readExportInput(request);
-    const exported = await exportLessonDocument(
-      lesson,
-      sourceBuffer,
-      sourceFileName,
-    );
+    const exported = await withRequestConcurrency({
+      scope: "document-export",
+      subject: session.id,
+      limit: 1,
+      task: () =>
+        exportLessonDocument(lesson, sourceBuffer, sourceFileName),
+    });
 
     return new Response(new Uint8Array(exported.buffer), {
       headers: {

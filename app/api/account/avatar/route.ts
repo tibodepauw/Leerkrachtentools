@@ -8,10 +8,13 @@ import { getDatabase } from "@/lib/auth/database";
 import {
   deleteProfileImageFile,
   mimeTypeForProfileImage,
+  PROFILE_IMAGE_MAX_BYTES,
   profileImageAbsolutePath,
   profileImageUrl,
   saveProfileImageFile,
 } from "@/lib/auth/profileImage";
+import { publicErrorMessage } from "@/lib/http/clientError";
+import { assertContentLength } from "@/lib/http/requestBody";
 
 export const runtime = "nodejs";
 
@@ -51,6 +54,7 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
+    assertContentLength(request, PROFILE_IMAGE_MAX_BYTES + 128_000);
     const formData = await request.formData();
     const file = formData.get("file");
 
@@ -85,10 +89,10 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Profielfoto kon niet worden opgeslagen.",
+        error: publicErrorMessage(
+          error,
+          "Profielfoto kon niet veilig worden opgeslagen.",
+        ),
       },
       { status: 400 },
     );

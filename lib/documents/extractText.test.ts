@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
+import JSZip from "jszip";
 import {
   isSupportedLessonDocument,
   lessonDocumentExtension,
 } from "@/lib/documents/supportedFormats";
-import { extractDocumentText } from "@/lib/documents/extractText";
+import {
+  assertSafeZipArchive,
+  extractDocumentText,
+} from "@/lib/documents/extractText";
 
 describe("lesson document formats", () => {
   it("herkent gangbare extensies", () => {
@@ -20,5 +24,17 @@ describe("lesson document formats", () => {
       "les.txt",
     );
     expect(text).toContain("Instap");
+  });
+
+  it("weigert archieven met te veel onderdelen", async () => {
+    const zip = new JSZip();
+    for (let index = 0; index < 2_001; index += 1) {
+      zip.file(`entry-${index}.txt`, "");
+    }
+    const buffer = await zip.generateAsync({ type: "nodebuffer" });
+
+    await expect(assertSafeZipArchive(buffer)).rejects.toThrow(
+      "te veel onderdelen",
+    );
   });
 });

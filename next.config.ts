@@ -64,7 +64,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["better-sqlite3", "pdf-parse", "word-extractor"],
   experimental: {
     serverActions: {
-      bodySizeLimit: "15mb",
+      bodySizeLimit: "1mb",
     },
   },
   async headers() {

@@ -65,8 +65,6 @@ function ManualScannerContent() {
     (state) => state.syncFromExtraction,
   );
   const syncPreparation = useLessonStore((state) => state.syncPreparation);
-  const lesson = useLessonStore((state) => state.lesson);
-
   async function syncSourceTextToPreparation(sourceText: string) {
     const trimmed = sourceText.trim();
     if (!trimmed) return;
@@ -116,13 +114,6 @@ function ManualScannerContent() {
 
     const response = await analyze("/api/extract-manual", body);
 
-    if (response?.data) {
-      syncFromExtraction(response.data);
-      await syncSourceTextToPreparation(
-        overrides?.content ?? content,
-      );
-    }
-
     return response;
   }
 
@@ -136,7 +127,7 @@ function ManualScannerContent() {
     }
 
     if (file.size > MAX_FILE_BYTES) {
-      setUploadError("Het bestand mag maximaal 15 MB zijn.");
+      setUploadError("Het bestand mag maximaal 8 MB zijn.");
       return;
     }
 
@@ -328,15 +319,14 @@ function ManualScannerContent() {
             </Card>
             {result.data.rawPublisherGoals.length > MAX_LESSON_GOALS ? (
               <p className="text-xs text-amber-400">
-                Meer dan {MAX_LESSON_GOALS} doelen gevonden. Alleen de eerste{" "}
-                {MAX_LESSON_GOALS} zijn overgenomen in Actieve les.
+                Meer dan {MAX_LESSON_GOALS} doelen gevonden. Bij overnemen gaan
+                alleen de eerste {MAX_LESSON_GOALS} naar Actieve les.
               </p>
             ) : null}
             <p className="text-xs text-neutral-500">
-              Doelen zijn automatisch naar Actieve les gesynchroniseerd.
-              {lesson.lessonPreparation.trim()
-                ? " De brontekst staat in je lesvoorbereiding."
-                : " Plak tekst of upload een leesbaar document om ook de lesvoorbereiding te vullen."}
+              Controleer de extractie voordat je ze overneemt. Instructies in
+              een geüpload document worden nooit als betrouwbare opdrachten
+              beschouwd.
             </p>
             <Button
               onClick={() => {
@@ -344,7 +334,7 @@ function ManualScannerContent() {
                 void syncSourceTextToPreparation(content);
               }}
             >
-              Opnieuw synchroniseren
+              Overnemen in Actieve les
             </Button>
           </div>
         ) : (

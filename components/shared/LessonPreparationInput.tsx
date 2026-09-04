@@ -55,7 +55,7 @@ export function LessonPreparationInput({
         ? "Geïmporteerd - pas de tekst hieronder gerust nog aan"
         : showLinkedDocument
           ? "Gekoppeld aan Actieve les - tekst staat hieronder klaar voor analyse"
-          : "PDF, DOC, DOCX, ODT, RTF, TXT · max. 15 MB";
+          : "PDF, DOC, DOCX, ODT, RTF, TXT · max. 8 MB";
 
   async function handleFile(file?: File) {
     if (!file) return;
