@@ -64,15 +64,28 @@ export async function raceWithTimeout<T>(
   timeoutMs: number,
 ): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
+  const settled = promise.then(
+    (value) => ({ status: "fulfilled" as const, value }),
+    (error: unknown) => ({ status: "rejected" as const, error }),
+  );
+
   try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
+    const winner = await Promise.race([
+      settled,
+      new Promise<{ status: "timeout" }>((resolve) => {
         timer = setTimeout(() => {
-          reject(new DiscoveryEngineTimeoutError(timeoutMs));
+          resolve({ status: "timeout" });
         }, timeoutMs);
       }),
     ]);
+
+    if (winner.status === "timeout") {
+      throw new DiscoveryEngineTimeoutError(timeoutMs);
+    }
+    if (winner.status === "rejected") {
+      throw winner.error;
+    }
+    return winner.value;
   } finally {
     if (timer !== undefined) {
       clearTimeout(timer);
@@ -300,7 +313,7 @@ async function performDiscoverySearch(
         },
       },
     },
-    { autoPaginate: false, timeout: DISCOVERY_SEARCH_TIMEOUT_MS },
+    { autoPaginate: false },
   );
 
   const hits: DiscoveryHit[] = [];
@@ -343,9 +356,21 @@ async function performDiscoverySearch(
   };
 }
 
+function isDiscoveryConfigured(): boolean {
+  return Boolean(
+    process.env.GOOGLE_PROJECT_ID?.trim() &&
+      process.env.GOOGLE_CLIENT_EMAIL?.trim() &&
+      process.env.GOOGLE_PRIVATE_KEY?.trim() &&
+      process.env.GOOGLE_DATA_STORE_ID?.trim(),
+  );
+}
+
 export async function searchDiscoveryEngine(
   options: DiscoverySearchOptions,
 ): Promise<DiscoverySearchResponse> {
+  if (!isDiscoveryConfigured()) {
+    return emptyDiscoveryResponse("empty");
+  }
   const key = JSON.stringify([
     options.query.trim().toLocaleLowerCase("nl-BE"),
     options.network ?? "ALL",

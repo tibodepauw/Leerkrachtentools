@@ -43,6 +43,26 @@ describe("discoveryEngine helpers", () => {
     ).rejects.toBeInstanceOf(DiscoveryEngineTimeoutError);
   });
 
+  it("slikt late rejects na time-out zodat de HTTP-request niet crasht", async () => {
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => {
+      unhandled.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+    let rejectLater: ((error: Error) => void) | undefined;
+    const hanging = new Promise<never>((_, reject) => {
+      rejectLater = reject;
+    });
+
+    await expect(raceWithTimeout(hanging, 20)).rejects.toBeInstanceOf(
+      DiscoveryEngineTimeoutError,
+    );
+    rejectLater?.(new Error("late gRPC-fout"));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    process.off("unhandledRejection", onUnhandled);
+    expect(unhandled).toEqual([]);
+  });
+
   it("herkent Discovery-transportfouten", () => {
     expect(isDiscoveryTransportError(new DiscoveryEngineTimeoutError())).toBe(
       true,

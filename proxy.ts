@@ -133,7 +133,16 @@ export function proxy(request: NextRequest) {
             ),
           );
         }
-        throw error;
+        console.error("[proxy]", error);
+        return secure(
+          NextResponse.json(
+            {
+              error:
+                "De server kon de aanvraag niet verwerken. Probeer het opnieuw.",
+            },
+            { status: 503, headers: { "Cache-Control": "no-store" } },
+          ),
+        );
       }
     }
     return next();

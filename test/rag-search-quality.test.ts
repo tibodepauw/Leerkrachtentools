@@ -155,4 +155,31 @@ describe("RAG zoekkwaliteit", () => {
     expect(body.error).toBeUndefined();
     expect(body.data?.corpusNotice).toMatch(/niet beschikbaar|niet op tijd/i);
   });
+
+  it("geeft HTTP 200 met JSON voor een lokale maaltafel-zoekopdracht", async () => {
+    const response = await postCurriculum(
+      new Request("http://localhost/api/rag-curriculum", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: "maaltafels van 4 en 8",
+          curriculum: "zill",
+          level: "basisonderwijs",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      error?: string;
+      results?: Array<{ code?: string }>;
+      corpusNotice?: string;
+      data?: { goal?: unknown; alternatives?: unknown[] };
+    };
+    expect(body.error).toBeUndefined();
+    expect(Array.isArray(body.results)).toBe(true);
+    expect(body.results?.length).toBeGreaterThan(0);
+    expect(body.data?.goal).not.toBe("niet gevonden");
+    expect(typeof body.corpusNotice).toBe("string");
+  });
 });

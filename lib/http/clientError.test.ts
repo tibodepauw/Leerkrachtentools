@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { publicErrorMessage } from "@/lib/http/clientError";
+import {
+  formatClientRequestError,
+  publicErrorMessage,
+} from "@/lib/http/clientError";
+
+describe("formatClientRequestError", () => {
+  it("vertaalt Failed to fetch naar een duidelijke verbindingsfout", () => {
+    expect(formatClientRequestError(new TypeError("Failed to fetch"))).toBe(
+      "De verbinding met de server is verbroken. Probeer het opnieuw.",
+    );
+  });
+});
 
 describe("publicErrorMessage", () => {
   it("laat eigen Nederlandstalige fouten door", () => {

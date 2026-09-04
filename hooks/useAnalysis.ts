@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { formatClientRequestError } from "@/lib/http/clientError";
 
 export interface AnalysisResponse<T> {
   data: T;
@@ -38,12 +39,21 @@ export function useAnalysis<T>(scopeKey?: string) {
     try {
       const response = await fetch(url, {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const payload = (await response.json()) as
-        | AnalysisResponse<T>
-        | { error?: string };
+      let payload: AnalysisResponse<T> | { error?: string; corpusNotice?: string };
+      try {
+        payload = (await response.json()) as
+          | AnalysisResponse<T>
+          | { error?: string; corpusNotice?: string };
+      } catch (parseError) {
+        console.error(`[${url}] ongeldig antwoord`, parseError, {
+          status: response.status,
+        });
+        throw new Error("De server gaf een ongeldig antwoord. Probeer het opnieuw.");
+      }
       if (requestId !== requestIdRef.current) {
         return null;
       }
@@ -55,7 +65,9 @@ export function useAnalysis<T>(scopeKey?: string) {
         throw new Error(
           "error" in payload && payload.error
             ? payload.error
-            : "De analyse is mislukt.",
+            : "corpusNotice" in payload && payload.corpusNotice
+              ? payload.corpusNotice
+              : "De analyse is mislukt.",
         );
       }
       setLatestResult(payload);
@@ -64,12 +76,11 @@ export function useAnalysis<T>(scopeKey?: string) {
       }
       return payload;
     } catch (caught) {
+      console.error(`[${url}]`, caught);
       if (requestId !== requestIdRef.current) {
         return null;
       }
-      setError(
-        caught instanceof Error ? caught.message : "De analyse is mislukt.",
-      );
+      setError(formatClientRequestError(caught));
       return null;
     } finally {
       if (requestId === requestIdRef.current) {
