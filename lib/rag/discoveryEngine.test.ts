@@ -5,6 +5,7 @@ import {
   isDiscoveryTransportError,
   networkFromUri,
   raceWithTimeout,
+  swallowBackgroundRejection,
   titleFromLink,
 } from "@/lib/rag/discoveryEngine";
 
@@ -58,6 +59,36 @@ describe("discoveryEngine helpers", () => {
       DiscoveryEngineTimeoutError,
     );
     rejectLater?.(new Error("late gRPC-fout"));
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    process.off("unhandledRejection", onUnhandled);
+    expect(unhandled).toEqual([]);
+  });
+
+  it("annuleert de achtergrondpromise via AbortController bij time-out", async () => {
+    const abort = new AbortController();
+    await expect(
+      raceWithTimeout(new Promise(() => undefined), 20, { abort }),
+    ).rejects.toBeInstanceOf(DiscoveryEngineTimeoutError);
+    expect(abort.signal.aborted).toBe(true);
+  });
+
+  it("vangt de ruwe Google-promise af zodat een late gRPC-fout het proces niet laat crashen", async () => {
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => {
+      unhandled.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+
+    let rejectGoogle: ((error: Error) => void) | undefined;
+    const googlePromise = new Promise<string>((_, reject) => {
+      rejectGoogle = reject;
+    });
+    swallowBackgroundRejection(googlePromise);
+
+    await expect(raceWithTimeout(googlePromise, 15)).rejects.toBeInstanceOf(
+      DiscoveryEngineTimeoutError,
+    );
+    rejectGoogle?.(new Error("late gRPC-fout"));
     await new Promise((resolve) => setTimeout(resolve, 30));
     process.off("unhandledRejection", onUnhandled);
     expect(unhandled).toEqual([]);

@@ -98,28 +98,57 @@ function curriculumSearchResponse({
   retrievalMode,
   networkFallbackNotice,
   queryRewrite = null,
+  error,
 }: {
   merged: Array<CurriculumSearchResult & { score?: number }>;
   corpusNotice: string;
   retrievalMode: CurriculumSearchPayload["retrievalMode"];
   networkFallbackNotice?: string;
   queryRewrite?: unknown;
+  error?: string;
 }) {
   const alternatives = merged.slice(1);
-  return NextResponse.json({
-    data: {
-      goal: merged[0] ?? "niet gevonden",
-      alternatives,
+  return NextResponse.json(
+    {
+      data: {
+        goal: merged[0] ?? "niet gevonden",
+        alternatives,
+        corpusNotice,
+        networkFallbackNotice,
+        retrievalMode,
+        queryRewrite,
+      },
+      results: merged,
       corpusNotice,
-      networkFallbackNotice,
-      retrievalMode,
-      queryRewrite,
+      provider: "jsonl-corpus+discovery-engine",
+      fallbackErrors: error ? [error] : [],
+      ...(error ? { error } : {}),
     },
-    results: merged,
-    corpusNotice,
-    provider: "jsonl-corpus+discovery-engine",
-    fallbackErrors: [],
-  });
+    { status: 200 },
+  );
+}
+
+function interruptedSearchResponse(error?: unknown) {
+  const message =
+    error instanceof Error && error.message.trim()
+      ? INTERRUPTED_NOTICE
+      : INTERRUPTED_NOTICE;
+  return NextResponse.json(
+    {
+      results: [],
+      error: message,
+      data: {
+        goal: "niet gevonden",
+        alternatives: [],
+        corpusNotice: message,
+        retrievalMode: "semantic-fallback",
+      },
+      corpusNotice: message,
+      provider: "jsonl-corpus+discovery-engine",
+      fallbackErrors: [message],
+    },
+    { status: 200 },
+  );
 }
 
 function discoveryFallbackNotice(
@@ -259,6 +288,15 @@ async function runCurriculumSearch(
 
 export async function POST(request: Request) {
   try {
+    return await handleCurriculumSearch(request);
+  } catch (error) {
+    console.error("[rag-curriculum]", error);
+    return interruptedSearchResponse(error);
+  }
+}
+
+async function handleCurriculumSearch(request: Request) {
+  try {
     const session = sessionFromRequest(request);
     if (!session) return unauthorizedResponse();
     const tierDenied = approvedTierResponse(session.tier);
@@ -375,14 +413,16 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error("[rag-curriculum:search]", error);
       const local = searchLocalSafely(searchQuery, network, educationLevel);
+      const notice =
+        local.length > 0
+          ? discoveryFallbackNotice(false, true, true) ?? INTERRUPTED_NOTICE
+          : INTERRUPTED_NOTICE;
       return curriculumSearchResponse({
         merged: local,
-        corpusNotice:
-          local.length > 0
-            ? discoveryFallbackNotice(false, true, true) ?? INTERRUPTED_NOTICE
-            : INTERRUPTED_NOTICE,
+        corpusNotice: notice,
         retrievalMode: local.length > 0 ? "curriculum-hybrid" : "semantic-fallback",
         queryRewrite: rewrite,
+        error: local.length === 0 ? notice : undefined,
       });
     }
 
@@ -426,10 +466,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("[rag-curriculum]", error);
-    return curriculumSearchResponse({
-      merged: [],
-      corpusNotice: INTERRUPTED_NOTICE,
-      retrievalMode: "semantic-fallback",
-    });
+    return interruptedSearchResponse(error);
   }
 }

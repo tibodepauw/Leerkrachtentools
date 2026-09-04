@@ -59,12 +59,30 @@ export function emptyDiscoveryResponse(
   };
 }
 
+export function swallowBackgroundRejection<T>(promise: Promise<T>): Promise<T> {
+  void promise.catch(() => {});
+  return promise;
+}
+
+function abortQuietly(controller?: AbortController) {
+  if (!controller || controller.signal.aborted) {
+    return;
+  }
+  try {
+    controller.abort();
+  } catch {
+    // Abort mag nooit zelf een unhandled rejection veroorzaken.
+  }
+}
+
 export async function raceWithTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
+  options?: { abort?: AbortController },
 ): Promise<T> {
+  const guarded = swallowBackgroundRejection(Promise.resolve(promise));
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const settled = promise.then(
+  const settled = guarded.then(
     (value) => ({ status: "fulfilled" as const, value }),
     (error: unknown) => ({ status: "rejected" as const, error }),
   );
@@ -80,6 +98,7 @@ export async function raceWithTimeout<T>(
     ]);
 
     if (winner.status === "timeout") {
+      abortQuietly(options?.abort);
       throw new DiscoveryEngineTimeoutError(timeoutMs);
     }
     if (winner.status === "rejected") {
@@ -267,7 +286,34 @@ function matchesNetwork(
   return hitNetwork === filter;
 }
 
-let client: SearchServiceClient | null = null;
+const DISCOVERY_CLIENT_KEY = Symbol.for(
+  "leerkrachtentools.discoverySearchClient",
+);
+
+type DiscoveryGlobals = typeof globalThis & {
+  [DISCOVERY_CLIENT_KEY]?: SearchServiceClient;
+};
+
+type GoogleSearchHit = SearchResultLike & {
+  document?: { id?: string | null } | null;
+};
+
+type CancellableSearchPromise = Promise<
+  [
+    GoogleSearchHit[],
+    unknown,
+    {
+      summary?: {
+        summaryText?: string | null;
+        summaryWithMetadata?: {
+          references?: Array<{ title?: string | null; uri?: string | null }>;
+        };
+      };
+      totalSize?: number | string | null;
+    },
+  ]
+> & { cancel?: () => void };
+
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 const SEARCH_CACHE_MAX_ENTRIES = 500;
 const searchCache = new Map<
@@ -276,24 +322,47 @@ const searchCache = new Map<
 >();
 const searchesInFlight = new Map<string, Promise<DiscoverySearchResponse>>();
 
-function getClient(): SearchServiceClient {
-  if (!client) {
-    client = new SearchServiceClient({
+export function getDiscoverySearchClient(): SearchServiceClient {
+  const globals = globalThis as DiscoveryGlobals;
+  if (!globals[DISCOVERY_CLIENT_KEY]) {
+    globals[DISCOVERY_CLIENT_KEY] = new SearchServiceClient({
       credentials: {
         client_email: readEnv("GOOGLE_CLIENT_EMAIL"),
         private_key: privateKey(),
       },
     });
   }
-  return client;
+  return globals[DISCOVERY_CLIENT_KEY];
+}
+
+function attachAbortToGoogleCall(
+  searchCall: CancellableSearchPromise,
+  signal?: AbortSignal,
+) {
+  if (!signal) {
+    return;
+  }
+  const cancelCall = () => {
+    try {
+      searchCall.cancel?.();
+    } catch {
+      // cancel() mag de request-lifecycle niet laten crashen.
+    }
+  };
+  if (signal.aborted) {
+    cancelCall();
+    return;
+  }
+  signal.addEventListener("abort", cancelCall, { once: true });
 }
 
 async function performDiscoverySearch(
   options: DiscoverySearchOptions,
+  signal?: AbortSignal,
 ): Promise<DiscoverySearchResponse> {
-  const searchClient = getClient();
+  const searchClient = getDiscoverySearchClient();
   const pageSize = options.pageSize ?? 12;
-  const [results, , rawResponse] = await searchClient.search(
+  const searchCall = searchClient.search(
     {
       servingConfig: servingConfigPath(searchClient),
       query: buildQuery(options.query, options.network),
@@ -313,8 +382,17 @@ async function performDiscoverySearch(
         },
       },
     },
-    { autoPaginate: false },
-  );
+    {
+      autoPaginate: false,
+      signal,
+      otherArgs: { signal },
+    } as { autoPaginate: boolean; signal?: AbortSignal; otherArgs: { signal?: AbortSignal } },
+  ) as CancellableSearchPromise;
+
+  attachAbortToGoogleCall(searchCall, signal);
+  swallowBackgroundRejection(searchCall);
+
+  const [results, , rawResponse] = await searchCall;
 
   const hits: DiscoveryHit[] = [];
   for (const [index, result] of (results ?? []).entries()) {
@@ -384,10 +462,14 @@ export async function searchDiscoveryEngine(
   const existing = searchesInFlight.get(key);
   if (existing) return existing;
 
-  const pending = raceWithTimeout(
-    performDiscoverySearch(options),
-    DISCOVERY_SEARCH_TIMEOUT_MS,
-  )
+  const abortController = new AbortController();
+  const googleSearch = swallowBackgroundRejection(
+    performDiscoverySearch(options, abortController.signal),
+  );
+
+  const pending = raceWithTimeout(googleSearch, DISCOVERY_SEARCH_TIMEOUT_MS, {
+    abort: abortController,
+  })
     .then((value) => {
       if (searchCache.size >= SEARCH_CACHE_MAX_ENTRIES) {
         const oldest = searchCache.keys().next().value as string | undefined;
@@ -400,7 +482,12 @@ export async function searchDiscoveryEngine(
       return value;
     })
     .catch((error: unknown) => {
-      if (error instanceof DiscoveryEngineTimeoutError) {
+      abortQuietly(abortController);
+      if (
+        error instanceof DiscoveryEngineTimeoutError ||
+        (error instanceof Error &&
+          /aborted|cancelled|canceled/i.test(error.message))
+      ) {
         return emptyDiscoveryResponse("timeout");
       }
       return emptyDiscoveryResponse("error");

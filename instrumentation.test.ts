@@ -37,4 +37,15 @@ describe("production startup validation", () => {
 
     await expect(register()).resolves.toBeUndefined();
   });
+
+  it("installeert process-safety nets zonder het proces af te sluiten", async () => {
+    vi.stubEnv("NEXT_RUNTIME", "nodejs");
+    vi.stubEnv("NODE_ENV", "test");
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new Error(`process.exit(${code})`);
+    });
+
+    await expect(register()).resolves.toBeUndefined();
+    expect(exit).not.toHaveBeenCalled();
+  });
 });

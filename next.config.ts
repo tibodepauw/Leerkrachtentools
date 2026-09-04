@@ -47,7 +47,14 @@ const nextConfig: NextConfig = {
     "*.cursorusercontent.com",
   ],
   devIndicators: false,
-  serverExternalPackages: ["better-sqlite3", "pdf-parse", "word-extractor"],
+  serverExternalPackages: [
+    "better-sqlite3",
+    "pdf-parse",
+    "word-extractor",
+    "@google-cloud/discoveryengine",
+    "google-gax",
+    "@grpc/grpc-js",
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: "1mb",
