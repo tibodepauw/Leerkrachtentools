@@ -21,6 +21,9 @@ export async function DELETE(request: Request) {
     database
       .prepare("DELETE FROM feedback_events WHERE user_id = ?")
       .run(session.id);
+    database
+      .prepare("DELETE FROM request_rate_events WHERE subject = ?")
+      .run(session.id);
     database.prepare("DELETE FROM users WHERE id = ?").run(session.id);
   })();
   const response = NextResponse.json({ ok: true });
