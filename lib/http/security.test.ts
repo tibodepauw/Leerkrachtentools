@@ -1,10 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   contentSecurityPolicy,
   isSameOriginMutation,
 } from "@/lib/http/security";
 
 describe("web security", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("bouwt een nonce-CSP zonder unsafe-inline scripts", () => {
     const policy = contentSecurityPolicy("nonce-value", false);
     expect(policy).toContain("script-src 'self' 'nonce-nonce-value' 'strict-dynamic'");
@@ -38,5 +42,28 @@ describe("web security", () => {
         new Request("https://app.example/api/account", { method: "POST" }),
       ),
     ).toBe(true);
+  });
+
+  it("laat lokale previewpoorten alleen buiten productie toe", () => {
+    const request = new Request("http://localhost:3000/api/auth/request-code", {
+      method: "POST",
+      headers: { origin: "http://127.0.0.1:63483" },
+    });
+    expect(isSameOriginMutation(request)).toBe(true);
+
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_ORIGIN", "https://tools.example.be");
+    expect(isSameOriginMutation(request)).toBe(false);
+  });
+
+  it("weigert een misvormde Origin-header", () => {
+    expect(
+      isSameOriginMutation(
+        new Request("https://app.example/api/account", {
+          method: "POST",
+          headers: { origin: "not a url" },
+        }),
+      ),
+    ).toBe(false);
   });
 });

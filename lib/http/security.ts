@@ -30,6 +30,24 @@ export function isSameOriginMutation(request: Request) {
   if (!origin) return true;
 
   const configuredOrigin = process.env.APP_ORIGIN?.trim();
-  const expectedOrigin = configuredOrigin || new URL(request.url).origin;
-  return origin === expectedOrigin;
+  if (configuredOrigin) return origin === configuredOrigin;
+
+  const requestUrl = new URL(request.url);
+  let originUrl: URL;
+  try {
+    originUrl = new URL(origin);
+  } catch {
+    return false;
+  }
+  if (process.env.NODE_ENV !== "production") {
+    const loopbackHosts = new Set(["127.0.0.1", "::1", "localhost"]);
+    if (
+      loopbackHosts.has(requestUrl.hostname) &&
+      loopbackHosts.has(originUrl.hostname)
+    ) {
+      return true;
+    }
+  }
+
+  return originUrl.origin === requestUrl.origin;
 }
