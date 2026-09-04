@@ -37,8 +37,11 @@ export async function listProviderModels(
   switch (provider) {
     case "google": {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
-        { signal: AbortSignal.timeout(20_000) },
+        "https://generativelanguage.googleapis.com/v1beta/models",
+        {
+          headers: { "x-goog-api-key": apiKey },
+          signal: AbortSignal.timeout(20_000),
+        },
       );
       if (!response.ok) {
         throw new Error(`Google-modellen konden niet worden opgehaald (${response.status}).`);

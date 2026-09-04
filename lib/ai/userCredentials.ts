@@ -17,6 +17,7 @@ export interface UserAiSettingsPublic {
   provider: ProviderName;
   model: string;
   hasApiKey: boolean;
+  credentialError: boolean;
   apiKeyHint: string | null;
   cloudflareAccountId: string | null;
 }
@@ -41,6 +42,13 @@ export function isProviderName(value: string): value is ProviderName {
   return providers.has(value as ProviderName);
 }
 
+export function apiKeyEncryptionContext(
+  userId: string,
+  provider: ProviderName,
+) {
+  return `user:${userId}:provider:${provider}`;
+}
+
 export function getUserAiSettingsPublic(userId: string): UserAiSettingsPublic {
   const row = getDatabase()
     .prepare(
@@ -56,28 +64,36 @@ export function getUserAiSettingsPublic(userId: string): UserAiSettingsPublic {
       provider: "google",
       model: "",
       hasApiKey: false,
+      credentialError: false,
       apiKeyHint: null,
       cloudflareAccountId: null,
     };
   }
 
+  const provider = isProviderName(row.ai_provider ?? "")
+    ? (row.ai_provider as ProviderName)
+    : "google";
   let apiKeyHint: string | null = null;
+  let credentialError = false;
   if (row.ai_api_key_enc) {
     try {
-      const decrypted = decryptSecret(row.ai_api_key_enc);
+      const decrypted = decryptSecret(
+        row.ai_api_key_enc,
+        apiKeyEncryptionContext(userId, provider),
+      );
       apiKeyHint = decrypted.length <= 4 ? "••••" : `••••${decrypted.slice(-4)}`;
     } catch {
       apiKeyHint = "••••";
+      credentialError = true;
     }
   }
 
   return {
     enabled: Boolean(row.use_own_api_keys),
-    provider: isProviderName(row.ai_provider ?? "")
-      ? (row.ai_provider as ProviderName)
-      : "google",
+    provider,
     model: row.ai_model ?? "",
     hasApiKey: Boolean(row.ai_api_key_enc),
+    credentialError,
     apiKeyHint,
     cloudflareAccountId: row.ai_cloudflare_account_id,
   };
@@ -92,21 +108,31 @@ export function getUserAiConfig(userId: string): UserAiConfig | null {
     )
     .get(userId) as UserAiRow | undefined;
 
-  if (!row?.use_own_api_keys || !row.ai_api_key_enc) return null;
-  if (!isProviderName(row.ai_provider ?? "")) return null;
+  if (!row?.use_own_api_keys) return null;
 
-  try {
-    const apiKey = decryptSecret(row.ai_api_key_enc);
-    return {
-      enabled: true,
-      provider: row.ai_provider as ProviderName,
-      apiKey,
-      model: row.ai_model ?? "",
-      cloudflareAccountId: row.ai_cloudflare_account_id ?? undefined,
-    };
-  } catch {
-    return null;
+  const provider = isProviderName(row.ai_provider ?? "")
+    ? (row.ai_provider as ProviderName)
+    : "google";
+  let apiKey = "";
+
+  if (row.ai_api_key_enc && isProviderName(row.ai_provider ?? "")) {
+    try {
+      apiKey = decryptSecret(
+        row.ai_api_key_enc,
+        apiKeyEncryptionContext(userId, provider),
+      );
+    } catch {
+      apiKey = "";
+    }
   }
+
+  return {
+    enabled: true,
+    provider,
+    apiKey,
+    model: row.ai_model ?? "",
+    cloudflareAccountId: row.ai_cloudflare_account_id ?? undefined,
+  };
 }
 
 export function userAiConfigHasCredentials(config: UserAiConfig) {

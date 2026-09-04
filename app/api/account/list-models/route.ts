@@ -28,12 +28,22 @@ export async function POST(request: Request) {
     );
   }
   const provider = body.provider as ProviderName;
+  const submittedApiKey =
+    typeof body.apiKey === "string" ? body.apiKey.trim() : "";
+  if (submittedApiKey.length > 4_096) {
+    return NextResponse.json(
+      { error: "De API-key is te lang." },
+      { status: 400 },
+    );
+  }
 
   const saved = getUserAiConfig(session.id);
   const apiKey =
-    typeof body.apiKey === "string" && body.apiKey.trim()
-      ? body.apiKey.trim()
-      : saved?.apiKey ?? "";
+    submittedApiKey ||
+    (saved?.provider === provider &&
+    saved.apiKey.trim()
+      ? saved.apiKey
+      : "");
 
   if (!apiKey) {
     return NextResponse.json(
@@ -48,7 +58,11 @@ export async function POST(request: Request) {
       ? body.cloudflareAccountId.trim()
       : saved?.cloudflareAccountId;
 
-  if (body.provider === "cloudflare" && !cloudflareAccountId) {
+  if (
+    body.provider === "cloudflare" &&
+    (!cloudflareAccountId ||
+      !/^[a-f0-9]{32}$/iu.test(cloudflareAccountId))
+  ) {
     return NextResponse.json(
       { error: "Vul je Cloudflare account ID in." },
       { status: 400 },

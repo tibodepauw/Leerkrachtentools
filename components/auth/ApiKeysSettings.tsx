@@ -34,6 +34,7 @@ interface ApiSettings {
   provider: ProviderName;
   model: string;
   hasApiKey: boolean;
+  credentialError: boolean;
   apiKeyHint: string | null;
   cloudflareAccountId: string | null;
 }
@@ -60,9 +61,12 @@ export function ApiKeysSettings() {
     provider: "google",
     model: "",
     hasApiKey: false,
+    credentialError: false,
     apiKeyHint: null,
     cloudflareAccountId: null,
   });
+  const [savedProvider, setSavedProvider] =
+    useState<ProviderName>("google");
   const [apiKey, setApiKey] = useState("");
   const [cloudflareAccountId, setCloudflareAccountId] = useState("");
   const [models, setModels] = useState<ListedModel[]>([]);
@@ -81,6 +85,7 @@ export function ApiKeysSettings() {
       const payload = (await response.json()) as ApiSettings;
       if (cancelled) return;
       setSettings(payload);
+      setSavedProvider(payload.provider);
       setCloudflareAccountId(payload.cloudflareAccountId ?? "");
       setLoading(false);
     })();
@@ -157,6 +162,7 @@ export function ApiKeysSettings() {
       return;
     }
     setSettings(payload);
+    setSavedProvider(payload.provider);
     setApiKey("");
     toast.success(
       payload.enabled
@@ -267,12 +273,25 @@ export function ApiKeysSettings() {
                   value={apiKey}
                   onChange={(event) => setApiKey(event.target.value)}
                   placeholder={
-                    settings.hasApiKey && settings.apiKeyHint
+                    settings.provider === savedProvider &&
+                    settings.hasApiKey &&
+                    settings.apiKeyHint &&
+                    !settings.credentialError
                       ? `Opgeslagen (${settings.apiKeyHint}) - laat leeg om te behouden`
                       : "Plak je API-key"
                   }
                   autoComplete="off"
                 />
+                {settings.credentialError ? (
+                  <p className="text-xs text-red-400">
+                    De opgeslagen key kan niet meer veilig worden gelezen. Vul
+                    ze opnieuw in.
+                  </p>
+                ) : settings.provider !== savedProvider ? (
+                  <p className="text-xs text-neutral-500">
+                    Vul een nieuwe key in voor deze provider.
+                  </p>
+                ) : null}
               </div>
 
               <div className="@container/model-picker space-y-2">

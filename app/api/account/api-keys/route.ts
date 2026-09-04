@@ -4,6 +4,7 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import {
+  apiKeyEncryptionContext,
   getUserAiSettingsPublic,
   isProviderName,
 } from "@/lib/ai/userCredentials";
@@ -15,7 +16,9 @@ import type { ProviderName } from "@/lib/ai/providers";
 export async function GET(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
-  return NextResponse.json(getUserAiSettingsPublic(session.id));
+  return NextResponse.json(getUserAiSettingsPublic(session.id), {
+    headers: { "Cache-Control": "no-store" },
+  });
 }
 
 export async function PATCH(request: Request) {
@@ -31,6 +34,15 @@ export async function PATCH(request: Request) {
   };
 
   const current = getUserAiSettingsPublic(session.id);
+  if (
+    body.provider !== undefined &&
+    !isProviderName(body.provider)
+  ) {
+    return NextResponse.json(
+      { error: "Kies een geldige provider." },
+      { status: 400 },
+    );
+  }
   const enabled = body.enabled ?? current.enabled;
   const provider: ProviderName = isProviderName(body.provider ?? "")
     ? (body.provider as ProviderName)
@@ -43,12 +55,38 @@ export async function PATCH(request: Request) {
     typeof body.cloudflareAccountId === "string"
       ? body.cloudflareAccountId.trim()
       : current.cloudflareAccountId ?? "";
+  const providerChanged = provider !== current.provider;
+  const hasNewKey =
+    typeof body.apiKey === "string" && Boolean(body.apiKey.trim());
+
+  if (model.length > 200 || /[\p{C}\s?#]/u.test(model)) {
+    return NextResponse.json(
+      { error: "Kies een geldige modelnaam." },
+      { status: 400 },
+    );
+  }
+  if (
+    provider === "cloudflare" &&
+    cloudflareAccountId &&
+    !/^[a-f0-9]{32}$/iu.test(cloudflareAccountId)
+  ) {
+    return NextResponse.json(
+      { error: "Vul een geldig Cloudflare account ID in." },
+      { status: 400 },
+    );
+  }
 
   if (enabled) {
-    const hasNewKey = typeof body.apiKey === "string" && body.apiKey.trim();
-    if (!hasNewKey && !current.hasApiKey) {
+    if (
+      !hasNewKey &&
+      (!current.hasApiKey || current.credentialError || providerChanged)
+    ) {
       return NextResponse.json(
-        { error: "Vul een API-key in voordat je eigen keys inschakelt." },
+        {
+          error: providerChanged
+            ? "Vul een nieuwe API-key in wanneer je van provider wisselt."
+            : "Vul een geldige API-key in voordat je eigen keys inschakelt.",
+        },
         { status: 400 },
       );
     }
@@ -67,9 +105,16 @@ export async function PATCH(request: Request) {
   }
 
   let apiKeyEnc: string | null = null;
-  if (typeof body.apiKey === "string" && body.apiKey.trim()) {
-    apiKeyEnc = encryptSecret(body.apiKey.trim());
-  } else if (current.hasApiKey) {
+  if (hasNewKey) {
+    apiKeyEnc = encryptSecret(
+      body.apiKey!.trim(),
+      apiKeyEncryptionContext(session.id, provider),
+    );
+  } else if (
+    current.hasApiKey &&
+    !current.credentialError &&
+    !providerChanged
+  ) {
     const row = getDatabase()
       .prepare("SELECT ai_api_key_enc FROM users WHERE id = ?")
       .get(session.id) as { ai_api_key_enc: string | null } | undefined;
@@ -97,5 +142,7 @@ export async function PATCH(request: Request) {
       session.id,
     );
 
-  return NextResponse.json(getUserAiSettingsPublic(session.id));
+  return NextResponse.json(getUserAiSettingsPublic(session.id), {
+    headers: { "Cache-Control": "no-store" },
+  });
 }

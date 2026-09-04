@@ -90,7 +90,7 @@ export type ServerAiAccessResult =
       limit: number;
       used: number;
     }
-  | { allowed: false; status: 403 | 429; message: string };
+  | { allowed: false; status: 403 | 409 | 429; message: string };
 
 export function evaluateServerAiAccess({
   userId,
@@ -103,6 +103,18 @@ export function evaluateServerAiAccess({
   userAiConfig?: UserAiConfig | null;
   now?: number;
 }): ServerAiAccessResult {
+  if (
+    userAiConfig?.enabled &&
+    !userAiConfigHasCredentials(userAiConfig)
+  ) {
+    return {
+      allowed: false,
+      status: 409,
+      message:
+        "Je opgeslagen API-key kon niet veilig worden gebruikt. Vul de key opnieuw in bij Instellingen.",
+    };
+  }
+
   if (usesOwnAiKeys(userAiConfig)) {
     return { allowed: true, usesServerQuota: false };
   }

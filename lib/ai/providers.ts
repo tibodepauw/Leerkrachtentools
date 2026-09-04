@@ -124,15 +124,20 @@ export function getModelCandidates(
   preferred?: ProviderName,
   userConfig?: UserAiConfig | null,
 ) {
-  if (userConfig?.enabled && userAiConfigHasCredentials(userConfig)) {
-    return userModelCandidates(userConfig, preferred);
+  if (userConfig?.enabled) {
+    return userAiConfigHasCredentials(userConfig)
+      ? userModelCandidates(userConfig, preferred)
+      : [];
   }
   return envModelCandidates(preferred);
 }
 
 export function hasCloudflare(userConfig?: UserAiConfig | null) {
-  if (userConfig?.enabled && userConfig.provider === "cloudflare") {
-    return userAiConfigHasCredentials(userConfig);
+  if (userConfig?.enabled) {
+    return (
+      userConfig.provider === "cloudflare" &&
+      userAiConfigHasCredentials(userConfig)
+    );
   }
   return Boolean(
     process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_API_TOKEN,
