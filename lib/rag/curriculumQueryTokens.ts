@@ -1,53 +1,56 @@
 import { tokenize } from "@/lib/rag/curriculumCorpus";
 import {
+  DIDACTIC_STOPWORDS,
+  isDidacticStopword,
+  stripDidacticPhrases,
+} from "@/lib/rag/didacticStopwords";
+import {
   applyPhoneticTypos,
+  fuzzyMatchHaystackWords,
   fuzzySimilarity,
+  haystackWordsFromText,
   isFuzzySimilar,
 } from "@/lib/rag/fuzzyMatch";
 
 const CONTENT_TOKEN_WEIGHT = 3;
-const STOPWORD_TOKEN_WEIGHT = 0.1;
+const HIGH_IDF_TOKEN_WEIGHT = 14;
+const STOPWORD_TOKEN_WEIGHT = 0;
 const DEFAULT_TOKEN_WEIGHT = 1;
+const MATH_DOMAIN_MULTIPLIER = 5;
+const TECH_DOMAIN_MULTIPLIER = 5;
+const WRONG_DOMAIN_MULTIPLIER = 0.18;
 
-const DIDACTIC_STOPWORDS = new Set([
-  "de",
-  "het",
-  "een",
-  "leerling",
-  "leerlingen",
-  "kunnen",
-  "weten",
-  "kennen",
-  "zijn",
-  "wat",
-  "hoe",
-  "in",
-  "op",
-  "van",
-  "met",
-  "kan",
-  "kleuters",
-  "deze",
-  "dat",
-  "voor",
-  "bij",
-  "worden",
-  "door",
-  "naar",
-  "ook",
-  "nog",
-  "als",
-  "dan",
-  "tot",
-  "uit",
-  "er",
-  "om",
-  "der",
-  "des",
-  "maken",
-  "doen",
-  "gebruiken",
-]);
+const MATH_HIGH_IDF_STEMS = [
+  "maaltafel",
+  "maal",
+  "tafel",
+  "optell",
+  "aftrek",
+  "vermenigvuld",
+  "delen",
+  "deeltafel",
+  "breuk",
+  "kommagetal",
+  "komma",
+  "cijfer",
+  "meetlat",
+  "vraagstuk",
+  "reken",
+] as const;
+
+const TECH_HIGH_IDF_STEMS = [
+  "brug",
+  "bouw",
+  "gewicht",
+  "kracht",
+  "tape",
+  "papier",
+  "krantenpapier",
+  "materiaal",
+  "construct",
+  "techniek",
+  "kilo",
+] as const;
 
 const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   {
@@ -60,11 +63,34 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   },
   {
     pattern: /optell|optel[^a-z]|som|plus|opptell/i,
-    stems: ["optell", "som", "plus", "brug"],
+    stems: ["optell", "som", "plus"],
   },
   {
     pattern: /aftrek|aftreken|verschil|min[^a-z]/i,
-    stems: ["aftrek", "verschil", "min", "brug"],
+    stems: ["aftrek", "verschil", "min"],
+  },
+  {
+    pattern: /vraagstuk|cijferen|meetlat|kommagetal/i,
+    stems: ["vraagstuk", "cijfer", "meetlat", "kommagetal", "reken"],
+  },
+  {
+    pattern:
+      /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem/i,
+    stems: [
+      "brug",
+      "bouw",
+      "construct",
+      "materiaal",
+      "techniek",
+      "gewicht",
+      "papier",
+      "krantenpapier",
+      "tape",
+    ],
+  },
+  {
+    pattern: /tikker|tikkertje|mikken|pionneke|pionnen|\bpion\b/i,
+    stems: ["tikker", "spel", "spelen", "werp", "vang", "bal", "beweg", "motor"],
   },
   {
     pattern: /breuk/i,
@@ -201,11 +227,11 @@ const CANONICAL_QUERY_TERMS: Array<{
   },
   {
     canonical: "optellen",
-    stems: ["optell", "som", "plus", "brug"],
+    stems: ["optell", "som", "plus"],
   },
   {
     canonical: "aftrekken",
-    stems: ["aftrek", "verschil", "min", "brug"],
+    stems: ["aftrek", "verschil", "min"],
   },
   {
     canonical: "delen",
@@ -264,6 +290,30 @@ const CANONICAL_QUERY_TERMS: Array<{
       "voordrag",
       "mondel",
     ],
+  },
+  {
+    canonical: "maaltafels",
+    stems: ["maaltafel", "maal", "tafel", "vermenigvuld", "keer"],
+  },
+  {
+    canonical: "vraagstukken",
+    stems: ["vraagstuk", "reken"],
+  },
+  {
+    canonical: "constructie",
+    stems: ["construct", "bouw", "brug", "materiaal", "techniek"],
+  },
+  {
+    canonical: "spelen",
+    stems: ["spel", "speel"],
+  },
+  {
+    canonical: "tikkertje",
+    stems: ["tikker", "spel", "spelen", "beweg", "motor"],
+  },
+  {
+    canonical: "pionnen",
+    stems: ["pion", "mikken", "werp", "spel"],
   },
   {
     canonical: "programmeren",
@@ -334,6 +384,11 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
   {
     pattern: /zoogdier|zoogdieren|\bdieren\b|planten|bomen|natuur|organismen|biotoop|leefwereld/i,
     discipline: "Oriëntatie op natuur",
+  },
+  {
+    pattern:
+      /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem/i,
+    discipline: "Wetenschap en techniek",
   },
   {
     pattern: /wetenschap|techniek|vulkaan/i,
@@ -409,11 +464,13 @@ export function normalizeDutchNumberWords(text: string): string {
 export function normalizeQueryText(text: string): string {
   return applyPhoneticTypos(
     normalizeDutchNumberWords(
-      text
-        .toLocaleLowerCase("nl-BE")
-        .normalize("NFD")
-        .replace(/\p{Diacritic}/gu, "")
-        .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2"),
+      stripDidacticPhrases(
+        text
+          .toLocaleLowerCase("nl-BE")
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "")
+          .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2"),
+      ),
     ),
   );
 }
@@ -430,7 +487,7 @@ export function extractContentTokens(query: string): Set<string> {
   const tokens = new Set<string>();
 
   for (const word of queryWords(normalized)) {
-    if (!DIDACTIC_STOPWORDS.has(word)) {
+    if (!isDidacticStopword(word)) {
       tokens.add(word);
     }
   }
@@ -459,9 +516,51 @@ function isContentToken(token: string, contentTokens: Set<string>): boolean {
   return false;
 }
 
-export function tokenWeight(token: string, contentTokens: Set<string>): number {
-  if (DIDACTIC_STOPWORDS.has(token)) {
+export function queryMatchesMathTopic(query: string): boolean {
+  return /maaltafel|vermenigvuld|vermeningvuld|optell|aftrek|\bdel(?:en|ing)\b|breuk|kommagetal|cijferen|meetlat|vraagstuk|wiskunde|reken|\btafel(?:s)?\b/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+export function queryMatchesTechTopic(query: string): boolean {
+  return /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+function tokenMatchesHighIdfStem(
+  token: string,
+  stems: readonly string[],
+): boolean {
+  return stems.some(
+    (stem) =>
+      token === stem ||
+      (stem.length >= 4 && (token.startsWith(stem) || stem.startsWith(token))),
+  );
+}
+
+function isHighIdfToken(token: string, query: string): boolean {
+  if (/^\d{1,7}$/.test(token) && queryMatchesMathTopic(query)) {
+    return true;
+  }
+  if (queryMatchesMathTopic(query) && tokenMatchesHighIdfStem(token, MATH_HIGH_IDF_STEMS)) {
+    if (token === "tafel" || token.startsWith("tafel")) {
+      return /maal|reken|wiskunde|cijfer|vraagstuk/.test(normalizeQueryText(query));
+    }
+    return true;
+  }
+  if (queryMatchesTechTopic(query) && tokenMatchesHighIdfStem(token, TECH_HIGH_IDF_STEMS)) {
+    return true;
+  }
+  return false;
+}
+
+export function tokenWeight(token: string, contentTokens: Set<string>, query = ""): number {
+  if (isDidacticStopword(token)) {
     return STOPWORD_TOKEN_WEIGHT;
+  }
+  if (query && isHighIdfToken(token, query)) {
+    return HIGH_IDF_TOKEN_WEIGHT;
   }
   if (isContentToken(token, contentTokens)) {
     return CONTENT_TOKEN_WEIGHT;
@@ -530,6 +629,9 @@ export function extractIndexTokens(text: string): Set<string> {
   const tokens = new Set<string>();
 
   for (const word of queryWords(normalized)) {
+    if (isDidacticStopword(word)) {
+      continue;
+    }
     if (word.length >= 3) {
       tokens.add(word);
     }
@@ -555,15 +657,23 @@ export function countCurriculumTokenMatches(
 ): number {
   const normalizedHaystack = normalizeQueryText(haystack);
   const contentTokens = query ? extractContentTokens(query) : new Set<string>();
+  const haystackWords = haystackWordsFromText(normalizedHaystack);
   let weightedMatches = 0;
 
   for (const token of tokens) {
-    if (!normalizedHaystack.includes(token)) {
+    if (isDidacticStopword(token)) {
+      continue;
+    }
+    const matched =
+      normalizedHaystack.includes(token) ||
+      (token.length >= 5 &&
+        fuzzyMatchHaystackWords(haystackWords, token, 0.78));
+    if (!matched) {
       continue;
     }
 
     weightedMatches += query
-      ? tokenWeight(token, contentTokens)
+      ? tokenWeight(token, contentTokens, query)
       : DEFAULT_TOKEN_WEIGHT;
   }
 
@@ -581,13 +691,26 @@ export function scoreCurriculumOverlap(
 
   const normalizedHaystack = normalizeQueryText(haystack);
   const contentTokens = query ? extractContentTokens(query) : new Set<string>();
+  const haystackWords = haystackWordsFromText(normalizedHaystack);
   let weightedMatches = 0;
   let totalWeight = 0;
 
   for (const token of tokens) {
-    const weight = query ? tokenWeight(token, contentTokens) : DEFAULT_TOKEN_WEIGHT;
+    if (isDidacticStopword(token)) {
+      continue;
+    }
+    const weight = query
+      ? tokenWeight(token, contentTokens, query)
+      : DEFAULT_TOKEN_WEIGHT;
+    if (weight <= 0) {
+      continue;
+    }
     totalWeight += weight;
-    if (normalizedHaystack.includes(token)) {
+    const matched =
+      normalizedHaystack.includes(token) ||
+      (token.length >= 5 &&
+        fuzzyMatchHaystackWords(haystackWords, token, 0.78));
+    if (matched) {
       weightedMatches += weight;
     }
   }
@@ -607,6 +730,10 @@ export function inferDisciplineFromQuery(query: string): string | null {
 
 export function isZillMathThinkingCode(code: string): boolean {
   return /^WD(?:gk|lw|mm|rv|mk)\d/i.test(code.trim());
+}
+
+export function isZillTechCode(code: string): boolean {
+  return /^OWte\d/i.test(code.trim());
 }
 
 export function isZillNatureCode(code: string): boolean {
@@ -661,7 +788,10 @@ function queryMatchesHistoryTopic(query: string): boolean {
 }
 
 function queryMatchesMotorTopic(query: string): boolean {
-  return /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|\bturnen\b|\bturn\b|\blo\b/i.test(
+  if (queryMatchesTechTopic(query) || queryMatchesMathTopic(query)) {
+    return false;
+  }
+  return /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|\bturnen\b|\bturn\b|\blo\b|tikker|mikken|pion/i.test(
     normalizeQueryText(query),
   );
 }
@@ -750,6 +880,24 @@ export function scoreCodePrefixBonus(query: string, code: string): number {
   const trimmedCode = code.trim();
   if (!trimmedCode) {
     return 0;
+  }
+
+  if (queryMatchesMathTopic(query)) {
+    if (isZillMathThinkingCode(trimmedCode) || /^WD/i.test(trimmedCode)) {
+      return 0.45;
+    }
+    if (/^TO|^MZ|^RK|^ME/i.test(trimmedCode)) {
+      return -0.28;
+    }
+  }
+
+  if (queryMatchesTechTopic(query)) {
+    if (isZillTechCode(trimmedCode)) {
+      return 0.45;
+    }
+    if (/^MZ|^RK|^TO|^ME/i.test(trimmedCode)) {
+      return -0.28;
+    }
   }
 
   if (queryMatchesNatureTopic(query)) {
@@ -939,7 +1087,11 @@ export function scoreDisciplineBonus(
       combined.includes("schriftelijke taalvaardigheid")) ||
     (hint === "Nederlands" &&
       (combined.includes("nederlands") || combined.includes("taalontwikkeling"))) ||
-    (hint === "Wetenschap en techniek" && combined.includes("natuur")) ||
+    (hint === "Wetenschap en techniek" &&
+      (combined.includes("natuur") ||
+        combined.includes("techniek") ||
+        combined.includes("technische") ||
+        isZillTechCode(code))) ||
     (hint === "Lichamelijke opvoeding" &&
       (combined.includes("lichamelijk") ||
         combined.includes("motor") ||
@@ -959,6 +1111,71 @@ export function scoreDisciplineBonus(
   }
 
   return bonus;
+}
+
+export function isMathDomain(
+  discipline: string,
+  code = "",
+  subdomein = "",
+): boolean {
+  const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+  return (
+    isZillMathThinkingCode(code) ||
+    /^WD/i.test(code.trim()) ||
+    combined.includes("wiskunde") ||
+    combined.includes("wiskundig")
+  );
+}
+
+export function isTechDomain(
+  discipline: string,
+  code = "",
+  subdomein = "",
+): boolean {
+  const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+  return (
+    isZillTechCode(code) ||
+    combined.includes("techniek") ||
+    combined.includes("technische") ||
+    combined.includes("w&t") ||
+    combined.includes("wetenschap en techniek")
+  );
+}
+
+function applyDomainMultiplier(
+  score: number,
+  query: string,
+  discipline: string,
+  code: string,
+  subdomein: string,
+): number {
+  const mathQuery = queryMatchesMathTopic(query);
+  const techQuery = queryMatchesTechTopic(query);
+
+  if (mathQuery && !techQuery) {
+    return score * (isMathDomain(discipline, code, subdomein)
+      ? MATH_DOMAIN_MULTIPLIER
+      : WRONG_DOMAIN_MULTIPLIER);
+  }
+
+  if (techQuery && !mathQuery) {
+    if (isTechDomain(discipline, code, subdomein)) {
+      return score * TECH_DOMAIN_MULTIPLIER;
+    }
+    const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+    if (
+      combined.includes("lichamelijk") ||
+      combined.includes("motor") ||
+      combined.includes("godsdienst") ||
+      combined.includes("muzisch") ||
+      combined.includes("religie")
+    ) {
+      return score * WRONG_DOMAIN_MULTIPLIER;
+    }
+    return score * 0.45;
+  }
+
+  return score;
 }
 
 export function scoreCurriculumCandidate({
@@ -981,12 +1198,10 @@ export function scoreCurriculumCandidate({
   const titelScore = scoreCurriculumOverlap(titel, tokens, query);
   const contextScore = scoreCurriculumOverlap(haystack, tokens, query);
 
-  let score = Math.min(
-    1.2,
+  let score =
     titelScore * 0.55 +
-      contextScore * 0.45 +
-      scoreDisciplineBonus(query, discipline, code, subdomein),
-  );
+    contextScore * 0.45 +
+    scoreDisciplineBonus(query, discipline, code, subdomein);
 
   const queryLower = normalizeQueryText(query);
   const titelLower = normalizeQueryText(titel);
@@ -1031,5 +1246,6 @@ export function scoreCurriculumCandidate({
     score += 0.12;
   }
 
-  return { score: Math.min(1.2, score), tokenMatches };
+  score = applyDomainMultiplier(score, query, discipline, code, subdomein);
+  return { score: Math.max(0, Math.min(6, score)), tokenMatches };
 }

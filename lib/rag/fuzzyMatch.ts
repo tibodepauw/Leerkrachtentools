@@ -101,7 +101,7 @@ export function fuzzyMatchHaystackWords(
   needle: string,
   threshold = 0.72,
 ): boolean {
-  if (needle.length < 5) {
+  if (needle.length < 4) {
     return false;
   }
 
@@ -135,6 +135,9 @@ const PHONETIC_TYPO_REPLACEMENTS: Array<[RegExp, string]> = [
   [/vermeningvuld/giu, "vermenigvuld"],
   [/presntat/giu, "present"],
   [/prorgamm/giu, "programm"],
+  [/\bspele\b/giu, "spelen"],
+  [/pionnekes/giu, "pionnen"],
+  [/tikkertje/giu, "tikker"],
 ];
 
 export function applyPhoneticTypos(text: string): string {

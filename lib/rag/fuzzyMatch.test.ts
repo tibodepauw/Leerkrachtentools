@@ -28,6 +28,9 @@ describe("fuzzyMatch", () => {
     );
     expect(applyPhoneticTypos("vermeningvuldigen")).toBe("vermenigvuldigen");
     expect(applyPhoneticTypos("prorgammeren")).toBe("programmeren");
+    expect(applyPhoneticTypos("tikkertje spele me pionnekes")).toBe(
+      "tikker spelen me pionnen",
+    );
   });
 
   it("berekent bigram overlap", () => {

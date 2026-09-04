@@ -13,6 +13,7 @@ import {
   isZillMathThinkingCode,
   isZillMediaCode,
   isZillMotorCode,
+  isZillTechCode,
   normalizeQueryText,
   scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
@@ -33,6 +34,8 @@ import {
   ZILL_CORPUS_PROD,
 } from "@/lib/rag/corpusLevelCache";
 import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
+import { DIDACTIC_STOPWORDS } from "@/lib/rag/didacticStopwords";
+import { isFuzzySimilar } from "@/lib/rag/fuzzyMatch";
 import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
 
 type RawRecord = Record<string, unknown>;
@@ -59,46 +62,6 @@ export const ABSOLUTE_MIN_SCORE = 0.18;
 export const CURRICULUM_CANDIDATE_LIMIT = 50;
 export const CURRICULUM_TOP_N = 5;
 const MAX_CORPUS_INDICES_TO_SCORE = 96;
-const STOPWORDS = new Set([
-  "tot",
-  "een",
-  "de",
-  "het",
-  "van",
-  "met",
-  "kan",
-  "kunnen",
-  "weten",
-  "kennen",
-  "leerling",
-  "leerlingen",
-  "kleuters",
-  "deze",
-  "dat",
-  "voor",
-  "bij",
-  "zijn",
-  "worden",
-  "door",
-  "naar",
-  "ook",
-  "nog",
-  "als",
-  "dan",
-  "der",
-  "des",
-  "wat",
-  "hoe",
-  "in",
-  "op",
-  "uit",
-  "er",
-  "als",
-  "om",
-  "maken",
-  "doen",
-  "gebruiken",
-]);
 
 const GO_LEGEND_META_PATTERNS = [
   /links in de eerste rij van elk leerplandoel staat het go!?-volgnummer/i,
@@ -205,12 +168,40 @@ function getCorpusTokenIndex(
   return built;
 }
 
+function expandFuzzyIndexTokens(
+  tokens: Set<string>,
+  tokenToRecordIndices: Map<string, number[]>,
+): Set<string> {
+  const extra = new Set<string>();
+  const byPrefix = new Map<string, string[]>();
+  for (const key of tokenToRecordIndices.keys()) {
+    if (key.length < 4) continue;
+    const prefix = key.slice(0, 3);
+    const list = byPrefix.get(prefix);
+    if (list) {
+      list.push(key);
+    } else {
+      byPrefix.set(prefix, [key]);
+    }
+  }
+
+  for (const token of tokens) {
+    if (token.length < 4 || DIDACTIC_STOPWORDS.has(token)) continue;
+    for (const key of byPrefix.get(token.slice(0, 3)) ?? []) {
+      if (isFuzzySimilar(token, key, 0.78)) {
+        extra.add(key);
+      }
+    }
+  }
+  return extra;
+}
+
 function candidateIndicesFromQuery(
   query: string,
   index: CorpusTokenIndex,
 ): Set<number> {
-  const lookupTokens = buildQueryLookupTokens(query);
-  const candidates = new Set<number>();
+  let lookupTokens = buildQueryLookupTokens(query);
+  let candidates = new Set<number>();
 
   for (const token of lookupTokens) {
     const indices = index.tokenToRecordIndices.get(token);
@@ -219,6 +210,43 @@ function candidateIndicesFromQuery(
     }
     for (const recordIndex of indices) {
       candidates.add(recordIndex);
+    }
+  }
+
+  if (candidates.size === 0) {
+    lookupTokens = new Set([
+      ...lookupTokens,
+      ...expandFuzzyIndexTokens(lookupTokens, index.tokenToRecordIndices),
+    ]);
+    for (const token of lookupTokens) {
+      const indices = index.tokenToRecordIndices.get(token);
+      if (!indices) continue;
+      for (const recordIndex of indices) {
+        candidates.add(recordIndex);
+      }
+    }
+  } else {
+    const unmatched = new Set<string>();
+    for (const token of lookupTokens) {
+      if (
+        token.length >= 4 &&
+        !DIDACTIC_STOPWORDS.has(token) &&
+        !index.tokenToRecordIndices.has(token)
+      ) {
+        unmatched.add(token);
+      }
+    }
+    if (unmatched.size > 0) {
+      for (const token of expandFuzzyIndexTokens(
+        unmatched,
+        index.tokenToRecordIndices,
+      )) {
+        const indices = index.tokenToRecordIndices.get(token);
+        if (!indices) continue;
+        for (const recordIndex of indices) {
+          candidates.add(recordIndex);
+        }
+      }
     }
   }
 
@@ -541,6 +569,14 @@ function normalizeDiscipline(
     return subdomein ? `Wiskunde · ${subdomein}` : "Wiskunde";
   }
   if (
+    isZillTechCode(code) ||
+    normalized.includes("technische systemen")
+  ) {
+    return subdomein
+      ? `Wetenschap en techniek · ${subdomein}`
+      : "Wetenschap en techniek";
+  }
+  if (
     isZillMotorCode(code) ||
     normalized.includes("motorische en zintuiglijke")
   ) {
@@ -617,7 +653,7 @@ export function tokenize(value: string): Set<string> {
       .replace(/\p{Diacritic}/gu, "")
       .replace(/[^\p{Letter}\p{Number}\s]/gu, " ")
       .split(/\s+/)
-      .filter((token) => token.length > 2 && !STOPWORDS.has(token)),
+      .filter((token) => token.length > 2 && !DIDACTIC_STOPWORDS.has(token)),
   );
 }
 

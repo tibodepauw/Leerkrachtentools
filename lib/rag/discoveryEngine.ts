@@ -21,6 +21,63 @@ export interface DiscoverySearchResponse {
   summaryText: string;
   citations: Array<{ title?: string; uri?: string; startIndex?: number }>;
   totalSize: number;
+  timedOut?: boolean;
+  failed?: boolean;
+}
+
+export const DISCOVERY_SEARCH_TIMEOUT_MS = 3_500;
+
+export class DiscoveryEngineTimeoutError extends Error {
+  constructor(timeoutMs = DISCOVERY_SEARCH_TIMEOUT_MS) {
+    super(`Discovery Engine time-out na ${timeoutMs} ms.`);
+    this.name = "DiscoveryEngineTimeoutError";
+  }
+}
+
+export function isDiscoveryTransportError(error: unknown): boolean {
+  if (error instanceof DiscoveryEngineTimeoutError) {
+    return true;
+  }
+  if (!(error instanceof Error)) {
+    return false;
+  }
+  return /discovery|timeout|timed?\s*out|fetch failed|failed to fetch|econn|aborted|etimedout|network/i.test(
+    error.message,
+  );
+}
+
+export function emptyDiscoveryResponse(
+  reason: "timeout" | "error" | "empty" = "empty",
+): DiscoverySearchResponse {
+  return {
+    hits: [],
+    summaryText: "",
+    citations: [],
+    totalSize: 0,
+    timedOut: reason === "timeout",
+    failed: reason === "error",
+  };
+}
+
+export async function raceWithTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new DiscoveryEngineTimeoutError(timeoutMs));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+    }
+  }
 }
 
 const NETWORK_PATH: Record<Exclude<CurriculumNetworkFilter, "ALL">, string> = {
@@ -243,7 +300,7 @@ async function performDiscoverySearch(
         },
       },
     },
-    { autoPaginate: false, timeout: 10_000 },
+    { autoPaginate: false, timeout: DISCOVERY_SEARCH_TIMEOUT_MS },
   );
 
   const hits: DiscoveryHit[] = [];
@@ -302,7 +359,10 @@ export async function searchDiscoveryEngine(
   const existing = searchesInFlight.get(key);
   if (existing) return existing;
 
-  const pending = performDiscoverySearch(options)
+  const pending = raceWithTimeout(
+    performDiscoverySearch(options),
+    DISCOVERY_SEARCH_TIMEOUT_MS,
+  )
     .then((value) => {
       if (searchCache.size >= SEARCH_CACHE_MAX_ENTRIES) {
         const oldest = searchCache.keys().next().value as string | undefined;
@@ -313,6 +373,12 @@ export async function searchDiscoveryEngine(
         value,
       });
       return value;
+    })
+    .catch((error: unknown) => {
+      if (error instanceof DiscoveryEngineTimeoutError) {
+        return emptyDiscoveryResponse("timeout");
+      }
+      return emptyDiscoveryResponse("error");
     })
     .finally(() => searchesInFlight.delete(key));
 

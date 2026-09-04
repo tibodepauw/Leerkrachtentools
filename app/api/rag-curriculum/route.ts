@@ -10,7 +10,10 @@ import {
   isAhovoksDomainLevel,
   resolveCurriculumNetwork,
 } from "@/lib/lesson/educationLevelPreference";
-import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
+import {
+  isDiscoveryTransportError,
+  searchDiscoveryEngine,
+} from "@/lib/rag/discoveryEngine";
 import { isPovCorpusAvailable } from "@/lib/rag/corpusLevelCache";
 import {
   CURRICULUM_TOP_N,
@@ -65,6 +68,24 @@ type CurriculumSearchPayload = {
   networkFallbackNotice?: string;
 };
 
+function discoveryFallbackNotice(
+  timedOut: boolean,
+  failed: boolean,
+  hasLocalResults: boolean,
+): string | undefined {
+  if (!timedOut && !failed) {
+    return undefined;
+  }
+  if (timedOut) {
+    return hasLocalResults
+      ? "De semantische zoekdienst reageerde niet op tijd. Dit zijn de lokale treffers."
+      : "De semantische zoekdienst reageerde niet op tijd en er zijn geen lokale treffers.";
+  }
+  return hasLocalResults
+    ? "De semantische zoekdienst is tijdelijk niet beschikbaar. Dit zijn de lokale treffers."
+    : "De semantische zoekdienst is tijdelijk niet beschikbaar en er zijn geen lokale treffers.";
+}
+
 async function runCurriculumSearch(
   query: string,
   network: CurriculumNetworkFilter,
@@ -84,6 +105,8 @@ async function runCurriculumSearch(
   const semanticFallback = localCandidates.length === 0;
   let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
     [];
+  let timedOut = false;
+  let failed = false;
 
   try {
     const discovery = await searchDiscoveryEngine({
@@ -91,6 +114,8 @@ async function runCurriculumSearch(
       network,
       pageSize: semanticFallback ? 20 : 16,
     });
+    timedOut = discovery.timedOut === true;
+    failed = discovery.failed === true;
 
     discoveryCandidates = resolveDiscoveryCandidates({
       hits: discovery.hits,
@@ -102,6 +127,7 @@ async function runCurriculumSearch(
       (item) => semanticFallback || isStructuredResult(item),
     );
   } catch {
+    failed = true;
     discoveryCandidates = [];
   }
 
@@ -145,8 +171,17 @@ async function runCurriculumSearch(
       "POV-leerplannen zijn lokaal nog niet opgehaald. Draai `npm run fetch:secundair` om de corpus te laden.";
   }
 
-  if (semanticFallback && merged.length > 0) {
+  if (semanticFallback && merged.length > 0 && !timedOut && !failed) {
     corpusNotice = `${merged.length} semantisch passende leerplandoel${merged.length === 1 ? "" : "en"} via Discovery Engine (geen exacte token-match).`;
+  }
+
+  const fallbackNotice = discoveryFallbackNotice(
+    timedOut,
+    failed,
+    localCandidates.length > 0,
+  );
+  if (fallbackNotice) {
+    corpusNotice = fallbackNotice;
   }
 
   return {
@@ -163,6 +198,10 @@ export async function POST(request: Request) {
   if (tierDenied) return tierDenied;
   const moduleDenied = requireModuleAccess(session, "curriculum-rag");
   if (moduleDenied) return moduleDenied;
+
+  let parsedQuery = "";
+  let parsedNetwork: CurriculumNetworkFilter = "ALL";
+  let parsedEducationLevel: EducationLevelFilter = "BASISONDERWIJS";
 
   try {
     const body = (await readJsonBody(request, 64_000)) as {
@@ -233,6 +272,10 @@ export async function POST(request: Request) {
       tier: session.tier,
     });
 
+    parsedQuery = searchQuery;
+    parsedNetwork = network;
+    parsedEducationLevel = educationLevel;
+
     let searchResult = await withRequestConcurrency({
       scope: "rag-search",
       subject: session.id,
@@ -287,6 +330,30 @@ export async function POST(request: Request) {
       fallbackErrors: [],
     });
   } catch (error) {
+    if (isDiscoveryTransportError(error)) {
+      const local = parsedQuery
+        ? searchLocalCorpus({
+            query: parsedQuery,
+            network: parsedNetwork,
+            educationLevel: parsedEducationLevel,
+            limit: CURRICULUM_TOP_N,
+          })
+        : [];
+      return NextResponse.json({
+        data: {
+          goal: local[0] ?? "niet gevonden",
+          alternatives: local.slice(1),
+          corpusNotice:
+            discoveryFallbackNotice(false, true, local.length > 0) ??
+            "De semantische zoekdienst is tijdelijk niet beschikbaar. Dit zijn de lokale treffers.",
+          retrievalMode:
+            local.length > 0 ? "curriculum-hybrid" : "semantic-fallback",
+          queryRewrite: null,
+        },
+        provider: "jsonl-corpus+discovery-engine",
+        fallbackErrors: [],
+      });
+    }
     return NextResponse.json(
       {
         error: publicErrorMessage(error, "Doelenzoekopdracht mislukt."),

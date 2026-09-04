@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  DiscoveryEngineTimeoutError,
   extractRelevanceScore,
+  isDiscoveryTransportError,
   networkFromUri,
+  raceWithTimeout,
   titleFromLink,
 } from "@/lib/rag/discoveryEngine";
 
@@ -34,7 +37,17 @@ describe("discoveryEngine helpers", () => {
     ).toBe(0.83);
   });
 
-  it("valt terug op rank-based score zonder signals", () => {
-    expect(extractRelevanceScore({}, 2)).toBeCloseTo(0.78, 2);
+  it("breekt een hangende Discovery-aanroep af", async () => {
+    await expect(
+      raceWithTimeout(new Promise(() => undefined), 25),
+    ).rejects.toBeInstanceOf(DiscoveryEngineTimeoutError);
+  });
+
+  it("herkent Discovery-transportfouten", () => {
+    expect(isDiscoveryTransportError(new DiscoveryEngineTimeoutError())).toBe(
+      true,
+    );
+    expect(isDiscoveryTransportError(new Error("Failed to fetch"))).toBe(true);
+    expect(isDiscoveryTransportError(new Error("ongeldige query"))).toBe(false);
   });
 });

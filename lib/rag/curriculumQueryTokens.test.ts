@@ -5,6 +5,7 @@ import {
   isZillMathThinkingCode,
   isZillMediaCode,
   isZillMotorCode,
+  isZillTechCode,
   normalizeDutchNumberWords,
   normalizeQueryText,
   queryMatchesMathFunctionTopic,
@@ -67,6 +68,20 @@ describe("curriculumQueryTokens", () => {
     expect(contentScore).toBeGreaterThan(stopwordOnlyScore);
   });
 
+  it("filtert didactische stopwoorden uit de querytokens", () => {
+    const tokens = tokenizeCurriculumQuery(
+      "De leerlingen kunnen de maaltafels van 4 en 8 vlot toepassen in eenvoudige vraagstukken",
+    );
+    expect(tokens.has("toepassen")).toBe(false);
+    expect(tokens.has("eenvoudige")).toBe(false);
+    expect(tokens.has("vlot")).toBe(false);
+    expect(tokens.has("leerlingen")).toBe(false);
+    expect(tokens.has("maaltafels") || tokens.has("maaltafel")).toBe(true);
+    expect(tokens.has("4")).toBe(true);
+    expect(tokens.has("8")).toBe(true);
+    expect(tokens.has("vraagstukken") || tokens.has("vraagstuk")).toBe(true);
+  });
+
   it("herkent geschiedenis uit kastelen-query", () => {
     expect(inferDisciplineFromQuery("kastelen in de middeleeuwen")).toBe(
       "Geschiedenis",
@@ -76,6 +91,9 @@ describe("curriculumQueryTokens", () => {
   it("herkent wiskunde uit reken-query", () => {
     expect(inferDisciplineFromQuery("vermenigvuldigen tot 20")).toBe("Wiskunde");
     expect(inferDisciplineFromQuery("vermeningvuldigen tot 20")).toBe("Wiskunde");
+    expect(
+      inferDisciplineFromQuery("stevige brug bouwen met tape en papier"),
+    ).toBe("Wetenschap en techniek");
   });
 
   it("herkent ZILL WD-codes als wiskundig denken", () => {
@@ -83,6 +101,12 @@ describe("curriculumQueryTokens", () => {
     expect(isZillMathThinkingCode("WDlw6")).toBe(true);
     expect(isZillMathThinkingCode("WDmm2")).toBe(true);
     expect(isZillMathThinkingCode("IKid1")).toBe(false);
+  });
+
+  it("herkent ZILL OWte-codes als technische systemen", () => {
+    expect(isZillTechCode("OWte1")).toBe(true);
+    expect(isZillTechCode("OWte12")).toBe(true);
+    expect(isZillTechCode("OWna1")).toBe(false);
   });
 
   it("normaliseert geschreven getallen en fonetische typos", () => {
