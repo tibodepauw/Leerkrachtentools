@@ -2,8 +2,6 @@ import type { NextConfig } from "next";
 import { execSync } from "node:child_process";
 import packageJson from "./package.json";
 
-const isDevelopment = process.env.NODE_ENV !== "production";
-
 function resolveGitCommit() {
   if (process.env.VERCEL_GIT_COMMIT_SHA) {
     return process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7);
@@ -64,17 +62,12 @@ const nextConfig: NextConfig = {
         key: "Permissions-Policy",
         value: "camera=(), microphone=(self), geolocation=()",
       },
+      { key: "X-Frame-Options", value: "DENY" },
+      {
+        key: "Strict-Transport-Security",
+        value: "max-age=31536000; includeSubDomains",
+      },
     ];
-
-    if (!isDevelopment) {
-      securityHeaders.push(
-        { key: "X-Frame-Options", value: "DENY" },
-        {
-          key: "Strict-Transport-Security",
-          value: "max-age=31536000; includeSubDomains",
-        },
-      );
-    }
 
     return [
       {
