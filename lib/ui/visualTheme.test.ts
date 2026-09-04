@@ -66,6 +66,9 @@ describe("huisstijl", () => {
     const glow = css.slice(css.indexOf(".glow-wordmark {"));
     expect(glow).toMatch(/display:\s*block/);
     expect(glow.slice(0, 80)).not.toMatch(/display:\s*none/);
+    expect(glow).toMatch(
+      /mask-image:\s*linear-gradient\(to bottom, transparent 0, #000 56px\)/,
+    );
   });
 
   it("geeft de GitHub-banner hetzelfde raster als de website", () => {

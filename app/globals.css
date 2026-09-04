@@ -802,6 +802,8 @@ aside {
   overflow: hidden;
   aspect-ratio: 1720 / 260;
   max-height: min(36vh, 280px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 56px);
   pointer-events: auto;
   user-select: none;
 }
