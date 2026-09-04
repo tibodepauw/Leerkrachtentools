@@ -4,6 +4,7 @@ const LESSON_STORE_BASE_KEY = "leerkrachtentools-active-lesson";
 const DOCUMENT_DB_BASE_NAME = "leerkrachtentools-documents";
 const LEGACY_LESSON_STORE_KEY = LESSON_STORE_BASE_KEY;
 const LEGACY_DOCUMENT_DB_NAME = DOCUMENT_DB_BASE_NAME;
+const SIDEBAR_STORAGE_BASE_KEY = "leerkrachtentools-sidebar-width";
 
 let activeUserId: string | null = null;
 
@@ -33,12 +34,12 @@ export function migrateLegacyLessonStorage(userId: string) {
   if (typeof window === "undefined") return;
 
   const scopedKey = lessonStoreStorageKey(userId);
-  if (window.localStorage.getItem(scopedKey)) return;
-
   const legacyValue = window.localStorage.getItem(LEGACY_LESSON_STORE_KEY);
   if (!legacyValue) return;
 
-  window.localStorage.setItem(scopedKey, legacyValue);
+  if (!window.localStorage.getItem(scopedKey)) {
+    window.localStorage.setItem(scopedKey, legacyValue);
+  }
   window.localStorage.removeItem(LEGACY_LESSON_STORE_KEY);
 }
 
@@ -47,12 +48,35 @@ export async function migrateLegacyDocumentStorage(userId: string) {
 
   const scopedDbName = documentDatabaseName(userId);
   const hasScopedData = await indexedDbHasEntries(scopedDbName);
-  if (hasScopedData) return;
+  if (!hasScopedData) {
+    const legacyEntries = await readAllIndexedDbEntries(
+      LEGACY_DOCUMENT_DB_NAME,
+    );
+    if (legacyEntries.length > 0) {
+      await writeIndexedDbEntries(scopedDbName, legacyEntries);
+    }
+  }
+  await deleteIndexedDb(LEGACY_DOCUMENT_DB_NAME);
+}
 
-  const legacyEntries = await readAllIndexedDbEntries(LEGACY_DOCUMENT_DB_NAME);
-  if (legacyEntries.length === 0) return;
+function deleteIndexedDb(dbName: string) {
+  return new Promise<void>((resolve, reject) => {
+    const request = window.indexedDB.deleteDatabase(dbName);
+    request.onerror = () =>
+      reject(request.error ?? new Error("IndexedDB verwijderen mislukt."));
+    request.onblocked = () =>
+      reject(new Error("IndexedDB verwijderen is geblokkeerd."));
+    request.onsuccess = () => resolve();
+  });
+}
 
-  await writeIndexedDbEntries(scopedDbName, legacyEntries);
+export async function deleteUserBrowserStorage(userId: string) {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.removeItem(lessonStoreStorageKey(userId));
+  window.localStorage.removeItem(settingsStoreStorageKey(userId));
+  window.localStorage.removeItem(`${SIDEBAR_STORAGE_BASE_KEY}:${userId}`);
+  await deleteIndexedDb(documentDatabaseName(userId));
 }
 
 function indexedDbHasEntries(dbName: string) {

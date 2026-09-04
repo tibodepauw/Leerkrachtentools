@@ -16,7 +16,13 @@ export async function DELETE(request: Request) {
     .get(session.id) as { profile_image_path: string | null } | undefined;
 
   deleteProfileImageFile(row?.profile_image_path);
-  getDatabase().prepare("DELETE FROM users WHERE id = ?").run(session.id);
+  const database = getDatabase();
+  database.transaction(() => {
+    database
+      .prepare("DELETE FROM feedback_events WHERE user_id = ?")
+      .run(session.id);
+    database.prepare("DELETE FROM users WHERE id = ?").run(session.id);
+  })();
   const response = NextResponse.json({ ok: true });
   response.cookies.set(SESSION_COOKIE, "", {
     httpOnly: true,

@@ -31,7 +31,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { detachClientUserStorage } from "@/lib/storage/clientUserSession";
+import {
+  deleteClientUserStorage,
+  detachClientUserStorage,
+} from "@/lib/storage/clientUserSession";
 import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
 import { LoaderSettingsView } from "@/components/settings/LoaderSettingsView";
 import { SettingsView } from "@/components/settings/SettingsView";
@@ -119,7 +122,14 @@ export function AccountSettings({
       toast.error("Account kon niet worden verwijderd.");
       return;
     }
-    detachClientUserStorage();
+    try {
+      await deleteClientUserStorage(userId);
+    } catch {
+      detachClientUserStorage();
+      toast.warning(
+        "Je account is verwijderd, maar lokale browserdata kon niet volledig worden gewist. Wis de sitegegevens van deze browser.",
+      );
+    }
     router.push("/");
     router.refresh();
   }

@@ -2,6 +2,7 @@ import { getDatabase } from "@/lib/auth/database";
 
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_SUBMISSIONS = 5;
+const RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 
 interface CountRow {
   count: number;
@@ -9,6 +10,9 @@ interface CountRow {
 
 export function assertFeedbackRateLimit(userId: string, now = Date.now()) {
   const db = getDatabase();
+  db.prepare("DELETE FROM feedback_events WHERE created_at < ?").run(
+    now - RETENTION_MS,
+  );
   const row = db
     .prepare(
       `SELECT COUNT(*) AS count
