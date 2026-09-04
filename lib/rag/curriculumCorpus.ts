@@ -524,10 +524,6 @@ function sanitizeCorpusRecords(records: RawRecord[]): RawRecord[] {
   return records.filter((raw) => !isGoLegendOrMetaRecord(raw));
 }
 
-function recordHaystack(raw: RawRecord): string {
-  return buildRecordHaystack(raw);
-}
-
 function normalizeDiscipline(
   code: string,
   discipline: string,

@@ -535,7 +535,6 @@ function minimumGoalRetrievalQuery(query: string): {
 }
 
 const MAX_MINIMUM_GOAL_INDICES_TO_SCORE = 180;
-const MAX_CORPUS_INDICES_TO_SCORE = 180;
 
 export function collectMinimumGoalCandidates({
   query,

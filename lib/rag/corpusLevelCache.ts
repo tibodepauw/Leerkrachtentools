@@ -313,15 +313,6 @@ function scheduleUnload(level: CorpusLevel, entry: LevelCacheEntry): void {
   }
 }
 
-function touchLevelCache(level: CorpusLevel): void {
-  const entry = levelCache.get(level);
-  if (!entry) {
-    return;
-  }
-  entry.lastAccessAt = Date.now();
-  scheduleUnload(level, entry);
-}
-
 function evictLeastRecentlyUsed(activeLevel: CorpusLevel): void {
   if (levelCache.size < MAX_ACTIVE_LEVEL_CACHES) {
     return;

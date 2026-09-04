@@ -6,7 +6,6 @@ import {
   isFaithfulResult,
   matchesAllPatternGroups,
   matchesDisciplinePatterns,
-  summarizeBenchmarkReport,
 } from "@/lib/rag/ragBenchmark";
 import type { CurriculumSearchResult } from "@/types";
 
