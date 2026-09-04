@@ -17,9 +17,9 @@ export function assertContentLength(request: Request, maxBytes: number) {
 export async function readBodyBuffer(
   request: Request,
   maxBytes: number,
-): Promise<Uint8Array> {
+): Promise<ArrayBuffer> {
   assertContentLength(request, maxBytes);
-  if (!request.body) return new Uint8Array();
+  if (!request.body) return new ArrayBuffer(0);
 
   const reader = request.body.getReader();
   let total = 0;
@@ -42,7 +42,7 @@ export async function readBodyBuffer(
     body.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return body;
+  return body.buffer;
 }
 
 export async function readJsonBody(

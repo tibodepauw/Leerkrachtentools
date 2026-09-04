@@ -46,14 +46,12 @@ export function isSameOriginMutation(request: Request) {
   } catch {
     return false;
   }
-  if (process.env.NODE_ENV !== "production") {
-    const loopbackHosts = new Set(["127.0.0.1", "::1", "localhost"]);
-    if (
-      loopbackHosts.has(requestUrl.hostname) &&
-      loopbackHosts.has(originUrl.hostname)
-    ) {
-      return true;
-    }
+  const loopbackHosts = new Set(["127.0.0.1", "::1", "localhost"]);
+  if (
+    loopbackHosts.has(requestUrl.hostname) &&
+    loopbackHosts.has(originUrl.hostname)
+  ) {
+    return true;
   }
 
   return originUrl.origin === requestUrl.origin;
