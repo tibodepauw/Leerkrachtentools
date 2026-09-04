@@ -40,7 +40,8 @@ export function getDatabase() {
       marketing_consent_at INTEGER,
       privacy_accepted_at INTEGER,
       created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL
+      updated_at INTEGER NOT NULL,
+      pinned_modules TEXT NOT NULL DEFAULT '[]'
     );
 
     CREATE TABLE IF NOT EXISTS login_codes (
@@ -140,6 +141,11 @@ export function getDatabase() {
   }
   if (!userColumns.has("privacy_accepted_at")) {
     database.exec("ALTER TABLE users ADD COLUMN privacy_accepted_at INTEGER");
+  }
+  if (!userColumns.has("pinned_modules")) {
+    database.exec(
+      "ALTER TABLE users ADD COLUMN pinned_modules TEXT NOT NULL DEFAULT '[]'",
+    );
   }
   const loginCodeColumns = new Set(
     (

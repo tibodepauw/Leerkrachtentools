@@ -17,7 +17,10 @@ export default async function AppGroupLayout({
   }
 
   return (
-    <UserStorageScope userId={session.id}>
+    <UserStorageScope
+      userId={session.id}
+      accountPinnedModules={session.pinnedModules}
+    >
       <ModuleAccessProvider
         tier={session.tier}
         accessibleModuleIds={resolveAccessibleModuleIds(

@@ -19,4 +19,14 @@ describe("ensureDatabaseIndexes", () => {
     expect(names.has("user_ai_usage_created_at")).toBe(true);
     expect(names.has("users_created_at")).toBe(true);
   });
+
+  it("bewaart vastgezette tools op de gebruikersrij", () => {
+    const columns = getDatabase()
+      .prepare("PRAGMA table_info(users)")
+      .all() as Array<{ name: string }>;
+
+    expect(columns.some((column) => column.name === "pinned_modules")).toBe(
+      true,
+    );
+  });
 });

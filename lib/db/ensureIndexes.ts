@@ -3,8 +3,8 @@ import type Database from "better-sqlite3";
 /**
  * SQLite performance indexes for auth/session tables.
  *
- * Active lessons and pinned modules are persisted client-side (localStorage
- * via useLessonStore), not in SQLite.
+ * Active lessons stay in browser storage. Pinned sidebar tools are stored on
+ * the user row (`pinned_modules`) and mirrored in localStorage.
  */
 export function ensureDatabaseIndexes(db: Database.Database): void {
   db.exec(`

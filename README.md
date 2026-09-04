@@ -38,7 +38,7 @@ Every module reads from the same persisted lesson state:
 - Reference school year and total lesson minutes (default 50)
 - Four phases: **Instap, Instructie, Verwerking, Afronding**
 - Lesson preparation text and optional uploaded document (Word/PDF preview in browser)
-- Pinned sidebar tools for quick access
+- Pinned sidebar tools for quick access, remembered in the browser and on the account
 
 Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere else immediately.
 

@@ -3,8 +3,10 @@ import {
   deleteUserBrowserStorage,
   lessonStoreStorageKey,
   migrateLegacyLessonStorage,
+  setActiveUserId,
   settingsStoreStorageKey,
 } from "@/lib/storage/userStorageScope";
+import { createUserScopedPersistStorage } from "@/lib/storage/userScopedPersistStorage";
 
 describe("user storage keys", () => {
   const values = new Map<string, string>();
@@ -64,5 +66,37 @@ describe("user storage keys", () => {
 
     expect(values.size).toBe(0);
     expect(deletedDatabases).toEqual(["leerkrachtentools-documents:user-1"]);
+  });
+});
+
+describe("user-scoped persist writes", () => {
+  const values = new Map<string, string>();
+
+  beforeEach(() => {
+    values.clear();
+    setActiveUserId(null);
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+        removeItem: (key: string) => values.delete(key),
+      },
+    });
+  });
+
+  it("overschrijft opgeslagen lesdata niet zonder actieve gebruiker", () => {
+    const key = lessonStoreStorageKey("user-1");
+    values.set(key, '{"state":{"pinnedModules":["spellcheck"]}}');
+    const storage = createUserScopedPersistStorage("lesson");
+
+    storage.setItem("leerkrachtentools-active-lesson", '{"state":{"pinnedModules":[]}}');
+    expect(values.get(key)).toBe('{"state":{"pinnedModules":["spellcheck"]}}');
+
+    setActiveUserId("user-1");
+    storage.setItem(
+      "leerkrachtentools-active-lesson",
+      '{"state":{"pinnedModules":["alignment"]}}',
+    );
+    expect(values.get(key)).toBe('{"state":{"pinnedModules":["alignment"]}}');
   });
 });

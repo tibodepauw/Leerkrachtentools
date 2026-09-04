@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { isPinnableModule, parsePinnedModules } from "@/lib/auth/pinnedModules";
 import { createUserScopedPersistStorage } from "@/lib/storage/userScopedPersistStorage";
 import {
   buildGoalsFromPublisher,
@@ -75,6 +76,7 @@ interface LessonStore {
   setHydrated: (hydrated: boolean) => void;
   setStorageUserId: (userId: string | null) => void;
   setActiveModule: (module: ModuleId) => void;
+  setPinnedModules: (pinnedModules: ModuleId[]) => void;
   togglePinnedModule: (module: ModuleId) => void;
   setEducationLevel: (educationLevel: EducationLevelPreference) => void;
   setSecondaryGradeFilter: (secondaryGradeFilter: SecondaryGradeFilter) => void;
@@ -200,12 +202,19 @@ export const useLessonStore = create<LessonStore>()(
       setHydrated: (hydrated) => set({ hydrated }),
       setStorageUserId: (storageUserId) => set({ storageUserId }),
       setActiveModule: (activeModule) => set({ activeModule }),
+      setPinnedModules: (pinnedModules) =>
+        set({ pinnedModules: parsePinnedModules(pinnedModules) }),
       togglePinnedModule: (moduleId) =>
-        set((state) => ({
-          pinnedModules: state.pinnedModules.includes(moduleId)
-            ? state.pinnedModules.filter((id) => id !== moduleId)
-            : [...state.pinnedModules, moduleId],
-        })),
+        set((state) => {
+          if (!isPinnableModule(moduleId)) {
+            return state;
+          }
+          return {
+            pinnedModules: state.pinnedModules.includes(moduleId)
+              ? state.pinnedModules.filter((id) => id !== moduleId)
+              : [...state.pinnedModules, moduleId],
+          };
+        }),
       setEducationLevel: (educationLevel) =>
         set((state) =>
           state.educationLevel === educationLevel
@@ -436,7 +445,9 @@ export const useLessonStore = create<LessonStore>()(
             ...mergedLesson,
             ...migrateLessonTargetGroup(mergedLesson),
           },
-          pinnedModules: persisted?.pinnedModules ?? currentState.pinnedModules,
+          pinnedModules: parsePinnedModules(
+            persisted?.pinnedModules ?? currentState.pinnedModules,
+          ),
           educationLevel: normalizeEducationLevelPreference(
             persisted?.educationLevel,
             currentState.educationLevel,

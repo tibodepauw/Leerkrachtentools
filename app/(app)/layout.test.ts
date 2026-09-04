@@ -9,8 +9,16 @@ describe("app group layout", () => {
     const dashboard = readFileSync("components/Dashboard.tsx", "utf8");
 
     expect(layout).toContain("UserStorageScope");
+    expect(layout).toContain("accountPinnedModules");
     expect(settings).not.toContain("UserStorageScope");
     expect(home).not.toContain("UserStorageScope");
     expect(dashboard).not.toContain("UserStorageScope");
+  });
+
+  it("laadt vastgezette tools uit het account en maakt persist los voor hydratatie", () => {
+    const scope = readFileSync("components/auth/UserStorageScope.tsx", "utf8");
+    expect(scope).toContain("setActiveUserId(null)");
+    expect(scope).toContain("/api/account/pinned-modules");
+    expect(scope).toContain("reconcilePinnedModules");
   });
 });

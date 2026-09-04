@@ -11,6 +11,7 @@ import {
   cleanExpiredAuthRecords,
   getDatabase,
 } from "@/lib/auth/database";
+import { parsePinnedModules } from "@/lib/auth/pinnedModules";
 import { profileImageUrl } from "@/lib/auth/profileImage";
 import { hasAppAccess, inviteOnlyMessage, resolveTierFromEmail } from "@/lib/auth/tiers";
 import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
@@ -197,6 +198,7 @@ interface UserRow {
   tier: string;
   marketing_opt_in: number;
   profile_image_path?: string | null;
+  pinned_modules?: string | null;
   updated_at?: number;
 }
 
@@ -320,7 +322,8 @@ export function getSession(token?: string) {
   const row = db
     .prepare(
       `SELECT users.id, users.email, users.display_name, users.tier,
-              users.marketing_opt_in, users.profile_image_path, users.updated_at,
+              users.marketing_opt_in, users.profile_image_path,
+              users.pinned_modules, users.updated_at,
               sessions.expires_at
        FROM sessions
        JOIN users ON users.id = sessions.user_id
@@ -364,6 +367,7 @@ export function getSession(token?: string) {
     profileImageUrl: row.profile_image_path
       ? profileImageUrl(row.updated_at ?? Date.now())
       : null,
+    pinnedModules: parsePinnedModules(row.pinned_modules),
     expiresAt: row.expires_at,
   };
 }
