@@ -44,8 +44,8 @@ De app kan werken met meerdere cloudproviders. Welke beschikbaar zijn, hangt af 
 
 ### 2.3 Fallback en betrouwbaarheid
 
-- Meerdere providers kunnen na elkaar geprobeerd worden (serverkeys).
-- Timeout per poging: ca. 45 seconden.
+- Met serverkeys kunnen maximaal twee providers na elkaar geprobeerd worden.
+- Totale deadline: maximaal ca. 45 seconden, met maximaal 20 seconden per poging.
 - Temperatuur: laag (0,2) voor consistente, feitelijke output.
 - Zonder geconfigureerde provider: analyse-modules geven een **503-fout** - er zijn geen “nep-demo-antwoorden” meer in productie.
 
@@ -221,9 +221,18 @@ De app gebruikt ook **deterministische code** naast AI:
 | Lesvoorbereidingstekst | Browser (Zustand) | Alleen wat je per analyse meestuurt |
 | Geüpload PDF/Word | IndexedDB (lokaal) | Alleen bij Scanner/reflectie/export |
 | Profiel, e-mail, API-keys | SQLite (server) | API-keys alleen naar gekozen provider |
-| Curriculum corpus | Statisch in code | Nooit naar externe AI |
+| Curriculum corpus | Statisch in code | De zoekterm kan naar Google Cloud Discovery Engine |
 
 Prompts instrueren expliciet: **verzin geen officiële leerplandoelcodes**; bij onzekerheid liever “niet gevonden” dan hallucinatie.
+
+API-keys zijn versleuteld gebonden aan de gebruiker en de gekozen provider.
+Wisselen van provider vereist daarom een nieuwe key. Een decryptiefout blokkeert
+de aanvraag en valt nooit terug op servercredentials.
+
+Bij accountverwijdering wist de app naast serverdata ook de gebruikersgebonden
+localStorage- en IndexedDB-opslag in de huidige browser. Legacy IndexedDB-data
+wordt na een eenmalige migratie verwijderd om overdracht tussen browsergebruikers
+te voorkomen.
 
 ---
 

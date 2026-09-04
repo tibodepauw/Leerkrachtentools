@@ -25,6 +25,7 @@ import { publicErrorMessage } from "@/lib/http/clientError";
 import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
 import { readJsonBody } from "@/lib/http/requestBody";
 import { withRequestConcurrency } from "@/lib/http/rateLimit";
+import { isValidRagTargetContext } from "@/lib/rag/requestValidation";
 import type {
   CurriculumSearchResult,
   EducationLevelFilter,
@@ -103,6 +104,12 @@ export async function POST(request: Request) {
     if (query.length > 10_000) {
       return NextResponse.json(
         { error: "Het lesdoel is te lang." },
+        { status: 400 },
+      );
+    }
+    if (!isValidRagTargetContext(body)) {
+      return NextResponse.json(
+        { error: "De doelgroepfilters bevatten ongeldige waarden." },
         { status: 400 },
       );
     }

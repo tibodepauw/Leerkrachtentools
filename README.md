@@ -172,13 +172,17 @@ CLOUDFLARE_API_TOKEN=
 BREVO_API_KEY=
 BREVO_FROM_EMAIL=Leerkrachtentools <login@yourdomain.be>
 AUTH_SECRET=use-a-long-random-string-at-least-32-characters
+API_KEY_ENCRYPTION_SECRET=use-a-different-long-random-string
+APP_ORIGIN=http://127.0.0.1:43127
 
 # Optional
 DATABASE_PATH=./data/leerkrachtentools.db
 FEEDBACK_TO_EMAIL=feedback@yourdomain.be
 ```
 
-Local development works without Brevo: the login API returns a visible dev code when email is not configured.
+Local development without Brevo is deliberately opt-in. Set
+`ALLOW_DEV_LOGIN_CODE=true` and open the app via localhost or `127.0.0.1`.
+Never enable this option in previews or production.
 
 ### Module visibility (server `.env.local`)
 
@@ -224,6 +228,31 @@ Also copy `.next/static` and `public` into `.next/standalone` for a self-hosted 
 Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs.
 
 Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database.
+
+Before exposing the service publicly:
+
+- Set `NODE_ENV=production`, `APP_ORIGIN`, `AUTH_SECRET` and a separate
+  `API_KEY_ENCRYPTION_SECRET`. Generate both secrets randomly with at least
+  32 characters.
+- Put the app behind HTTPS and enforce a request-body limit of at most 10 MB
+  at the reverse proxy. The app adds HSTS, a per-request nonce CSP and
+  same-origin checks.
+- Set `TRUST_PROXY_IP_HEADERS=true` only when the reverse proxy removes
+  incoming forwarded-IP headers and writes trusted values itself. Vercel is
+  detected automatically.
+- Run one application instance per SQLite database. Use a persistent,
+  access-restricted volume, database and WAL permissions readable only by the
+  service account, encrypted backups, and regular restore tests. Use a shared
+  transactional database and distributed rate limiter before horizontal
+  scaling.
+- Configure only AI providers covered by the project’s processor agreements.
+  Server-key fallback can submit the same request to at most two configured
+  providers. Inform users which processors may receive their submitted data.
+- Rotate API-key encryption with
+  `API_KEY_ENCRYPTION_PREVIOUS_SECRETS`, re-save existing keys, then remove
+  previous secrets after the migration window.
+- Keep `ALLOW_DEV_LOGIN_CODE=false` and expose tester accounts only through
+  the environment allowlist.
 
 ## Privacy
 

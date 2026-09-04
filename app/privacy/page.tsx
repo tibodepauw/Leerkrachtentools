@@ -53,6 +53,9 @@ export default function PrivacyPage() {
             <p className="mt-2">
               Verwerking van je e-mailadres is noodzakelijk voor de uitvoering van de dienst (beveiligen van toegang en voorkomen van misbruik). Projectupdates worden uitsluitend verzonden op basis van je expliciete voorafgaande toestemming.
             </p>
+            <p className="mt-2">
+              Wanneer je feedback verstuurt, verwerken we de inhoud van je bericht en, tenzij je voor anoniem kiest, je e-mailadres om je melding te behandelen. Technische feedback-rate-limitgegevens worden maximaal 90 dagen bewaard.
+            </p>
           </section>
 
           <section>
@@ -71,7 +74,10 @@ export default function PrivacyPage() {
               Wanneer je expliciet een AI-analyse uitvoert (bv. Doelverbeteraar, Taalfoutencheck of Audits), wordt uitsluitend de voor die specifieke actie benodigde tekst naar de geconfigureerde AI-provider verstuurd. Dit kan Google (Gemini), Groq, Cerebras, SambaNova of Cloudflare Workers AI zijn, afhankelijk van de instellingen.
             </p>
             <p className="mt-2">
-              <strong>Geen AI-training:</strong> Ingediende teksten en lesvoorbereidingen worden door Leerkrachtentools noch door onze API-providers gebruikt om AI-modellen te trainen of te verbeteren.
+              Bij een technische fout kan een aanvraag met serverkeys naar maximaal één andere geconfigureerde provider worden doorgestuurd. Met een eigen API-key wordt uitsluitend de door jou gekozen provider gebruikt.
+            </p>
+            <p className="mt-2">
+              We configureren providerdiensten onder API- of enterprisevoorwaarden die ingediende gegevens niet voor algemene modeltraining gebruiken. De precieze bewaartermijn en verwerking door een provider volgen uit diens toepasselijke voorwaarden.
             </p>
           </section>
 
@@ -107,6 +113,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-2">
               Je kunt je account en alle geassocieerde serversessies op elk moment onmiddellijk wissen via de knop <strong>Account verwijderen</strong> in de instellingen van de applicatie.
+              Daarbij probeert de app ook de gebruikersgebonden lesdata en documenten uit de huidige browser te verwijderen. Als de browser dit blokkeert, krijg je het advies de sitegegevens handmatig te wissen.
             </p>
           </section>
 

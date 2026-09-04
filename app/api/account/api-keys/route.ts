@@ -59,6 +59,12 @@ export async function PATCH(request: Request) {
   const providerChanged = provider !== current.provider;
   const hasNewKey =
     typeof body.apiKey === "string" && Boolean(body.apiKey.trim());
+  if (typeof body.apiKey === "string" && body.apiKey.trim().length > 4_096) {
+    return NextResponse.json(
+      { error: "De API-key is te lang." },
+      { status: 400 },
+    );
+  }
 
   if (model.length > 200 || /[\p{C}\s?#]/u.test(model)) {
     return NextResponse.json(

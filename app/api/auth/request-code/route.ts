@@ -14,14 +14,16 @@ export async function POST(request: Request) {
       privacyAccepted?: boolean;
     };
     const clientIp = clientIpFromRequest(request);
+    const requestHost = new URL(request.url).hostname;
     const result = await requestLoginCode({
       email: body.email ?? "",
       marketingOptIn: body.marketingOptIn === true,
       privacyAccepted: body.privacyAccepted === true,
       ipHash: hashRequestIp(clientIp),
       exposeDevCode:
+        process.env.NODE_ENV !== "production" &&
         process.env.ALLOW_DEV_LOGIN_CODE === "true" &&
-        (clientIp === "127.0.0.1" || clientIp === "::1"),
+        ["127.0.0.1", "::1", "localhost"].includes(requestHost),
     });
     return NextResponse.json(result, {
       headers: { "Cache-Control": "no-store" },
