@@ -5,7 +5,9 @@ export async function register() {
     const { validateProductionEnvironment } = await import("@/lib/auth/env");
     validateProductionEnvironment();
   } catch (error) {
-    console.error("Fatale fout in de productieconfiguratie.", error);
-    process.exit(1);
+    const { terminateInvalidProductionStartup } = await import(
+      "@/lib/auth/fatalStartup"
+    );
+    terminateInvalidProductionStartup(error);
   }
 }
