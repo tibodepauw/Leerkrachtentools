@@ -14,6 +14,7 @@ import {
 import { profileImageUrl } from "@/lib/auth/profileImage";
 import { hasAppAccess, inviteOnlyMessage, resolveTierFromEmail } from "@/lib/auth/tiers";
 import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
+import { buildVerificationEmail } from "@/lib/email/verificationEmail";
 
 export const SESSION_COOKIE =
   process.env.NODE_ENV === "production"
@@ -61,16 +62,12 @@ async function sendVerificationEmail(email: string, code: string) {
     throw new Error("Brevo is nog niet geconfigureerd.");
   }
 
+  const message = buildVerificationEmail(code);
   await sendBrevoEmail({
     to: email,
-    subject: `${code} is je verificatiecode`,
-    text: `Je verificatiecode voor Leerkrachtentools is ${code}. De code vervalt over 10 minuten. Heb je dit niet aangevraagd? Negeer dan deze e-mail.`,
-    html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px">
-      <h1 style="font-size:20px">Inloggen bij Leerkrachtentools</h1>
-      <p>Gebruik deze eenmalige verificatiecode:</p>
-      <p style="font-size:32px;font-weight:700;letter-spacing:8px">${code}</p>
-      <p>De code vervalt over 10 minuten. Heb je dit niet aangevraagd? Negeer dan deze e-mail.</p>
-    </div>`,
+    subject: message.subject,
+    text: message.text,
+    html: message.html,
   });
 }
 
