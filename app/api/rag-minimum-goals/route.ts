@@ -23,6 +23,8 @@ import {
 import { resultMatchesEducationLevel } from "@/lib/rag/educationLevel";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
+import { readJsonBody } from "@/lib/http/requestBody";
+import { withRequestConcurrency } from "@/lib/http/rateLimit";
 import type {
   CurriculumSearchResult,
   EducationLevelFilter,
@@ -79,7 +81,7 @@ export async function POST(request: Request) {
   if (moduleDenied) return moduleDenied;
 
   try {
-    const body = (await request.json()) as {
+    const body = (await readJsonBody(request, 64_000)) as {
       goal?: string;
       educationLevel?: EducationLevelFilter;
       grade?: TargetGroupSearchContext["grade"];
@@ -129,10 +131,16 @@ export async function POST(request: Request) {
     let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
       [];
     try {
-      const discovery = await searchDiscoveryEngine({
-        query: searchQuery,
-        network: "ALL",
-        pageSize: 16,
+      const discovery = await withRequestConcurrency({
+        scope: "rag-search",
+        subject: session.id,
+        limit: 2,
+        task: () =>
+          searchDiscoveryEngine({
+            query: searchQuery,
+            network: "ALL",
+            pageSize: 16,
+          }),
       });
 
       discoveryCandidates = toAhovoksCandidates(

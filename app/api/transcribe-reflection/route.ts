@@ -16,6 +16,7 @@ import {
 } from "@/lib/ai/serverAccess";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
 import { publicErrorMessage } from "@/lib/http/clientError";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 export const runtime = "nodejs";
 
@@ -48,7 +49,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const input = reflectionRequestSchema.parse(await request.json());
+    const input = reflectionRequestSchema.parse(
+      await readJsonBody(request, 9_000_000),
+    );
     const goals = input.goals ?? [];
 
     const tracked = await runWithServerAiQuota(access, session.id, () =>

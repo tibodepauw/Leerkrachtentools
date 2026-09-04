@@ -40,7 +40,7 @@ async function callCloudflare<T>({
   system,
   prompt,
   userAiConfig,
-}: StructuredRequest<T>): Promise<T> {
+}: StructuredRequest<T>, timeoutMs: number): Promise<T> {
   const { accountId: account, token, model } = cloudflareCredentials(
     userAiConfig,
   );
@@ -62,7 +62,7 @@ async function callCloudflare<T>({
           { role: "user", content: prompt },
         ],
       }),
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(timeoutMs),
     },
   );
   if (!response.ok) throw new Error(`Cloudflare HTTP ${response.status}`);
@@ -76,6 +76,8 @@ export async function runStructured<T>(
   request: StructuredRequest<T>,
 ): Promise<StructuredResult<T>> {
   const errors: string[] = [];
+  const deadline = Date.now() + 45_000;
+  let attempts = 0;
 
   const candidates = getModelCandidates(
     request.preferredProvider,
@@ -87,8 +89,11 @@ export async function runStructured<T>(
     );
   }
 
-  for (const candidate of candidates) {
+  for (const candidate of candidates.slice(0, 2)) {
     try {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      attempts += 1;
       const result = await generateText({
         model: candidate.model,
         system: request.system,
@@ -111,15 +116,15 @@ export async function runStructured<T>(
             }
           : { prompt: request.prompt }),
         output: Output.object({ schema: request.schema }),
-        maxOutputTokens: request.maxOutputTokens ?? 2400,
+        maxOutputTokens: Math.min(request.maxOutputTokens ?? 2400, 4096),
         temperature: 0.2,
-        maxRetries: 1,
-        abortSignal: AbortSignal.timeout(45_000),
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(Math.min(20_000, remaining)),
       });
       return {
         data: request.schema.parse(result.output),
         provider: candidate.name,
-        fallbackErrors: errors,
+        fallbackErrors: [],
       };
     } catch (error) {
       errors.push(
@@ -128,12 +133,20 @@ export async function runStructured<T>(
     }
   }
 
-  if (hasCloudflare(request.userAiConfig)) {
+  if (
+    attempts < 2 &&
+    Date.now() < deadline &&
+    hasCloudflare(request.userAiConfig)
+  ) {
     try {
+      attempts += 1;
       return {
-        data: await callCloudflare(request),
+        data: await callCloudflare(
+          request,
+          Math.min(20_000, deadline - Date.now()),
+        ),
         provider: "cloudflare",
-        fallbackErrors: errors,
+        fallbackErrors: [],
       };
     } catch (error) {
       errors.push(
@@ -150,5 +163,5 @@ export async function runStructured<T>(
     );
   }
 
-  return { data: request.mock, provider: "local", fallbackErrors: errors };
+  return { data: request.mock, provider: "local", fallbackErrors: [] };
 }

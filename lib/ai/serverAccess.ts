@@ -13,6 +13,7 @@ import {
   type ServerAiAccessResult,
 } from "@/lib/ai/usageLimits";
 import type { UserAiConfig } from "@/lib/ai/userCredentials";
+import { withRequestConcurrency } from "@/lib/http/rateLimit";
 
 export function approvedTierResponse(tier: string) {
   if (isApprovedTier(tier)) return null;
@@ -59,15 +60,19 @@ export async function runWithServerAiQuota<T extends { provider: string }>(
   }
 
   try {
-    const result = await run();
+    const result = await withRequestConcurrency({
+      scope: "ai-provider",
+      subject: userId,
+      limit: 2,
+      task: run,
+    });
     if (reservationId && result.provider === "local") {
       releaseServerAiUsage(reservationId);
     }
     return { ok: true, result };
   } catch (error) {
-    if (reservationId) {
-      releaseServerAiUsage(reservationId);
-    }
+    // A remote provider may already have accepted or billed the request.
+    // Keep the reservation on failures to prevent free retry abuse.
     throw error;
   }
 }

@@ -23,6 +23,8 @@ import {
 import { applyTargetGroupRanking } from "@/lib/rag/targetGroupBonus";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
+import { readJsonBody } from "@/lib/http/requestBody";
+import { withRequestConcurrency } from "@/lib/http/rateLimit";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
@@ -161,7 +163,7 @@ export async function POST(request: Request) {
   if (moduleDenied) return moduleDenied;
 
   try {
-    const body = (await request.json()) as {
+    const body = (await readJsonBody(request, 64_000)) as {
       goal?: string;
       network?: CurriculumNetworkFilter;
       educationLevel?: EducationLevelFilter;
@@ -223,12 +225,15 @@ export async function POST(request: Request) {
       tier: session.tier,
     });
 
-    let searchResult = await runCurriculumSearch(
-      searchQuery,
-      network,
-      educationLevel,
-      { targetGroup },
-    );
+    let searchResult = await withRequestConcurrency({
+      scope: "rag-search",
+      subject: session.id,
+      limit: 2,
+      task: () =>
+        runCurriculumSearch(searchQuery, network, educationLevel, {
+          targetGroup,
+        }),
+    });
     let networkFallbackNotice: string | undefined;
 
     if (
@@ -236,15 +241,16 @@ export async function POST(request: Request) {
       network !== "ALL" &&
       !isAhovoksDomainLevel(educationLevel)
     ) {
-      const fallback = await runCurriculumSearch(
-        searchQuery,
-        "ALL",
-        educationLevel,
-        {
-          excludeNetwork: network,
-          targetGroup,
-        },
-      );
+      const fallback = await withRequestConcurrency({
+        scope: "rag-search",
+        subject: session.id,
+        limit: 2,
+        task: () =>
+          runCurriculumSearch(searchQuery, "ALL", educationLevel, {
+            excludeNetwork: network,
+            targetGroup,
+          }),
+      });
 
       if (fallback.merged.length > 0) {
         searchResult = {

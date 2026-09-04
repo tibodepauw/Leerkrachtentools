@@ -1,11 +1,38 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession, SESSION_COOKIE } from "@/lib/auth/service";
+import {
+  assertRequestRateLimit,
+  RequestRateLimitError,
+} from "@/lib/http/rateLimit";
 
 const PUBLIC_API_PATHS = new Set([
   "/api/auth/request-code",
   "/api/auth/verify-code",
   "/api/auth/logout",
 ]);
+const RAG_API_PATHS = new Set([
+  "/api/rag-curriculum",
+  "/api/rag-minimum-goals",
+]);
+const DOCUMENT_API_PATHS = new Set([
+  "/api/import-lesson-document",
+  "/api/export-lesson-document",
+  "/api/extract-manual",
+  "/api/transcribe-reflection",
+]);
+const AI_API_PATHS = new Set([
+  "/api/analyze-goals",
+  "/api/classify-goal-taxonomy",
+  "/api/format-dialogue",
+  "/api/spellcheck",
+  "/api/audit-timing",
+  "/api/audit-alignment",
+  "/api/audit-engagement",
+  "/api/full-audit",
+  "/api/extract-manual",
+  "/api/transcribe-reflection",
+]);
+const RATE_WINDOW_MS = 15 * 60 * 1000;
 
 function isPublicPath(pathname: string) {
   if (pathname === "/" || pathname === "/privacy") return true;
@@ -24,7 +51,57 @@ export function proxy(request: NextRequest) {
   }
 
   const session = getSession(request.cookies.get(SESSION_COOKIE)?.value);
-  if (session) return NextResponse.next();
+  if (session) {
+    if (pathname.startsWith("/api/")) {
+      try {
+        assertRequestRateLimit({
+          scope: "api",
+          subject: session.id,
+          limit: 300,
+          windowMs: RATE_WINDOW_MS,
+        });
+        if (RAG_API_PATHS.has(pathname)) {
+          assertRequestRateLimit({
+            scope: "rag",
+            subject: session.id,
+            limit: 60,
+            windowMs: RATE_WINDOW_MS,
+          });
+        }
+        if (DOCUMENT_API_PATHS.has(pathname)) {
+          assertRequestRateLimit({
+            scope: "document",
+            subject: session.id,
+            limit: 20,
+            windowMs: RATE_WINDOW_MS,
+          });
+        }
+        if (AI_API_PATHS.has(pathname)) {
+          assertRequestRateLimit({
+            scope: "ai",
+            subject: session.id,
+            limit: 60,
+            windowMs: RATE_WINDOW_MS,
+          });
+        }
+      } catch (error) {
+        if (error instanceof RequestRateLimitError) {
+          return NextResponse.json(
+            { error: error.message },
+            {
+              status: 429,
+              headers: {
+                "Cache-Control": "no-store",
+                "Retry-After": "900",
+              },
+            },
+          );
+        }
+        throw error;
+      }
+    }
+    return NextResponse.next();
+  }
 
   if (pathname.startsWith("/api/")) {
     return NextResponse.json(

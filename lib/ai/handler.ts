@@ -17,6 +17,7 @@ import {
 } from "@/lib/ai/serverAccess";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 type InputRecord = Record<string, unknown>;
 
@@ -57,7 +58,9 @@ export function createAnalysisHandler<T>({
     if (moduleDenied) return moduleDenied;
 
     try {
-      const input = inputSchema.parse(await request.json()) as InputRecord;
+      const input = inputSchema.parse(
+        await readJsonBody(request, 1_000_000),
+      ) as InputRecord;
       const userAiConfig = getUserAiConfig(session.id);
       const access = checkServerAiAccess({
         userId: session.id,

@@ -89,6 +89,16 @@ export function getDatabase() {
 
     CREATE INDEX IF NOT EXISTS feedback_events_user_created
       ON feedback_events(user_id, created_at);
+
+    CREATE TABLE IF NOT EXISTS request_rate_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      scope TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS request_rate_events_scope_subject_created
+      ON request_rate_events(scope, subject, created_at);
   `);
   ensureDatabaseIndexes(database);
   const userColumns = new Set(

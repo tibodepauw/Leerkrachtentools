@@ -19,6 +19,7 @@ import {
 } from "@/lib/ai/serverAccess";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
 import { publicErrorMessage } from "@/lib/http/clientError";
+import { readJsonBody } from "@/lib/http/requestBody";
 import {
   dialoguePromptForStyle,
   formatDialogueInstruction,
@@ -55,7 +56,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const input = formatDialogueRequestSchema.parse(await request.json());
+    const input = formatDialogueRequestSchema.parse(
+      await readJsonBody(request, 500_000),
+    );
 
     const tracked = await runWithServerAiQuota(access, session.id, () =>
       runStructured({

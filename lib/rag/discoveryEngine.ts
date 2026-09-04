@@ -191,6 +191,13 @@ function matchesNetwork(
 }
 
 let client: SearchServiceClient | null = null;
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+const SEARCH_CACHE_MAX_ENTRIES = 500;
+const searchCache = new Map<
+  string,
+  { expiresAt: number; value: DiscoverySearchResponse }
+>();
+const searchesInFlight = new Map<string, Promise<DiscoverySearchResponse>>();
 
 function getClient(): SearchServiceClient {
   if (!client) {
@@ -204,7 +211,7 @@ function getClient(): SearchServiceClient {
   return client;
 }
 
-export async function searchDiscoveryEngine(
+async function performDiscoverySearch(
   options: DiscoverySearchOptions,
 ): Promise<DiscoverySearchResponse> {
   const searchClient = getClient();
@@ -229,7 +236,7 @@ export async function searchDiscoveryEngine(
         },
       },
     },
-    { autoPaginate: false },
+    { autoPaginate: false, timeout: 10_000 },
   );
 
   const hits: DiscoveryHit[] = [];
@@ -270,6 +277,40 @@ export async function searchDiscoveryEngine(
     citations,
     totalSize: Number(rawResponse?.totalSize ?? hits.length),
   };
+}
+
+export async function searchDiscoveryEngine(
+  options: DiscoverySearchOptions,
+): Promise<DiscoverySearchResponse> {
+  const key = JSON.stringify([
+    options.query.trim().toLocaleLowerCase("nl-BE"),
+    options.network ?? "ALL",
+    options.pageSize ?? 12,
+  ]);
+  const now = Date.now();
+  const cached = searchCache.get(key);
+  if (cached && cached.expiresAt > now) return cached.value;
+  if (cached) searchCache.delete(key);
+
+  const existing = searchesInFlight.get(key);
+  if (existing) return existing;
+
+  const pending = performDiscoverySearch(options)
+    .then((value) => {
+      if (searchCache.size >= SEARCH_CACHE_MAX_ENTRIES) {
+        const oldest = searchCache.keys().next().value as string | undefined;
+        if (oldest) searchCache.delete(oldest);
+      }
+      searchCache.set(key, {
+        expiresAt: Date.now() + SEARCH_CACHE_TTL_MS,
+        value,
+      });
+      return value;
+    })
+    .finally(() => searchesInFlight.delete(key));
+
+  searchesInFlight.set(key, pending);
+  return pending;
 }
 
 export function localPathFromGcsUri(uri: string): string | null {

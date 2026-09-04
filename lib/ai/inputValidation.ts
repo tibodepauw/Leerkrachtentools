@@ -5,8 +5,8 @@ import {
 } from "@/lib/ai/audioMediaType";
 import { WRITING_STYLES } from "@/lib/ai/writingStyle";
 
-export const MAX_AI_TEXT_CHARS = 500_000;
-export const MAX_BASE64_CHARS = 20_000_000;
+export const MAX_AI_TEXT_CHARS = 200_000;
+export const MAX_BASE64_CHARS = 8_000_000;
 
 export const aiProviderSchema = z.enum([
   "google",
@@ -43,7 +43,7 @@ export const analysisRequestSchema = z
     topic: z.string().max(500).optional(),
     educationNetwork: z.enum(["ZILL", "OVSG", "GO"]).optional(),
   })
-  .passthrough()
+  .strict()
   .superRefine((value, ctx) => {
     for (const [key, fieldValue] of Object.entries(value)) {
       if (typeof fieldValue !== "string") continue;
