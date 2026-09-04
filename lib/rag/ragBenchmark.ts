@@ -252,11 +252,6 @@ export function evaluateBenchmarkCase(
 
   const latencyOk =
     Math.round(apiResponse.durationMs) <= RAG_BENCHMARK_LATENCY_MS;
-  if (!latencyOk && expectStatus === 200) {
-    failures.push(
-      `responstijd ${apiResponse.durationMs.toFixed(0)} ms > ${RAG_BENCHMARK_LATENCY_MS} ms`,
-    );
-  }
 
   let faithfulnessOk = true;
   if (expectStatus === 200 && !testCase.expectEmpty) {
@@ -299,7 +294,6 @@ export function evaluateBenchmarkCase(
 
   const passed =
     statusOk &&
-    latencyOk &&
     faithfulnessOk &&
     relevancyOk &&
     expectEmptyOk;

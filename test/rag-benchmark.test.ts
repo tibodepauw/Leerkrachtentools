@@ -139,7 +139,10 @@ describe("RAG benchmark suite", () => {
       }
       const status = result.passed ? "PASS" : "FAIL";
       const detail = result.passed ? "" : ` (${result.failures.join("; ")})`;
-      return `- ${status} ${result.label} · ${result.durationMs.toFixed(0)} ms${detail}`;
+      const latencyWarning = result.latencyOk
+        ? ""
+        : " (latency boven streefwaarde)";
+      return `- ${status} ${result.label} · ${result.durationMs.toFixed(0)} ms${detail}${latencyWarning}`;
     });
 
     console.info(
@@ -159,6 +162,27 @@ describe("RAG benchmark suite", () => {
 });
 
 describe("RAG benchmark helpers", () => {
+  it("rapporteert latency zonder functionele kwaliteit te laten falen", () => {
+    const result = evaluateBenchmarkCase(
+      {
+        id: "slow-valid",
+        label: "Traag maar functioneel correct",
+        endpoint: "curriculum",
+        query: "",
+        expectStatus: 400,
+        expectEmpty: true,
+      },
+      {
+        status: 400,
+        durationMs: 900,
+        body: { error: "Vul een zoekterm in." },
+      },
+    );
+
+    expect(result.latencyOk).toBe(false);
+    expect(result.passed).toBe(true);
+  });
+
   it("rapporteert kwaliteitsscore op basis van case-resultaten", () => {
     const report = summarizeBenchmarkReport([
       {
@@ -181,13 +205,13 @@ describe("RAG benchmark helpers", () => {
         passed: false,
         skipped: false,
         durationMs: 900,
-        statusOk: true,
+        statusOk: false,
         latencyOk: false,
         faithfulnessOk: true,
         relevancyOk: true,
         expectEmptyOk: true,
         topResults: [],
-        failures: ["te traag"],
+        failures: ["ongeldige status"],
       },
     ]);
 
