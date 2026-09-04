@@ -4,6 +4,13 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.15.1] - 2026-09-04
+
+### Fixed
+- Zaklampeffect op de login-wordmark vervaagt naadloos aan de bovenrand zonder zichtbare horizontale scheidingslijn
+
+---
+
 ## [5.15.0] - 2026-09-04
 
 Production security hardening, corrected curriculum retrieval, and a cleaner

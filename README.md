@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v5.15.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Version](https://img.shields.io/badge/version-v5.15.1-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 [![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
@@ -285,6 +285,6 @@ Before exposing the service publicly:
 
 ## Releases
 
-Current version: **5.15.0**
+Current version: **5.15.1**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).
