@@ -4,6 +4,8 @@ const LESSON_STORE_BASE_KEY = "leerkrachtentools-active-lesson";
 const DOCUMENT_DB_BASE_NAME = "leerkrachtentools-documents";
 const LEGACY_LESSON_STORE_KEY = LESSON_STORE_BASE_KEY;
 const LEGACY_DOCUMENT_DB_NAME = DOCUMENT_DB_BASE_NAME;
+const LEGACY_DOCUMENT_MIGRATION_OWNER_KEY =
+  "leerkrachtentools-documents:migration-owner";
 const SIDEBAR_STORAGE_BASE_KEY = "leerkrachtentools-sidebar-width";
 
 let activeUserId: string | null = null;
@@ -46,6 +48,17 @@ export function migrateLegacyLessonStorage(userId: string) {
 export async function migrateLegacyDocumentStorage(userId: string) {
   if (typeof window === "undefined" || !window.indexedDB) return;
 
+  const claimedBy = window.localStorage.getItem(
+    LEGACY_DOCUMENT_MIGRATION_OWNER_KEY,
+  );
+  if (claimedBy && claimedBy !== userId) {
+    await deleteIndexedDb(LEGACY_DOCUMENT_DB_NAME, true);
+    return;
+  }
+
+  // Claim before reading so a failed or blocked migration can never expose
+  // the same unscoped documents to a later browser user.
+  window.localStorage.setItem(LEGACY_DOCUMENT_MIGRATION_OWNER_KEY, userId);
   const scopedDbName = documentDatabaseName(userId);
   const hasScopedData = await indexedDbHasEntries(scopedDbName);
   if (!hasScopedData) {
@@ -56,16 +69,18 @@ export async function migrateLegacyDocumentStorage(userId: string) {
       await writeIndexedDbEntries(scopedDbName, legacyEntries);
     }
   }
-  await deleteIndexedDb(LEGACY_DOCUMENT_DB_NAME);
+  await deleteIndexedDb(LEGACY_DOCUMENT_DB_NAME, true);
 }
 
-function deleteIndexedDb(dbName: string) {
+function deleteIndexedDb(dbName: string, allowBlocked = false) {
   return new Promise<void>((resolve, reject) => {
     const request = window.indexedDB.deleteDatabase(dbName);
     request.onerror = () =>
       reject(request.error ?? new Error("IndexedDB verwijderen mislukt."));
-    request.onblocked = () =>
-      reject(new Error("IndexedDB verwijderen is geblokkeerd."));
+    request.onblocked = () => {
+      if (allowBlocked) resolve();
+      else reject(new Error("IndexedDB verwijderen is geblokkeerd."));
+    };
     request.onsuccess = () => resolve();
   });
 }
