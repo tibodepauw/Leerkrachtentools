@@ -6,13 +6,14 @@ import {
 import { assertFeedbackRateLimit } from "@/lib/feedback/rateLimit";
 import { sendFeedbackEmail } from "@/lib/feedback/sendFeedback";
 import { publicErrorMessage } from "@/lib/http/clientError";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 export async function POST(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
   try {
-    const body = (await request.json()) as {
+    const body = (await readJsonBody(request, 16_384)) as {
       message?: string;
       kind?: string;
       activeModule?: string;

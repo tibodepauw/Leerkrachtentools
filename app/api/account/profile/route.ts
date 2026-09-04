@@ -4,12 +4,15 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/auth/database";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 export async function PATCH(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await request.json()) as { displayName?: string };
+  const body = (await readJsonBody(request, 16_384)) as {
+    displayName?: string;
+  };
   const displayName = body.displayName?.trim() ?? "";
   if (
     displayName.length < 2 ||

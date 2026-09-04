@@ -4,12 +4,15 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/auth/database";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 export async function PATCH(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await request.json()) as { marketingOptIn?: boolean };
+  const body = (await readJsonBody(request, 1_024)) as {
+    marketingOptIn?: boolean;
+  };
   if (typeof body.marketingOptIn !== "boolean") {
     return NextResponse.json(
       { error: "Ongeldige toestemmingswaarde." },

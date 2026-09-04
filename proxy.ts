@@ -4,6 +4,10 @@ import {
   assertRequestRateLimit,
   RequestRateLimitError,
 } from "@/lib/http/rateLimit";
+import {
+  contentSecurityPolicy,
+  isSameOriginMutation,
+} from "@/lib/http/security";
 
 const PUBLIC_API_PATHS = new Set([
   "/api/auth/request-code",
@@ -46,8 +50,38 @@ function isPublicPath(pathname: string) {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const csp = contentSecurityPolicy(
+    nonce,
+    process.env.NODE_ENV !== "production",
+  );
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+
+  const secure = <T extends NextResponse>(response: T): T => {
+    response.headers.set("Content-Security-Policy", csp);
+    response.headers.set("X-Frame-Options", "DENY");
+    return response;
+  };
+  const next = () =>
+    secure(
+      NextResponse.next({
+        request: { headers: requestHeaders },
+      }),
+    );
+
+  if (!isSameOriginMutation(request)) {
+    return secure(
+      NextResponse.json(
+        { error: "Aanvraag van een andere website geweigerd." },
+        { status: 403, headers: { "Cache-Control": "no-store" } },
+      ),
+    );
+  }
+
   if (isPublicPath(pathname)) {
-    return NextResponse.next();
+    return next();
   }
 
   const session = getSession(request.cookies.get(SESSION_COOKIE)?.value);
@@ -86,36 +120,42 @@ export function proxy(request: NextRequest) {
         }
       } catch (error) {
         if (error instanceof RequestRateLimitError) {
-          return NextResponse.json(
-            { error: error.message },
-            {
-              status: 429,
-              headers: {
-                "Cache-Control": "no-store",
-                "Retry-After": "900",
+          return secure(
+            NextResponse.json(
+              { error: error.message },
+              {
+                status: 429,
+                headers: {
+                  "Cache-Control": "no-store",
+                  "Retry-After": "900",
+                },
               },
-            },
+            ),
           );
         }
         throw error;
       }
     }
-    return NextResponse.next();
+    return next();
   }
 
   if (pathname.startsWith("/api/")) {
-    return NextResponse.json(
-      { error: "Je sessie is verlopen. Log opnieuw in." },
-      { status: 401, headers: { "Cache-Control": "no-store" } },
+    return secure(
+      NextResponse.json(
+        { error: "Je sessie is verlopen. Log opnieuw in." },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      ),
     );
   }
 
   const loginUrl = request.nextUrl.clone();
   loginUrl.pathname = "/";
   loginUrl.search = "";
-  return NextResponse.redirect(loginUrl);
+  return secure(NextResponse.redirect(loginUrl));
 }
 
 export const config = {
-  matcher: ["/settings/:path*", "/dev/:path*", "/api/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$).*)",
+  ],
 };

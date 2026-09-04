@@ -13,18 +13,18 @@ const KEY_SALT = "leerkrachtentools-api-keys-v2";
 function authSecret() {
   const secret = process.env.AUTH_SECRET;
   if (secret && secret.length >= 32) return secret;
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV === "test") {
     return "local-development-secret-change-before-production";
   }
-  throw new Error("AUTH_SECRET moet in productie minstens 32 tekens bevatten.");
+  throw new Error("AUTH_SECRET moet minstens 32 tekens bevatten.");
 }
 
 function encryptionSecret() {
   const secret = process.env.API_KEY_ENCRYPTION_SECRET;
   if (secret && secret.length >= 32) return secret;
-  if (process.env.NODE_ENV !== "production") return authSecret();
+  if (process.env.NODE_ENV === "test") return authSecret();
   throw new Error(
-    "API_KEY_ENCRYPTION_SECRET moet in productie minstens 32 tekens bevatten.",
+    "API_KEY_ENCRYPTION_SECRET moet minstens 32 tekens bevatten.",
   );
 }
 

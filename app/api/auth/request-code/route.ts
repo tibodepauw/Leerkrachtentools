@@ -2,21 +2,26 @@ import { NextResponse } from "next/server";
 import { hashRequestIp, requestLoginCode } from "@/lib/auth/service";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { clientIpFromRequest } from "@/lib/http/requestIp";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
+    const body = (await readJsonBody(request, 16_384)) as {
       email?: string;
       marketingOptIn?: boolean;
       privacyAccepted?: boolean;
     };
+    const clientIp = clientIpFromRequest(request);
     const result = await requestLoginCode({
       email: body.email ?? "",
       marketingOptIn: body.marketingOptIn === true,
       privacyAccepted: body.privacyAccepted === true,
-      ipHash: hashRequestIp(clientIpFromRequest(request)),
+      ipHash: hashRequestIp(clientIp),
+      exposeDevCode:
+        process.env.ALLOW_DEV_LOGIN_CODE === "true" &&
+        (clientIp === "127.0.0.1" || clientIp === "::1"),
     });
     return NextResponse.json(result, {
       headers: { "Cache-Control": "no-store" },

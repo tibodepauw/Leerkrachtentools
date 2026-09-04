@@ -40,10 +40,13 @@ describe("resolveTierFromEmail", () => {
     expect(resolveTierFromEmail("iemand@gmail.com")).toBe("unapproved");
   });
 
-  it("geeft ingebouwde testers toegang zonder omgevingsvariabele", () => {
+  it("geeft lokale testers alleen buiten productie toegang", () => {
     expect(resolveTierFromEmail("wxdsfq@zear.cez")).toBe("tester");
     expect(resolveTierFromEmail("WXDSFQ@ZEAR.CEZ")).toBe("tester");
     expect(hasAppAccess("wxdsfq@zear.cez")).toBe(true);
     expect(hasAppAccess("iemand@gmail.com")).toBe(false);
+
+    vi.stubEnv("NODE_ENV", "production");
+    expect(resolveTierFromEmail("wxdsfq@zear.cez")).toBe("unapproved");
   });
 });

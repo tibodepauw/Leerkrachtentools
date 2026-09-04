@@ -15,17 +15,21 @@ import { profileImageUrl } from "@/lib/auth/profileImage";
 import { hasAppAccess, inviteOnlyMessage, resolveTierFromEmail } from "@/lib/auth/tiers";
 import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
 
-export const SESSION_COOKIE = "leerkrachtentools_session";
+export const SESSION_COOKIE =
+  process.env.NODE_ENV === "production"
+    ? "__Host-leerkrachtentools_session"
+    : "leerkrachtentools_session";
 const CODE_TTL = 10 * 60 * 1000;
-const SESSION_TTL = 30 * 24 * 60 * 60 * 1000;
+const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
+const SESSION_IDLE_TTL = 24 * 60 * 60 * 1000;
 
 function authSecret() {
   const secret = process.env.AUTH_SECRET;
   if (secret && secret.length >= 32) return secret;
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV === "test") {
     return "local-development-secret-change-before-production";
   }
-  throw new Error("AUTH_SECRET moet in productie minstens 32 tekens bevatten.");
+  throw new Error("AUTH_SECRET moet minstens 32 tekens bevatten.");
 }
 
 function digest(value: string) {
@@ -78,16 +82,25 @@ interface LatestRow {
   created_at: number;
 }
 
+function waitUntil(timestamp: number) {
+  const delay = timestamp - Date.now();
+  return delay > 0
+    ? new Promise<void>((resolve) => setTimeout(resolve, delay))
+    : Promise.resolve();
+}
+
 export async function requestLoginCode({
   email: rawEmail,
   marketingOptIn,
   privacyAccepted,
   ipHash,
+  exposeDevCode = false,
 }: {
   email: string;
   marketingOptIn: boolean;
   privacyAccepted: boolean;
   ipHash: string;
+  exposeDevCode?: boolean;
 }) {
   const email = normalizeEmail(rawEmail);
   if (!isValidEmail(email)) throw new Error("Vul een geldig e-mailadres in.");
@@ -96,6 +109,7 @@ export async function requestLoginCode({
   }
 
   const now = Date.now();
+  const responseNotBefore = now + randomInt(750, 1_001);
   const db = getDatabase();
   cleanExpiredAuthRecords(now);
   const windowStart = now - 15 * 60 * 1000;
@@ -147,6 +161,7 @@ export async function requestLoginCode({
     db.prepare(
       "UPDATE login_codes SET used_at = ? WHERE email = ? AND used_at IS NULL",
     ).run(now, email);
+    await waitUntil(responseNotBefore);
     return {
       email,
       expiresInSeconds: CODE_TTL / 1000,
@@ -162,13 +177,11 @@ export async function requestLoginCode({
     throw error;
   }
 
+  await waitUntil(responseNotBefore);
   return {
     email,
     expiresInSeconds: CODE_TTL / 1000,
-    devCode:
-      process.env.NODE_ENV !== "production" && !isBrevoConfigured()
-        ? code
-        : undefined,
+    devCode: exposeDevCode && !isBrevoConfigured() ? code : undefined,
   };
 }
 
@@ -280,6 +293,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
     )
     .get(email) as UserRow;
   const sessionToken = randomBytes(32).toString("base64url");
+  db.prepare("DELETE FROM sessions WHERE user_id = ?").run(user.id);
   db.prepare(
     `INSERT INTO sessions
       (token_hash, user_id, expires_at, created_at, last_seen_at)
@@ -313,9 +327,15 @@ export function getSession(token?: string) {
               sessions.expires_at
        FROM sessions
        JOIN users ON users.id = sessions.user_id
-       WHERE sessions.token_hash = ? AND sessions.expires_at >= ?`,
+       WHERE sessions.token_hash = ?
+         AND sessions.expires_at >= ?
+         AND sessions.last_seen_at >= ?`,
     )
-    .get(digest(`session:${token}`), now) as
+    .get(
+      digest(`session:${token}`),
+      now,
+      now - SESSION_IDLE_TTL,
+    ) as
     | (UserRow & { expires_at: number })
     | undefined;
   if (!row) return null;

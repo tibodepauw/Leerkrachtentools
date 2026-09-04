@@ -12,6 +12,7 @@ import { getDatabase } from "@/lib/auth/database";
 import { encryptSecret } from "@/lib/auth/crypto";
 import { defaultModelForProvider } from "@/lib/ai/listModels";
 import type { ProviderName } from "@/lib/ai/providers";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 export async function GET(request: Request) {
   const session = sessionFromRequest(request);
@@ -25,7 +26,7 @@ export async function PATCH(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await request.json()) as {
+  const body = (await readJsonBody(request, 16_384)) as {
     enabled?: boolean;
     provider?: string;
     model?: string;

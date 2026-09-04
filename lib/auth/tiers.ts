@@ -10,8 +10,8 @@ export { USER_TIERS, type UserTier, normalizeAccountTier };
 
 const THOMAS_MORE_DOMAINS = ["@student.thomasmore.be", "@thomasmore.be"];
 
-/** Testers die altijd toegang hebben, naast TESTER_EMAILS in de omgeving. */
-export const BUILT_IN_TESTER_EMAILS = ["wxdsfq@zear.cez"] as const;
+/** Lokale testaccount, nooit actief in een productieproces. */
+const DEVELOPMENT_TESTER_EMAILS = ["wxdsfq@zear.cez"] as const;
 
 export const DAILY_SERVER_AI_LIMITS: Record<UserTier, number> = {
   student: 40,
@@ -39,8 +39,10 @@ function adminEmails() {
 
 function testerEmails() {
   const emails = parseEmailAllowlist(process.env.TESTER_EMAILS);
-  for (const email of BUILT_IN_TESTER_EMAILS) {
-    emails.add(email);
+  if (process.env.NODE_ENV !== "production") {
+    for (const email of DEVELOPMENT_TESTER_EMAILS) {
+      emails.add(email);
+    }
   }
   return emails;
 }

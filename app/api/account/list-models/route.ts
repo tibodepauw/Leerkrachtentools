@@ -10,12 +10,13 @@ import {
 import { listProviderModels } from "@/lib/ai/listModels";
 import type { ProviderName } from "@/lib/ai/providers";
 import { publicErrorMessage } from "@/lib/http/clientError";
+import { readJsonBody } from "@/lib/http/requestBody";
 
 export async function POST(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await request.json()) as {
+  const body = (await readJsonBody(request, 16_384)) as {
     provider?: string;
     apiKey?: string;
     cloudflareAccountId?: string;
