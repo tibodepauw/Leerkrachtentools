@@ -17,6 +17,8 @@ import {
   normalizeQueryText,
   scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
+  applyMultiIntentDiversity,
+  queryMatchesMusicTopic,
 } from "@/lib/rag/curriculumQueryTokens";
 import {
   DOMAIN_CORPUS_PATHS,
@@ -854,7 +856,7 @@ export function searchLocalCorpus({
     return [];
   }
   const maxCorpusIndices =
-    queryTokens.size >= 4 ? 140 : MAX_CORPUS_INDICES_TO_SCORE;
+    queryTokens.size >= 4 ? 220 : MAX_CORPUS_INDICES_TO_SCORE;
   if (indicesToScore.size > maxCorpusIndices) {
     const ranked = [...indicesToScore]
       .map((recordIndex) => {
@@ -872,10 +874,21 @@ export function searchLocalCorpus({
         (left, right) =>
           right.tokenMatches - left.tokenMatches ||
           left.recordIndex - right.recordIndex,
-      )
-      .slice(0, maxCorpusIndices)
-      .map((entry) => entry.recordIndex);
-    indicesToScore = new Set(ranked);
+      );
+    const kept = ranked.slice(0, maxCorpusIndices).map((entry) => entry.recordIndex);
+    if (/frans/i.test(query) && queryMatchesMusicTopic(query)) {
+      for (const entry of ranked) {
+        if (kept.length >= maxCorpusIndices + 24) {
+          break;
+        }
+        const discipline =
+          index.records[entry.recordIndex]?.record?.discipline ?? "";
+        if (/frans/i.test(discipline) && !kept.includes(entry.recordIndex)) {
+          kept.push(entry.recordIndex);
+        }
+      }
+    }
+    indicesToScore = new Set(kept);
   }
 
   const candidates: Array<{
@@ -925,19 +938,22 @@ export function searchLocalCorpus({
     candidates.push({ record, score, tokenMatches });
   }
 
+  const ranked = candidates
+    .sort(
+      (left, right) =>
+        right.score - left.score || right.tokenMatches - left.tokenMatches,
+    )
+    .filter(
+      (entry) =>
+        entry.score >= MIN_LOCAL_SEARCH_SCORE || entry.tokenMatches >= 1,
+    );
+
   return filterByAbsoluteMinScore(
-    candidates
-      .sort(
-        (left, right) =>
-          right.score - left.score || right.tokenMatches - left.tokenMatches,
-      )
-      .slice(0, candidateLimit)
-      .filter(
-        (entry) =>
-          entry.score >= MIN_LOCAL_SEARCH_SCORE || entry.tokenMatches >= 1,
-      )
-      .slice(0, limit)
-      .map((entry) => ({ ...entry.record, score: entry.score })),
+    applyMultiIntentDiversity(
+      query,
+      ranked.map((entry) => ({ ...entry.record, score: entry.score })),
+      limit,
+    ),
   );
 }
 

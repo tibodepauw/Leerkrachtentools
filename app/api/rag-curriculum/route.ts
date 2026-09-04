@@ -24,6 +24,7 @@ import {
   searchLocalCorpus,
 } from "@/lib/rag/curriculumCorpus";
 import { applyTargetGroupRanking } from "@/lib/rag/targetGroupBonus";
+import { applyMultiIntentDiversity } from "@/lib/rag/curriculumQueryTokens";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
 import { readJsonBody } from "@/lib/http/requestBody";
@@ -151,6 +152,8 @@ async function runCurriculumSearch(
     secondaryGrade: options?.targetGroup?.secondaryGrade,
     secondaryFinality: options?.targetGroup?.secondaryFinality,
   });
+
+  merged = applyMultiIntentDiversity(query, merged, CURRICULUM_TOP_N);
 
   if (options?.excludeNetwork) {
     merged = merged.filter(

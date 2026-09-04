@@ -89,6 +89,10 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
     ],
   },
   {
+    pattern: /liedje|zingen|\bzang\b|\bdansen\b|\bdans\b|muziek|muzisch/i,
+    stems: ["liedje", "zingen", "zang", "dansen", "muzisch", "muziek"],
+  },
+  {
     pattern: /tikker|tikkertje|mikken|pionneke|pionnen|\bpion\b/i,
     stems: ["tikker", "spel", "spelen", "werp", "vang", "bal", "beweg", "motor"],
   },
@@ -524,6 +528,12 @@ export function queryMatchesMathTopic(query: string): boolean {
 
 export function queryMatchesTechTopic(query: string): boolean {
   return /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+export function queryMatchesMusicTopic(query: string): boolean {
+  return /liedje|zingen|\bzang\b|\bdansen\b|\bdans\b|muziek|muzisch/i.test(
     normalizeQueryText(query),
   );
 }
@@ -1001,6 +1011,17 @@ export function scoreDisciplineBonus(
     }
   }
 
+  if (queryMatchesMusicTopic(query)) {
+    if (
+      combined.includes("muzisch") ||
+      combined.includes("muziek") ||
+      combined.includes("zang") ||
+      combined.includes("dans")
+    ) {
+      bonus += 0.28;
+    }
+  }
+
   if (queryMatchesMathFunctionTopic(query)) {
     if (
       combined.includes("wiskunde") ||
@@ -1248,4 +1269,47 @@ export function scoreCurriculumCandidate({
 
   score = applyDomainMultiplier(score, query, discipline, code, subdomein);
   return { score: Math.max(0, Math.min(6, score)), tokenMatches };
+}
+
+export function applyMultiIntentDiversity<
+  T extends {
+    discipline: string;
+    subdomein?: string;
+    titel: string;
+  },
+>(query: string, results: T[], limit: number): T[] {
+  if (results.length <= 1 || limit <= 1) {
+    return results.slice(0, limit);
+  }
+
+  const groups: Array<(item: T) => boolean> = [];
+  const haystackOf = (item: T) =>
+    `${item.discipline} ${item.subdomein ?? ""} ${item.titel}`;
+
+  if (
+    /frans/i.test(normalizeQueryText(query)) &&
+    queryMatchesMusicTopic(query)
+  ) {
+    groups.push((item) => /frans/i.test(haystackOf(item)));
+    groups.push((item) =>
+      /muzisch|muziek|\bzang|\bdans/i.test(haystackOf(item)),
+    );
+  }
+
+  if (groups.length < 2) {
+    return results.slice(0, limit);
+  }
+
+  const remaining = [...results];
+  const selected: T[] = [];
+  for (const matches of groups) {
+    const index = remaining.findIndex(matches);
+    if (index === -1) {
+      continue;
+    }
+    selected.push(remaining.splice(index, 1)[0]!);
+  }
+
+  selected.push(...remaining);
+  return selected.slice(0, limit);
 }

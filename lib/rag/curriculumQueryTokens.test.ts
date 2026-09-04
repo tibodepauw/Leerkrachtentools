@@ -94,6 +94,9 @@ describe("curriculumQueryTokens", () => {
     expect(
       inferDisciplineFromQuery("stevige brug bouwen met tape en papier"),
     ).toBe("Wetenschap en techniek");
+    expect(inferDisciplineFromQuery("Franse liedjes zingen en dansen")).toBe(
+      "Frans",
+    );
   });
 
   it("herkent ZILL WD-codes als wiskundig denken", () => {
