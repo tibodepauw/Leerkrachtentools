@@ -16,6 +16,7 @@ describe("corpusLevelCache", () => {
     expect(normalizeCorpusLevel("KLEUTER")).toBe("BASISONDERWIJS");
     expect(normalizeCorpusLevel("LAGER")).toBe("BASISONDERWIJS");
     expect(resolveCorpusLevel("ALL", "ZILL")).toBe("BASISONDERWIJS");
+    expect(resolveCorpusLevel("ALL", "GO_OUD")).toBe("BASISONDERWIJS");
     expect(resolveCorpusLevel("ALL", "GO")).toBe("SECUNDAIR");
   });
 

@@ -53,6 +53,18 @@ const GO_NIEUW_CORPUS_FIXTURE = path.join(
   "fixtures",
   "curriculum-go-nieuw.jsonl",
 );
+const GO_OUD_CORPUS_PROD = path.join(
+  process.cwd(),
+  "data",
+  "go",
+  "go_volledig.jsonl",
+);
+const GO_OUD_CORPUS_FIXTURE = path.join(
+  process.cwd(),
+  "test",
+  "fixtures",
+  "curriculum-go-oud.jsonl",
+);
 const ZILL_CORPUS_PROD = path.join(
   process.cwd(),
   "data",
@@ -183,6 +195,7 @@ export function resolveCorpusLevel(
     case "OPSTAP":
     case "OVSG":
     case "GO_NIEUW":
+    case "GO_OUD":
     case "ZILL":
       return "BASISONDERWIJS";
     default:
@@ -221,6 +234,7 @@ function basisonderwijsLoadPaths(): string[] {
     OPSTAP_CORPUS_PROD,
     OVSG_CORPUS_PROD,
     GO_NIEUW_CORPUS_PROD,
+    GO_OUD_CORPUS_PROD,
     ZILL_CORPUS_PROD,
   ];
 }
@@ -247,6 +261,10 @@ function ingestBasisonderwijsRecords(): RawRecord[] {
     ...tagNetwork(
       loadCorpusWithFallback(GO_NIEUW_CORPUS_PROD, GO_NIEUW_CORPUS_FIXTURE),
       "GO_NIEUW",
+    ),
+    ...tagNetwork(
+      loadCorpusWithFallback(GO_OUD_CORPUS_PROD, GO_OUD_CORPUS_FIXTURE),
+      "GO_OUD",
     ),
     ...tagNetwork(
       loadCorpusWithFallback(ZILL_CORPUS_PROD, ZILL_CORPUS_FIXTURE),
@@ -431,6 +449,8 @@ export {
   OVSG_CORPUS_FIXTURE,
   GO_NIEUW_CORPUS_PROD,
   GO_NIEUW_CORPUS_FIXTURE,
+  GO_OUD_CORPUS_PROD,
+  GO_OUD_CORPUS_FIXTURE,
   ZILL_CORPUS_PROD,
   ZILL_CORPUS_FIXTURE,
   SECONDARY_CURRICULUM_PROD,

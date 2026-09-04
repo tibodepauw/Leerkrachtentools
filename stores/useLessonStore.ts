@@ -147,6 +147,7 @@ const CURRICULUM_NETWORK_FILTERS = new Set<CurriculumNetworkFilter>([
   "OPSTAP",
   "OVSG",
   "GO_NIEUW",
+  "GO_OUD",
   "ZILL",
   "GO",
   "KOV",

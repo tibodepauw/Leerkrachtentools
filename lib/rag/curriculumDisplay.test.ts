@@ -114,6 +114,8 @@ describe("curriculumDisplay", () => {
   it("formatteert netwerk-badges", () => {
     expect(networkBadgeLabel("OPSTAP")).toBe("Op.stap");
     expect(networkBadgeLabel("GO_NIEUW")).toBe("GO! Nieuw");
+    expect(networkBadgeLabel("GO_OUD")).toBe("GO! Oud");
+    expect(networkBadgeLabel("GO")).toBe("GO! Secundair");
     expect(networkBadgeLabel("AHOVOKS")).toBe("AHOVOKS");
   });
 

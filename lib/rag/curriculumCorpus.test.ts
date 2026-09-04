@@ -13,6 +13,8 @@ import {
   searchMinimumGoals,
   tokenize,
   isStandaloneSecundairMinimumGoal,
+  recordsForNetwork,
+  resolveDiscoveryCandidates,
 } from "@/lib/rag/curriculumCorpus";
 import type { DiscoveryHit } from "@/lib/rag/discoveryEngine";
 
@@ -45,6 +47,43 @@ describe("curriculumCorpus matching", () => {
     expect(result.bronTitel).toBe("Wiskunde leerplan");
     expect(result.score).toBe(0.81);
     expect(result.netwerk).toBe("OPSTAP");
+  });
+
+  it("doorzoekt het oude GO!-basisleerplan apart", () => {
+    const records = recordsForNetwork("GO_OUD", "BASISONDERWIJS");
+    expect(records.length).toBeGreaterThan(0);
+    expect(records.every((record) => record.netwerk === "GO_OUD")).toBe(true);
+
+    const matches = searchLocalCorpus({
+      query: "verschillende informatiebronnen raadplegen",
+      network: "GO_OUD",
+      educationLevel: "BASISONDERWIJS",
+    });
+    expect(matches[0]?.netwerk).toBe("GO_OUD");
+    expect(matches[0]?.titel).toContain("informatiebronnen");
+  });
+
+  it("laat Discovery-resultaten uit het oude GO!-basisleerplan toe", () => {
+    const results = resolveDiscoveryCandidates({
+      hits: [
+        {
+          id: "go-oud-1",
+          link: "gs://leerkrachtentools-curriculum/go/nederlands.pdf",
+          title: "GO! Nederlands",
+          snippet:
+            "De leerlingen herkennen rijmwoorden in een kort gedicht.",
+          network: "GO_OUD",
+          relevanceScore: 0.8,
+        },
+      ],
+      query: "rijmwoorden herkennen in een gedicht",
+      network: "GO_OUD",
+      educationLevel: "BASISONDERWIJS",
+      semanticFallback: true,
+    });
+
+    expect(results[0]?.netwerk).toBe("GO_OUD");
+    expect(["corpus", "fragment"]).toContain(results[0]?.verrijking);
   });
 
   it("geeft null terug zonder corpus-match in ZILL", () => {

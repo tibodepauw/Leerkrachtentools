@@ -4,6 +4,7 @@ export type CurriculumNetworkFilter =
   | "OPSTAP"
   | "OVSG"
   | "GO_NIEUW"
+  | "GO_OUD"
   | "ZILL"
   | "GO"
   | "KOV"

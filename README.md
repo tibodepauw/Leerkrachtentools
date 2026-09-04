@@ -55,7 +55,7 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 |--------|----------------|
 | **Doelverbeteraar** | Rewrites a selected lesson goal using institute rules for well-formulated goals. Shows rationale and term changes. Requires AI. |
 | **MC-DAS-SPM herkenner** | Classifies a goal as mental-cognitive (MC), dynamic-affective (DAS), or sensomotor/psychomotor (SPM) without rewriting it. Requires AI. |
-| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora (Op.stap, ZILL, OVSG, GO! Nieuw, secundair, POV). Filters by education network and level: basisonderwijs, secundair, and full **AHOVOKS** coverage (OKAN, buitengewoon basisonderwijs/BuBaO, buitengewoon secundair/BuSO, deeltijds kunstonderwijs/DKO, volwassenenonderwijs, hoger onderwijs). Typo-tolerant matching, lazy corpus loading per level, optional semantic fallback, and target-group ranking. |
+| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora and Discovery Engine (Op.stap, ZILL, OVSG, GO! Oud, GO! Nieuw, secundair, POV). Filters by education network and level: basisonderwijs, secundair, and full **AHOVOKS** coverage (OKAN, buitengewoon basisonderwijs/BuBaO, buitengewoon secundair/BuSO, deeltijds kunstonderwijs/DKO, volwassenenonderwijs, hoger onderwijs). Typo-tolerant matching, lazy corpus loading per level, optional semantic fallback, and target-group ranking. |
 | **Minimumdoelen** | Matches official minimum goals across basisonderwijs, secundair, and the same **AHOVOKS** domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger). Education-level filter with domain-specific options (NT2, BuBaO-types, BuSO OV1-3, DKO-graad, …), numeric range awareness, and top 3 ranked results. Repeated exact queries are served from a client-side session cache. |
 
 Curriculum search is **retrieval only** (no generative AI in the matcher itself). Results come from indexed JSONL files shipped with or built for the deployment.
@@ -104,8 +104,8 @@ Local search indexes official goal corpora:
 | ZILL | Katholiek onderwijs ZILL selector (learning lines + nested content) |
 | OVSG | Leer Lokaal |
 | Op.stap | Katholiek onderwijs Op.stap |
-| GO | GO! basisonderwijs vakleerplannen (9 subject books) |
-| GO! Nieuw | GO! basisonderwijs 12 doelensets |
+| GO! Oud | GO! basisonderwijs vakleerplannen (9 vakboeken, via Discovery Engine) |
+| GO! Nieuw | GO! basisonderwijs 12 doelensets (lokaal corpus) |
 | Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen (lokaal) |
 | AHOVOKS-domeinen | Volledige doelencorpus via onderwijsdoelen.be (~24.000 doelen, lokaal): OKAN (onthaal), buitengewoon basisonderwijs (BuBaO), buitengewoon secundair (BuSO), deeltijds kunstonderwijs (DKO), volwassenenonderwijs, hoger onderwijs (lerarenopleiding) |
 | Vlaamse overheid | Officiële secundaire minimumdoelen (lokaal, via scripts) |

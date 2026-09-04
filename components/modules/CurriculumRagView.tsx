@@ -82,8 +82,9 @@ const NETWORK_OPTIONS: Array<{
   { value: "OPSTAP", label: "Op.stap / Katholiek onderwijs" },
   { value: "OVSG", label: "OVSG / LeerLokaal" },
   { value: "GO_NIEUW", label: "GO! / Nieuw leerplan" },
+  { value: "GO_OUD", label: "GO! / Oud leerplan" },
   { value: "ZILL", label: "ZILL / Katholiek onderwijs" },
-  { value: "GO", label: "GO! / Legacy leerplan" },
+  { value: "GO", label: "GO! / Secundair onderwijs" },
   { value: "KOV", label: "Katholiek onderwijs / Secundair" },
   { value: "POV", label: "Provinciaal onderwijs / Secundair" },
 ];
@@ -699,13 +700,23 @@ function networkOptionsForLevel(
   }
   if (level === "BASISONDERWIJS" || level === "KLEUTER" || level === "LAGER") {
     return NETWORK_OPTIONS.filter((option) =>
-      ["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "ZILL"].includes(option.value),
+      ["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "GO_OUD", "ZILL"].includes(
+        option.value,
+      ),
     );
   }
   return NETWORK_OPTIONS.filter((option) =>
-    ["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "ZILL", "GO", "KOV", "POV"].includes(
-      option.value,
-    ),
+    [
+      "ALL",
+      "OPSTAP",
+      "OVSG",
+      "GO_NIEUW",
+      "GO_OUD",
+      "ZILL",
+      "GO",
+      "KOV",
+      "POV",
+    ].includes(option.value),
   );
 }
 

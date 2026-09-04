@@ -27,8 +27,9 @@ const NETWORK_PATH: Record<Exclude<CurriculumNetworkFilter, "ALL">, string> = {
   OPSTAP: "/opstap/",
   OVSG: "/ovsg/",
   GO_NIEUW: "/go_nieuw/",
+  GO_OUD: "/go/",
   ZILL: "/zill/",
-  GO: "/go/",
+  GO: "/secundair/",
   KOV: "/secundair/",
   POV: "/secundair/",
 };
@@ -61,10 +62,16 @@ function servingConfigPath(client: SearchServiceClient): string {
 export function networkFromUri(uri: string): CurriculumNetworkFilter | null {
   const normalized = uri.toLowerCase();
   if (normalized.includes("/go_nieuw/")) return "GO_NIEUW";
+  if (
+    normalized.includes("/secundair/go/") ||
+    normalized.includes("/secundair/leerplannen_secundair_go")
+  ) {
+    return "GO";
+  }
+  if (normalized.includes("/go/")) return "GO_OUD";
   if (normalized.includes("/opstap/")) return "OPSTAP";
   if (normalized.includes("/ovsg/")) return "OVSG";
   if (normalized.includes("/zill/")) return "ZILL";
-  if (normalized.includes("/go/")) return "GO";
   if (normalized.includes("/secundair/pov/")) return "POV";
   if (normalized.includes("/secundair/")) return "KOV";
   return null;

@@ -354,6 +354,7 @@ function networkFromRaw(
   if (netwerk === "OPSTAP") return "OPSTAP";
   if (netwerk === "OVSG") return "OVSG";
   if (netwerk === "GO_NIEUW") return "GO_NIEUW";
+  if (netwerk === "GO_OUD") return "GO_OUD";
   if (netwerk === "ZILL") return "ZILL";
   if (netwerk === "GO") return "GO";
   if (netwerk === "KOV") return "KOV";

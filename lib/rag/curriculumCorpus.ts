@@ -29,6 +29,7 @@ import {
   OPSTAP_CORPUS_PROD,
   OVSG_CORPUS_PROD,
   GO_NIEUW_CORPUS_PROD,
+  GO_OUD_CORPUS_PROD,
   ZILL_CORPUS_PROD,
 } from "@/lib/rag/corpusLevelCache";
 import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
@@ -269,7 +270,7 @@ export function recordsForNetwork(
   if (corpusLevel === "BASISONDERWIJS") {
     if (network === "ALL") {
       return (
-        ["OPSTAP", "OVSG", "GO_NIEUW", "ZILL"] as Array<
+        ["OPSTAP", "OVSG", "GO_NIEUW", "GO_OUD", "ZILL"] as Array<
           Exclude<CurriculumNetworkFilter, "ALL">
         >
       ).flatMap((key) => loadBasisonderwijsNetworkRecords(key));
@@ -364,6 +365,8 @@ function loadBasisonderwijsNetworkRecords(
         ? recordsFromBasisonderwijsNetwork("OVSG")
         : network === "GO_NIEUW"
           ? recordsFromBasisonderwijsNetwork("GO_NIEUW")
+          : network === "GO_OUD"
+            ? recordsFromBasisonderwijsNetwork("GO_OUD")
           : network === "ZILL"
             ? recordsFromBasisonderwijsNetwork("ZILL")
             : [];
@@ -376,7 +379,7 @@ function loadBasisonderwijsNetworkRecords(
 }
 
 function recordsFromBasisonderwijsNetwork(
-  network: "OPSTAP" | "OVSG" | "GO_NIEUW" | "ZILL",
+  network: "OPSTAP" | "OVSG" | "GO_NIEUW" | "GO_OUD" | "ZILL",
 ): RawRecord[] {
   return getCorpusRecordsForLevel("BASISONDERWIJS").filter((raw) => {
     const netwerk = asString(raw.netwerk ?? raw.network).toUpperCase();
@@ -426,6 +429,7 @@ function networkFromRaw(raw: RawRecord): CurriculumNetworkFilter | null {
   if (netwerk === "OPSTAP") return "OPSTAP";
   if (netwerk === "OVSG") return "OVSG";
   if (netwerk === "GO_NIEUW") return "GO_NIEUW";
+  if (netwerk === "GO_OUD") return "GO_OUD";
   if (netwerk === "ZILL") return "ZILL";
   if (netwerk === "GO") return "GO";
   if (netwerk === "KOV") return "KOV";
@@ -512,7 +516,7 @@ export function buildRecordHaystack(raw: RawRecord): string {
 
 export function isGoLegendOrMetaRecord(raw: RawRecord): boolean {
   const network = asString(raw.netwerk ?? raw.network).toUpperCase();
-  if (network !== "GO" && network !== "GO_NIEUW") {
+  if (network !== "GO" && network !== "GO_NIEUW" && network !== "GO_OUD") {
     return false;
   }
 
@@ -1045,6 +1049,8 @@ function inferBronUrl(network: CurriculumNetworkFilter | null): string {
       return "https://leerlokaal.ovsg.be/";
     case "GO_NIEUW":
       return "https://pro.g-o.be/themas/leerplannen/basisonderwijs/nieuw-leerplan-basisonderwijs/";
+    case "GO_OUD":
+      return "https://pro.g-o.be/themas/leerplannen/basisonderwijs/";
     case "ZILL":
       return "https://zill-selector.katholiekonderwijs.vlaanderen/";
     case "GO":
@@ -1192,7 +1198,7 @@ export function resolveDiscoveryCandidates({
       continue;
     }
 
-    if (educationLevel === "ALL") {
+    if (educationLevel === "ALL" || network === "GO_OUD") {
       const fragment = buildFragmentResult(hit);
       resolved.push({
         ...fragment,
@@ -1212,6 +1218,8 @@ export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[
       return [OVSG_CORPUS_PROD, SECONDARY_CURRICULUM_PROD];
     case "GO_NIEUW":
       return [GO_NIEUW_CORPUS_PROD];
+    case "GO_OUD":
+      return [GO_OUD_CORPUS_PROD];
     case "ZILL":
       return [ZILL_CORPUS_PROD];
     case "GO":
@@ -1225,6 +1233,7 @@ export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[
         OPSTAP_CORPUS_PROD,
         OVSG_CORPUS_PROD,
         GO_NIEUW_CORPUS_PROD,
+        GO_OUD_CORPUS_PROD,
         ZILL_CORPUS_PROD,
         SECONDARY_CURRICULUM_PROD,
         SECONDARY_POV_CURRICULUM_PROD,
