@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: npm run security:audit
 
       - name: Generate Next.js route types
         run: npx next typegen

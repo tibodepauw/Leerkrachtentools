@@ -7,8 +7,8 @@
 </p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-224%20passing-brightgreen)](https://github.com/tibodepauw/Leerkrachtentools)
-[![Version](https://img.shields.io/badge/version-v5.14.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![CI](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-v5.15.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 [![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
@@ -208,11 +208,15 @@ Module ids: `active-lesson`, `manual-scanner`, `goal-optimizer`, `goal-taxonomy`
 npm run lint
 npm run typecheck
 npm test
+npm run security:audit
 npm run test:rag-benchmark
 npm run build
 ```
 
-181 automated tests cover curriculum tokenization, minimum-goal ranking, RAG benchmarks, fuzzy matching, auth tiers, and core utilities.
+269 automated tests across 61 test files cover curriculum retrieval and ranking,
+auth and authorization, credential encryption, API quotas and request limits,
+browser storage isolation, document handling, UI behavior, and core utilities.
+The test total represents individual assertions, not a code-coverage percentage.
 
 ## Production deployment
 
@@ -281,6 +285,6 @@ Before exposing the service publicly:
 
 ## Releases
 
-Current version: **5.14.0**
+Current version: **5.15.0**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).

@@ -4,6 +4,54 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.15.0] - 2026-09-04
+
+Production security hardening, corrected curriculum retrieval, and a cleaner
+settings and module experience.
+
+### Added
+- Server-side request budgets for API, AI, RAG, and document routes
+- Per-user concurrency limits for AI-provider calls and heavy document/RAG work
+- Five-minute Discovery Engine cache with coalescing for identical searches
+- Per-request nonce CSP, same-origin mutation checks, HSTS, and hidden framework fingerprint
+- Versioned API-key encryption envelopes with provider/user binding and previous-key rotation support
+- OSV production dependency audit in local scripts and GitHub CI
+- Security regression tests for CSRF, request bodies, rate limits, storage isolation, archive validation, and credential failures
+
+### Changed
+- Session lifetime reduced to seven days with a 24-hour idle limit; a new login invalidates older sessions
+- Development login codes require an explicit localhost-only opt-in
+- Tester access is configured through production environment allowlists only
+- AI fallback is bounded to two provider attempts under one 45-second deadline
+- AI and RAG payloads use strict schemas and bounded streaming JSON readers
+- Document upload limit reduced to 8 MB and scanner extraction requires review before copying into Actieve les
+- Settings keeps account-scoped browser storage mounted between app routes
+- Sidebar pins appear only while hovering; hover labels use Dutch copy
+- Settings copy, muted helper text, duplicate notices, and decorative hairlines simplified
+- Curriculum search button shows a delayed loading state without flicker
+
+### Fixed
+- Saved API-keys can no longer be reused or sent to a different provider
+- Broken or rotated user credentials fail closed instead of falling back to serverkeys
+- Account deletion removes server metadata, localStorage, and IndexedDB data
+- Legacy IndexedDB migration can no longer copy documents to multiple browser users
+- IP rate limiting only trusts explicitly configured reverse proxies
+- Failed paid provider attempts remain counted against quota
+- Google model discovery sends API-keys in a header instead of the URL
+- Raw provider and document parser errors are no longer exposed to clients
+- DOCX/ODT archive bombs, mismatched file signatures, invalid Cloudflare paths, and oversized request bodies are rejected
+- ALL-level curriculum search, GO/GO Nieuw mapping, secondary minimum-goal filtering, and corpus cache scoping corrected
+- Goal identifiers, add-to-lesson replacement, voice answers, and active-goal synchronization corrected
+- Settings navigation no longer remounts and reruns account storage migration
+
+### Security
+- No known vulnerabilities were found across 278 production packages in the release audit
+- Next.js 16.3.3 and React 19.2.8 include the August 2026 security fixes
+- Server API authorization remains enforced independently of UI visibility and Proxy
+- Uploaded manual content is treated as untrusted input and is never auto-applied
+
+---
+
 ## [5.14.0] - 2026-09-03
 
 ### Added

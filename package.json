@@ -1,6 +1,6 @@
 {
   "name": "leerkrachtentools",
-  "version": "5.14.0",
+  "version": "5.15.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,7 +15,8 @@
     "fetch:domains": "python3 scripts/fetch_onderwijsdoelen_domains.py",
     "export:secundair": "python3 scripts/export_secundair_zip.py",
     "export:banner": "node scripts/export-banner-prod.mjs",
-    "export:banner:dev": "node scripts/export-banner-assets.mjs"
+    "export:banner:dev": "node scripts/export-banner-assets.mjs",
+    "security:audit": "node scripts/audit-production-dependencies.mjs"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.78",
