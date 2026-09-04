@@ -4,6 +4,7 @@ import { register } from "@/instrumentation";
 describe("production startup validation", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it("laat de Node.js-startup falen bij ontbrekende secrets", async () => {
@@ -12,9 +13,18 @@ describe("production startup validation", () => {
     vi.stubEnv("APP_ORIGIN", "https://tools.example.be");
     delete process.env.AUTH_SECRET;
     delete process.env.API_KEY_ENCRYPTION_SECRET;
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const exit = vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new Error(`process.exit(${code})`);
+    });
 
-    await expect(register()).rejects.toThrow(
-      "Ongeldige productieconfiguratie",
+    await expect(register()).rejects.toThrow("process.exit(1)");
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(consoleError).toHaveBeenCalledWith(
+      "Fatale fout in de productieconfiguratie.",
+      expect.any(Error),
     );
   });
 
