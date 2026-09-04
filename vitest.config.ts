@@ -13,10 +13,13 @@ export default defineConfig({
   test: {
     environment: "node",
     pool: "threads",
+    testTimeout: 10_000,
     exclude: ["**/node_modules/**", "**/.next/**"],
     env: {
       DATABASE_PATH: "./test-leerkrachtentools.db",
       AUTH_SECRET: "test-auth-secret-with-at-least-32-characters",
+      API_KEY_ENCRYPTION_SECRET:
+        "test-encryption-secret-with-at-least-32-characters",
     },
   },
 });

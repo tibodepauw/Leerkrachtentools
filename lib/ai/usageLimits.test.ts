@@ -40,6 +40,26 @@ describe("server AI usage limits", () => {
     }
   });
 
+  it("valt niet terug op serverquota bij een onleesbare eigen key", () => {
+    seedUser(userId, "student");
+    const access = evaluateServerAiAccess({
+      userId,
+      tier: "student",
+      userAiConfig: {
+        enabled: true,
+        provider: "google",
+        apiKey: "",
+        model: "gemini-test",
+      },
+    });
+
+    expect(access.allowed).toBe(false);
+    if (!access.allowed) {
+      expect(access.status).toBe(409);
+      expect(access.message).toContain("opnieuw");
+    }
+  });
+
   it("hanteert daglimieten voor studenten", () => {
     seedUser(userId, "student");
     const now = Date.now();
