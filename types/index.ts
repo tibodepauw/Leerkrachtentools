@@ -185,6 +185,8 @@ export interface CurriculumSearchResult {
   bronTitel?: string;
   verrijking?: "corpus" | "fragment";
   score?: number;
+  proWhy?: string;
+  proLessonPhase?: "Instap" | "Instructie" | "Verwerking" | "Afronding";
 }
 
 export interface CurriculumGoal {

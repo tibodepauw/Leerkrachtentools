@@ -21,10 +21,11 @@ export type RagQueryCacheScope = {
   domainDetail?: string;
   domainFinality?: string;
   enableLlmQueryRewriting?: boolean;
+  searchMode?: "snel" | "pro" | string;
 };
 
 const STORAGE_KEY = "leerkrachtentools-rag-query-cache";
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 type StoredRagQueryCache = {
   version: number;
@@ -54,6 +55,7 @@ export function buildRagQueryCacheKey(
     scope.domainDetail ?? "",
     scope.domainFinality ?? "",
     scope.enableLlmQueryRewriting ? "1" : "0",
+    scope.searchMode === "pro" ? "pro" : "snel",
   ].join("|");
   return `${educationLevel}:${network}:${normalizeCachedQuery(query)}:${scopeKey}`;
 }

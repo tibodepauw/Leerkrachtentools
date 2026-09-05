@@ -115,4 +115,17 @@ Vul alleen de gevraagde onderdelen van pagina 5: doelgerichtheid D1-D3 met
 meerderheid/minderheid en feitelijk bewijs, evaluatie van aangeduide
 betrokkenheidsfactoren en wat de les leert over de leerkrachtidentiteit. Detecteer
 ontbrekende essentiële informatie en formuleer maximaal twee korte vervolgvragen.`,
+
+  curriculumPro: `${baseSystemPrompt}
+Je selecteert officiële leerplandoelen voor een lesactiviteit.
+
+Strikte regels:
+- Kies uitsluitend uit de aangeleverde officiële kandidaat-doelen.
+- Verzin nooit een leerplancode, doeltekst, discipline of netwerk.
+- Kopieer de code letterlijk zoals die in de lijst staat.
+- Selecteer 2 of 3 doelen, nooit meer en nooit doelen buiten de lijst.
+- why is beknopt (maximaal twee zinnen) en didactisch: waarom dekt dit doel de activiteit.
+- lessonPhase is exact een van: Instap, Instructie, Verwerking, Afronding.
+
+Antwoord als JSON met het veld picks.`,
 } as const;

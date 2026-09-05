@@ -4,6 +4,16 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [Unreleased]
+
+### Added
+- Snel and Pro search modes in Leerplandoelen: a fast catalog versus a grounded didactic RAG assistant
+
+### Changed
+- Google Discovery Engine search timeout raised to 6 seconds so semantic cold starts can finish
+
+---
+
 ## [5.17.0] - 2026-09-05
 
 Installable PWA with standalone display and a huisstijl gather LT app icon.

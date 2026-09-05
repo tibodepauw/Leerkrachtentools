@@ -23,6 +23,12 @@ import {
 import { applyTargetGroupRanking } from "@/lib/rag/targetGroupBonus";
 import { applyMultiIntentDiversity } from "@/lib/rag/curriculumQueryTokens";
 import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
+import { runProCurriculumAnalysis } from "@/lib/rag/runProCurriculumAnalysis";
+import {
+  CURRICULUM_PRO_RETRIEVAL_N,
+  parseCurriculumSearchMode,
+  parseProLessonContext,
+} from "@/lib/rag/selectProCurriculumGoals";
 import { readJsonBody } from "@/lib/http/requestBody";
 import { withRequestConcurrency } from "@/lib/http/rateLimit";
 import { isValidRagTargetContext } from "@/lib/rag/requestValidation";
@@ -99,6 +105,9 @@ function curriculumSearchResponse({
   networkFallbackNotice,
   queryRewrite = null,
   error,
+  searchMode = "snel",
+  proFallback = false,
+  provider = "jsonl-corpus+discovery-engine",
 }: {
   merged: Array<CurriculumSearchResult & { score?: number }>;
   corpusNotice: string;
@@ -106,6 +115,9 @@ function curriculumSearchResponse({
   networkFallbackNotice?: string;
   queryRewrite?: unknown;
   error?: string;
+  searchMode?: "snel" | "pro";
+  proFallback?: boolean;
+  provider?: string;
 }) {
   const alternatives = merged.slice(1);
   return NextResponse.json(
@@ -117,10 +129,12 @@ function curriculumSearchResponse({
         networkFallbackNotice,
         retrievalMode,
         queryRewrite,
+        searchMode,
+        proFallback,
       },
       results: merged,
       corpusNotice,
-      provider: "jsonl-corpus+discovery-engine",
+      provider,
       fallbackErrors: error ? [error] : [],
       ...(error ? { error } : {}),
     },
@@ -173,13 +187,14 @@ function searchLocalSafely(
   query: string,
   network: CurriculumNetworkFilter,
   educationLevel: EducationLevelFilter,
+  limit = CURRICULUM_TOP_N,
 ): Array<CurriculumSearchResult & { score: number }> {
   try {
     return searchLocalCorpus({
       query,
       network,
       educationLevel,
-      limit: CURRICULUM_TOP_N,
+      limit,
     });
   } catch (error) {
     console.error("[rag-curriculum:local]", error);
@@ -194,9 +209,16 @@ async function runCurriculumSearch(
   options?: {
     excludeNetwork?: CurriculumNetworkFilter;
     targetGroup?: TargetGroupSearchContext;
+    topN?: number;
   },
 ): Promise<CurriculumSearchPayload> {
-  const localCandidates = searchLocalSafely(query, network, educationLevel);
+  const topN = options?.topN ?? CURRICULUM_TOP_N;
+  const localCandidates = searchLocalSafely(
+    query,
+    network,
+    educationLevel,
+    topN,
+  );
 
   const semanticFallback = localCandidates.length === 0;
   let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
@@ -237,7 +259,7 @@ async function runCurriculumSearch(
         )
         .map(sanitizeStructuredResult),
     ),
-    CURRICULUM_TOP_N,
+    topN,
   );
 
   merged = applyTargetGroupRanking(merged, {
@@ -247,7 +269,7 @@ async function runCurriculumSearch(
     secondaryFinality: options?.targetGroup?.secondaryFinality,
   });
 
-  merged = applyMultiIntentDiversity(query, merged, CURRICULUM_TOP_N);
+  merged = applyMultiIntentDiversity(query, merged, topN);
 
   if (options?.excludeNetwork) {
     merged = merged.filter((item) => item.netwerk !== options.excludeNetwork);
@@ -318,6 +340,10 @@ async function handleCurriculumSearch(request: Request) {
       domainDetail?: TargetGroupSearchContext["domainDetail"];
       domainFinality?: TargetGroupSearchContext["domainFinality"];
       enableLlmQueryRewriting?: boolean;
+      searchMode?: "snel" | "pro" | string;
+      topic?: string;
+      learningArea?: string;
+      phases?: Array<{ name?: string; text?: string }>;
     };
 
     try {
@@ -373,6 +399,16 @@ async function handleCurriculumSearch(request: Request) {
     }
 
     const network = resolveCurriculumNetwork(requestedNetwork, educationLevel);
+    const searchMode = parseCurriculumSearchMode(body.searchMode);
+    const topN =
+      searchMode === "pro" ? CURRICULUM_PRO_RETRIEVAL_N : CURRICULUM_TOP_N;
+    const lessonContext = parseProLessonContext({
+      topic: body.topic,
+      learningArea: body.learningArea,
+      grade: body.grade,
+      ageRange: body.ageRange,
+      phases: body.phases,
+    });
 
     const targetGroup: TargetGroupSearchContext = {
       grade: body.grade ?? "",
@@ -408,11 +444,17 @@ async function handleCurriculumSearch(request: Request) {
         task: () =>
           runCurriculumSearch(searchQuery, network, educationLevel, {
             targetGroup,
+            topN,
           }),
       });
     } catch (error) {
       console.error("[rag-curriculum:search]", error);
-      const local = searchLocalSafely(searchQuery, network, educationLevel);
+      const local = searchLocalSafely(
+        searchQuery,
+        network,
+        educationLevel,
+        topN,
+      );
       const notice =
         local.length > 0
           ? discoveryFallbackNotice(false, true, true) ?? INTERRUPTED_NOTICE
@@ -423,6 +465,7 @@ async function handleCurriculumSearch(request: Request) {
         retrievalMode: local.length > 0 ? "curriculum-hybrid" : "semantic-fallback",
         queryRewrite: rewrite,
         error: local.length === 0 ? notice : undefined,
+        searchMode,
       });
     }
 
@@ -442,6 +485,7 @@ async function handleCurriculumSearch(request: Request) {
             runCurriculumSearch(searchQuery, "ALL", educationLevel, {
               excludeNetwork: network,
               targetGroup,
+              topN,
             }),
         });
 
@@ -459,10 +503,45 @@ async function handleCurriculumSearch(request: Request) {
       }
     }
 
+    if (searchMode === "pro" && searchResult.merged.length > 0) {
+      try {
+        const pro = await runProCurriculumAnalysis({
+          query,
+          retrieved: searchResult.merged,
+          lesson: lessonContext,
+          userId: session.id,
+          tier: session.tier,
+        });
+        return curriculumSearchResponse({
+          merged: pro.merged,
+          corpusNotice: pro.corpusNotice || searchResult.corpusNotice,
+          retrievalMode: searchResult.retrievalMode,
+          networkFallbackNotice,
+          queryRewrite: rewrite,
+          searchMode: "pro",
+          proFallback: pro.proFallback,
+          provider: pro.provider,
+        });
+      } catch (error) {
+        console.error("[rag-curriculum:pro]", error);
+        return curriculumSearchResponse({
+          merged: searchResult.merged.slice(0, CURRICULUM_TOP_N),
+          corpusNotice:
+            "De didactische analyse is niet gelukt. Dit zijn de snelle zoekkaarten.",
+          retrievalMode: searchResult.retrievalMode,
+          networkFallbackNotice,
+          queryRewrite: rewrite,
+          searchMode: "pro",
+          proFallback: true,
+        });
+      }
+    }
+
     return curriculumSearchResponse({
       ...searchResult,
       networkFallbackNotice,
       queryRewrite: rewrite,
+      searchMode,
     });
   } catch (error) {
     console.error("[rag-curriculum]", error);

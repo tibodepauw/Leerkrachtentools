@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DISCOVERY_SEARCH_TIMEOUT_MS,
   DiscoveryEngineTimeoutError,
   extractRelevanceScore,
   isDiscoveryTransportError,
@@ -10,6 +11,11 @@ import {
 } from "@/lib/rag/discoveryEngine";
 
 describe("discoveryEngine helpers", () => {
+  it("geeft Discovery Engine 6 seconden voor een semantische cold start", () => {
+    expect(DISCOVERY_SEARCH_TIMEOUT_MS).toBe(6_000);
+    expect(DISCOVERY_SEARCH_TIMEOUT_MS).toBeGreaterThanOrEqual(5_500);
+  });
+
   it("haalt titels uit GCS-paden", () => {
     expect(
       titleFromLink("gs://leerkrachtentools-curriculum/opstap/wiskunde_leerplan.pdf"),
