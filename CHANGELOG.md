@@ -4,6 +4,33 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [5.16.0] - 2026-09-05
+
+Pinned sidebar tools, a separate GO! / Oud leerplan option, and curriculum
+search that stays available when Discovery Engine times out.
+
+### Added
+- Sidebar pins persist in the browser and on the user account after login
+- GO! / Oud leerplan as a separate basisonderwijs option next to GO! / Nieuw leerplan
+- Didactic stopword filtering, math and technology domain boosting, and typo-tolerant matching in curriculum search
+- Multi-intent ranking so mixed queries keep both domains in the top results
+
+### Changed
+- Login verification email uses the black, zinc and Rubik brand and stays readable in Outlook, Gmail and dark mode
+- Invalid production configuration fails closed at Node startup
+
+### Fixed
+- Curriculum search no longer drops the browser connection after a Discovery Engine timeout
+- Timed-out Google searches are aborted so late gRPC errors cannot crash the Node process
+- SearchServiceClient is reused across Fast Refresh instead of leaking gRPC sockets
+- Unexpected RAG route errors always return HTTP 200 JSON with empty results
+
+### Security
+- Production authentication boundaries, cookie options, avatar path containment, and request body limits hardened
+- Node startup terminates when required production secrets are missing
+
+---
+
 ## [5.15.1] - 2026-09-04
 
 ### Fixed
