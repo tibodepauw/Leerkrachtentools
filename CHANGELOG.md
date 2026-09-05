@@ -13,6 +13,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ### Changed
 - Google Discovery Engine search timeout raised to 6 seconds so semantic cold starts can finish
 - Narrow sidebar swaps the wordmark for gather LT letters so it no longer overlaps the collapse control
+- Agent instruction files, including `AGENTS.md`, stay local and are not committed to GitHub
 
 ---
 
