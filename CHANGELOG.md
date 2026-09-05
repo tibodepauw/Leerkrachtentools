@@ -17,6 +17,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Custom API-key model picker loads the provider list automatically, shows a full dropdown, and hides embedding or audio models
 - Idee of feedback in the collapsed sidebar opens the dialog instead of nesting the trigger inside a tooltip
 - Content-only result cards drop extra top padding so the kader is even
+- Module descriptions use the full header width instead of wrapping at max-w-2xl
 
 ---
 
