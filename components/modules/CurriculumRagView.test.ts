@@ -25,8 +25,8 @@ describe("CurriculumRagView leerplanopties", () => {
       "utf8",
     );
 
-    expect(source).toContain('<TabsTrigger value="snel">Snel</TabsTrigger>');
-    expect(source).toContain('<TabsTrigger value="pro">Pro</TabsTrigger>');
+    expect(source).toContain("CurriculumSearchModeToggle");
+    expect(source).toContain("Didactisch analyseren...");
     expect(source).toContain("Didactisch analyseren...");
     expect(source).toContain("Toevoegen aan Actieve les");
     expect(source).toContain("searchMode,");

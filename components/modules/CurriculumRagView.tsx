@@ -29,7 +29,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  CurriculumSearchModeToggle,
+  type CurriculumSearchMode,
+} from "@/components/modules/CurriculumSearchModeToggle";
 import { useRagQueryAnalysis } from "@/hooks/useRagQueryAnalysis";
 import {
   formatGoalCopyText,
@@ -345,7 +348,7 @@ function ProSearchSkeleton() {
 function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const copy = variantCopy[variant];
   const lesson = useLessonStore((state) => state.lesson);
-  const [searchMode, setSearchMode] = useState<"snel" | "pro">("snel");
+  const [searchMode, setSearchMode] = useState<CurriculumSearchMode>("snel");
   const enableLlmQueryRewriting = useSettingsStore(
     (state) => state.enableLlmQueryRewriting,
   );
@@ -613,28 +616,10 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 onAddGoal={addGoal}
               />
               {variant === "leerplandoel" ? (
-                <div className="space-y-2">
-                  <Label htmlFor="leerplandoel-search-mode">Zoekmodus</Label>
-                  <Tabs
-                    value={searchMode}
-                    onValueChange={(value) =>
-                      setSearchMode(value === "pro" ? "pro" : "snel")
-                    }
-                  >
-                    <TabsList
-                      id="leerplandoel-search-mode"
-                      aria-label="Zoekmodus"
-                    >
-                      <TabsTrigger value="snel">Snel</TabsTrigger>
-                      <TabsTrigger value="pro">Pro</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  <p className="text-xs leading-5 text-neutral-500">
-                    {searchMode === "pro"
-                      ? "Didactische assistent: analyseert je lesactiviteit en stelt 2 of 3 beargumenteerde doelen voor."
-                      : "Directe catalogus: toont snel de beste treffers voor een code of trefwoord."}
-                  </p>
-                </div>
+                <CurriculumSearchModeToggle
+                  value={searchMode}
+                  onChange={setSearchMode}
+                />
               ) : null}
             </div>
           }

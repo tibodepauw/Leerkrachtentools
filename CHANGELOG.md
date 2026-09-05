@@ -8,6 +8,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ### Added
 - Snel and Pro search modes in Leerplandoelen: a fast catalog versus a grounded didactic RAG assistant
+- Huisstijl pill toggle for Snel and Pro in Leerplandoelen
 
 ### Changed
 - Google Discovery Engine search timeout raised to 6 seconds so semantic cold starts can finish
