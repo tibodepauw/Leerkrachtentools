@@ -15,6 +15,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Narrow sidebar swaps the wordmark for gather LT letters so it no longer overlaps the collapse control
 - Agent instruction files, including `AGENTS.md`, stay local and are not committed to GitHub
 - Custom API-key model picker loads the provider list automatically, shows a full dropdown, and hides embedding or audio models
+- Idee of feedback in the collapsed sidebar opens the dialog instead of nesting the trigger inside a tooltip
 
 ---
 
