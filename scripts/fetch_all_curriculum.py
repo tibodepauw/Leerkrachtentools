@@ -21,27 +21,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+from curriculum_deps import (
+    ensure_curriculum_python_deps,
+    ensure_playwright_chromium,
+)
 from local_env import load_local_env
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = Path(__file__).resolve().parent
-
-SECUNDAIR_PACKAGES = (
-    ("requests", "requests"),
-    ("bs4", "beautifulsoup4"),
-    ("docx", "python-docx"),
-    ("pypdf", "pypdf"),
-)
-
-
-def missing_modules(packages: tuple[tuple[str, str], ...]) -> list[str]:
-    missing: list[str] = []
-    for module, pip_name in packages:
-        try:
-            __import__(module)
-        except ImportError:
-            missing.append(pip_name)
-    return missing
 
 
 def run_step(label: str, command: list[str]) -> int:
@@ -77,24 +64,24 @@ def main() -> int:
     python = sys.executable
     load_local_env(ROOT)
 
-    if not args.domains_only and not args.skip_secundair:
-        missing = missing_modules(SECUNDAIR_PACKAGES)
-        if missing:
-            logging.error(
-                "Python-pakketten ontbreken: %s. Installeer ze eerst met "
-                "`pip install -r scripts/requirements-curriculum.txt`.",
-                ", ".join(missing),
-            )
-            return 1
+    deps = ensure_curriculum_python_deps(python)
+    if deps != 0:
+        return deps
+    browser = ensure_playwright_chromium(python)
+    if browser != 0:
+        logging.warning(
+            "Playwright Chromium kon niet worden geïnstalleerd (exit %s). "
+            "Portaal-fallback werkt dan niet.",
+            browser,
+        )
 
     api_key = os.environ.get("ONDERWIJSDOELEN_API_KEY", "").strip()
     if not api_key:
-        logging.error(
-            "ONDERWIJSDOELEN_API_KEY ontbreekt. Zet de key in .env.local "
-            "(zie .env.example) of exporteer die in je shell. "
-            "Zonder key stopt de OKAN/BuBaO/BuSO/DKO-fetch."
+        logging.warning(
+            "ONDERWIJSDOELEN_API_KEY ontbreekt in .env.local. "
+            "OKAN/BuBaO/... gebruikt het publieke portaal (Playwright). "
+            "BuBaO zit niet in die portalsets."
         )
-        return 1
 
     failures = 0
 

@@ -120,10 +120,8 @@ Domain corpusdata (`data/okan/`, `data/bubao/`, …) en secundaire corpusdata (`
 Maintenance scripts (optional, not required to run the app UI):
 
 ```bash
-pip install -r scripts/requirements-curriculum.txt
-playwright install chromium   # for portal fallback + ZILL/OVSG scrapers
-
-# Needs ONDERWIJSDOELEN_API_KEY in .env.local (loaded automatically)
+# npm run fetch:all installs Python packages and Playwright Chromium if needed.
+# Optional: ONDERWIJSDOELEN_API_KEY in .env.local (faster than the public portal fallback)
 npm run fetch:all
 
 # Only AHOVOKS domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger)
