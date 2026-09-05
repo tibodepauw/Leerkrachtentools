@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from education_record_schema import export_all_domain_gcs
+from local_env import load_local_env
 from onderwijsdoelen_api_client import (
     fetch_all_goals,
     fetch_portal_dataset,
@@ -117,6 +118,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    load_local_env(ROOT)
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",

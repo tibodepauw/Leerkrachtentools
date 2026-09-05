@@ -19,6 +19,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Content-only result cards drop extra top padding so the kader is even
 - Module descriptions use the full header width instead of wrapping at max-w-2xl
 - Snel and Pro in Leerplandoelen no longer show catalog or assistant hint copy under the toggle
+- `npm run fetch:all` loads `.env.local` and stops with a clear error if Python packages or `ONDERWIJSDOELEN_API_KEY` are missing
 
 ---
 

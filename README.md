@@ -123,7 +123,7 @@ Maintenance scripts (optional, not required to run the app UI):
 pip install -r scripts/requirements-curriculum.txt
 playwright install chromium   # for portal fallback + ZILL/OVSG scrapers
 
-# All education domains (OKAN through hoger onderwijs) + secundair in one run
+# Needs ONDERWIJSDOELEN_API_KEY in .env.local (loaded automatically)
 npm run fetch:all
 
 # Only AHOVOKS domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger)

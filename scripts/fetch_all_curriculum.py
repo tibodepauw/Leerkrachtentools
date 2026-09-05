@@ -16,12 +16,32 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+from local_env import load_local_env
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = Path(__file__).resolve().parent
+
+SECUNDAIR_PACKAGES = (
+    ("requests", "requests"),
+    ("bs4", "beautifulsoup4"),
+    ("docx", "python-docx"),
+    ("pypdf", "pypdf"),
+)
+
+
+def missing_modules(packages: tuple[tuple[str, str], ...]) -> list[str]:
+    missing: list[str] = []
+    for module, pip_name in packages:
+        try:
+            __import__(module)
+        except ImportError:
+            missing.append(pip_name)
+    return missing
 
 
 def run_step(label: str, command: list[str]) -> int:
@@ -55,6 +75,27 @@ def main() -> int:
     )
 
     python = sys.executable
+    load_local_env(ROOT)
+
+    if not args.domains_only and not args.skip_secundair:
+        missing = missing_modules(SECUNDAIR_PACKAGES)
+        if missing:
+            logging.error(
+                "Python-pakketten ontbreken: %s. Installeer ze eerst met "
+                "`pip install -r scripts/requirements-curriculum.txt`.",
+                ", ".join(missing),
+            )
+            return 1
+
+    api_key = os.environ.get("ONDERWIJSDOELEN_API_KEY", "").strip()
+    if not api_key:
+        logging.error(
+            "ONDERWIJSDOELEN_API_KEY ontbreekt. Zet de key in .env.local "
+            "(zie .env.example) of exporteer die in je shell. "
+            "Zonder key stopt de OKAN/BuBaO/BuSO/DKO-fetch."
+        )
+        return 1
+
     failures = 0
 
     if not args.domains_only and not args.skip_secundair:

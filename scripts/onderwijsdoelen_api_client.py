@@ -12,6 +12,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from education_record_schema import normalize_api_goal_record
+from local_env import load_local_env
 
 logger = logging.getLogger("onderwijsdoelen_api_client")
 
@@ -23,11 +24,13 @@ USER_AGENT = (
 
 
 def resolve_api_key(api_key: str | None = None) -> str:
+    load_local_env()
     key = (api_key or os.environ.get("ONDERWIJSDOELEN_API_KEY", "")).strip()
     if not key:
         raise ValueError(
-            "ONDERWIJSDOELEN_API_KEY ontbreekt. Zet de key in .env.local of "
-            "exporteer die voor fetch-scripts (zie docs/curriculum-bronnen-urls.md)."
+            "ONDERWIJSDOELEN_API_KEY ontbreekt. Zet de key in .env.local "
+            "(npm run fetch:all laadt dat bestand automatisch) of exporteer "
+            "die voor fetch-scripts (zie docs/curriculum-bronnen-urls.md)."
         )
     return key
 
