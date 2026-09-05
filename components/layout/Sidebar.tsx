@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/shared/ProfileAvatar";
-import { WordmarkLogo } from "@/components/shared/WordmarkLogo";
+import { LtMark, WordmarkLogo } from "@/components/shared/WordmarkLogo";
 import { tierBadgeLabel } from "@/components/shared/TierBadge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -36,7 +36,11 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useModuleAccess } from "@/components/auth/ModuleAccessProvider";
-import { useSidebarLayout } from "@/hooks/useSidebarLayout";
+import {
+  SIDEBAR_MOBILE_WIDTH,
+  sidebarShowsWordmark,
+  useSidebarLayout,
+} from "@/hooks/useSidebarLayout";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { SidebarFeedback } from "@/components/layout/SidebarFeedback";
 import {
@@ -219,11 +223,13 @@ function accountLabel(account: AccountSummary) {
 function SidebarContent({
   account,
   collapsed,
+  width,
   onNavigate,
   pinMotion = false,
 }: {
   account: AccountSummary;
   collapsed: boolean;
+  width: number;
   onNavigate?: () => void;
   pinMotion?: boolean;
 }) {
@@ -235,6 +241,7 @@ function SidebarContent({
   const setActiveModule = useLessonStore((state) => state.setActiveModule);
   const togglePinnedModule = useLessonStore((state) => state.togglePinnedModule);
   const { toggleCollapsed } = useSidebarLayout();
+  const showWordmark = sidebarShowsWordmark(width, collapsed);
   const { canAccessModule } = useModuleAccess();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showBottomFade, setShowBottomFade] = useState(false);
@@ -323,8 +330,12 @@ function SidebarContent({
               <TooltipContent side="right">Zijbalk uitvouwen</TooltipContent>
             </Tooltip>
           ) : (
-            <div className="flex w-full min-w-0 items-center justify-between gap-2 overflow-visible">
-              <WordmarkLogo size="sm" className="min-w-0 flex-1 overflow-visible" />
+            <div className="flex w-full min-w-0 items-center justify-end gap-2 overflow-hidden">
+              {showWordmark ? (
+                <WordmarkLogo size="sm" className="mr-auto min-w-0 flex-1 overflow-visible" />
+              ) : (
+                <LtMark className="mr-auto" />
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -560,7 +571,12 @@ export function Sidebar({ account }: { account: AccountSummary }) {
           !isResizing && "transition-[width] duration-200 ease-out",
         )}
       >
-        <SidebarContent account={account} collapsed={collapsed} pinMotion />
+        <SidebarContent
+          account={account}
+          collapsed={collapsed}
+          width={width}
+          pinMotion
+        />
         <SidebarResizeHandle />
       </aside>
       <div className="fixed left-3 top-3 z-50 lg:hidden">
@@ -574,6 +590,7 @@ export function Sidebar({ account }: { account: AccountSummary }) {
             <SidebarContent
               account={account}
               collapsed={false}
+              width={SIDEBAR_MOBILE_WIDTH}
               onNavigate={() => setMobileOpen(false)}
             />
           </SheetContent>

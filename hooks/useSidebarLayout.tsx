@@ -15,6 +15,13 @@ export const SIDEBAR_MIN_WIDTH = 200;
 export const SIDEBAR_MAX_WIDTH = 360;
 export const SIDEBAR_COLLAPSED_WIDTH = 72;
 export const SIDEBAR_COLLAPSE_THRESHOLD = 140;
+/** Compact `WordmarkLogo` (`12em` at ~1rem) plus collapse control. */
+export const SIDEBAR_WORDMARK_MIN_WIDTH = 280;
+export const SIDEBAR_MOBILE_WIDTH = 288;
+
+export function sidebarShowsWordmark(width: number, collapsed = false) {
+  return !collapsed && width >= SIDEBAR_WORDMARK_MIN_WIDTH;
+}
 
 const STORAGE_BASE_KEY = "leerkrachtentools-sidebar-width";
 

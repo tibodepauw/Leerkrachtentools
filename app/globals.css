@@ -282,6 +282,15 @@
   height: 1.5em;
 }
 
+.wordmark-logo--lt.wordmark-loader {
+  width: 2.15em;
+  height: 1.5em;
+}
+
+.wordmark-logo--lt.wordmark-loader--compact-gather .wordmark-loader__letter--gather {
+  animation-duration: 0.55s;
+}
+
 .wordmark-logo--md.wordmark-loader {
   font-size: clamp(0.625rem, 2.8vw, 0.8125rem);
   height: 1.45em;
