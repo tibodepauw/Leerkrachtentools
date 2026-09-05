@@ -21,6 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import {
+  defaultModelForProvider,
+  pickPreferredModelId,
+} from "@/lib/ai/usableModels";
 
 type ProviderName =
   | "google"
@@ -70,6 +74,64 @@ export function ApiKeysSettings() {
   const [apiKey, setApiKey] = useState("");
   const [cloudflareAccountId, setCloudflareAccountId] = useState("");
   const [models, setModels] = useState<ListedModel[]>([]);
+  const [detectError, setDetectError] = useState<string | null>(null);
+
+  async function loadProviderModels(input: {
+    provider: ProviderName;
+    apiKey?: string;
+    cloudflareAccountId?: string;
+    silent?: boolean;
+  }) {
+    setDetecting(true);
+    setDetectError(null);
+    try {
+      const response = await fetch("/api/account/list-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: input.provider,
+          apiKey: input.apiKey?.trim() || undefined,
+          cloudflareAccountId:
+            input.provider === "cloudflare"
+              ? input.cloudflareAccountId?.trim() || undefined
+              : undefined,
+        }),
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        models?: ListedModel[];
+      };
+      if (!response.ok) {
+        const message =
+          payload.error ?? "Modellen konden niet worden opgehaald.";
+        setDetectError(message);
+        if (!input.silent) toast.error(message);
+        return;
+      }
+      const detected = payload.models ?? [];
+      setModels(detected);
+      if (detected.length > 0) {
+        setSettings((current) => ({
+          ...current,
+          model: pickPreferredModelId(
+            detected,
+            current.model,
+            defaultModelForProvider(current.provider),
+          ),
+        }));
+      }
+      if (!input.silent) {
+        toast.success(`${detected.length} model(len) gevonden.`);
+      }
+    } catch {
+      const message =
+        "Modellen detecteren mislukt. Controleer je verbinding en probeer opnieuw.";
+      setDetectError(message);
+      if (!input.silent) toast.error(message);
+    } finally {
+      setDetecting(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +150,17 @@ export function ApiKeysSettings() {
       setSavedProvider(payload.provider);
       setCloudflareAccountId(payload.cloudflareAccountId ?? "");
       setLoading(false);
+      if (
+        payload.enabled &&
+        payload.hasApiKey &&
+        !payload.credentialError
+      ) {
+        await loadProviderModels({
+          provider: payload.provider,
+          cloudflareAccountId: payload.cloudflareAccountId ?? "",
+          silent: true,
+        });
+      }
     })();
 
     return () => {
@@ -96,46 +169,11 @@ export function ApiKeysSettings() {
   }, []);
 
   async function detectModels() {
-    setDetecting(true);
-    try {
-      const response = await fetch("/api/account/list-models", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: settings.provider,
-          apiKey: apiKey.trim() || undefined,
-          cloudflareAccountId:
-            settings.provider === "cloudflare"
-              ? cloudflareAccountId.trim() || undefined
-              : undefined,
-        }),
-      });
-      const payload = (await response.json()) as {
-        error?: string;
-        models?: ListedModel[];
-      };
-      if (!response.ok) {
-        toast.error(payload.error ?? "Modellen konden niet worden opgehaald.");
-        return;
-      }
-      const detected = payload.models ?? [];
-      setModels(detected);
-      if (detected.length > 0) {
-        setSettings((current) => ({
-          ...current,
-          model: detected.some((model) => model.id === current.model)
-            ? current.model
-            : detected[0]!.id,
-        }));
-      }
-      toast.success(`${detected.length} model(len) gevonden.`);
-    } catch {
-      toast.error(
-        "Modellen detecteren mislukt. Controleer je verbinding en probeer opnieuw.",
-      );
-    } finally {
-      setDetecting(false);
-    }
+    await loadProviderModels({
+      provider: settings.provider,
+      apiKey,
+      cloudflareAccountId,
+    });
   }
 
   async function saveSettings(event: FormEvent) {
@@ -169,6 +207,13 @@ export function ApiKeysSettings() {
         ? "API-keys opgeslagen en actief."
         : "API-keys uitgeschakeld.",
     );
+    if (payload.enabled && payload.hasApiKey && !payload.credentialError) {
+      void loadProviderModels({
+        provider: payload.provider,
+        cloudflareAccountId: payload.cloudflareAccountId ?? "",
+        silent: true,
+      });
+    }
   }
 
   if (loading) {
@@ -223,12 +268,25 @@ export function ApiKeysSettings() {
                 <Select
                   value={settings.provider}
                   onValueChange={(value) => {
+                    const provider = value as ProviderName;
                     setSettings((current) => ({
                       ...current,
-                      provider: value as ProviderName,
+                      provider,
                       model: "",
                     }));
                     setModels([]);
+                    setDetectError(null);
+                    if (
+                      provider === savedProvider &&
+                      settings.hasApiKey &&
+                      !settings.credentialError
+                    ) {
+                      void loadProviderModels({
+                        provider,
+                        cloudflareAccountId,
+                        silent: true,
+                      });
+                    }
                   }}
                 >
                   <SelectTrigger id="ai-provider" className="w-full">
@@ -306,7 +364,12 @@ export function ApiKeysSettings() {
                     <SelectTrigger id="ai-model" className="min-w-0 w-full">
                       <SelectValue placeholder="Selecteer model" />
                     </SelectTrigger>
-                    <SelectContent position="popper" align="start" side="bottom">
+                    <SelectContent
+                      position="popper"
+                      align="start"
+                      side="bottom"
+                      className="max-h-72"
+                    >
                       {models.length > 0 ? (
                         models.map((model) => (
                           <SelectItem key={model.id} value={model.id}>
@@ -335,6 +398,13 @@ export function ApiKeysSettings() {
                     Modellen detecteren
                   </Button>
                 </div>
+                {detectError ? (
+                  <p className="text-xs text-red-400">{detectError}</p>
+                ) : models.length === 0 ? (
+                  <p className="text-xs text-neutral-500">
+                    Haal de modellijst op om een ander model te kiezen.
+                  </p>
+                ) : null}
               </div>
             </>
           ) : null}
