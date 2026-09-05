@@ -39,11 +39,14 @@ const AI_API_PATHS = new Set([
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 
 function isPublicPath(pathname: string) {
-  if (pathname === "/" || pathname === "/privacy") return true;
+  if (pathname === "/" || pathname === "/privacy" || pathname === "/offline") {
+    return true;
+  }
   if (pathname.startsWith("/wordmark-export")) return true;
   if (PUBLIC_API_PATHS.has(pathname)) return true;
   if (pathname.startsWith("/_next/")) return true;
   if (pathname === "/favicon.ico") return true;
+  if (pathname === "/sw.js" || pathname === "/manifest.webmanifest") return true;
   if (/\.(?:html|ico|png|jpg|svg|txt|xml|woff2?)$/i.test(pathname)) return true;
   return false;
 }
@@ -165,6 +168,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|woff|woff2)$).*)",
   ],
 };

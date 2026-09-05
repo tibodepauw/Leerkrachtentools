@@ -14,6 +14,8 @@ describe("web security", () => {
     expect(policy).toContain("script-src 'self' 'nonce-nonce-value' 'strict-dynamic'");
     expect(policy).not.toMatch(/script-src[^;]*'unsafe-inline'/);
     expect(policy).toContain("object-src 'none'");
+    expect(policy).toContain("worker-src 'self'");
+    expect(policy).toContain("manifest-src 'self'");
     expect(policy).toContain("upgrade-insecure-requests");
   });
 

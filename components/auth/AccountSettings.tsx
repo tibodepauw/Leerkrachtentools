@@ -36,6 +36,7 @@ import {
   detachClientUserStorage,
 } from "@/lib/storage/clientUserSession";
 import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
+import { PwaInstallCard } from "@/components/pwa/PwaInstallCard";
 import { LoaderSettingsView } from "@/components/settings/LoaderSettingsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 
@@ -147,7 +148,7 @@ export function AccountSettings({
         <div className="mb-8">
           <h1 className="text-2xl font-black tracking-tight">Instellingen</h1>
           <p className="mt-2 text-sm text-neutral-500">
-            Beheer je profiel, status, API-keys en privacy.
+            Beheer je profiel, status, app-installatie, API-keys en privacy.
           </p>
         </div>
 
@@ -268,6 +269,8 @@ export function AccountSettings({
               </div>
             </CardContent>
           </Card>
+
+          <PwaInstallCard />
 
           <div className="xl:col-span-2">
             <ApiKeysSettings />

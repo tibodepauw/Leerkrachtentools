@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Leerkrachtentools">
+  <rect width="512" height="512" fill="#000000"/>
+  <defs>
+    <linearGradient id="lt" x1="256" y1="96" x2="256" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0.3" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#71717a"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#lt)" d="M156 118h96v186h148v80H156z"/>
+</svg>
