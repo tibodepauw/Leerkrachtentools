@@ -15,4 +15,18 @@ describe("CurriculumSearchModeToggle", () => {
     expect(source).toContain("Sparkles");
     expect(source).toContain("Zap");
   });
+
+  it("schuift de metallic pill met left, niet met translateX", () => {
+    const css = readFileSync("app/globals.css", "utf8");
+    const toggle = css.slice(css.indexOf(".search-mode-toggle {"));
+
+    expect(toggle).toMatch(/overflow:\s*hidden/);
+    expect(toggle).toMatch(
+      /\.search-mode-toggle\[data-mode="pro"\] \.search-mode-toggle__thumb \{\s*left:\s*50%;/,
+    );
+    expect(toggle).not.toMatch(/translateX\(100%\)/);
+    expect(toggle).toMatch(
+      /background:\s*linear-gradient\(180deg, var\(--gl-btn-from\) 0%, var\(--gl-btn-to\) 100%\)/,
+    );
+  });
 });
