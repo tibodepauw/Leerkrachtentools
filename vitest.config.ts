@@ -20,6 +20,7 @@ export default defineConfig({
       AUTH_SECRET: "test-auth-secret-with-at-least-32-characters",
       API_KEY_ENCRYPTION_SECRET:
         "test-encryption-secret-with-at-least-32-characters",
+      APP_ORIGIN: "",
     },
   },
 });

@@ -1,10 +1,14 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   contentSecurityPolicy,
   isSameOriginMutation,
 } from "@/lib/http/security";
 
 describe("web security", () => {
+  beforeEach(() => {
+    vi.stubEnv("APP_ORIGIN", "");
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
   });
