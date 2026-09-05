@@ -61,7 +61,7 @@ export function FullAuditView() {
         result ? (
           <div className="space-y-4">
             <Card>
-              <CardContent className="space-y-3 pt-5">
+              <CardContent className="space-y-3">
                 <div className="flex items-end justify-between">
                   <p className="text-sm text-neutral-500">Totale kwaliteitsscore</p>
                   <p className="text-3xl font-semibold">{result.data.score}%</p>

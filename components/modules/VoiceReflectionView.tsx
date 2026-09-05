@@ -125,7 +125,7 @@ export function VoiceReflectionView() {
                 />
               </div>
               <Card>
-                <CardContent className="flex items-center justify-between gap-3 pt-5">
+                <CardContent className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">Microfoonopname</p>
                     <p className="text-xs text-neutral-500">{recorder.audio ? "Opname klaar" : recorder.recording ? `${recorder.duration}s opgenomen` : "Optioneel"}</p>

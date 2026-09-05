@@ -81,7 +81,7 @@ export function GoalOptimizerView() {
           <div className="space-y-4">
             {isAlreadyGood ? (
               <Card>
-                <CardContent className="space-y-3 pt-5">
+                <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="size-5" />
                     <p className="font-medium">Dit doel is al goed</p>
@@ -112,7 +112,7 @@ export function GoalOptimizerView() {
             {!isAlreadyGood ? (
               <>
                 <Card>
-                  <CardContent className="space-y-3 pt-5 text-sm">
+                  <CardContent className="space-y-3 text-sm">
                     <p>{result.data.rationale}</p>
                     {result.data.removedTerms.length > 0 && (
                       <p className="text-neutral-500">
