@@ -1,8 +1,9 @@
-const CACHE_NAME = "lt-shell-v1";
+const CACHE_NAME = "lt-shell-v2";
 const PRECACHE_URLS = [
   "/offline",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
+  "/icons/icon-512-maskable.png",
   "/apple-touch-icon.png",
 ];
 

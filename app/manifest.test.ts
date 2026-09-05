@@ -31,4 +31,38 @@ describe("web app manifest", () => {
     expect(apple.width).toBe(180);
     expect(readFileSync("public/icons/icon-192.png")[0]).toBe(0x89);
   });
+
+  it("zet LT in Rubik Black met dezelfde gather-tilt als het profielicoon", async () => {
+    const svg = readFileSync("public/icons/icon.svg", "utf8");
+    const generator = readFileSync("scripts/generate-pwa-icons.mjs", "utf8");
+    expect(svg).toContain('id="hsGrid"');
+    expect(svg).toContain('stop-color="#71717a"');
+    expect(svg).toContain('fill="#000000"');
+    expect(svg).toContain("rotate(-12");
+    expect(svg).toContain("rotate(12");
+    expect(svg).toContain("M586 0");
+    expect(svg).toContain("L309 -205L586 -205");
+    expect(svg).toContain("L210 -485L44 -485");
+    expect(generator).toContain("GAP = 24");
+    expect(generator).toContain("L_ADVANCE = 626");
+    expect(generator).toContain("ROT_L = -12");
+    expect(generator).toContain("ROT_T = 12");
+
+    const { data, info } = await sharp("public/icons/icon-512.png")
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const y = 130;
+    const runs: number[] = [];
+    let start = -1;
+    for (let x = 0; x <= info.width; x += 1) {
+      const on =
+        x < info.width && data[(y * info.width + x) * info.channels] > 50;
+      if (on && start < 0) start = x;
+      if (!on && start >= 0) {
+        runs.push(x - start);
+        start = -1;
+      }
+    }
+    expect(runs.length).toBeGreaterThanOrEqual(2);
+  });
 });

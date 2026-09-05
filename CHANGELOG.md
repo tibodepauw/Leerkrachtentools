@@ -4,10 +4,15 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
-## [Unreleased]
+## [5.17.0] - 2026-09-05
+
+Installable PWA with standalone display and a huisstijl gather LT app icon.
 
 ### Added
 - Installable PWA with standalone display, app icons, an offline page, and an install card in Settings
+
+### Changed
+- PWA app icon uses gather-tilted Rubik Black LT with the huisstijl title gradient and dotted grid
 
 ---
 

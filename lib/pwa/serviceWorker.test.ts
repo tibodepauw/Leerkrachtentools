@@ -19,6 +19,7 @@ describe("PWA service worker", () => {
   it("precache't alleen de offlinelijn en iconen", () => {
     expect(sw).toContain('"/offline"');
     expect(sw).toContain('"/icons/icon-192.png"');
+    expect(sw).toContain("lt-shell-v2");
     expect(sw).toContain("self.skipWaiting()");
     expect(sw).toContain("self.clients.claim()");
   });
