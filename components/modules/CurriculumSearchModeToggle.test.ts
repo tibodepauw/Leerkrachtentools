@@ -14,6 +14,8 @@ describe("CurriculumSearchModeToggle", () => {
     expect(source).toContain('role="radiogroup"');
     expect(source).toContain("Sparkles");
     expect(source).toContain("Zap");
+    expect(source).not.toContain("Directe catalogus");
+    expect(source).not.toContain("Didactische assistent");
   });
 
   it("schuift de metallic pill met left, niet met translateX", () => {

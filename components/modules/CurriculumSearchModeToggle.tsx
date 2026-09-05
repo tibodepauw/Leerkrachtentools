@@ -9,21 +9,10 @@ export type CurriculumSearchMode = "snel" | "pro";
 const OPTIONS: Array<{
   value: CurriculumSearchMode;
   label: string;
-  hint: string;
   icon: typeof Zap;
 }> = [
-  {
-    value: "snel",
-    label: "Snel",
-    hint: "Directe catalogus: toont snel de beste treffers voor een code of trefwoord.",
-    icon: Zap,
-  },
-  {
-    value: "pro",
-    label: "Pro",
-    hint: "Didactische assistent: analyseert je lesactiviteit en stelt 2 of 3 beargumenteerde doelen voor.",
-    icon: Sparkles,
-  },
+  { value: "snel", label: "Snel", icon: Zap },
+  { value: "pro", label: "Pro", icon: Sparkles },
 ];
 
 export function CurriculumSearchModeToggle({
@@ -33,8 +22,6 @@ export function CurriculumSearchModeToggle({
   value: CurriculumSearchMode;
   onChange: (value: CurriculumSearchMode) => void;
 }) {
-  const active = OPTIONS.find((option) => option.value === value) ?? OPTIONS[0];
-
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
       return;
@@ -73,7 +60,6 @@ export function CurriculumSearchModeToggle({
           );
         })}
       </div>
-      <p className="text-xs leading-5 text-neutral-500">{active.hint}</p>
     </div>
   );
 }
