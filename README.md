@@ -94,6 +94,7 @@ Curriculum search is **retrieval only** (no generative AI in the matcher itself)
 - Marketing email preference (opt-in, off by default)
 - In-app feedback form (idea, feedback, bug)
 - App version and build info with link to GitHub releases
+- Install as a PWA from Settings (standalone app on phone, tablet, or computer)
 
 ## Curriculum data
 

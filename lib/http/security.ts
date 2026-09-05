@@ -9,6 +9,8 @@ export function contentSecurityPolicy(nonce: string, development: boolean) {
     "media-src 'self' blob:",
     "connect-src 'self'",
     "font-src 'self' data:",
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "object-src 'none'",
     "frame-src 'self' blob:",
     "frame-ancestors 'none'",

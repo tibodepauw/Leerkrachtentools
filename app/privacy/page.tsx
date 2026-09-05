@@ -68,7 +68,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="mb-2 font-semibold text-white">4. Lesgegevens, lokale opslag en AI-providers</h2>
             <p>
-              Onze centrale accountdatabase bewaart <strong>geen</strong> lesvoorbereidingen, klasgegevens of ingediende teksten. De actieve lescontext staat uitsluitend lokaal opgeslagen in je eigen browser (via IndexedDB en lokale opslag).
+              Onze centrale accountdatabase bewaart <strong>geen</strong> lesvoorbereidingen, klasgegevens of ingediende teksten. De actieve lescontext staat uitsluitend lokaal opgeslagen in je eigen browser (via IndexedDB en lokale opslag). Als je de app installeert, bewaart de browser alleen een cache van statische bestanden (iconen, scripts en de offlinelijn). Lesinhoud, API-antwoorden en sessies gaan niet in die cache.
             </p>
             <p className="mt-2">
               Wanneer je expliciet een AI-analyse uitvoert (bv. Doelverbeteraar, Taalfoutencheck of Audits), wordt uitsluitend de voor die specifieke actie benodigde tekst naar de geconfigureerde AI-provider verstuurd. Dit kan Google (Gemini), Groq, Cerebras, SambaNova of Cloudflare Workers AI zijn, afhankelijk van de instellingen.

@@ -16,6 +16,7 @@
     "export:secundair": "python3 scripts/export_secundair_zip.py",
     "export:banner": "node scripts/export-banner-prod.mjs",
     "export:banner:dev": "node scripts/export-banner-assets.mjs",
+    "export:pwa-icons": "node scripts/generate-pwa-icons.mjs",
     "security:audit": "node scripts/audit-production-dependencies.mjs"
   },
   "dependencies": {
