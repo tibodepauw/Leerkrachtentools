@@ -52,6 +52,10 @@ const TECH_HIGH_IDF_STEMS = [
   "techniek",
   "kilo",
   "gereedschap",
+  "handzaag",
+  "schuurpapier",
+  "schuurblok",
+  "zaagbeugel",
   "zaag",
   "schuur",
   "hout",
@@ -139,6 +143,10 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
       /handzaag|schuurpapier|schuurblok|zaagbeugel|\bzaag\b|gereedschap|schuur|fotokader/i,
     stems: [
       "gereedschap",
+      "handzaag",
+      "schuurpapier",
+      "schuurblok",
+      "zaagbeugel",
       "techniek",
       "zaag",
       "schuur",
@@ -714,7 +722,44 @@ function expandFuzzyCanonicalStems(tokens: Set<string>, normalized: string): voi
   }
 }
 
+const TOKENIZE_QUERY_CACHE_LIMIT = 64;
+const tokenizeQueryCache = new Map<string, readonly string[]>();
+
+const GENERIC_RETRIEVAL_STEMS = new Set([
+  "nederlands",
+  "schrijven",
+  "schrijf",
+  "techniek",
+  "technisch",
+  "veilig",
+  "materiaal",
+  "ontwerp",
+  "woorden",
+  "woord",
+  "taal",
+  "gebruiken",
+  "gebruik",
+  "maken",
+  "kennen",
+  "kunnen",
+  "toepassen",
+  "passen",
+  "lezen",
+  "manier",
+  "regels",
+  "regel",
+  "leerling",
+  "leerlingen",
+]);
+
 export function tokenizeCurriculumQuery(value: string): Set<string> {
+  const cached = tokenizeQueryCache.get(value);
+  if (cached) {
+    tokenizeQueryCache.delete(value);
+    tokenizeQueryCache.set(value, cached);
+    return new Set(cached);
+  }
+
   const normalized = normalizeQueryText(value);
   const tokens = tokenize(normalized);
 
@@ -734,6 +779,39 @@ export function tokenizeCurriculumQuery(value: string): Set<string> {
 
   for (const stopword of DIDACTIC_STOPWORDS) {
     tokens.delete(stopword);
+  }
+
+  const snapshot = [...tokens];
+  tokenizeQueryCache.set(value, snapshot);
+  if (tokenizeQueryCache.size > TOKENIZE_QUERY_CACHE_LIMIT) {
+    const oldest = tokenizeQueryCache.keys().next().value;
+    if (oldest !== undefined) {
+      tokenizeQueryCache.delete(oldest);
+    }
+  }
+
+  return new Set(snapshot);
+}
+
+export function distinctiveCurriculumTokens(query: string): Set<string> {
+  const tokens = new Set<string>();
+
+  for (const token of extractContentTokens(query)) {
+    if (GENERIC_RETRIEVAL_STEMS.has(token)) {
+      continue;
+    }
+    if (token.length >= 7 || /\d/u.test(token)) {
+      tokens.add(token);
+    }
+  }
+
+  for (const token of tokenizeCurriculumQuery(query)) {
+    if (GENERIC_RETRIEVAL_STEMS.has(token)) {
+      continue;
+    }
+    if (isHighIdfToken(token, query) || token.length >= 7) {
+      tokens.add(token);
+    }
   }
 
   return tokens;

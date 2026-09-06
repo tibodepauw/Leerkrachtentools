@@ -25,7 +25,7 @@ export type RagQueryCacheScope = {
 };
 
 const STORAGE_KEY = "leerkrachtentools-rag-query-cache";
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 type StoredRagQueryCache = {
   version: number;
@@ -133,6 +133,14 @@ export function readRagQueryCache<T>(
   return entry as CachedRagQueryResult<T>;
 }
 
+export function isEmptyRagQueryPayload(data: unknown): boolean {
+  if (!data || typeof data !== "object") {
+    return true;
+  }
+  const goal = (data as { goal?: unknown }).goal;
+  return goal == null || goal === "niet gevonden";
+}
+
 export function writeRagQueryCache<T>(
   endpoint: RagQueryEndpoint,
   educationLevel: EducationLevelFilter,
@@ -143,6 +151,9 @@ export function writeRagQueryCache<T>(
 ): void {
   const normalized = normalizeCachedQuery(query);
   if (!normalized) {
+    return;
+  }
+  if (isEmptyRagQueryPayload(payload.data)) {
     return;
   }
 

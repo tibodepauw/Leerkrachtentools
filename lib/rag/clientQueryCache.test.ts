@@ -197,4 +197,27 @@ describe("clientQueryCache", () => {
       )?.data.goal,
     ).toBe("pro");
   });
+
+  it("slaat lege zoekresultaten niet op", () => {
+    writeRagQueryCache(
+      "rag-minimum-goals",
+      "BASISONDERWIJS",
+      "-",
+      "open en gesloten lettergreep",
+      {
+        data: { goal: "niet gevonden", alternatives: [] },
+        provider: "jsonl-corpus",
+        fallbackErrors: [],
+      },
+    );
+
+    expect(
+      readRagQueryCache(
+        "rag-minimum-goals",
+        "BASISONDERWIJS",
+        "-",
+        "open en gesloten lettergreep",
+      ),
+    ).toBeNull();
+  });
 });

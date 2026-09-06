@@ -9,6 +9,8 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ### Fixed
 - Minimumdoelen finds Nederlands spelling and Wetenschap & Techniek goals that the math-only fixture previously missed
 - Minimumdoelen scoring keeps OPSTAP titles and AHOVOKS descriptions, and uses the same stopword and stem matching as Leerplandoelen
+- Minimumdoelen search on the full Op.stap catalog keeps rare terms such as lettergreep and handzaag instead of flooding the ranking with generic words
+- Empty Minimumdoelen and Leerplandoelen searches are no longer stored in the browser session cache
 
 ---
 

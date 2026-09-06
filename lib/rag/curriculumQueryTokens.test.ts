@@ -20,6 +20,7 @@ import {
   scoreCurriculumOverlap,
   scoreDisciplineBonus,
   tokenizeCurriculumQuery,
+  distinctiveCurriculumTokens,
 } from "@/lib/rag/curriculumQueryTokens";
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
 
@@ -54,6 +55,28 @@ describe("curriculumQueryTokens", () => {
     expect(tools.has("gereedschap")).toBe(true);
     expect(tools.has("zaag")).toBe(true);
     expect(tools.has("schuur")).toBe(true);
+    expect(tools.has("handzaag")).toBe(true);
+  });
+
+  it("houdt zeldzame spelling- en gereedschapstermen als kenmerkende tokens", () => {
+    const spelling = distinctiveCurriculumTokens(
+      "De leerlingen passen de regels van de open en gesloten lettergreep toe bij het schrijven van woorden met dubbele medeklinkers",
+    );
+    expect(spelling.has("lettergreep")).toBe(true);
+    expect(spelling.has("medeklinkers") || spelling.has("medeklinker")).toBe(
+      true,
+    );
+    expect(spelling.has("open")).toBe(false);
+    expect(spelling.has("nederlands")).toBe(false);
+    expect(spelling.has("schrijven")).toBe(false);
+
+    const tools = distinctiveCurriculumTokens(
+      "De leerlingen gebruiken een handzaag en schuurpapier op een veilige manier om een houten fotokadertje te maken",
+    );
+    expect(tools.has("handzaag")).toBe(true);
+    expect(tools.has("schuurpapier")).toBe(true);
+    expect(tools.has("gebruiken")).toBe(false);
+    expect(tools.has("techniek")).toBe(false);
   });
 
   it("matcht maaltafels op vermenigvuldigen", () => {
