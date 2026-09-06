@@ -183,7 +183,8 @@ describe("RAG minimumdoelen Pro-modus", () => {
 
   it("houdt alleen grounded officiële minimumdoelcodes over", async () => {
     vi.mocked(runStructured).mockResolvedValueOnce({
-      provider: "mock",
+      provider: "google",
+      fallbackErrors: [],
       data: {
         picks: [
           {
