@@ -5,7 +5,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import type { LanguageModel } from "ai";
 import type { UserAiConfig } from "@/lib/ai/userCredentials";
 import { userAiConfigHasCredentials } from "@/lib/ai/userCredentials";
-import { defaultModelForProvider } from "@/lib/ai/listModels";
+import { defaultModelForProvider } from "@/lib/ai/usableModels";
 import { getGoogleModelId } from "@/lib/ai/googleModel";
 
 export type ProviderName =

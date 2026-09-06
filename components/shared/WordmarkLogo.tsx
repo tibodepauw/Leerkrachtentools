@@ -4,26 +4,36 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { WordmarkLoader } from "@/components/shared/WordmarkLoader";
+import {
+  LT_WORDMARK_LETTERS,
+  WORDMARK_LETTERS,
+  type WordmarkLetter,
+} from "@/lib/wordmark/letters";
 import { cn } from "@/lib/utils";
 
 interface WordmarkLogoProps {
   size?: "sm" | "md";
   className?: string;
   href?: string;
+  letters?: readonly WordmarkLetter[];
 }
 
-/** Compact gather: 0.8s duration + last letter stagger (16 × 32ms). */
-const GATHER_ANIMATION_MS = 1350;
+function gatherAnimationMs(letterCount: number, compactLt: boolean) {
+  if (compactLt) return 620;
+  return 800 + Math.max(0, letterCount - 1) * 32 + 50;
+}
 
 export function WordmarkLogo({
   size = "md",
   className,
   href = "/",
+  letters = WORDMARK_LETTERS,
 }: WordmarkLogoProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [playing, setPlaying] = useState(false);
   const [playKey, setPlayKey] = useState(0);
+  const compactLt = letters === LT_WORDMARK_LETTERS;
 
   const finishGather = useCallback(() => {
     setPlaying(false);
@@ -34,9 +44,12 @@ export function WordmarkLogo({
 
   useEffect(() => {
     if (!playing) return;
-    const timer = window.setTimeout(finishGather, GATHER_ANIMATION_MS);
+    const timer = window.setTimeout(
+      finishGather,
+      gatherAnimationMs(letters.length, compactLt),
+    );
     return () => window.clearTimeout(timer);
-  }, [playing, playKey, finishGather]);
+  }, [playing, playKey, finishGather, letters.length, compactLt]);
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
@@ -49,10 +62,12 @@ export function WordmarkLogo({
       key={playKey}
       variant={playing ? "gather" : "static"}
       compactAnimation
+      letters={letters}
       className={cn(
         "wordmark-logo",
         `wordmark-logo--${size}`,
-        playing && "wordmark-logo--animating",
+        compactLt && "wordmark-logo--lt",
+        playing && !compactLt && "wordmark-logo--animating",
       )}
     />
   );
@@ -74,5 +89,16 @@ export function WordmarkLogo({
     >
       {logo}
     </Link>
+  );
+}
+
+/** Short gather LT, same letters as the long sidebar wordmark. */
+export function LtMark({ className }: { className?: string }) {
+  return (
+    <WordmarkLogo
+      size="sm"
+      letters={LT_WORDMARK_LETTERS}
+      className={className}
+    />
   );
 }

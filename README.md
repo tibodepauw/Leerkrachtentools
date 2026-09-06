@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v5.17.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Version](https://img.shields.io/badge/version-v5.18.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 [![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
@@ -120,10 +120,8 @@ Domain corpusdata (`data/okan/`, `data/bubao/`, …) en secundaire corpusdata (`
 Maintenance scripts (optional, not required to run the app UI):
 
 ```bash
-pip install -r scripts/requirements-curriculum.txt
-playwright install chromium   # for portal fallback + ZILL/OVSG scrapers
-
-# All education domains (OKAN through hoger onderwijs) + secundair in one run
+# npm run fetch:all installs Python packages and Playwright Chromium if needed.
+# Optional: ONDERWIJSDOELEN_API_KEY in .env.local (faster than the public portal fallback)
 npm run fetch:all
 
 # Only AHOVOKS domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger)
@@ -286,6 +284,6 @@ Before exposing the service publicly:
 
 ## Releases
 
-Current version: **5.17.0**
+Current version: **5.18.0**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).

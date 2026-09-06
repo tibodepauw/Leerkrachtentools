@@ -108,7 +108,7 @@ export function DialogueFormatterView() {
               <CopyButton value={result.data.formatted} />
             </div>
             <Card>
-              <CardContent className="whitespace-pre-wrap pt-5 text-sm leading-7">
+              <CardContent className="whitespace-pre-wrap text-sm leading-7">
                 {result.data.formatted}
               </CardContent>
             </Card>

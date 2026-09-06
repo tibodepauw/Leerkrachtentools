@@ -1,7 +1,9 @@
 import "server-only";
 
 import type { ProviderName } from "@/lib/ai/providers";
-import { getGoogleModelId } from "@/lib/ai/googleModel";
+import { isUsableChatModelId } from "@/lib/ai/usableModels";
+
+export { defaultModelForProvider } from "@/lib/ai/usableModels";
 
 export interface ListedModel {
   id: string;
@@ -14,15 +16,26 @@ const cloudflareModels: ListedModel[] = [
   { id: "@cf/mistral/mistral-small-3.1-24b-instruct", label: "Mistral Small 3.1 24B" },
 ];
 
+function uniqueModels(models: ListedModel[]) {
+  const seen = new Set<string>();
+  return models.filter((model) => {
+    if (!model.id || seen.has(model.id)) return false;
+    seen.add(model.id);
+    return true;
+  });
+}
+
 function openAiCompatibleModels(
+  provider: Exclude<ProviderName, "google" | "cloudflare">,
   body: { data?: Array<{ id?: string }> },
-  filter?: (id: string) => boolean,
 ) {
-  return (body.data ?? [])
-    .map((entry) => entry.id)
-    .filter((id): id is string => typeof id === "string" && id.length > 0)
-    .filter((id) => (filter ? filter(id) : true))
-    .map((id) => ({ id, label: id }));
+  return uniqueModels(
+    (body.data ?? [])
+      .map((entry) => entry.id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0)
+      .filter((id) => isUsableChatModelId(provider, id))
+      .map((id) => ({ id, label: id })),
+  );
 }
 
 export async function listProviderModels(
@@ -47,15 +60,31 @@ export async function listProviderModels(
         throw new Error(`Google-modellen konden niet worden opgehaald (${response.status}).`);
       }
       const body = (await response.json()) as {
-        models?: Array<{ name?: string; displayName?: string }>;
+        models?: Array<{
+          name?: string;
+          displayName?: string;
+          supportedGenerationMethods?: string[];
+        }>;
       };
-      return (body.models ?? [])
-        .map((model) => {
-          const id = model.name?.replace(/^models\//, "") ?? "";
-          return { id, label: model.displayName ?? id };
-        })
-        .filter((model) => model.id.includes("gemini"))
-        .sort((left, right) => left.label.localeCompare(right.label, "nl"));
+      return uniqueModels(
+        (body.models ?? [])
+          .filter((model) => {
+            const methods = model.supportedGenerationMethods ?? [];
+            return (
+              methods.length === 0 || methods.includes("generateContent")
+            );
+          })
+          .map((model) => {
+            const id = model.name?.replace(/^models\//, "") ?? "";
+            return { id, label: model.displayName ?? id };
+          })
+          .filter(
+            (model) =>
+              model.id.includes("gemini") &&
+              isUsableChatModelId("google", model.id),
+          )
+          .sort((left, right) => left.label.localeCompare(right.label, "nl")),
+      );
     }
     case "groq": {
       const response = await fetch("https://api.groq.com/openai/v1/models", {
@@ -65,7 +94,7 @@ export async function listProviderModels(
       if (!response.ok) {
         throw new Error(`Groq-modellen konden niet worden opgehaald (${response.status}).`);
       }
-      return openAiCompatibleModels(await response.json());
+      return openAiCompatibleModels("groq", await response.json());
     }
     case "cerebras": {
       const response = await fetch("https://api.cerebras.ai/v1/models", {
@@ -77,7 +106,7 @@ export async function listProviderModels(
           `Cerebras-modellen konden niet worden opgehaald (${response.status}).`,
         );
       }
-      return openAiCompatibleModels(await response.json());
+      return openAiCompatibleModels("cerebras", await response.json());
     }
     case "sambanova": {
       const baseUrl =
@@ -91,26 +120,11 @@ export async function listProviderModels(
           `SambaNova-modellen konden niet worden opgehaald (${response.status}).`,
         );
       }
-      return openAiCompatibleModels(await response.json());
+      return openAiCompatibleModels("sambanova", await response.json());
     }
     case "cloudflare":
       return cloudflareModels;
     default:
       return [];
-  }
-}
-
-export function defaultModelForProvider(provider: ProviderName) {
-  switch (provider) {
-    case "google":
-      return getGoogleModelId();
-    case "groq":
-      return "llama-3.3-70b-versatile";
-    case "cerebras":
-      return "llama3.1-8b";
-    case "sambanova":
-      return "Meta-Llama-3.3-70B-Instruct";
-    case "cloudflare":
-      return "@cf/meta/llama-3.1-8b-instruct";
   }
 }

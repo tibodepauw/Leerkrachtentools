@@ -3,11 +3,13 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 SCRIPTS_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from education_record_schema import classify_domain, normalize_api_goal_record
+from fetch_onderwijsdoelen_domains import collect_raw_goals
 
 
 class EducationDomainSchemaTests(unittest.TestCase):
@@ -53,6 +55,21 @@ class EducationDomainSchemaTests(unittest.TestCase):
         assert record is not None
         self.assertEqual(record["onderwijsniveau"], "BUBAO")
         self.assertEqual(record["netwerk"], "AHOVOKS")
+
+    def test_falls_back_to_portal_when_api_key_is_missing(self) -> None:
+        async def fake_portal():
+            return [{"code": "OKAN-1"}]
+
+        with patch(
+            "fetch_onderwijsdoelen_domains.fetch_all_goals",
+            side_effect=ValueError("ONDERWIJSDOELEN_API_KEY ontbreekt"),
+        ), patch(
+            "fetch_onderwijsdoelen_domains.fetch_portal_domain_goals",
+            new=fake_portal,
+        ):
+            raw, source = collect_raw_goals()
+        self.assertEqual(raw, [{"code": "OKAN-1"}])
+        self.assertEqual(source, "www.onderwijsdoelen.be/doelen")
 
 
 if __name__ == "__main__":

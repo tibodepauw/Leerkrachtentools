@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from education_record_schema import export_all_domain_gcs
+from local_env import load_local_env
 from onderwijsdoelen_api_client import (
     fetch_all_goals,
     fetch_portal_dataset,
@@ -54,7 +55,11 @@ def split_by_domain(records: list[dict[str, str]]) -> dict[str, list[dict[str, s
     return grouped
 
 
-def write_domain_outputs(grouped: dict[str, list[dict[str, str]]]) -> dict[str, int]:
+def write_domain_outputs(
+    grouped: dict[str, list[dict[str, str]]],
+    *,
+    source: str,
+) -> dict[str, int]:
     counts: dict[str, int] = {}
     for domain, records in grouped.items():
         meta = DOMAIN_OUTPUT[domain]
@@ -67,7 +72,7 @@ def write_domain_outputs(grouped: dict[str, list[dict[str, str]]]) -> dict[str, 
             "grade_counts": dict(Counter(r.get("graad", "") for r in records)),
             "finaliteit_counts": dict(Counter(r.get("finaliteit", "") for r in records)),
             "discipline_top": dict(Counter(r.get("discipline", "") for r in records).most_common(20)),
-            "source": "onderwijs.api.vlaanderen.be/onderwijsdoelen",
+            "source": source,
         }
         report_path = output.with_name(output.stem + "_report.json")
         report_path.write_text(
@@ -76,6 +81,37 @@ def write_domain_outputs(grouped: dict[str, list[dict[str, str]]]) -> dict[str, 
         )
         logger.info("JSONL %s: %s doelen", output, counts[domain])
     return counts
+
+
+async def fetch_portal_domain_goals() -> list[dict[str, Any]]:
+    collected: list[dict[str, Any]] = []
+    datasets = [
+        dataset
+        for dataset, domain in DATASET_TO_DOMAIN.items()
+        if domain in TARGET_DOMAINS
+    ]
+    for dataset in datasets:
+        logger.info("Portaal dataset %s", dataset)
+        collected.extend(await fetch_portal_dataset(dataset))
+    return collected
+
+
+def collect_raw_goals() -> tuple[list[dict[str, Any]], str]:
+    try:
+        raw = fetch_all_goals()
+        if raw:
+            return raw, "onderwijs.api.vlaanderen.be/onderwijsdoelen"
+        logger.warning("Onderwijsdoelen API gaf geen records terug.")
+    except ValueError as exc:
+        logger.warning("%s", exc)
+    logger.warning(
+        "Val terug op het publieke onderwijsdoelen.be-portaal. "
+        "BuBaO zit niet in die portalsets."
+    )
+    return (
+        asyncio.run(fetch_portal_domain_goals()),
+        "www.onderwijsdoelen.be/doelen",
+    )
 
 
 async def verify_portal_samples() -> dict[str, int]:
@@ -117,22 +153,23 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    load_local_env(ROOT)
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
     try:
-        raw = fetch_all_goals()
+        raw, source = collect_raw_goals()
         if not raw:
-            raise RuntimeError("Geen doelen opgehaald via Onderwijsdoelen API.")
+            raise RuntimeError("Geen doelen opgehaald via API of portaal.")
 
         normalized = normalize_goals(raw)
         grouped = split_by_domain(normalized)
         selected = set(args.domain)
         grouped = {k: v for k, v in grouped.items() if k in selected}
 
-        counts = write_domain_outputs(grouped)
+        counts = write_domain_outputs(grouped, source=source)
 
         if not args.skip_gcs:
             gcs_counts = export_all_domain_gcs(DATA_ROOT)

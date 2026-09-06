@@ -18,6 +18,7 @@ const STOPWORD_TOKEN_WEIGHT = 0;
 const DEFAULT_TOKEN_WEIGHT = 1;
 const MATH_DOMAIN_MULTIPLIER = 5;
 const TECH_DOMAIN_MULTIPLIER = 5;
+const EXPRESSIVE_DOMAIN_MULTIPLIER = 5;
 const WRONG_DOMAIN_MULTIPLIER = 0.18;
 
 const MATH_HIGH_IDF_STEMS = [
@@ -51,6 +52,21 @@ const TECH_HIGH_IDF_STEMS = [
   "techniek",
   "kilo",
 ] as const;
+
+const EXPRESSIVE_HIGH_IDF_STEMS = [
+  "drama",
+  "mimiek",
+  "uitbeeld",
+  "toneel",
+  "lichaamstaal",
+  "lichaamshouding",
+  "emotie",
+  "gevoelens",
+  "rolspel",
+] as const;
+
+const EXPRESSION_TOPIC_PATTERN =
+  /drama|mimiek|uitbeeld|\btoneel\b|lichaamstaal|lichaamshouding|emoties|\bemotie\b|gevoelens|\bgevoel\b|\brolspel\b|\brol\b/i;
 
 const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   {
@@ -91,6 +107,23 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   {
     pattern: /liedje|zingen|\bzang\b|\bdansen\b|\bdans\b|muziek|muzisch/i,
     stems: ["liedje", "zingen", "zang", "dansen", "muzisch", "muziek"],
+  },
+  {
+    pattern: EXPRESSION_TOPIC_PATTERN,
+    stems: [
+      "drama",
+      "mimiek",
+      "uitbeeld",
+      "toneel",
+      "lichaamstaal",
+      "lichaamshouding",
+      "emotie",
+      "gevoelens",
+      "rolspel",
+      "boos",
+      "blij",
+      "bang",
+    ],
   },
   {
     pattern: /tikker|tikkertje|mikken|pionneke|pionnen|\bpion\b/i,
@@ -398,6 +431,10 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
     pattern: /wetenschap|techniek|vulkaan/i,
     discipline: "Wetenschap en techniek",
   },
+  {
+    pattern: EXPRESSION_TOPIC_PATTERN,
+    discipline: "Muzische vorming",
+  },
   { pattern: /muziek|muzisch|zang/i, discipline: "Muzische vorming" },
   { pattern: /godsdienst/i, discipline: "Godsdienst" },
   {
@@ -538,6 +575,10 @@ export function queryMatchesMusicTopic(query: string): boolean {
   );
 }
 
+export function queryMatchesExpressionTopic(query: string): boolean {
+  return EXPRESSION_TOPIC_PATTERN.test(normalizeQueryText(query));
+}
+
 function tokenMatchesHighIdfStem(
   token: string,
   stems: readonly string[],
@@ -560,6 +601,12 @@ function isHighIdfToken(token: string, query: string): boolean {
     return true;
   }
   if (queryMatchesTechTopic(query) && tokenMatchesHighIdfStem(token, TECH_HIGH_IDF_STEMS)) {
+    return true;
+  }
+  if (
+    queryMatchesExpressionTopic(query) &&
+    tokenMatchesHighIdfStem(token, EXPRESSIVE_HIGH_IDF_STEMS)
+  ) {
     return true;
   }
   return false;
@@ -771,6 +818,22 @@ export function isZillMotorCode(code: string): boolean {
   return /^MZ(?:gm|lb)\d/i.test(trimmed);
 }
 
+export function isZillArtsCode(code: string): boolean {
+  return /^MU/i.test(code.trim());
+}
+
+export function isZillSocioEmotionalCode(code: string): boolean {
+  return /^SE/i.test(code.trim());
+}
+
+export function isGoArtsCode(code: string): boolean {
+  return /^MV(?:[.\d]|$)/i.test(code.trim());
+}
+
+export function isGoSocioEmotionalCode(code: string): boolean {
+  return /^SV(?:[.\d]|$)/i.test(code.trim());
+}
+
 export function isZillMediaCode(code: string): boolean {
   return /^ME(?:mw|ge|va|cr)\d/i.test(code.trim());
 }
@@ -798,7 +861,11 @@ function queryMatchesHistoryTopic(query: string): boolean {
 }
 
 function queryMatchesMotorTopic(query: string): boolean {
-  if (queryMatchesTechTopic(query) || queryMatchesMathTopic(query)) {
+  if (
+    queryMatchesTechTopic(query) ||
+    queryMatchesMathTopic(query) ||
+    queryMatchesExpressionTopic(query)
+  ) {
     return false;
   }
   return /koprol|tuimel|rollen|springen|klimmen|klauteren|zwaaien|turnen|gymnastiek|balvaardigheid|werpen|vangen|lopen|evenwicht|balanceren|motoriek|bewegen|lichamelijk|gym|\bturnen\b|\bturn\b|\blo\b|tikker|mikken|pion/i.test(
@@ -906,6 +973,20 @@ export function scoreCodePrefixBonus(query: string, code: string): number {
       return 0.45;
     }
     if (/^MZ|^RK|^TO|^ME/i.test(trimmedCode)) {
+      return -0.28;
+    }
+  }
+
+  if (queryMatchesExpressionTopic(query)) {
+    if (
+      isZillArtsCode(trimmedCode) ||
+      isGoArtsCode(trimmedCode) ||
+      isZillSocioEmotionalCode(trimmedCode) ||
+      isGoSocioEmotionalCode(trimmedCode)
+    ) {
+      return 0.45;
+    }
+    if (isZillNatureCode(trimmedCode) || isZillMotorGrossCode(trimmedCode)) {
       return -0.28;
     }
   }
@@ -1022,6 +1103,15 @@ export function scoreDisciplineBonus(
     }
   }
 
+  if (queryMatchesExpressionTopic(query)) {
+    if (isArtsDomain(discipline, code, subdomein) || isSocioEmotionalDomain(discipline, code, subdomein)) {
+      bonus += 0.28;
+    }
+    if (isZillNatureCode(code) || isZillMotorGrossCode(code)) {
+      bonus -= 0.22;
+    }
+  }
+
   if (queryMatchesMathFunctionTopic(query)) {
     if (
       combined.includes("wiskunde") ||
@@ -1113,6 +1203,15 @@ export function scoreDisciplineBonus(
         combined.includes("techniek") ||
         combined.includes("technische") ||
         isZillTechCode(code))) ||
+    (hint === "Muzische vorming" &&
+      (combined.includes("muzisch") ||
+        isZillArtsCode(code) ||
+        isGoArtsCode(code))) ||
+    (hint === "Sociaal-emotioneel" &&
+      (combined.includes("sociaal-emotioneel") ||
+        combined.includes("sociaal emotioneel") ||
+        isZillSocioEmotionalCode(code) ||
+        isGoSocioEmotionalCode(code))) ||
     (hint === "Lichamelijke opvoeding" &&
       (combined.includes("lichamelijk") ||
         combined.includes("motor") ||
@@ -1163,6 +1262,35 @@ export function isTechDomain(
   );
 }
 
+export function isArtsDomain(
+  discipline: string,
+  code = "",
+  subdomein = "",
+): boolean {
+  const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+  return (
+    isZillArtsCode(code) ||
+    isGoArtsCode(code) ||
+    combined.includes("muzisch") ||
+    combined.includes("muziek")
+  );
+}
+
+export function isSocioEmotionalDomain(
+  discipline: string,
+  code = "",
+  subdomein = "",
+): boolean {
+  const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+  return (
+    isZillSocioEmotionalCode(code) ||
+    isGoSocioEmotionalCode(code) ||
+    combined.includes("sociaal-emotioneel") ||
+    combined.includes("sociaal emotioneel") ||
+    combined.includes("sociale vaardigheden")
+  );
+}
+
 function applyDomainMultiplier(
   score: number,
   query: string,
@@ -1172,14 +1300,15 @@ function applyDomainMultiplier(
 ): number {
   const mathQuery = queryMatchesMathTopic(query);
   const techQuery = queryMatchesTechTopic(query);
+  const expressionQuery = queryMatchesExpressionTopic(query);
 
-  if (mathQuery && !techQuery) {
+  if (mathQuery && !techQuery && !expressionQuery) {
     return score * (isMathDomain(discipline, code, subdomein)
       ? MATH_DOMAIN_MULTIPLIER
       : WRONG_DOMAIN_MULTIPLIER);
   }
 
-  if (techQuery && !mathQuery) {
+  if (techQuery && !mathQuery && !expressionQuery) {
     if (isTechDomain(discipline, code, subdomein)) {
       return score * TECH_DOMAIN_MULTIPLIER;
     }
@@ -1190,6 +1319,28 @@ function applyDomainMultiplier(
       combined.includes("godsdienst") ||
       combined.includes("muzisch") ||
       combined.includes("religie")
+    ) {
+      return score * WRONG_DOMAIN_MULTIPLIER;
+    }
+    return score * 0.45;
+  }
+
+  if (expressionQuery && !mathQuery && !techQuery) {
+    if (
+      isArtsDomain(discipline, code, subdomein) ||
+      isSocioEmotionalDomain(discipline, code, subdomein)
+    ) {
+      return score * EXPRESSIVE_DOMAIN_MULTIPLIER;
+    }
+    const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+    if (
+      isZillNatureCode(code) ||
+      isZillMotorGrossCode(code) ||
+      /^LO(?:[.\d]|$)/i.test(code) ||
+      combined.includes("grootmotorisch") ||
+      combined.includes("orientatie op natuur") ||
+      combined.includes("oriëntatie op natuur") ||
+      combined.includes("lichamelijke opvoeding")
     ) {
       return score * WRONG_DOMAIN_MULTIPLIER;
     }

@@ -26,6 +26,12 @@ import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
 import { readJsonBody } from "@/lib/http/requestBody";
 import { withRequestConcurrency } from "@/lib/http/rateLimit";
 import { isValidRagTargetContext } from "@/lib/rag/requestValidation";
+import { runProCurriculumAnalysis } from "@/lib/rag/runProCurriculumAnalysis";
+import {
+  CURRICULUM_PRO_RETRIEVAL_N,
+  parseCurriculumSearchMode,
+  parseProLessonContext,
+} from "@/lib/rag/selectProCurriculumGoals";
 import type {
   CurriculumSearchResult,
   EducationLevelFilter,
@@ -92,6 +98,10 @@ export async function POST(request: Request) {
       domainDetail?: TargetGroupSearchContext["domainDetail"];
       domainFinality?: TargetGroupSearchContext["domainFinality"];
       enableLlmQueryRewriting?: boolean;
+      searchMode?: "snel" | "pro" | string;
+      topic?: string;
+      learningArea?: string;
+      phases?: unknown;
     };
     const query = body.goal?.trim();
 
@@ -121,6 +131,17 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
+    const searchMode = parseCurriculumSearchMode(body.searchMode);
+    const topN =
+      searchMode === "pro" ? CURRICULUM_PRO_RETRIEVAL_N : MINIMUM_GOALS_TOP_N;
+    const lessonContext = parseProLessonContext({
+      topic: body.topic,
+      learningArea: body.learningArea,
+      grade: body.grade,
+      ageRange: body.ageRange,
+      phases: body.phases,
+    });
 
     const { searchQuery, rewrite } = await resolveTrackedRagSearchQuery({
       query,
@@ -175,7 +196,7 @@ export async function POST(request: Request) {
     const merged = rankMinimumGoalResults(
       searchQuery,
       candidatePool.filter(hasMinimumGoal).map(sanitizeMinimumGoalForResponse),
-      MINIMUM_GOALS_TOP_N,
+      topN,
       {
         grade: body.grade ?? "",
         ageRange: body.ageRange?.trim() ?? "",
@@ -187,21 +208,53 @@ export async function POST(request: Request) {
       },
     );
 
-    const goal = merged[0] ?? null;
-    const alternatives = merged.slice(1);
+    let ranked = merged;
+    let corpusNotice =
+      ranked.length > 0
+        ? `Top ${Math.min(ranked.length, MINIMUM_GOALS_TOP_N)} minimumdoelen - hoogste match bovenaan.`
+        : "Geen passend minimumdoel gevonden. Probeer je lesdoel anders te formuleren.";
+    let proFallback = false;
+    let provider = "jsonl-corpus+discovery-engine";
+
+    if (searchMode === "pro" && ranked.length > 0) {
+      try {
+        const pro = await runProCurriculumAnalysis({
+          query,
+          retrieved: ranked,
+          lesson: lessonContext,
+          userId: session.id,
+          tier: session.tier,
+          kind: "minimumdoel",
+          fallbackLimit: MINIMUM_GOALS_TOP_N,
+        });
+        ranked = pro.merged;
+        corpusNotice = pro.corpusNotice || corpusNotice;
+        proFallback = pro.proFallback;
+        provider = pro.provider;
+      } catch {
+        ranked = ranked.slice(0, MINIMUM_GOALS_TOP_N);
+        corpusNotice =
+          "De didactische analyse is niet gelukt. Dit zijn de snelle zoekkaarten.";
+        proFallback = true;
+      }
+    }
+
+    const goal = ranked[0] ?? null;
+    const alternatives = ranked.slice(1);
 
     return NextResponse.json({
       data: {
         goal: goal ?? "niet gevonden",
         alternatives,
-        corpusNotice:
-          merged.length > 0
-            ? `Top ${Math.min(merged.length, MINIMUM_GOALS_TOP_N)} minimumdoelen - hoogste match bovenaan.`
-            : "Geen passend minimumdoel gevonden. Probeer je lesdoel anders te formuleren.",
+        corpusNotice,
         retrievalMode: "minimum-goals-hybrid",
         queryRewrite: rewrite,
+        searchMode,
+        proFallback,
       },
-      provider: "jsonl-corpus+discovery-engine",
+      results: ranked,
+      corpusNotice,
+      provider,
       fallbackErrors: [],
     });
   } catch (error) {

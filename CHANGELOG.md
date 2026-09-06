@@ -4,6 +4,33 @@ All notable changes to **Leerkrachtentools** are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
+## [Unreleased]
+
+---
+
+## [5.18.0] - 2026-09-06
+
+Snel and Pro search for Leerplandoelen and Minimumdoelen, plus stronger Muzische and Sociaal-emotioneel ranking.
+
+### Added
+- Snel and Pro search modes in Leerplandoelen and Minimumdoelen: a fast catalog versus a grounded didactic RAG assistant
+- Huisstijl pill toggle for Snel and Pro in both curriculum modules
+- Domain boosts in Leerplandoelen for Muzische vorming and Sociaal-emotioneel on drama, mimiek and gevoelens queries
+
+### Changed
+- Google Discovery Engine search timeout raised to 6 seconds so semantic cold starts can finish
+- Narrow sidebar swaps the wordmark for gather LT letters so it no longer overlaps the collapse control
+- Agent instruction files, including `AGENTS.md`, stay local and are not committed to GitHub
+- Custom API-key model picker loads the provider list automatically, shows a full dropdown, and hides embedding or audio models
+- Idee of feedback in the collapsed sidebar opens the dialog instead of nesting the trigger inside a tooltip
+- Content-only result cards drop extra top padding so the kader is even
+- Module descriptions use the full header width instead of wrapping at max-w-2xl
+- Snel and Pro no longer show catalog or assistant hint copy under the toggle
+- `npm run fetch:all` loads `.env.local`, installs missing Python packages, and falls back to the public onderwijsdoelen.be portal when `ONDERWIJSDOELEN_API_KEY` is absent
+- Drama and gevoelens searches suppress Natuur (`OWna`) and grootmotorisch bewegen (`MZgm`) so those domains no longer crowd out MU/SE goals
+
+---
+
 ## [5.17.0] - 2026-09-05
 
 Installable PWA with standalone display and a huisstijl gather LT app icon.

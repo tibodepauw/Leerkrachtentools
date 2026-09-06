@@ -150,7 +150,7 @@ export function ActiveLessonView() {
       <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Actieve les</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
+          <p className="mt-2 text-sm leading-6 text-neutral-400">
             Bekijk je originele lesvoorbereiding als document. De Word-download
             past je geüploade formulier aan met je actuele lesdoelen en
             lescontext.

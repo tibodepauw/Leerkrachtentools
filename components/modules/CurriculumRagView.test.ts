@@ -18,4 +18,22 @@ describe("CurriculumRagView leerplanopties", () => {
       /\["ALL", "OPSTAP", "OVSG", "GO_NIEUW", "GO_OUD", "ZILL"\]/u,
     );
   });
+
+  it("biedt een Snel- en Pro-zoekmodus aan voor leerplandoelen en minimumdoelen", () => {
+    const source = readFileSync(
+      "components/modules/CurriculumRagView.tsx",
+      "utf8",
+    );
+
+    expect(source).toContain("CurriculumSearchModeToggle");
+    expect(source).toContain("Didactisch analyseren...");
+    expect(source).toContain("Toevoegen aan Actieve les");
+    expect(source).toContain('endpoint: "rag-minimum-goals"');
+    expect(source).not.toMatch(
+      /variant === "leerplandoel" \? \(\s*<CurriculumSearchModeToggle/u,
+    );
+    expect(source).toMatch(
+      /endpoint: "rag-minimum-goals"[\s\S]*searchMode,/u,
+    );
+  });
 });

@@ -27,6 +27,12 @@ export const WORDMARK_LETTERS: WordmarkLetter[] = [
   { char: "s", xEm: 5.667, yEm: 0, rotateDeg: 5 },
 ];
 
+/** Gather LT for headers that cannot fit the full wordmark. Same tilt as the app icon. */
+export const LT_WORDMARK_LETTERS: WordmarkLetter[] = [
+  { char: "L", xEm: -0.44, yEm: -0.04, rotateDeg: -12 },
+  { char: "T", xEm: 0.44, yEm: 0.04, rotateDeg: 12 },
+];
+
 export type WordmarkLoaderVariant =
   | "gather"
   | "typewriter"
@@ -112,6 +118,25 @@ export function compactGatherOrbit(
     xEm: scatter.xEm * 0.55 + final.xEm * 0.5 + swirl * 0.28,
     yEm: scatter.yEm * 0.55 + final.yEm * 0.5 - swirl * 0.2,
     rotateDeg: final.rotateDeg * 0.5 + scatter.rotateDeg * 0.4,
+  };
+}
+
+/** Short LT: each letter stays on its own side and settles in a few tenths of an em. */
+export function ltGatherScatter(index: number, final: WordmarkLetter) {
+  const outward = index % 2 === 0 ? -1 : 1;
+  return {
+    xEm: final.xEm + outward * 0.18,
+    yEm: final.yEm + outward * 0.05,
+    rotateDeg: final.rotateDeg + outward * 8,
+  };
+}
+
+export function ltGatherOrbit(index: number, final: WordmarkLetter) {
+  const outward = index % 2 === 0 ? -1 : 1;
+  return {
+    xEm: final.xEm + outward * 0.05,
+    yEm: final.yEm + outward * 0.015,
+    rotateDeg: final.rotateDeg + outward * 2,
   };
 }
 

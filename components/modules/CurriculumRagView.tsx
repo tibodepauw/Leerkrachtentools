@@ -28,6 +28,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  CurriculumSearchModeToggle,
+  type CurriculumSearchMode,
+} from "@/components/modules/CurriculumSearchModeToggle";
 import { useRagQueryAnalysis } from "@/hooks/useRagQueryAnalysis";
 import {
   formatGoalCopyText,
@@ -61,7 +66,7 @@ import type {
   EducationLevelFilter,
   EducationLevelPreference,
 } from "@/types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type SearchVariant = "leerplandoel" | "minimumdoel";
@@ -72,6 +77,8 @@ interface MatcherResult {
   corpusNotice: string;
   networkFallbackNotice?: string;
   retrievalMode: string;
+  searchMode?: "snel" | "pro";
+  proFallback?: boolean;
 }
 
 const NETWORK_OPTIONS: Array<{
@@ -98,6 +105,8 @@ const variantCopy: Record<
     description: string;
     action: string;
     busyAction: string;
+    proAction?: string;
+    proBusyAction?: string;
     empty: string;
   }
 > = {
@@ -107,6 +116,8 @@ const variantCopy: Record<
       "Zoekt in de leerplannen van koepels: Katholiek Onderwijs, GO!, OVSG en POV.",
     action: "Zoek leerplandoel",
     busyAction: "Leerplandoelen zoeken...",
+    proAction: "Analyseer met Pro",
+    proBusyAction: "Didactisch analyseren...",
     empty: "Officiële doelkaarten met code, discipline en doelzin verschijnen hier.",
   },
   minimumdoel: {
@@ -115,6 +126,8 @@ const variantCopy: Record<
       "Zoekt Vlaamse minimumdoelen en AHOVOKS-doelen: basisonderwijs, secundair, BuBaO, BuSO, OKAN, DKO, volwassenen- en hoger onderwijs.",
     action: "Zoek minimumdoel",
     busyAction: "Minimumdoelen zoeken...",
+    proAction: "Analyseer met Pro",
+    proBusyAction: "Didactisch analyseren...",
     empty:
       "Minimumdoelkaarten met code, graad of leerjaar en doelzin verschijnen hier na je zoekopdracht.",
   },
@@ -192,6 +205,22 @@ function GoalCard({
 
         <ToelichtingAccordion text={toelichting} />
 
+        {result.proWhy ? (
+          <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Didactische verantwoording
+            </p>
+            {result.proLessonPhase ? (
+              <Badge variant="outline" className="mt-2">
+                {result.proLessonPhase}
+              </Badge>
+            ) : null}
+            <p className="mt-2 text-sm leading-6 text-neutral-200">
+              {result.proWhy}
+            </p>
+          </div>
+        ) : null}
+
         {result.gelinktMinimumdoel ? (
           <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
@@ -234,11 +263,13 @@ function MinimumGoalCard({
   onAddToLesson,
   rank,
   isBestMatch = false,
+  showRank = true,
 }: {
   result: CurriculumSearchResult;
   onAddToLesson: (text: string) => void;
   rank: number;
   isBestMatch?: boolean;
+  showRank?: boolean;
 }) {
   const minimum = result.gelinktMinimumdoel;
   if (!minimum?.tekst) {
@@ -258,9 +289,11 @@ function MinimumGoalCard({
     <Card>
       <CardHeader className="space-y-3 pb-3">
         <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={isBestMatch ? "default" : "outline"}>
-              {isBestMatch ? `Beste match #${rank}` : `Alternatief #${rank}`}
-            </Badge>
+            {showRank ? (
+              <Badge variant={isBestMatch ? "default" : "outline"}>
+                {isBestMatch ? `Beste match #${rank}` : `Alternatief #${rank}`}
+              </Badge>
+            ) : null}
           <Badge variant="secondary">{ijkpuntLabel}</Badge>
           {result.discipline ? (
             <span className="text-xs font-medium text-neutral-300">
@@ -286,6 +319,22 @@ function MinimumGoalCard({
 
         <ToelichtingAccordion text={toelichting} />
 
+        {result.proWhy ? (
+          <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Didactische verantwoording
+            </p>
+            {result.proLessonPhase ? (
+              <Badge variant="outline" className="mt-2">
+                {result.proLessonPhase}
+              </Badge>
+            ) : null}
+            <p className="mt-2 text-sm leading-6 text-neutral-200">
+              {result.proWhy}
+            </p>
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap gap-2 pt-1">
           <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
           <Button type="button" variant="default" size="sm" onClick={handleAddToLesson}>
@@ -298,9 +347,30 @@ function MinimumGoalCard({
   );
 }
 
+function ProSearchSkeleton() {
+  return (
+    <div className="space-y-3" aria-busy="true" aria-live="polite">
+      <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+        Didactisch analyseren...
+      </p>
+      {[0, 1, 2].map((index) => (
+        <Card key={index}>
+          <CardContent className="space-y-3 py-6">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-4/5" />
+            <Skeleton className="h-16 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const copy = variantCopy[variant];
   const lesson = useLessonStore((state) => state.lesson);
+  const [searchMode, setSearchMode] = useState<CurriculumSearchMode>("snel");
   const enableLlmQueryRewriting = useSettingsStore(
     (state) => state.enableLlmQueryRewriting,
   );
@@ -356,8 +426,8 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   }
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
-      : `${variant}:${resolvedNetwork}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
+      ? `${variant}:${searchMode}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
+      : `${variant}:${searchMode}:${resolvedNetwork}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyzeRag, result, loading, error } =
     useRagQueryAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();
@@ -374,7 +444,14 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               result.data.retrievalMode === "semantic-fallback") &&
             (variant === "minimumdoel" ? item.gelinktMinimumdoel?.tekst : true),
         )
-        .slice(0, variant === "minimumdoel" ? 3 : 5)
+        .slice(
+          0,
+          searchMode === "pro" && !result.data.proFallback
+            ? 3
+            : variant === "minimumdoel"
+              ? 3
+              : 5,
+        )
     : [];
 
   const moduleId = variant === "minimumdoel" ? "minimum-goals" : "curriculum-rag";
@@ -560,6 +637,10 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 onTextChange={setText}
                 onAddGoal={addGoal}
               />
+              <CurriculumSearchModeToggle
+                value={searchMode}
+                onChange={setSearchMode}
+              />
             </div>
           }
           actions={
@@ -568,8 +649,16 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               <BusySearchButton
                 loading={loading}
                 disabled={actionDisabled}
-                idleLabel={copy.action}
-                busyLabel={copy.busyAction}
+                idleLabel={
+                  searchMode === "pro"
+                    ? (copy.proAction ?? copy.action)
+                    : copy.action
+                }
+                busyLabel={
+                  searchMode === "pro"
+                    ? (copy.proBusyAction ?? copy.busyAction)
+                    : copy.busyAction
+                }
                 idleIcon={<Icon className="size-4" />}
                 onClick={() =>
                   analyzeRag(
@@ -587,6 +676,13 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                             domainDetail: domainDetailFilter,
                             domainFinality: domainFinalityFilter,
                             enableLlmQueryRewriting,
+                            searchMode,
+                            topic: lesson.topic,
+                            learningArea: lesson.learningArea,
+                            phases: lesson.phases.map((phase) => ({
+                              name: phase.name,
+                              text: phase.text,
+                            })),
                           },
                         }
                       : {
@@ -604,6 +700,13 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                             domainDetail: domainDetailFilter,
                             domainFinality: domainFinalityFilter,
                             enableLlmQueryRewriting,
+                            searchMode,
+                            topic: lesson.topic,
+                            learningArea: lesson.learningArea,
+                            phases: lesson.phases.map((phase) => ({
+                              name: phase.name,
+                              text: phase.text,
+                            })),
                           },
                         },
                   )
@@ -614,7 +717,9 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
         />
       }
       output={
-        result ? (
+        loading && searchMode === "pro" ? (
+          <ProSearchSkeleton />
+        ) : result ? (
           <div className="space-y-4">
             {results.length > 0 ? (
               <div className="space-y-3">
@@ -625,16 +730,25 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     </CardContent>
                   </Card>
                 ) : null}
+                {result.data.proFallback ? (
+                  <Card>
+                    <CardContent className="py-4 text-sm leading-6 text-amber-100/90">
+                      {result.data.corpusNotice}
+                    </CardContent>
+                  </Card>
+                ) : null}
                 {variant === "leerplandoel" ? (
                   <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-                    Top {Math.min(results.length, 5)} leerplandoel
-                    {Math.min(results.length, 5) === 1 ? "" : "en"}
+                    {searchMode === "pro" && !result.data.proFallback
+                      ? `${results.length} beargumenteerd${results.length === 1 ? "" : "e"} leerplandoel${results.length === 1 ? "" : "en"}`
+                      : `Top ${Math.min(results.length, 5)} leerplandoel${Math.min(results.length, 5) === 1 ? "" : "en"}`}
                   </p>
                 ) : null}
                 {variant === "minimumdoel" ? (
                   <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-                    Top {Math.min(results.length, 3)} minimumdoel
-                    {Math.min(results.length, 3) === 1 ? "" : "en"}
+                    {searchMode === "pro" && !result.data.proFallback
+                      ? `${results.length} beargumenteerd${results.length === 1 ? "" : "e"} minimumdoel${results.length === 1 ? "" : "en"}`
+                      : `Top ${Math.min(results.length, 3)} minimumdoel${Math.min(results.length, 3) === 1 ? "" : "en"}`}
                   </p>
                 ) : null}
                 {results.map((goalResult, index) =>
@@ -645,6 +759,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       onAddToLesson={addGoalToLesson}
                       rank={index + 1}
                       isBestMatch={index === 0}
+                      showRank={!(searchMode === "pro" && !result.data.proFallback)}
                     />
                   ) : (
                     <GoalCard
@@ -672,11 +787,15 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
               </Card>
             )}
 
-            {variant === "minimumdoel" && results.length === 0 ? null : (
-              <p className="text-xs leading-5 text-neutral-500">
-                {result.data.corpusNotice}
-              </p>
-            )}
+            {variant === "minimumdoel" && results.length === 0
+              ? null
+              : result.data.proFallback
+                ? null
+                : (
+                    <p className="text-xs leading-5 text-neutral-500">
+                      {result.data.corpusNotice}
+                    </p>
+                  )}
           </div>
         ) : (
           <EmptyOutput>{copy.empty}</EmptyOutput>

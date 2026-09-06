@@ -54,7 +54,7 @@ export function ModuleShell({
     <div className="mx-auto w-full max-w-[1500px] p-4 lg:p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-black tracking-tight">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
+        <p className="mt-2 text-sm leading-6 text-neutral-400">
           {description}
         </p>
       </div>

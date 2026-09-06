@@ -58,7 +58,8 @@ __pycache__/
 tmp_*
 curriculum_*.zip
 
-# AI agent instruction files (optional local only)
+# AI agent instruction files (local only, never GitHub)
+AGENTS.md
 CLAUDE.md
 GEMINI.md
 .cursorrules

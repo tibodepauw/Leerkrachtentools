@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { POST as postCurriculum } from "@/app/api/rag-curriculum/route";
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
 import {
+  isArtsDomain,
   isMathDomain,
+  isSocioEmotionalDomain,
   isTechDomain,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
@@ -86,6 +88,35 @@ describe("RAG zoekkwaliteit", () => {
       ),
     ).toBe(true);
     expect(results[0]?.code.startsWith("OWte")).toBe(true);
+  });
+
+  it("plaatst drama- en gevoelszoekopdrachten als MUva of SE/SV in de top 3", () => {
+    const query =
+      "De leerlingen kunnen emoties zoals boos, blij en bang uitbeelden met lichaamshouding en mimiek zonder te praten";
+    const results = topResults(query);
+
+    expect(results.length).toBeGreaterThanOrEqual(1);
+    const topThree = results.slice(0, 3);
+    expect(
+      topThree.some(
+        (result) =>
+          result.code.startsWith("MUva") ||
+          result.code.startsWith("SE") ||
+          result.code.startsWith("SV") ||
+          isArtsDomain(result.discipline, result.code, result.subdomein) ||
+          isSocioEmotionalDomain(
+            result.discipline,
+            result.code,
+            result.subdomein,
+          ),
+      ),
+    ).toBe(true);
+    expect(
+      topThree.some(
+        (result) =>
+          result.code.startsWith("OWna") || result.code.startsWith("MZgm"),
+      ),
+    ).toBe(false);
   });
 
   it("stuurt slordige invoer altijd naar Discovery Engine", async () => {

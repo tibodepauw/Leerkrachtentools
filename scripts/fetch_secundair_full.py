@@ -22,6 +22,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from local_env import load_local_env
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = Path(__file__).resolve().parent
 
@@ -79,6 +81,7 @@ def main() -> int:
     )
 
     python = sys.executable
+    load_local_env(ROOT)
     failures = 0
 
     if not args.skip_curriculum:

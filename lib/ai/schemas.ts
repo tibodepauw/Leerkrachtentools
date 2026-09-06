@@ -91,3 +91,16 @@ export const reflectionSchema = z.object({
   teacherIdentity: z.string(),
   followUpQuestions: z.array(z.string()).max(2),
 });
+
+export const proCurriculumPicksSchema = z.object({
+  picks: z
+    .array(
+      z.object({
+        code: z.string().min(1).max(80),
+        why: z.string().min(1).max(500),
+        lessonPhase: z.enum(["Instap", "Instructie", "Verwerking", "Afronding"]),
+      }),
+    )
+    .min(1)
+    .max(3),
+});

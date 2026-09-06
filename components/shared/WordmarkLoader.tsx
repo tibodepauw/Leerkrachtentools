@@ -4,11 +4,15 @@ import type { CSSProperties } from "react";
 import {
   compactGatherOrbit,
   compactGatherScatter,
+  ltGatherOrbit,
+  ltGatherScatter,
   orbitOffset,
   orbitRingOffset,
   scatterOffset,
   shuffleSlotPosition,
+  LT_WORDMARK_LETTERS,
   WORDMARK_LETTERS,
+  type WordmarkLetter,
   type WordmarkLoaderVariant,
 } from "@/lib/wordmark/letters";
 import { cn } from "@/lib/utils";
@@ -17,6 +21,7 @@ interface WordmarkLoaderProps {
   variant?: WordmarkLoaderVariant;
   /** Smaller gather motion for sidebar logo clicks. */
   compactAnimation?: boolean;
+  letters?: readonly WordmarkLetter[];
   className?: string;
 }
 
@@ -33,8 +38,11 @@ const VARIANT_CLASS: Record<WordmarkLoaderVariant, string | false> = {
 export function WordmarkLoader({
   variant = "gather",
   compactAnimation = false,
+  letters = WORDMARK_LETTERS,
   className,
 }: WordmarkLoaderProps) {
+  const fullWord = letters === WORDMARK_LETTERS;
+  const compactLt = letters === LT_WORDMARK_LETTERS;
   return (
     <div
       className={cn(
@@ -46,16 +54,20 @@ export function WordmarkLoader({
       role="img"
       aria-label="Leerkrachtentools"
     >
-      {WORDMARK_LETTERS.map((letter, index) => {
-        const scatter = compactAnimation
-          ? compactGatherScatter(index, letter)
-          : scatterOffset(index);
-        const orbit = compactAnimation
-          ? compactGatherOrbit(index, letter, scatter)
-          : orbitOffset(index, letter, scatter);
-        const ring = orbitRingOffset(index);
-        const shuffle0 = shuffleSlotPosition(index, 0);
-        const shuffle1 = shuffleSlotPosition(index, 1);
+      {letters.map((letter, index) => {
+        const scatter = compactLt
+          ? ltGatherScatter(index, letter)
+          : compactAnimation
+            ? compactGatherScatter(index, letter)
+            : scatterOffset(index);
+        const orbit = compactLt
+          ? ltGatherOrbit(index, letter)
+          : compactAnimation
+            ? compactGatherOrbit(index, letter, scatter)
+            : orbitOffset(index, letter, scatter);
+        const ring = orbitRingOffset(index, letters.length);
+        const shuffle0 = fullWord ? shuffleSlotPosition(index, 0) : letter;
+        const shuffle1 = fullWord ? shuffleSlotPosition(index, 1) : letter;
         const delayMs = compactAnimation ? index * 32 : index * 55;
 
         return (

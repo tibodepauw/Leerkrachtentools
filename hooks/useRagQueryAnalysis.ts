@@ -33,6 +33,8 @@ export function useRagQueryAnalysis<T>(scopeKey: string) {
         domainDetail: String(params.body.domainDetail ?? ""),
         domainFinality: String(params.body.domainFinality ?? ""),
         enableLlmQueryRewriting: params.body.enableLlmQueryRewriting === true,
+        searchMode:
+          params.body.searchMode === "pro" ? "pro" : "snel",
       };
       const cached = readRagQueryCache<T>(
         params.endpoint,

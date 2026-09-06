@@ -2,12 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   countCurriculumTokenMatches,
   inferDisciplineFromQuery,
+  isArtsDomain,
+  isGoArtsCode,
+  isGoSocioEmotionalCode,
+  isSocioEmotionalDomain,
+  isZillArtsCode,
   isZillMathThinkingCode,
   isZillMediaCode,
   isZillMotorCode,
+  isZillSocioEmotionalCode,
   isZillTechCode,
   normalizeDutchNumberWords,
   normalizeQueryText,
+  queryMatchesExpressionTopic,
   queryMatchesMathFunctionTopic,
   queryMatchesProgrammingTopic,
   scoreCurriculumOverlap,
@@ -169,6 +176,31 @@ describe("curriculumQueryTokens", () => {
     expect(isZillMediaCode("MEge2")).toBe(true);
     expect(isZillMediaCode("MEmw1")).toBe(true);
     expect(isZillMediaCode("MEva1")).toBe(true);
+  });
+
+  it("herkent muzische en sociaal-emotionele domeinen", () => {
+    expect(isZillArtsCode("MUva2")).toBe(true);
+    expect(isZillArtsCode("MUmu1")).toBe(true);
+    expect(isGoArtsCode("MV.001")).toBe(true);
+    expect(isGoArtsCode("MEva1")).toBe(false);
+    expect(isZillSocioEmotionalCode("SEse1")).toBe(true);
+    expect(isGoSocioEmotionalCode("SV.001")).toBe(true);
+    expect(
+      isArtsDomain("Muzische vorming", "MUva2", "Drama"),
+    ).toBe(true);
+    expect(
+      isSocioEmotionalDomain("Sociaal-emotioneel", "SEse1", ""),
+    ).toBe(true);
+    expect(
+      queryMatchesExpressionTopic(
+        "emoties uitbeelden met mimiek en lichaamshouding",
+      ),
+    ).toBe(true);
+    expect(
+      inferDisciplineFromQuery(
+        "emoties zoals boos blij en bang uitbeelden met mimiek",
+      ),
+    ).toBe("Muzische vorming");
   });
 
   it("herkent Engels en schrijfopdracht-stemming", () => {

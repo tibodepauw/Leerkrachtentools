@@ -16,9 +16,16 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+from curriculum_deps import (
+    ensure_curriculum_python_deps,
+    ensure_playwright_chromium,
+)
+from local_env import load_local_env
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = Path(__file__).resolve().parent
@@ -55,6 +62,27 @@ def main() -> int:
     )
 
     python = sys.executable
+    load_local_env(ROOT)
+
+    deps = ensure_curriculum_python_deps(python)
+    if deps != 0:
+        return deps
+    browser = ensure_playwright_chromium(python)
+    if browser != 0:
+        logging.warning(
+            "Playwright Chromium kon niet worden geïnstalleerd (exit %s). "
+            "Portaal-fallback werkt dan niet.",
+            browser,
+        )
+
+    api_key = os.environ.get("ONDERWIJSDOELEN_API_KEY", "").strip()
+    if not api_key:
+        logging.warning(
+            "ONDERWIJSDOELEN_API_KEY ontbreekt in .env.local. "
+            "OKAN/BuBaO/... gebruikt het publieke portaal (Playwright). "
+            "BuBaO zit niet in die portalsets."
+        )
+
     failures = 0
 
     if not args.domains_only and not args.skip_secundair:

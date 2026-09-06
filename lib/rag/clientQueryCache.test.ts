@@ -46,7 +46,7 @@ describe("clientQueryCache", () => {
       "optellen tot twintig",
     );
     expect(buildRagQueryCacheKey("LAGER", "OPSTAP", "Optellen tot 20")).toBe(
-      "LAGER:OPSTAP:optellen tot 20:||||||0",
+      "LAGER:OPSTAP:optellen tot 20:||||||0|snel",
     );
   });
 
@@ -150,5 +150,51 @@ describe("clientQueryCache", () => {
     expect(
       readRagQueryCache("rag-curriculum", "KLEUTER", "ZILL", "slaan"),
     ).toBeNull();
+  });
+
+  it("houdt Snel- en Pro-resultaten in aparte cache-sleutels", () => {
+    writeRagQueryCache(
+      "rag-curriculum",
+      "LAGER",
+      "ALL",
+      "emoties uitbeelden",
+      {
+        data: { goal: "snel" },
+        provider: "jsonl-corpus",
+        fallbackErrors: [],
+      },
+      { searchMode: "snel" },
+    );
+    writeRagQueryCache(
+      "rag-curriculum",
+      "LAGER",
+      "ALL",
+      "emoties uitbeelden",
+      {
+        data: { goal: "pro" },
+        provider: "jsonl-corpus",
+        fallbackErrors: [],
+      },
+      { searchMode: "pro" },
+    );
+
+    expect(
+      readRagQueryCache<{ goal: string }>(
+        "rag-curriculum",
+        "LAGER",
+        "ALL",
+        "emoties uitbeelden",
+        { searchMode: "snel" },
+      )?.data.goal,
+    ).toBe("snel");
+    expect(
+      readRagQueryCache<{ goal: string }>(
+        "rag-curriculum",
+        "LAGER",
+        "ALL",
+        "emoties uitbeelden",
+        { searchMode: "pro" },
+      )?.data.goal,
+    ).toBe("pro");
   });
 });

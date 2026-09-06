@@ -10,7 +10,7 @@ import {
 } from "@/lib/ai/userCredentials";
 import { getDatabase } from "@/lib/auth/database";
 import { encryptSecret } from "@/lib/auth/crypto";
-import { defaultModelForProvider } from "@/lib/ai/listModels";
+import { defaultModelForProvider } from "@/lib/ai/usableModels";
 import type { ProviderName } from "@/lib/ai/providers";
 import { readJsonBody } from "@/lib/http/requestBody";
 

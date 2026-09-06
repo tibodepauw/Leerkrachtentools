@@ -10,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
@@ -94,8 +93,33 @@ export function SidebarFeedback({
     await submitFeedback(false);
   }
 
+  const trigger = (
+    <button
+      type="button"
+      aria-label="Idee of feedback"
+      onClick={() => setOpen(true)}
+      className={cn(
+        "text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100",
+        collapsed
+          ? "grid size-10 place-items-center rounded-full"
+          : "flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm",
+      )}
+    >
+      <Lightbulb className="size-4 shrink-0" />
+      {collapsed ? null : <span>Idee of feedback</span>}
+    </button>
+  );
+
   return (
     <section className={cn("border-t border-neutral-800/80", collapsed ? "pt-2" : "pt-4")}>
+      {collapsed ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+          <TooltipContent side="right">Idee of feedback</TooltipContent>
+        </Tooltip>
+      ) : (
+        trigger
+      )}
       <Dialog
         open={open}
         onOpenChange={(nextOpen) => {
@@ -106,30 +130,6 @@ export function SidebarFeedback({
           }
         }}
       >
-        <DialogTrigger asChild>
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Idee of feedback"
-                  className="grid size-10 place-items-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
-                >
-                  <Lightbulb className="size-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Idee of feedback</TooltipContent>
-            </Tooltip>
-          ) : (
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-full px-3 py-2 text-left text-sm text-neutral-400 transition-colors hover:bg-neutral-900 hover:text-neutral-100"
-            >
-              <Lightbulb className="size-4 shrink-0" />
-              <span>Idee of feedback</span>
-            </button>
-          )}
-        </DialogTrigger>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-lg">Idee of feedback</DialogTitle>

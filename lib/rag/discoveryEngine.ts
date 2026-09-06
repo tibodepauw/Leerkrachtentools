@@ -25,7 +25,7 @@ export interface DiscoverySearchResponse {
   failed?: boolean;
 }
 
-export const DISCOVERY_SEARCH_TIMEOUT_MS = 3_500;
+export const DISCOVERY_SEARCH_TIMEOUT_MS = 6_000;
 
 export class DiscoveryEngineTimeoutError extends Error {
   constructor(timeoutMs = DISCOVERY_SEARCH_TIMEOUT_MS) {
