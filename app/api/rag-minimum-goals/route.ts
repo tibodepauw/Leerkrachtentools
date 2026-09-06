@@ -195,7 +195,7 @@ export async function POST(request: Request) {
 
     const merged = rankMinimumGoalResults(
       searchQuery,
-      candidatePool.filter(hasMinimumGoal).map(sanitizeMinimumGoalForResponse),
+      candidatePool.filter(hasMinimumGoal),
       topN,
       {
         grade: body.grade ?? "",
@@ -239,6 +239,7 @@ export async function POST(request: Request) {
       }
     }
 
+    ranked = ranked.map(sanitizeMinimumGoalForResponse);
     const goal = ranked[0] ?? null;
     const alternatives = ranked.slice(1);
 

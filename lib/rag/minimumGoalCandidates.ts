@@ -19,6 +19,7 @@ import {
 } from "@/lib/rag/corpusLevelCache";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
 import {
+  distinctiveCurriculumTokens,
   extractContentTokens,
   extractIndexTokens,
   isDutchLanguageDomain,
@@ -88,12 +89,14 @@ function expandLookupTokens(tokens: Iterable<string>): Set<string> {
     if (token.length >= 5) {
       expanded.add(token.slice(0, 5));
     }
-    if (token.length >= 4) {
+    if (token.length >= 4 && token.length <= 5) {
       expanded.add(token.slice(0, 4));
     }
   }
   return expanded;
 }
+
+const INDEX_HAYSTACK_MAX = 900;
 
 function minimumGoalHaystackFromRaw(raw: RawRecord): string {
   const leerlijnSteps: string[] = [];
@@ -126,7 +129,7 @@ function minimumGoalHaystackFromRaw(raw: RawRecord): string {
     );
   }
 
-  return [
+  const head = [
     raw.code,
     raw.titel,
     raw.text,
@@ -134,17 +137,21 @@ function minimumGoalHaystackFromRaw(raw: RawRecord): string {
     raw.leergebied,
     raw.ontwikkelveld,
     raw.subdomein,
-    raw.toelichting,
     raw.sleutelcompetentie,
     raw.sleutelcompetentie_nr,
     raw.leerjaar_route,
     raw.graad,
     raw.finaliteit,
     ...linkedFields,
-    ...leerlijnSteps,
   ]
     .filter(Boolean)
     .join(" ");
+  if (head.length >= INDEX_HAYSTACK_MAX) {
+    return head.slice(0, INDEX_HAYSTACK_MAX);
+  }
+
+  const extra = [raw.toelichting, ...leerlijnSteps].filter(Boolean).join(" ");
+  return `${head} ${extra}`.trim().slice(0, INDEX_HAYSTACK_MAX);
 }
 
 function buildMinimumGoalIndexTokens(haystack: string): Set<string> {
@@ -263,13 +270,24 @@ export function rebuildMinimumGoalTokenIndex(
 function candidateIndicesFromMinimumGoalQuery(
   query: string,
   index: MinimumGoalTokenIndex,
+  useOrRetrieval: boolean,
 ): Set<number> {
+  const distinctiveHits = new Set<number>();
+  addCandidateIndicesForTokens(
+    expandLookupTokens(distinctiveCurriculumTokens(query)),
+    index,
+    distinctiveHits,
+  );
+  if (distinctiveHits.size > 0) {
+    return distinctiveHits;
+  }
+
   const candidates = new Set<number>();
   const lookupTokens = buildMinimumGoalQueryTokens(query);
   addCandidateIndicesForTokens(lookupTokens, index, candidates);
 
-  const coreKeywords = extractCoreKeywordsForOrRetrieval(query);
-  if (coreKeywords.size >= 2) {
+  if (useOrRetrieval) {
+    const coreKeywords = extractCoreKeywordsForOrRetrieval(query);
     for (const keyword of coreKeywords) {
       addCandidateIndicesForTokens(
         expandLookupTokens(new Set([keyword])),
@@ -320,6 +338,26 @@ function countMinimumGoalTokenMatches(
     }
   }
   return matches;
+}
+
+function scoreMinimumGoalIndexSpecificity(
+  haystack: string,
+  distinctiveTokens: Set<string>,
+  queryTokens: Set<string>,
+): number {
+  const normalizedHaystack = normalizeQueryText(haystack);
+  let score = 0;
+  for (const token of distinctiveTokens) {
+    if (token.length >= 2 && normalizedHaystack.includes(token)) {
+      score += token.length >= 7 ? 50 : 25;
+    }
+  }
+  for (const token of queryTokens) {
+    if (token.length >= 4 && normalizedHaystack.includes(token)) {
+      score += 1;
+    }
+  }
+  return score;
 }
 
 function asString(value: unknown): string {
@@ -563,9 +601,11 @@ export function collectMinimumGoalCandidates({
     return [];
   }
 
-  const coreKeywords = extractCoreKeywordsForOrRetrieval(retrievalQuery);
+  const contentTokenCount = extractContentTokens(retrievalQuery).size;
   const useOrRetrieval =
-    coreKeywords.size >= 2 && !/^\d+\s*\+\s*\d+$/u.test(query.trim());
+    contentTokenCount >= 2 &&
+    contentTokenCount <= 8 &&
+    !/^\d+\s*\+\s*\d+$/u.test(query.trim());
   const preFilterLimit = useOrRetrieval
     ? Math.max(limit, MINIMUM_GOAL_OR_CANDIDATE_POOL)
     : limit;
@@ -574,16 +614,18 @@ export function collectMinimumGoalCandidates({
   const candidateIndices = candidateIndicesFromMinimumGoalQuery(
     retrievalQuery,
     index,
+    useOrRetrieval,
   );
   let indicesToScore: Set<number> = candidateIndices;
   if (indicesToScore.size === 0) {
+    const fallbackTokens = tokenizeMinimumGoalQuery(retrievalQuery);
     indicesToScore = new Set<number>();
     for (let recordIndex = 0; recordIndex < index.records.length; recordIndex += 1) {
       const haystack = index.records[recordIndex]?.haystack;
       if (!haystack) {
         continue;
       }
-      for (const token of tokenizeMinimumGoalQuery(retrievalQuery)) {
+      for (const token of fallbackTokens) {
         if (token.length >= 4 && haystack.includes(token)) {
           indicesToScore.add(recordIndex);
           break;
@@ -599,19 +641,26 @@ export function collectMinimumGoalCandidates({
       ? 320
       : MAX_MINIMUM_GOAL_INDICES_TO_SCORE;
   if (indicesToScore.size > maxIndicesToScore) {
+    const distinctiveTokens = expandLookupTokens(
+      distinctiveCurriculumTokens(retrievalQuery),
+    );
+    const retrievalTokens = tokenizeMinimumGoalQuery(retrievalQuery);
     const ranked = [...indicesToScore]
       .map((recordIndex) => {
         const haystack = index.records[recordIndex]?.haystack ?? "";
         return {
           recordIndex,
-          tokenMatches: countMinimumGoalTokenMatches(
+          specificity: scoreMinimumGoalIndexSpecificity(
             haystack,
-            tokenizeMinimumGoalQuery(retrievalQuery),
+            distinctiveTokens,
+            retrievalTokens,
           ),
+          tokenMatches: countMinimumGoalTokenMatches(haystack, retrievalTokens),
         };
       })
       .sort(
         (left, right) =>
+          right.specificity - left.specificity ||
           right.tokenMatches - left.tokenMatches ||
           left.recordIndex - right.recordIndex,
       )
