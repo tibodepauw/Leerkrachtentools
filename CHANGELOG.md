@@ -6,6 +6,9 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Changed
+- README documents Snel and Pro curriculum search, tester module visibility, and the current test count
+
 ---
 
 ## [5.18.1] - 2026-09-06
