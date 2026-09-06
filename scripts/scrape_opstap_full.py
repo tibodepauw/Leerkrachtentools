@@ -176,7 +176,9 @@ class MinimumGoalCache:
             payload = response.json()
             record = MinimumGoal(
                 code=clean_text(str(payload.get("uniqueCode") or payload.get("code") or "")),
-                tekst=clean_text(payload.get("title") or ""),
+                tekst=clean_text(
+                    f"{payload.get('title') or ''} {payload.get('description') or ''}"
+                ),
                 type=clean_text(str(payload.get("type") or "")),
             )
             self.report.minimum_goals_fetched += 1
@@ -229,6 +231,7 @@ class OpstapScraper:
         headless: bool = True,
         timeout_ms: int = 90_000,
         dom_only: bool = False,
+        skip_playwright: bool = False,
     ) -> None:
         self.output = output
         self.report_path = output.with_name("opstap_scrape_report.json")
@@ -236,6 +239,7 @@ class OpstapScraper:
         self.headless = headless
         self.timeout_ms = timeout_ms
         self.dom_only = dom_only
+        self.skip_playwright = skip_playwright
         self.report = ScrapeReport()
         self.session = requests.Session()
         self.session.headers.update(
@@ -246,8 +250,10 @@ class OpstapScraper:
         )
 
     async def run(self) -> None:
-        if not self.dom_only:
+        if not self.dom_only and not self.skip_playwright:
             await self._verify_with_playwright()
+        elif self.skip_playwright:
+            self.report.warn("Playwright-verificatie overgeslagen (--skip-playwright).")
 
         records: list[GoalRecord]
         if self.dom_only:
@@ -467,6 +473,11 @@ def parse_args() -> argparse.Namespace:
         default=90,
         help="Timeout per browseractie in seconden (standaard: 90).",
     )
+    parser.add_argument(
+        "--skip-playwright",
+        action="store_true",
+        help="Sla de browserverificatie over en haal krcItems plus AHOVOKS-koppelingen direct op.",
+    )
     parser.add_argument("-v", "--verbose", action="store_true")
     return parser.parse_args()
 
@@ -477,6 +488,7 @@ async def async_main(args: argparse.Namespace) -> int:
         headless=not args.headed,
         timeout_ms=args.timeout * 1_000,
         dom_only=args.dom_only,
+        skip_playwright=args.skip_playwright,
     )
     await scraper.run()
     return 0
