@@ -281,7 +281,7 @@ Before exposing the service publicly:
 - Privacy policy consent is required at login
 - Marketing consent is off by default
 - AI modules only receive text you explicitly submit for that action
-- Read `/privacy` in the running app for processor details
+- Read [Privacybeleid](https://www.generativelabs.be/privacy.html) on generativelabs.be for processor details
 
 ## Documentation
 

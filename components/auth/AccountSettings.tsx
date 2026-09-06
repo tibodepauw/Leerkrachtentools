@@ -39,6 +39,7 @@ import { ApiKeysSettings } from "@/components/auth/ApiKeysSettings";
 import { PwaInstallCard } from "@/components/pwa/PwaInstallCard";
 import { LoaderSettingsView } from "@/components/settings/LoaderSettingsView";
 import { SettingsView } from "@/components/settings/SettingsView";
+import { LegalDocumentNav } from "@/components/legal/LegalDocuments";
 
 interface AccountSettingsProps {
   userId: string;
@@ -314,6 +315,7 @@ export function AccountSettings({
               <Button variant="outline" onClick={logout}>
                 <LogOut className="size-4" />Uitloggen
               </Button>
+              <LegalDocumentNav className="flex flex-col gap-2 text-sm text-neutral-300" />
               <Separator />
               <AlertDialog>
                 <AlertDialogTrigger asChild>
