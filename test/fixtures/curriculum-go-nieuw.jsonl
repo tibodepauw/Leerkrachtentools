@@ -4,3 +4,5 @@
 {"doelenset_nummer": 1, "discipline": "Nederlands", "component": "Begrijpen", "code": "NL.004", "titel": "Herkennen klankgroepen in woorden.", "leerjaren": ["4-5"], "netwerk": "GO_NIEUW"}
 {"doelenset_nummer": 1, "discipline": "Nederlands", "component": "Begrijpen", "code": "NL.005", "titel": "Herkennen klankgroepen in woorden.", "leerjaren": ["5-6"], "netwerk": "GO_NIEUW"}
 {"doelenset_nummer": 1, "discipline": "Nederlands", "component": "Gebruiken", "code": "NL.006", "titel": "Verdelen een woord in klankgroepen.", "leerjaren": ["4-5", "5-6"], "netwerk": "GO_NIEUW"}
+{"doelenset_nummer": 8, "discipline": "Muzische vorming", "component": "Gebruiken", "code": "MV.001", "titel": "Beelden emoties uit met mimiek, lichaamshouding en drama.", "leerjaren": ["6-8", "8-10"], "netwerk": "GO_NIEUW"}
+{"doelenset_nummer": 9, "discipline": "Sociaal-emotioneel", "component": "Begrijpen", "code": "SV.001", "titel": "Herkennen gevoelens zoals boos, blij en bang.", "leerjaren": ["6-8"], "netwerk": "GO_NIEUW"}

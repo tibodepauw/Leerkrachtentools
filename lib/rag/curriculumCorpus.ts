@@ -10,9 +10,11 @@ import { sanitizeCurriculumText } from "@/lib/rag/curriculumDisplay";
 import {
   countCurriculumTokenMatches,
   extractIndexTokens,
+  isZillArtsCode,
   isZillMathThinkingCode,
   isZillMediaCode,
   isZillMotorCode,
+  isZillSocioEmotionalCode,
   isZillTechCode,
   normalizeQueryText,
   scoreCurriculumCandidate,
@@ -588,6 +590,18 @@ function normalizeDiscipline(
   }
   if (isZillMediaCode(code) || normalized.includes("mediakundige")) {
     return subdomein ? `ICT · ${subdomein}` : "ICT";
+  }
+  if (isZillArtsCode(code) || normalized.includes("muzische")) {
+    return subdomein ? `Muzische vorming · ${subdomein}` : "Muzische vorming";
+  }
+  if (
+    isZillSocioEmotionalCode(code) ||
+    normalized.includes("sociaal-emotioneel") ||
+    normalized.includes("sociaal emotioneel")
+  ) {
+    return subdomein
+      ? `Sociaal-emotioneel · ${subdomein}`
+      : "Sociaal-emotioneel";
   }
   return discipline;
 }

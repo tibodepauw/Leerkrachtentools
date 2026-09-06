@@ -9,6 +9,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ### Added
 - Snel and Pro search modes in Leerplandoelen: a fast catalog versus a grounded didactic RAG assistant
 - Huisstijl pill toggle for Snel and Pro in Leerplandoelen
+- Domain boosts in Leerplandoelen for Muzische vorming and Sociaal-emotioneel on drama, mimiek and gevoelens queries
 
 ### Changed
 - Google Discovery Engine search timeout raised to 6 seconds so semantic cold starts can finish
@@ -20,6 +21,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Module descriptions use the full header width instead of wrapping at max-w-2xl
 - Snel and Pro in Leerplandoelen no longer show catalog or assistant hint copy under the toggle
 - `npm run fetch:all` loads `.env.local`, installs missing Python packages, and falls back to the public onderwijsdoelen.be portal when `ONDERWIJSDOELEN_API_KEY` is absent
+- Drama and gevoelens searches suppress Natuur (`OWna`) and grootmotorisch bewegen (`MZgm`) so those domains no longer crowd out MU/SE goals
 
 ---
 
