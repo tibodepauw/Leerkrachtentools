@@ -6,9 +6,15 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+---
+
+## [5.18.0] - 2026-09-06
+
+Snel and Pro search for Leerplandoelen and Minimumdoelen, plus stronger Muzische and Sociaal-emotioneel ranking.
+
 ### Added
 - Snel and Pro search modes in Leerplandoelen and Minimumdoelen: a fast catalog versus a grounded didactic RAG assistant
-- Huisstijl pill toggle for Snel and Pro in Leerplandoelen
+- Huisstijl pill toggle for Snel and Pro in both curriculum modules
 - Domain boosts in Leerplandoelen for Muzische vorming and Sociaal-emotioneel on drama, mimiek and gevoelens queries
 
 ### Changed
@@ -19,7 +25,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Idee of feedback in the collapsed sidebar opens the dialog instead of nesting the trigger inside a tooltip
 - Content-only result cards drop extra top padding so the kader is even
 - Module descriptions use the full header width instead of wrapping at max-w-2xl
-- Snel and Pro in Leerplandoelen no longer show catalog or assistant hint copy under the toggle
+- Snel and Pro no longer show catalog or assistant hint copy under the toggle
 - `npm run fetch:all` loads `.env.local`, installs missing Python packages, and falls back to the public onderwijsdoelen.be portal when `ONDERWIJSDOELEN_API_KEY` is absent
 - Drama and gevoelens searches suppress Natuur (`OWna`) and grootmotorisch bewegen (`MZgm`) so those domains no longer crowd out MU/SE goals
 
