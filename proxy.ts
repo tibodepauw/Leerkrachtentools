@@ -5,6 +5,10 @@ import {
   RequestRateLimitError,
 } from "@/lib/http/rateLimit";
 import {
+  hasLiveApiKeyAuthorization,
+  isB2bApiPath,
+} from "@/lib/api-keys";
+import {
   contentSecurityPolicy,
   isSameOriginMutation,
 } from "@/lib/http/security";
@@ -74,7 +78,12 @@ export function proxy(request: NextRequest) {
       }),
     );
 
-  if (!isSameOriginMutation(request)) {
+  const b2bApi =
+    isB2bApiPath(pathname) && hasLiveApiKeyAuthorization(request);
+
+  // Cookie-CSRF blijft ongewijzigd. Alleen /api/v1 met Bearer lt_live_ mag
+  // cross-origin, zodat uitgeverijen server-to-server kunnen koppelen.
+  if (!b2bApi && !isSameOriginMutation(request)) {
     return secure(
       NextResponse.json(
         { error: "Aanvraag van een andere website geweigerd." },
@@ -83,7 +92,7 @@ export function proxy(request: NextRequest) {
     );
   }
 
-  if (isPublicPath(pathname)) {
+  if (isPublicPath(pathname) || b2bApi) {
     return next();
   }
 

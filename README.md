@@ -202,6 +202,24 @@ USER_MODULE_GRANTS=beta@school.be:voice-reflection
 
 Module ids: `active-lesson`, `manual-scanner`, `goal-optimizer`, `goal-taxonomy`, `curriculum-rag`, `minimum-goals`, `dialogue-formatter`, `spellcheck`, `timing-check`, `alignment`, `engagement`, `full-audit`, `voice-reflection`.
 
+## B2B curriculum API
+
+Publishers can call a key-authenticated API for minimumdoelen matching, leerplandoelen matching, and the Doelverbeteraar. Session cookies are not used. Send `Authorization: Bearer lt_live_...`.
+
+```bash
+npx tsx scripts/manage-api-keys.ts create --org "Uitgeverij die Keure" --email "redactie@diekeure.be" --tier enterprise --quota 50000 --scopes "curriculum:match,curriculum:audit,goals:improve"
+```
+
+The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Revoke with `--key-id` and inspect monthly quota with `--org-id`.
+
+| Endpoint | Scope | What it does |
+|----------|--------|----------------|
+| `POST /api/v1/curriculum/match` | `curriculum:match` | Local corpus match. `network`: `AHOVOKS` (minimumdoelen), `KOV`, `GO`, `OVSG`. `level`: `basis` or `secundair`. `mode`: `snel` or `pro`. |
+| `POST /api/v1/curriculum/audit` | `curriculum:audit` | Coverage of `target_goals` against `lesson_units` |
+| `POST /api/v1/goals/improve` | `goals:improve` | Same lesson-goal rules as Doelverbeteraar |
+
+Monthly quota is enforced per key. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
+
 ## Quality checks
 
 ```bash
@@ -213,7 +231,7 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-385 automated tests across 89 test files cover curriculum retrieval and ranking,
+394 automated tests across 90 test files cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, API quotas and request limits,
 browser storage isolation, document handling, UI behavior, and core utilities.
 The test total represents individual assertions, not a code-coverage percentage.
@@ -231,7 +249,7 @@ Also copy `.next/static` and `public` into `.next/standalone` for a self-hosted 
 
 Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs.
 
-Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database.
+Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, B2B organisation keys (hashed), usage logs, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database.
 
 Before exposing the service publicly:
 

@@ -18,6 +18,8 @@ describe("ensureDatabaseIndexes", () => {
     expect(names.has("user_ai_usage_user_id")).toBe(true);
     expect(names.has("user_ai_usage_created_at")).toBe(true);
     expect(names.has("users_created_at")).toBe(true);
+    expect(names.has("idx_api_keys_hash")).toBe(true);
+    expect(names.has("idx_usage_quota")).toBe(true);
   });
 
   it("bewaart vastgezette tools op de gebruikersrij", () => {

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:rag-benchmark": "vitest run test/rag-benchmark.test.ts lib/rag/ragBenchmark.test.ts",
+    "manage-api-keys": "tsx scripts/manage-api-keys.ts",
     "fetch:secundair": "python3 scripts/fetch_secundair_full.py",
     "fetch:all": "python3 scripts/fetch_all_curriculum.py",
     "fetch:domains": "python3 scripts/fetch_onderwijsdoelen_domains.py",
@@ -60,6 +61,7 @@
     "shadcn": "^4.21.0",
     "sharp": "^0.35.4",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^4.1.11"
   },

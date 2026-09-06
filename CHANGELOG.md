@@ -6,6 +6,9 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Added
+- B2B curriculum API for publishers: hashed `lt_live_` keys, monthly quota, `POST /api/v1/curriculum/match`, `POST /api/v1/curriculum/audit`, and `POST /api/v1/goals/improve`
+
 ### Changed
 - README documents Snel and Pro curriculum search, tester module visibility, and the current test count
 
