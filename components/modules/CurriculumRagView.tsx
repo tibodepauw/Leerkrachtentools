@@ -126,6 +126,8 @@ const variantCopy: Record<
       "Zoekt Vlaamse minimumdoelen en AHOVOKS-doelen: basisonderwijs, secundair, BuBaO, BuSO, OKAN, DKO, volwassenen- en hoger onderwijs.",
     action: "Zoek minimumdoel",
     busyAction: "Minimumdoelen zoeken...",
+    proAction: "Analyseer met Pro",
+    proBusyAction: "Didactisch analyseren...",
     empty:
       "Minimumdoelkaarten met code, graad of leerjaar en doelzin verschijnen hier na je zoekopdracht.",
   },
@@ -261,11 +263,13 @@ function MinimumGoalCard({
   onAddToLesson,
   rank,
   isBestMatch = false,
+  showRank = true,
 }: {
   result: CurriculumSearchResult;
   onAddToLesson: (text: string) => void;
   rank: number;
   isBestMatch?: boolean;
+  showRank?: boolean;
 }) {
   const minimum = result.gelinktMinimumdoel;
   if (!minimum?.tekst) {
@@ -285,9 +289,11 @@ function MinimumGoalCard({
     <Card>
       <CardHeader className="space-y-3 pb-3">
         <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={isBestMatch ? "default" : "outline"}>
-              {isBestMatch ? `Beste match #${rank}` : `Alternatief #${rank}`}
-            </Badge>
+            {showRank ? (
+              <Badge variant={isBestMatch ? "default" : "outline"}>
+                {isBestMatch ? `Beste match #${rank}` : `Alternatief #${rank}`}
+              </Badge>
+            ) : null}
           <Badge variant="secondary">{ijkpuntLabel}</Badge>
           {result.discipline ? (
             <span className="text-xs font-medium text-neutral-300">
@@ -312,6 +318,22 @@ function MinimumGoalCard({
         </p>
 
         <ToelichtingAccordion text={toelichting} />
+
+        {result.proWhy ? (
+          <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              Didactische verantwoording
+            </p>
+            {result.proLessonPhase ? (
+              <Badge variant="outline" className="mt-2">
+                {result.proLessonPhase}
+              </Badge>
+            ) : null}
+            <p className="mt-2 text-sm leading-6 text-neutral-200">
+              {result.proWhy}
+            </p>
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap gap-2 pt-1">
           <CopyButton value={minimumCopy} label="Minimumdoel kopiëren" />
@@ -404,7 +426,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   }
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
+      ? `${variant}:${searchMode}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
       : `${variant}:${searchMode}:${resolvedNetwork}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
   const { analyzeRag, result, loading, error } =
     useRagQueryAnalysis<MatcherResult>(analysisScope);
@@ -424,9 +446,9 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
         )
         .slice(
           0,
-          variant === "minimumdoel"
+          searchMode === "pro" && !result.data.proFallback
             ? 3
-            : searchMode === "pro" && !result.data.proFallback
+            : variant === "minimumdoel"
               ? 3
               : 5,
         )
@@ -615,12 +637,10 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 onTextChange={setText}
                 onAddGoal={addGoal}
               />
-              {variant === "leerplandoel" ? (
-                <CurriculumSearchModeToggle
-                  value={searchMode}
-                  onChange={setSearchMode}
-                />
-              ) : null}
+              <CurriculumSearchModeToggle
+                value={searchMode}
+                onChange={setSearchMode}
+              />
             </div>
           }
           actions={
@@ -630,12 +650,12 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 loading={loading}
                 disabled={actionDisabled}
                 idleLabel={
-                  variant === "leerplandoel" && searchMode === "pro"
+                  searchMode === "pro"
                     ? (copy.proAction ?? copy.action)
                     : copy.action
                 }
                 busyLabel={
-                  variant === "leerplandoel" && searchMode === "pro"
+                  searchMode === "pro"
                     ? (copy.proBusyAction ?? copy.busyAction)
                     : copy.busyAction
                 }
@@ -656,6 +676,13 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                             domainDetail: domainDetailFilter,
                             domainFinality: domainFinalityFilter,
                             enableLlmQueryRewriting,
+                            searchMode,
+                            topic: lesson.topic,
+                            learningArea: lesson.learningArea,
+                            phases: lesson.phases.map((phase) => ({
+                              name: phase.name,
+                              text: phase.text,
+                            })),
                           },
                         }
                       : {
@@ -690,7 +717,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
         />
       }
       output={
-        variant === "leerplandoel" && loading && searchMode === "pro" ? (
+        loading && searchMode === "pro" ? (
           <ProSearchSkeleton />
         ) : result ? (
           <div className="space-y-4">
@@ -703,7 +730,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                     </CardContent>
                   </Card>
                 ) : null}
-                {variant === "leerplandoel" && result.data.proFallback ? (
+                {result.data.proFallback ? (
                   <Card>
                     <CardContent className="py-4 text-sm leading-6 text-amber-100/90">
                       {result.data.corpusNotice}
@@ -719,8 +746,9 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                 ) : null}
                 {variant === "minimumdoel" ? (
                   <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-                    Top {Math.min(results.length, 3)} minimumdoel
-                    {Math.min(results.length, 3) === 1 ? "" : "en"}
+                    {searchMode === "pro" && !result.data.proFallback
+                      ? `${results.length} beargumenteerd${results.length === 1 ? "" : "e"} minimumdoel${results.length === 1 ? "" : "en"}`
+                      : `Top ${Math.min(results.length, 3)} minimumdoel${Math.min(results.length, 3) === 1 ? "" : "en"}`}
                   </p>
                 ) : null}
                 {results.map((goalResult, index) =>
@@ -731,6 +759,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
                       onAddToLesson={addGoalToLesson}
                       rank={index + 1}
                       isBestMatch={index === 0}
+                      showRank={!(searchMode === "pro" && !result.data.proFallback)}
                     />
                   ) : (
                     <GoalCard
@@ -760,7 +789,7 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
 
             {variant === "minimumdoel" && results.length === 0
               ? null
-              : variant === "leerplandoel" && result.data.proFallback
+              : result.data.proFallback
                 ? null
                 : (
                     <p className="text-xs leading-5 text-neutral-500">

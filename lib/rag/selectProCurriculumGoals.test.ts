@@ -102,13 +102,67 @@ describe("selectProCurriculumGoals", () => {
     expect(grounded[0]?.titel).not.toContain("verzinnen");
   });
 
-  it("geeft een lege selectie terug als geen code grounded is", () => {
-    const retrieved = [goal({ code: "WD4.1", titel: "Maaltafels" })];
-    expect(
-      groundProPicks(retrieved, [
-        { code: "FAKE.1", why: "Nee", lessonPhase: "Instap" },
-      ]),
-    ).toEqual([]);
+  it("koppelt AI-picks aan minimumdoelcodes zonder resultaat.code", () => {
+    const retrieved = [
+      goal({
+        code: "",
+        titel: "",
+        gelinktMinimumdoel: {
+          code: "4-2.2.16",
+          tekst: "De leerlingen tellen tot 20.",
+          type: "Te bereiken minimumdoelen op populatieniveau",
+        },
+      }),
+      goal({
+        code: "",
+        titel: "",
+        gelinktMinimumdoel: {
+          code: "6-2.2.18",
+          tekst: "De leerlingen rekenen tot 100.",
+          type: "Te bereiken minimumdoelen op populatieniveau",
+        },
+      }),
+    ];
+
+    const grounded = groundProPicks(retrieved, [
+      {
+        code: "4-2.2.16",
+        why: "De les blijft binnen het getalbereik tot 20.",
+        lessonPhase: "Verwerking",
+      },
+      {
+        code: "VERZONNEN.1",
+        why: "Dit doel bestaat niet.",
+        lessonPhase: "Instap",
+      },
+    ]);
+
+    expect(grounded).toHaveLength(1);
+    expect(grounded[0]?.gelinktMinimumdoel?.code).toBe("4-2.2.16");
+    expect(grounded[0]?.proLessonPhase).toBe("Verwerking");
+  });
+
+  it("zet minimumdoelcodes in de Pro-prompt", () => {
+    const prompt = buildProCurriculumPrompt({
+      query: "tellen tot 20",
+      retrieved: [
+        goal({
+          code: "",
+          titel: "",
+          gelinktMinimumdoel: {
+            code: "4-2.2.16",
+            tekst: "De leerlingen tellen tot 20.",
+            type: "",
+          },
+        }),
+      ],
+      lesson: parseProLessonContext({ topic: "Getallen" }),
+      kind: "minimumdoel",
+    });
+
+    expect(prompt).toContain("Vlaamse minimumdoelen");
+    expect(prompt).toContain("4-2.2.16");
+    expect(prompt).toContain("tellen tot 20");
   });
 
   it("bouwt een prompt met lesfasen en kandidaatcodes", () => {

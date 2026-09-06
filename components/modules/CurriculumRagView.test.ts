@@ -19,7 +19,7 @@ describe("CurriculumRagView leerplanopties", () => {
     );
   });
 
-  it("biedt een Snel- en Pro-zoekmodus aan voor leerplandoelen", () => {
+  it("biedt een Snel- en Pro-zoekmodus aan voor leerplandoelen en minimumdoelen", () => {
     const source = readFileSync(
       "components/modules/CurriculumRagView.tsx",
       "utf8",
@@ -27,8 +27,13 @@ describe("CurriculumRagView leerplanopties", () => {
 
     expect(source).toContain("CurriculumSearchModeToggle");
     expect(source).toContain("Didactisch analyseren...");
-    expect(source).toContain("Didactisch analyseren...");
     expect(source).toContain("Toevoegen aan Actieve les");
-    expect(source).toContain("searchMode,");
+    expect(source).toContain('endpoint: "rag-minimum-goals"');
+    expect(source).not.toMatch(
+      /variant === "leerplandoel" \? \(\s*<CurriculumSearchModeToggle/u,
+    );
+    expect(source).toMatch(
+      /endpoint: "rag-minimum-goals"[\s\S]*searchMode,/u,
+    );
   });
 });

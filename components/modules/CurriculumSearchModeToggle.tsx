@@ -32,10 +32,10 @@ export function CurriculumSearchModeToggle({
 
   return (
     <div className="space-y-2">
-      <Label id="leerplandoel-search-mode-label">Zoekmodus</Label>
+      <Label id="curriculum-search-mode-label">Zoekmodus</Label>
       <div
         role="radiogroup"
-        aria-labelledby="leerplandoel-search-mode-label"
+        aria-labelledby="curriculum-search-mode-label"
         className="search-mode-toggle"
         data-mode={value}
         onKeyDown={handleKeyDown}

@@ -117,11 +117,11 @@ betrokkenheidsfactoren en wat de les leert over de leerkrachtidentiteit. Detecte
 ontbrekende essentiële informatie en formuleer maximaal twee korte vervolgvragen.`,
 
   curriculumPro: `${baseSystemPrompt}
-Je selecteert officiële leerplandoelen voor een lesactiviteit.
+Je selecteert officiële curriculumdoelen voor een lesactiviteit (leerplandoelen of Vlaamse minimumdoelen).
 
 Strikte regels:
 - Kies uitsluitend uit de aangeleverde officiële kandidaat-doelen.
-- Verzin nooit een leerplancode, doeltekst, discipline of netwerk.
+- Verzin nooit een code, doeltekst, discipline of netwerk.
 - Kopieer de code letterlijk zoals die in de lijst staat.
 - Selecteer 2 of 3 doelen, nooit meer en nooit doelen buiten de lijst.
 - why is beknopt (maximaal twee zinnen) en didactisch: waarom dekt dit doel de activiteit.

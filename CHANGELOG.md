@@ -7,7 +7,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ## [Unreleased]
 
 ### Added
-- Snel and Pro search modes in Leerplandoelen: a fast catalog versus a grounded didactic RAG assistant
+- Snel and Pro search modes in Leerplandoelen and Minimumdoelen: a fast catalog versus a grounded didactic RAG assistant
 - Huisstijl pill toggle for Snel and Pro in Leerplandoelen
 - Domain boosts in Leerplandoelen for Muzische vorming and Sociaal-emotioneel on drama, mimiek and gevoelens queries
 

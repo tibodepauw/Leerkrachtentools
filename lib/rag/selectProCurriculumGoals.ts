@@ -101,16 +101,35 @@ export function parseProLessonContext(input: {
   };
 }
 
+export type ProCurriculumKind = "leerplandoel" | "minimumdoel";
+
+function officialCandidateCode(item: CurriculumSearchResult): string {
+  return item.gelinktMinimumdoel?.code?.trim() || item.code;
+}
+
+function officialCandidateTitel(item: CurriculumSearchResult): string {
+  return item.gelinktMinimumdoel?.tekst?.trim() || item.titel;
+}
+
+function registerOfficialCode(
+  byCode: Map<string, CurriculumSearchResult>,
+  code: string,
+  item: CurriculumSearchResult,
+) {
+  const key = normalizeCurriculumCode(code);
+  if (key && !byCode.has(key)) {
+    byCode.set(key, item);
+  }
+}
+
 export function groundProPicks(
   retrieved: CurriculumSearchResult[],
   picks: Array<{ code?: string; why?: string; lessonPhase?: string }>,
 ): GroundedProGoal[] {
   const byCode = new Map<string, CurriculumSearchResult>();
   for (const item of retrieved) {
-    const key = normalizeCurriculumCode(item.code);
-    if (key && !byCode.has(key)) {
-      byCode.set(key, item);
-    }
+    registerOfficialCode(byCode, item.code, item);
+    registerOfficialCode(byCode, item.gelinktMinimumdoel?.code ?? "", item);
   }
 
   const seen = new Set<string>();
@@ -149,18 +168,20 @@ export function buildProCurriculumPrompt({
   query,
   retrieved,
   lesson,
+  kind = "leerplandoel",
 }: {
   query: string;
   retrieved: CurriculumSearchResult[];
   lesson: ProLessonContext;
+  kind?: ProCurriculumKind;
 }): string {
   const goals = retrieved.map((item, index) => ({
     nr: index + 1,
-    code: item.code,
+    code: officialCandidateCode(item),
     netwerk: item.netwerk,
     discipline: item.discipline,
     subdomein: item.subdomein,
-    titel: item.titel,
+    titel: officialCandidateTitel(item),
     toelichting: sanitizeSnippet(item.toelichting ?? "", 280),
   }));
 
@@ -170,6 +191,11 @@ export function buildProCurriculumPrompt({
           .map((phase) => `- ${phase.name}: ${phase.text || "(leeg)"}`)
           .join("\n")
       : "- (geen lesfasen ingevuld)";
+
+  const corpusLabel =
+    kind === "minimumdoel"
+      ? "Vlaamse minimumdoelen"
+      : "officiële leerplandoelen";
 
   return `Lesactiviteit of lesdoel van de leerkracht:
 ${query}
@@ -181,7 +207,7 @@ Leergebied: ${lesson.learningArea || "niet ingevuld"}.
 Lesfasen:
 ${phaseLines}
 
-Officiële kandidaat-doelen (kies ALLEEN hieruit, verzin geen codes of doelteksten):
+${corpusLabel} als kandidaat-doelen (kies ALLEEN hieruit, verzin geen codes of doelteksten):
 ${JSON.stringify(goals, null, 2)}
 
 Selecteer 2 of 3 doelen die de activiteit het best dekken. Gebruik exact de code uit de lijst.

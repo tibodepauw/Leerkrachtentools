@@ -13,6 +13,7 @@ import {
   groundProPicks,
   PRO_FALLBACK_NOTICES,
   withProFallbackSentence,
+  type ProCurriculumKind,
   type ProLessonContext,
 } from "@/lib/rag/selectProCurriculumGoals";
 import type { CurriculumSearchResult } from "@/types";
@@ -27,9 +28,10 @@ export type ProCurriculumAnalysisResult = {
 function fallbackResult(
   retrieved: CurriculumSearchResult[],
   notice: string,
+  fallbackLimit: number,
 ): ProCurriculumAnalysisResult {
   return {
-    merged: retrieved.slice(0, CURRICULUM_TOP_N),
+    merged: retrieved.slice(0, fallbackLimit),
     provider: "jsonl-corpus+discovery-engine",
     corpusNotice: notice,
     proFallback: true,
@@ -42,12 +44,16 @@ export async function runProCurriculumAnalysis({
   lesson,
   userId,
   tier,
+  kind = "leerplandoel",
+  fallbackLimit = CURRICULUM_TOP_N,
 }: {
   query: string;
   retrieved: CurriculumSearchResult[];
   lesson: ProLessonContext;
   userId: string;
   tier: string;
+  kind?: ProCurriculumKind;
+  fallbackLimit?: number;
 }): Promise<ProCurriculumAnalysisResult> {
   if (retrieved.length === 0) {
     return {
@@ -61,7 +67,7 @@ export async function runProCurriculumAnalysis({
   try {
     const userAiConfig = getUserAiConfig(userId);
     if (!hasAnyAiProvider(userAiConfig)) {
-      return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.noProvider);
+      return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.noProvider, fallbackLimit);
     }
 
     const access = checkServerAiAccess({ userId, tier, userAiConfig });
@@ -70,14 +76,14 @@ export async function runProCurriculumAnalysis({
         access.status === 429
           ? PRO_FALLBACK_NOTICES.quota
           : withProFallbackSentence(access.message);
-      return fallbackResult(retrieved, notice);
+      return fallbackResult(retrieved, notice, fallbackLimit);
     }
 
     const tracked = await runWithServerAiQuota(access, userId, () =>
       runStructured({
         schema: proCurriculumPicksSchema,
         system: prompts.curriculumPro,
-        prompt: buildProCurriculumPrompt({ query, retrieved, lesson }),
+        prompt: buildProCurriculumPrompt({ query, retrieved, lesson, kind }),
         mock: {
           picks: [
             {
@@ -94,23 +100,27 @@ export async function runProCurriculumAnalysis({
     );
 
     if (!tracked.ok) {
-      return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.quota);
+      return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.quota, fallbackLimit);
     }
 
     const grounded = groundProPicks(retrieved, tracked.result.data.picks);
     if (grounded.length === 0) {
-      return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.ungrounded);
+      return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.ungrounded, fallbackLimit);
     }
 
     const count = grounded.length;
+    const noun =
+      kind === "minimumdoel"
+        ? `minimumdoel${count === 1 ? "" : "en"}`
+        : `leerplandoel${count === 1 ? "" : "en"}`;
     return {
       merged: grounded,
       provider: `jsonl-corpus+discovery-engine+${tracked.result.provider}`,
-      corpusNotice: `${count} beargumenteerde leerplandoel${count === 1 ? "" : "en"} uit de officiële corpus, gekozen bij je lesactiviteit.`,
+      corpusNotice: `${count} beargumenteerde ${noun} uit de officiële corpus, gekozen bij je lesactiviteit.`,
       proFallback: false,
     };
   } catch (error) {
     console.error("[rag-curriculum:pro]", error);
-    return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.aiError);
+    return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.aiError, fallbackLimit);
   }
 }
