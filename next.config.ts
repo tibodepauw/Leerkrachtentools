@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { execSync } from "node:child_process";
 import packageJson from "./package.json";
+import { GENERATIVE_LABS_LEGAL } from "./lib/legal/generativeLabs";
 
 function resolveGitCommit() {
   if (process.env.VERCEL_GIT_COMMIT_SHA) {
@@ -59,6 +60,25 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "1mb",
     },
+  },
+  async redirects() {
+    return [
+      {
+        source: "/privacy",
+        destination: GENERATIVE_LABS_LEGAL.privacy,
+        permanent: true,
+      },
+      {
+        source: "/voorwaarden",
+        destination: GENERATIVE_LABS_LEGAL.terms,
+        permanent: true,
+      },
+      {
+        source: "/juridisch",
+        destination: GENERATIVE_LABS_LEGAL.imprint,
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     const securityHeaders = [

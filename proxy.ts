@@ -43,7 +43,7 @@ const AI_API_PATHS = new Set([
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 
 function isPublicPath(pathname: string) {
-  if (pathname === "/" || pathname === "/privacy" || pathname === "/offline") {
+  if (pathname === "/" || pathname === "/privacy" || pathname === "/voorwaarden" || pathname === "/juridisch" || pathname === "/offline") {
     return true;
   }
   if (pathname.startsWith("/wordmark-export")) return true;

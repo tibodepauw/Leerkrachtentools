@@ -23,6 +23,17 @@ describe("AuthScreen markup", () => {
     expect(source).toContain("GlowWordmark");
   });
 
+  it("plaatst de consent-regel onder e-mail en verificatiecode", () => {
+    expect(source).toContain("<LegalConsentLine />");
+    expect(source).toMatch(/id="email"[\s\S]*?<LegalConsentLine \/>/);
+    expect(source).toMatch(/id="code"[\s\S]*?<LegalConsentLine \/>/);
+    expect(source).toContain("GENERATIVE_LABS_LEGAL.terms");
+    expect(source).toContain("GENERATIVE_LABS_LEGAL.privacy");
+    expect(source).toContain("Algemene Voorwaarden");
+    expect(source).toContain("Privacybeleid");
+    expect(source).toContain("<LegalDocumentNav");
+  });
+
   it("toont de verificatiecode in zes losse vakjes", () => {
     expect(source).toContain("InputOTP");
     expect(source).toContain("InputOTPSlot");

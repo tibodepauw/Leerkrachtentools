@@ -43,6 +43,7 @@ import {
 } from "@/hooks/useSidebarLayout";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { SidebarFeedback } from "@/components/layout/SidebarFeedback";
+import { LegalDocumentNav } from "@/components/legal/LegalDocuments";
 import {
   excludePinnedModules,
   runSidebarPinTransition,
@@ -529,6 +530,9 @@ function SidebarContent({
               </div>
               <Settings className="size-4 text-neutral-600 transition-colors group-hover:text-neutral-300" />
             </Link>
+          )}
+          {collapsed ? null : (
+            <LegalDocumentNav className="mt-3 flex flex-col gap-1 px-2 text-[11px] text-neutral-500" />
           )}
         </div>
       </div>

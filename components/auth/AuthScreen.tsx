@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState, type ReactNode } from "react";
-import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { LoadingGate } from "@/components/shared/LoadingGate";
 import { GlowWordmark } from "@/components/shared/GlowWordmark";
 import { useClientMounted } from "@/hooks/useAppReady";
+import { LegalConsentLine, LegalDocumentNav, LegalExternalLink } from "@/components/legal/LegalDocuments";
+import { GENERATIVE_LABS_LEGAL } from "@/lib/legal/generativeLabs";
 
 export function AuthScreen() {
   const mounted = useClientMounted();
@@ -116,6 +117,7 @@ function AuthScreenContent() {
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="naam@school.be"
                   />
+                  <LegalConsentLine />
                 </div>
 
                 <div className="auth-consent space-y-3 rounded-xl border border-neutral-800 bg-black p-4">
@@ -129,17 +131,24 @@ function AuthScreenContent() {
                     onCheckedChange={setPrivacyAccepted}
                     label={
                       <>
-                        <span className="font-semibold">Verplicht:</span> ik ga akkoord met het{" "}
+                        <span className="font-semibold">Verplicht:</span> ik ga
+                        akkoord met de{" "}
                       </>
                     }
                   >
-                    <Link
-                      href="/privacy"
-                      className="text-white underline underline-offset-2 hover:text-neutral-200"
-                      target="_blank"
+                    <LegalExternalLink
+                      href={GENERATIVE_LABS_LEGAL.terms}
+                      className="text-white"
                     >
-                      privacybeleid
-                    </Link>
+                      Algemene Voorwaarden
+                    </LegalExternalLink>{" "}
+                    en het{" "}
+                    <LegalExternalLink
+                      href={GENERATIVE_LABS_LEGAL.privacy}
+                      className="text-white"
+                    >
+                      Privacybeleid
+                    </LegalExternalLink>
                     .
                   </ConsentChoice>
 
@@ -196,6 +205,7 @@ function AuthScreenContent() {
                       Lokale ontwikkelcode: {devCode}
                     </p>
                   )}
+                  <LegalConsentLine />
                 </div>
                 {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
                 <Button
@@ -225,8 +235,8 @@ function AuthScreenContent() {
         </Card>
         <p className="mt-5 text-center text-xs leading-5 text-neutral-600">
           We bewaren je e-mailadres voor toegang en beveiliging. Lesinhoud wordt niet in deze accountdatabase opgeslagen.
-          {" "}<Link href="/privacy" className="underline hover:text-neutral-400">Lees het privacyoverzicht.</Link>
         </p>
+        <LegalDocumentNav className="mt-3 flex justify-center gap-4 text-xs text-neutral-600" />
       </div>
     </main>
   );
