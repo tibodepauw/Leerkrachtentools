@@ -51,6 +51,21 @@ const TECH_HIGH_IDF_STEMS = [
   "construct",
   "techniek",
   "kilo",
+  "gereedschap",
+  "zaag",
+  "schuur",
+  "hout",
+  "montage",
+] as const;
+
+const SPELLING_HIGH_IDF_STEMS = [
+  "lettergreep",
+  "spell",
+  "spelling",
+  "medeklinker",
+  "verdubbel",
+  "verenkel",
+  "klinker",
 ] as const;
 
 const EXPRESSIVE_HIGH_IDF_STEMS = [
@@ -102,6 +117,37 @@ const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
       "papier",
       "krantenpapier",
       "tape",
+    ],
+  },
+  {
+    pattern:
+      /lettergreep|spelling|\bspell|medeklinker|verdubbel|verenkel|dubbele medeklinker|open en gesloten/i,
+    stems: [
+      "lettergreep",
+      "spell",
+      "spelling",
+      "medeklinker",
+      "verdubbel",
+      "verenkel",
+      "schrijven",
+      "klinker",
+      "nederlands",
+    ],
+  },
+  {
+    pattern:
+      /handzaag|schuurpapier|schuurblok|zaagbeugel|\bzaag\b|gereedschap|schuur|fotokader/i,
+    stems: [
+      "gereedschap",
+      "techniek",
+      "zaag",
+      "schuur",
+      "hout",
+      "materiaal",
+      "montage",
+      "ontwerp",
+      "technisch",
+      "veilig",
     ],
   },
   {
@@ -403,7 +449,7 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
     discipline: "Schriftelijke taalvaardigheid",
   },
   {
-    pattern: /nederlands|lezen|spell|schrijf|taal|tekst/i,
+    pattern: /nederlands|lezen|spell|schrijf|taal|tekst|lettergreep|medeklinker/i,
     discipline: "Nederlands",
   },
   { pattern: /\bengels\b/i, discipline: "Engels" },
@@ -424,7 +470,7 @@ const DISCIPLINE_HINTS: Array<{ pattern: RegExp; discipline: string }> = [
   },
   {
     pattern:
-      /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem/i,
+      /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem|handzaag|schuurpapier|gereedschap/i,
     discipline: "Wetenschap en techniek",
   },
   {
@@ -564,7 +610,13 @@ export function queryMatchesMathTopic(query: string): boolean {
 }
 
 export function queryMatchesTechTopic(query: string): boolean {
-  return /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem/i.test(
+  return /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem|handzaag|schuurpapier|schuurblok|zaagbeugel|gereedschap/i.test(
+    normalizeQueryText(query),
+  );
+}
+
+export function queryMatchesSpellingTopic(query: string): boolean {
+  return /lettergreep|spelling|\bspell|medeklinker|verdubbel|verenkel|dubbele medeklinker|open en gesloten/i.test(
     normalizeQueryText(query),
   );
 }
@@ -601,6 +653,12 @@ function isHighIdfToken(token: string, query: string): boolean {
     return true;
   }
   if (queryMatchesTechTopic(query) && tokenMatchesHighIdfStem(token, TECH_HIGH_IDF_STEMS)) {
+    return true;
+  }
+  if (
+    queryMatchesSpellingTopic(query) &&
+    tokenMatchesHighIdfStem(token, SPELLING_HIGH_IDF_STEMS)
+  ) {
     return true;
   }
   if (
@@ -1262,6 +1320,24 @@ export function isTechDomain(
   );
 }
 
+export function isDutchLanguageDomain(
+  discipline: string,
+  code = "",
+  subdomein = "",
+): boolean {
+  const combined = `${discipline} ${subdomein}`.toLocaleLowerCase("nl-BE");
+  const trimmed = code.trim();
+  return (
+    isZillDutchWritingCode(trimmed) ||
+    isZillDutchSpeakingCode(trimmed) ||
+    /^1(?:[.\-]|$)/.test(trimmed) ||
+    combined.includes("nederlands") ||
+    combined.includes("spelling") ||
+    combined.includes("schrijven") ||
+    combined.includes("taalvaardigheid")
+  );
+}
+
 export function isArtsDomain(
   discipline: string,
   code = "",
@@ -1301,8 +1377,15 @@ function applyDomainMultiplier(
   const mathQuery = queryMatchesMathTopic(query);
   const techQuery = queryMatchesTechTopic(query);
   const expressionQuery = queryMatchesExpressionTopic(query);
+  const spellingQuery = queryMatchesSpellingTopic(query);
 
-  if (mathQuery && !techQuery && !expressionQuery) {
+  if (spellingQuery && !mathQuery && !techQuery) {
+    return score * (isDutchLanguageDomain(discipline, code, subdomein)
+      ? MATH_DOMAIN_MULTIPLIER
+      : WRONG_DOMAIN_MULTIPLIER);
+  }
+
+  if (mathQuery && !techQuery && !expressionQuery && !spellingQuery) {
     return score * (isMathDomain(discipline, code, subdomein)
       ? MATH_DOMAIN_MULTIPLIER
       : WRONG_DOMAIN_MULTIPLIER);

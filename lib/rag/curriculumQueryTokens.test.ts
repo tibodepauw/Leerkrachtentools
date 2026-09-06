@@ -38,6 +38,24 @@ describe("curriculumQueryTokens", () => {
     expect(tokens.has("20")).toBe(true);
   });
 
+  it("breidt spelling- en gereedschapstermen uit", () => {
+    const spelling = tokenizeCurriculumQuery(
+      "open en gesloten lettergreep bij woorden met dubbele medeklinkers",
+    );
+    expect(spelling.has("lettergreep")).toBe(true);
+    expect(spelling.has("medeklinker") || spelling.has("medeklinkers")).toBe(
+      true,
+    );
+    expect(spelling.has("spell") || spelling.has("spelling")).toBe(true);
+
+    const tools = tokenizeCurriculumQuery(
+      "handzaag en schuurpapier voor een houten fotokadertje",
+    );
+    expect(tools.has("gereedschap")).toBe(true);
+    expect(tools.has("zaag")).toBe(true);
+    expect(tools.has("schuur")).toBe(true);
+  });
+
   it("matcht maaltafels op vermenigvuldigen", () => {
     const tokens = tokenizeCurriculumQuery("vermenigvuldigen");
     expect(

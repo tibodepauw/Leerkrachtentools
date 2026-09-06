@@ -3,7 +3,7 @@
 Volledige curriculum-fetch voor alle Vlaamse onderwijsdomeinen.
 
 Stappen:
-  1. Basisonderwijs corpus (optioneel, bestaande scripts)
+  1. Basisonderwijs Op.stap (leerplandoelen + gekoppelde AHOVOKS-minimumdoelen)
   2. Secundair (leerplannen + minimumdoelen)
   3. OKAN, BuBaO, BuSO, DKO, Volwassenen, Hoger (Onderwijsdoelen API)
 
@@ -92,13 +92,19 @@ def main() -> int:
         )
 
     failures += run_step(
+        "Op.stap leerplandoelen + AHOVOKS-minimumdoelen basisonderwijs",
+        [python, str(SCRIPTS / "scrape_opstap_full.py"), "--skip-playwright"],
+    )
+
+    failures += run_step(
         "Alle onderwijsdoelen-domeinen (OKAN t/m HO)",
         [python, str(SCRIPTS / "fetch_onderwijsdoelen_domains.py")],
     )
 
     print("\n=== Volledige fetch samenvatting ===")
     print(f"  Fouten: {failures}")
-    print("  Domeinen: data/{okan,bubao,buso,dko,volwassenen,hoger}/")
+    print("  Basisonderwijs Op.stap: data/opstap/")
+  print("  Domeinen: data/{okan,bubao,buso,dko,volwassenen,hoger}/")
     print("  Secundair: data/secundair/")
     return 1 if failures else 0
 

@@ -21,8 +21,11 @@ import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
 import {
   extractContentTokens,
   extractIndexTokens,
+  isDutchLanguageDomain,
+  isTechDomain,
   normalizeQueryText,
   scoreClimateMinimumGoalBonus,
+  scoreCurriculumCandidate,
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
 import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
@@ -285,16 +288,12 @@ function candidateIndicesFromMinimumGoalQuery(
 }
 
 export function tokenizeMinimumGoalQuery(value: string): Set<string> {
-  const normalized = normalizeQueryText(value);
-  const tokens = new Set<string>();
-
-  for (const word of normalized
-    .replace(/[^\p{Letter}\p{Number}\s]/gu, " ")
-    .split(/\s+/)
-    .filter((token) => token.length > 2)) {
-    tokens.add(word);
+  const tokens = tokenizeCurriculumQuery(value);
+  for (const token of extractContentTokens(value)) {
+    tokens.add(token);
   }
 
+  const normalized = normalizeQueryText(value);
   for (const match of normalized.matchAll(/\b\d{1,7}\b/g)) {
     tokens.add(match[0]);
   }
@@ -321,13 +320,6 @@ function countMinimumGoalTokenMatches(
     }
   }
   return matches;
-}
-
-function scoreMinimumGoalOverlap(haystack: string, tokens: Set<string>): number {
-  if (tokens.size === 0) {
-    return 0;
-  }
-  return countMinimumGoalTokenMatches(haystack, tokens) / tokens.size;
 }
 
 function asString(value: unknown): string {
@@ -478,22 +470,20 @@ function scoreMinimumGoalCandidate(
   record: CurriculumSearchResult,
   raw?: RawRecord,
 ): { score: number; tokenMatches: number } {
-  const allQueryTokens = tokenizeMinimumGoalQuery(query);
-  const contentTokens = extractContentTokens(query);
-  const scoringTokens =
-    contentTokens.size >= 2 ? contentTokens : allQueryTokens;
-  const haystack = candidateHaystack(record);
-  const minimumText = record.gelinktMinimumdoel?.tekst ?? "";
-  const tokenMatches = countMinimumGoalTokenMatches(haystack, scoringTokens);
+  const haystack = raw ? minimumGoalHaystackFromRaw(raw) : candidateHaystack(record);
+  const titel = raw
+    ? asString(raw.titel ?? raw.text ?? raw.title)
+    : record.gelinktMinimumdoel?.tekst ?? record.titel;
+  const { score: overlapScore, tokenMatches } = scoreCurriculumCandidate({
+    query,
+    haystack,
+    discipline: record.discipline,
+    titel,
+    code: record.gelinktMinimumdoel?.code ?? record.code,
+    subdomein: record.subdomein,
+  });
 
-  const minimumScore = scoreMinimumGoalOverlap(minimumText, scoringTokens);
-  const leerplanScore = scoreMinimumGoalOverlap(record.titel, scoringTokens);
-  const contextScore = scoreMinimumGoalOverlap(haystack, scoringTokens);
-
-  let score = Math.min(
-    1,
-    minimumScore * 0.5 + leerplanScore * 0.35 + contextScore * 0.15,
-  );
+  let score = overlapScore;
 
   score += scoreClimateMinimumGoalBonus(
     query,
@@ -516,6 +506,27 @@ function scoreMinimumGoalCandidate(
   }
   if (queryLower.includes("deel") && haystackLower.includes("deel")) {
     score += 0.08;
+  }
+
+  if (
+    /lettergreep|medeklinker|spelling|spell/.test(queryLower) &&
+    isDutchLanguageDomain(
+      record.discipline,
+      record.gelinktMinimumdoel?.code ?? "",
+      record.subdomein,
+    )
+  ) {
+    score += 0.16;
+  }
+  if (
+    /handzaag|schuurpapier|gereedschap|zaag|schuur|hout/.test(queryLower) &&
+    isTechDomain(
+      record.discipline,
+      record.gelinktMinimumdoel?.code ?? "",
+      record.subdomein,
+    )
+  ) {
+    score += 0.16;
   }
 
   return { score: Math.min(1, score), tokenMatches };

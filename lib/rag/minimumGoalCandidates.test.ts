@@ -75,6 +75,63 @@ describe("minimumGoalCandidates", () => {
     expect(topCodes.every((code) => code && !code.startsWith("WIS"))).toBe(true);
   });
 
+  it("vindt spelling-eindtermen voor open en gesloten lettergrepen", () => {
+    const query =
+      "De leerlingen passen de regels van de open en gesloten lettergreep toe bij het schrijven van woorden met dubbele medeklinkers";
+    const candidates = collectMinimumGoalCandidates({
+      query,
+      educationLevel: "BASISONDERWIJS",
+      limit: 50,
+    });
+
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(
+      candidates.some((item) => item.gelinktMinimumdoel?.code === "1.2.5"),
+    ).toBe(true);
+
+    const ranked = rankMinimumGoalResults(query, candidates, 3, {
+      educationLevel: "BASISONDERWIJS",
+    });
+    expect(ranked.length).toBeGreaterThan(0);
+    expect(ranked.some((item) => item.gelinktMinimumdoel?.code === "1.2.5")).toBe(
+      true,
+    );
+    expect(
+      ranked.some((item) =>
+        /lettergreep|medeklinker|spell/i.test(
+          `${item.gelinktMinimumdoel?.tekst ?? ""} ${item.titel}`,
+        ),
+      ),
+    ).toBe(true);
+  });
+
+  it("vindt W&T-eindtermen voor handzaag en schuurpapier", () => {
+    const query =
+      "De leerlingen gebruiken een handzaag en schuurpapier op een veilige manier om een houten fotokadertje te maken";
+    const candidates = collectMinimumGoalCandidates({
+      query,
+      educationLevel: "BASISONDERWIJS",
+      limit: 50,
+    });
+
+    expect(candidates.length).toBeGreaterThan(0);
+    const codes = candidates.map((item) => item.gelinktMinimumdoel?.code);
+    expect(codes.some((code) => code === "3.7.2" || code === "3.7.3")).toBe(
+      true,
+    );
+
+    const ranked = rankMinimumGoalResults(query, candidates, 3, {
+      educationLevel: "BASISONDERWIJS",
+    });
+    expect(ranked.length).toBeGreaterThan(0);
+    expect(
+      ranked.some((item) => {
+        const code = item.gelinktMinimumdoel?.code;
+        return code === "3.7.2" || code === "3.7.3";
+      }),
+    ).toBe(true);
+  });
+
   it("combineert meerdere pools zonder duplicaten op code", () => {
     const merged = mergeMinimumGoalCandidatePools([
       collectMinimumGoalCandidates({ query: "optellen tot 20", limit: 20 }),
