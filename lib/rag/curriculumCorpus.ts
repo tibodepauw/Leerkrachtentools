@@ -205,7 +205,7 @@ function candidateIndicesFromQuery(
   index: CorpusTokenIndex,
 ): Set<number> {
   let lookupTokens = buildQueryLookupTokens(query);
-  let candidates = new Set<number>();
+  const candidates = new Set<number>();
 
   for (const token of lookupTokens) {
     const indices = index.tokenToRecordIndices.get(token);
@@ -849,7 +849,6 @@ export function searchLocalCorpus({
   network,
   educationLevel = "ALL",
   limit = CURRICULUM_TOP_N,
-  candidateLimit = CURRICULUM_CANDIDATE_LIMIT,
 }: {
   query: string;
   network?: CurriculumNetworkFilter;
