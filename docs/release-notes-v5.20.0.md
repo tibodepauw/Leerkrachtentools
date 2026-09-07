@@ -38,6 +38,7 @@ Quota ledger, ZIP bounds, PostHog privacy, and a correct B2B Pro identity.
 - Dev login codes are ignored in production
 - External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds
 - Legal colophon for AHOVOKS, koepelrechten and EU AI Act art. 50
+- README documents the organization quota ledger, match citation fields, PostHog privacy, standalone asset copy, and the current test count
 
 ---
 

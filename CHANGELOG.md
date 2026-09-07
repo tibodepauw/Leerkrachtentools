@@ -28,6 +28,7 @@ Quota ledger, ZIP bounds, PostHog privacy, and B2B Pro identity.
 - PostHog session replay is off; lesson, preview and feedback UI use `ph-no-capture`
 - RAG query rewriting uses the same BYOK provider policy as other AI calls
 - B2B Pro analysis uses an organization budget path instead of a synthetic user-id
+- README documents the organization quota ledger, match citation fields, PostHog privacy, standalone asset copy, and the current test count
 
 ### Fixed
 - Exhausted B2B keys no longer write one usage-log row per 429

@@ -84,16 +84,17 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 
 ### Account and settings
 
-- Passwordless email login (one-time code)
+- Passwordless email login (one-time code). Deleting an account invalidates pending login codes for that e-mail
 - Invite-only account tiers (student, tester, partner, admin) with per-tier module access
-- Daily server-side AI usage limits per tier (bypassed when you use your own API key)
+- Daily server-side AI usage limits per tier (bypassed when you use your own API key). The budget is bound to an HMAC of the normalized e-mail for the rest of the 24h window, so delete and recreate does not reset it
 - Profile name and photo; account ID and **Niveau** shown in Settings
-- **Bring your own API key**: choose provider and model in Settings; the model list loads automatically and hides embedding or audio models. When enabled, only your key is used
-- **Opt-in LLM query rewriting** for RAG searches (Settings; default off)
+- **Bring your own API key**: choose provider and model in Settings; the model list loads automatically and hides embedding or audio models. When enabled, only your key is used. Decrypt failure does not fall back to server Google keys
+- **Opt-in LLM query rewriting** for RAG searches (Settings; default off). Rewrite uses the same BYOK/provider policy as other AI calls
 - Per-account browser storage for active lesson data and document previews
-- Marketing email preference (opt-in, off by default)
+- Marketing email preference (opt-in, off by default). Marketing consent is not an analytics choice
+- Optional PostHog EU Cloud analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Session replay stays disabled; lesson, preview and feedback UI use `ph-no-capture`. Identity resets on logout and account switch
 - In-app feedback form (idea, feedback, bug)
-- App version and build info with link to GitHub releases
+- App version, legal colophon (AHOVOKS modellicentie, koepel citation art. XI.189 WER, non-affiliation, EU AI Act art. 50) and build info with link to GitHub releases
 - Install as a PWA from Settings (standalone app on phone, tablet, or computer)
 
 ## Curriculum data
@@ -177,11 +178,14 @@ APP_ORIGIN=http://127.0.0.1:43127
 # Optional
 DATABASE_PATH=./data/leerkrachtentools.db
 FEEDBACK_TO_EMAIL=feedback@yourdomain.be
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=https://eu.posthog.com
 ```
 
 Local development without Brevo is deliberately opt-in. Set
 `ALLOW_DEV_LOGIN_CODE=true` and open the app via localhost or `127.0.0.1`.
-Never enable this option in previews or production.
+Never enable this option in previews or production. Production builds ignore
+the flag even if it is set.
 
 ### Module visibility (server `.env.local`)
 
@@ -214,11 +218,11 @@ The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Rev
 
 | Endpoint | Scope | What it does |
 |----------|--------|----------------|
-| `POST /api/v1/curriculum/match` | `curriculum:match` | Local corpus match. `network`: `AHOVOKS` (minimumdoelen), `KOV`, `GO`, `OVSG`. `level`: `basis` or `secundair`. `mode`: `snel` or `pro`. |
+| `POST /api/v1/curriculum/match` | `curriculum:match` | Local corpus match. `network`: `AHOVOKS` (minimumdoelen), `KOV`, `GO`, `OVSG`. `level`: `basis` or `secundair`. `mode`: `snel` or `pro`. `limit`: 1-10, default 5. Results are citation fields only: `code`, `text`, `network`, `score`, optional `didactic_note`. The JSON also includes `requestedMode`, `executedMode`, and `proFallback`. |
 | `POST /api/v1/curriculum/audit` | `curriculum:audit` | Coverage of `target_goals` against `lesson_units` |
 | `POST /api/v1/goals/improve` | `goals:improve` | Same lesson-goal rules as Doelverbeteraar |
 
-Monthly quota is enforced per key. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
+Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` so retries do not double-spend. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
 
 ## Quality checks
 
@@ -231,10 +235,10 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-394 automated tests across 90 test files cover curriculum retrieval and ranking,
-auth and authorization, credential encryption, API quotas and request limits,
+438 automated tests across 107 test files cover curriculum retrieval and ranking,
+auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
-The test total represents individual assertions, not a code-coverage percentage.
+The test total is the Vitest case count, not a code-coverage percentage.
 
 ## Production deployment
 
@@ -245,11 +249,11 @@ npm run build
 PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js
 ```
 
-Also copy `.next/static` and `public` into `.next/standalone` for a self-hosted deploy.
+`npm run build` copies `public` and `.next/static` into `.next/standalone`. You do not need to copy those trees by hand.
 
-Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs.
+Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs. External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds.
 
-Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, B2B organisation keys (hashed), usage logs, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database.
+Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, hashed B2B organisation keys, a shared organization quota ledger, idempotency keys, HMAC-bound daily AI budget rows, usage logs, security events, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database. ZIP import and export count actual inflated bytes and stop before the entry limit.
 
 Before exposing the service publicly:
 
@@ -260,8 +264,10 @@ Before exposing the service publicly:
   at the reverse proxy. The app adds HSTS, a per-request nonce CSP and
   same-origin checks.
 - Set `TRUST_PROXY_IP_HEADERS=true` only when the reverse proxy removes
-  incoming forwarded-IP headers and writes trusted values itself. Vercel is
-  detected automatically.
+  incoming forwarded-IP headers and writes trusted values itself. Do not
+  turn this on to "fix" missing IPs. Without a trusted proxy, login limits
+  use the e-mail address plus a high global emergency cap, not one shared
+  visitor bucket. Vercel is detected automatically.
 - Run one application instance per SQLite database. Use a persistent,
   access-restricted volume, database and WAL permissions readable only by the
   service account, encrypted backups, and regular restore tests. Use a shared
@@ -274,13 +280,16 @@ Before exposing the service publicly:
   `API_KEY_ENCRYPTION_PREVIOUS_SECRETS`, re-save existing keys, then remove
   previous secrets after the migration window.
 - Keep `ALLOW_DEV_LOGIN_CODE=false` and expose tester accounts only through
-  the environment allowlist.
+  the environment allowlist. Production builds ignore the flag even if it
+  is set.
 
 ## Privacy
 
 - Privacy policy consent is required at login
-- Marketing consent is off by default
+- Marketing consent is off by default and is not an analytics choice
+- Optional PostHog EU Cloud product analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Session replay is disabled in code
 - AI modules only receive text you explicitly submit for that action
+- Settings and the login screen include a legal colophon: AHOVOKS modellicentie, koepel citation (art. XI.189 WER), non-affiliation, and EU AI Act art. 50 transparency
 - Read [Privacybeleid](https://www.generativelabs.be/privacy.html) on generativelabs.be for processor details
 
 ## Documentation
