@@ -6,6 +6,12 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+---
+
+## [5.19.0] - 2026-09-07
+
+Generative Labs legal links, PostHog EU Cloud, B2B curriculum API, and a milder favicon squircle.
+
 ### Added
 - B2B curriculum API for publishers: hashed `lt_live_` keys, monthly quota, `POST /api/v1/curriculum/match`, `POST /api/v1/curriculum/audit`, and `POST /api/v1/goals/improve`
 - Consent line under the login e-mail and one-time code fields, with Algemene Voorwaarden and Privacybeleid in a new tab
