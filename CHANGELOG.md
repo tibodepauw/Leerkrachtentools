@@ -10,19 +10,15 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [5.19.0] - 2026-09-07
 
-Generative Labs legal links, PostHog EU Cloud, B2B curriculum API, and a milder favicon squircle.
+B2B curriculum API, PostHog EU telemetry, and legal compliance.
 
 ### Added
-- B2B curriculum API for publishers: hashed `lt_live_` keys, monthly quota, `POST /api/v1/curriculum/match`, `POST /api/v1/curriculum/audit`, and `POST /api/v1/goals/improve`
-- Consent line under the login e-mail and one-time code fields, with Algemene Voorwaarden and Privacybeleid in a new tab
-- PostHog EU Cloud analytics with identified-only profiles and masked session-recording inputs
+- B2B REST API endpoints (`/api/v1/curriculum/match`, `/api/v1/curriculum/audit`, `/api/v1/goals/improve`) with Bearer authentication, SHA-256 key hashing, and rate limiting
+- PostHog EU Cloud integration with client-side `maskAllInputs` and a tighter CSP
 
 ### Changed
-- README documents Snel and Pro curriculum search, tester module visibility, and the current test count
-- Login, settings and sidebar legal links point to the central Generative Labs documents
-- `/privacy`, `/voorwaarden` and `/juridisch` redirect to generativelabs.be instead of hosting copies in this app
-- Required login checkbox agrees to algemene voorwaarden and acknowledges the privacybeleid
-- Login footer link "Lees het privacyoverzicht" opens the Generative Labs privacy page in a new tab
+- Login screen with explicit terms and privacy consent linked to generativelabs.be
+- Minimumdoelen ranking for rare terms (spelling and Wetenschap & Techniek tools)
 - Favicon uses a mild squircle and slightly smaller gather LT letters
 
 ---
