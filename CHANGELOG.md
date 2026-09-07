@@ -6,6 +6,14 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Added
+- Legal colophon with AHOVOKS modellicentie, koepel citation (art. XI.189 WER), non-affiliation, and EU AI Act art. 50 transparency
+- Corpus hygiene test so full `.jsonl` corpora cannot enter git outside `test/fixtures/`
+
+### Changed
+- `.gitignore` ignores raw curriculum `.json`, `.jsonl` and `.pdf` under `data/`
+- B2B `POST /api/v1/curriculum/match` returns at most 5 citation fields by default: `code`, `text`, `network`, `score`, and optional `didactic_note`
+
 ---
 
 ## [5.19.0] - 2026-09-07

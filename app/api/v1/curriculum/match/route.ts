@@ -15,6 +15,7 @@ export const POST = withApiAuth(
       level: input.level,
       grade: input.grade,
       mode: input.mode,
+      limit: input.limit,
       orgId: context.orgId,
     });
 

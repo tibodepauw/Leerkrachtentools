@@ -44,6 +44,7 @@ import {
 import { useLessonStore } from "@/stores/useLessonStore";
 import { SidebarFeedback } from "@/components/layout/SidebarFeedback";
 import { LegalDocumentNav } from "@/components/legal/LegalDocuments";
+import { AboutAppDialog } from "@/components/legal/LegalColophon";
 import {
   excludePinnedModules,
   runSidebarPinTransition,
@@ -531,8 +532,15 @@ function SidebarContent({
               <Settings className="size-4 text-neutral-600 transition-colors group-hover:text-neutral-300" />
             </Link>
           )}
-          {collapsed ? null : (
-            <LegalDocumentNav className="mt-3 flex flex-col gap-1 px-2 text-[11px] text-neutral-500" />
+          {collapsed ? (
+            <div className="mt-2 flex justify-center">
+              <AboutAppDialog collapsed />
+            </div>
+          ) : (
+            <div className="mt-3 space-y-2 px-2">
+              <LegalDocumentNav className="flex flex-col gap-1 text-[11px] text-neutral-500" />
+              <AboutAppDialog />
+            </div>
           )}
         </div>
       </div>

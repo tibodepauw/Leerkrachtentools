@@ -40,6 +40,7 @@ import { PwaInstallCard } from "@/components/pwa/PwaInstallCard";
 import { LoaderSettingsView } from "@/components/settings/LoaderSettingsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { LegalDocumentNav } from "@/components/legal/LegalDocuments";
+import { AboutAppDialog, LegalColophon } from "@/components/legal/LegalColophon";
 
 interface AccountSettingsProps {
   userId: string;
@@ -299,6 +300,19 @@ export function AccountSettings({
                   Stuur mij updates over het toekomstige, uitgebreidere project.
                 </Label>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Bronnen en AI-transparantie</CardTitle>
+              <CardDescription>
+                Modellicentie, koepelrechten en art. 50 van Verordening 2024/1689.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <LegalColophon />
+              <AboutAppDialog />
             </CardContent>
           </Card>
 
