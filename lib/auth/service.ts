@@ -103,7 +103,7 @@ export async function requestLoginCode({
   const email = normalizeEmail(rawEmail);
   if (!isValidEmail(email)) throw new Error("Vul een geldig e-mailadres in.");
   if (!privacyAccepted) {
-    throw new Error("Ga akkoord met het privacybeleid om verder te gaan.");
+    throw new Error("Ga akkoord met de algemene voorwaarden om verder te gaan.");
   }
 
   const now = Date.now();

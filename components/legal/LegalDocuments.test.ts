@@ -40,8 +40,9 @@ describe("Legal document links", () => {
   it("toont voorwaarden, privacy en juridische informatie in settings en sidebar", () => {
     expect(settings).toContain("LegalDocumentNav");
     expect(sidebar).toContain("LegalDocumentNav");
-    expect(auth).toContain("LegalDocumentNav");
     expect(auth).toContain("LegalConsentLine");
+    expect(auth).toContain("Lees het privacyoverzicht");
+    expect(auth).toContain("neem kennis van het");
   });
 
   it("stuurt oude in-app paden door naar Generative Labs", () => {

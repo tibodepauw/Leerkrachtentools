@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { LoadingGate } from "@/components/shared/LoadingGate";
 import { GlowWordmark } from "@/components/shared/GlowWordmark";
 import { useClientMounted } from "@/hooks/useAppReady";
-import { LegalConsentLine, LegalDocumentNav, LegalExternalLink } from "@/components/legal/LegalDocuments";
+import { LegalConsentLine, LegalExternalLink } from "@/components/legal/LegalDocuments";
 import { GENERATIVE_LABS_LEGAL } from "@/lib/legal/generativeLabs";
 
 export function AuthScreen() {
@@ -140,14 +140,14 @@ function AuthScreenContent() {
                       href={GENERATIVE_LABS_LEGAL.terms}
                       className="text-white"
                     >
-                      Algemene Voorwaarden
+                      algemene voorwaarden
                     </LegalExternalLink>{" "}
-                    en het{" "}
+                    en neem kennis van het{" "}
                     <LegalExternalLink
                       href={GENERATIVE_LABS_LEGAL.privacy}
                       className="text-white"
                     >
-                      Privacybeleid
+                      privacybeleid
                     </LegalExternalLink>
                     .
                   </ConsentChoice>
@@ -234,9 +234,15 @@ function AuthScreenContent() {
           </CardContent>
         </Card>
         <p className="mt-5 text-center text-xs leading-5 text-neutral-600">
-          We bewaren je e-mailadres voor toegang en beveiliging. Lesinhoud wordt niet in deze accountdatabase opgeslagen.
+          We bewaren je e-mailadres voor toegang en beveiliging. Lesinhoud wordt niet in deze accountdatabase opgeslagen.{" "}
+          <LegalExternalLink
+            href={GENERATIVE_LABS_LEGAL.privacy}
+            className="hover:text-neutral-400"
+          >
+            Lees het privacyoverzicht
+          </LegalExternalLink>
+          .
         </p>
-        <LegalDocumentNav className="mt-3 flex justify-center gap-4 text-xs text-neutral-600" />
       </div>
     </main>
   );
