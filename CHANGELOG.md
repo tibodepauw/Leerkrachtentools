@@ -6,18 +6,37 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+---
+
+## [5.20.0] - 2026-09-07
+
+Quota ledger, ZIP bounds, PostHog privacy, and B2B Pro identity.
+
 ### Added
 - Legal colophon with AHOVOKS modellicentie, koepel citation (art. XI.189 WER), non-affiliation, and EU AI Act art. 50 transparency
 - Corpus hygiene test so full `.jsonl` corpora cannot enter git outside `test/fixtures/`
+- Shared organization API quota ledger with burst, concurrency, and idempotency keys
+- HMAC e-mail identity for the daily server-AI budget so delete/recreate keeps the same window
 
 ### Changed
 - `.gitignore` ignores raw curriculum `.json`, `.jsonl` and `.pdf` under `data/`
 - B2B `POST /api/v1/curriculum/match` returns at most 5 citation fields by default: `code`, `text`, `network`, `score`, and optional `didactic_note`
+- Match responses include `requestedMode`, `executedMode`, and `proFallback`
 - Standalone build copies `public` and `.next/static` into `.next/standalone`
 - Dev login codes are ignored whenever `NODE_ENV` is production
 - External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds
+- PostHog session replay is off; lesson, preview and feedback UI use `ph-no-capture`
+- RAG query rewriting uses the same BYOK provider policy as other AI calls
+- B2B Pro analysis uses an organization budget path instead of a synthetic user-id
 
----
+### Fixed
+- Exhausted B2B keys no longer write one usage-log row per 429
+- Account deletion invalidates pending login codes and no longer resets the daily AI budget
+- Login rate limits no longer share one bucket when client IP headers are untrusted
+- ZIP import/export counts actual inflated bytes instead of declared metadata
+- Word preview disables `renderAltChunks` so altChunk HTML is not rendered
+- Failed RAG rewrite after dispatch keeps the reserved AI unit
+
 
 ## [5.19.0] - 2026-09-07
 
