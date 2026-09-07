@@ -14,6 +14,8 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - README documents Snel and Pro curriculum search, tester module visibility, and the current test count
 - Login, settings and sidebar legal links point to the central Generative Labs documents
 - `/privacy`, `/voorwaarden` and `/juridisch` redirect to generativelabs.be instead of hosting copies in this app
+- Required login checkbox agrees to algemene voorwaarden and acknowledges the privacybeleid
+- Login footer link "Lees het privacyoverzicht" opens the Generative Labs privacy page in a new tab
 
 ---
 

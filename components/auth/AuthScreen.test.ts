@@ -29,9 +29,11 @@ describe("AuthScreen markup", () => {
     expect(source).toMatch(/id="code"[\s\S]*?<LegalConsentLine \/>/);
     expect(source).toContain("GENERATIVE_LABS_LEGAL.terms");
     expect(source).toContain("GENERATIVE_LABS_LEGAL.privacy");
-    expect(source).toContain("Algemene Voorwaarden");
-    expect(source).toContain("Privacybeleid");
-    expect(source).toContain("<LegalDocumentNav");
+    expect(source).toContain("algemene voorwaarden");
+    expect(source).toContain("neem kennis van het");
+    expect(source).toContain("privacybeleid");
+    expect(source).toContain("Lees het privacyoverzicht");
+    expect(source).not.toContain("LegalDocumentNav");
   });
 
   it("toont de verificatiecode in zes losse vakjes", () => {
