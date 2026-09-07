@@ -1,15 +1,35 @@
+const POSTHOG_EU_ORIGINS = [
+  "https://eu.posthog.com",
+  "https://eu.i.posthog.com",
+  "https://eu-assets.i.posthog.com",
+] as const;
+
+function posthogCspOrigins() {
+  const origins = new Set<string>(POSTHOG_EU_ORIGINS);
+  const configuredHost = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim();
+  if (configuredHost) {
+    try {
+      origins.add(new URL(configuredHost).origin);
+    } catch {
+      // Ignore an invalid override; EU Cloud hosts stay allowed.
+    }
+  }
+  return [...origins].join(" ");
+}
+
 export function contentSecurityPolicy(nonce: string, development: boolean) {
+  const posthogOrigins = posthogCspOrigins();
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${
       development ? " 'unsafe-eval'" : ""
     }`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob: ${posthogOrigins}`,
     "media-src 'self' blob:",
-    "connect-src 'self'",
+    `connect-src 'self' ${posthogOrigins}`,
     "font-src 'self' data:",
-    "worker-src 'self'",
+    "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",
     "frame-src 'self' blob:",
