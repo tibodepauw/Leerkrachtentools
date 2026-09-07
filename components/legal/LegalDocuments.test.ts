@@ -11,6 +11,14 @@ const sidebar = readFileSync(
   new URL("../layout/Sidebar.tsx", import.meta.url),
   "utf8",
 );
+const legalColophon = readFileSync(
+  new URL("./LegalColophon.tsx", import.meta.url),
+  "utf8",
+);
+const attribution = readFileSync(
+  new URL("../../lib/legal/curriculumAttribution.ts", import.meta.url),
+  "utf8",
+);
 const nextConfig = readFileSync(new URL("../../next.config.ts", import.meta.url), "utf8");
 const proxy = readFileSync(new URL("../../proxy.ts", import.meta.url), "utf8");
 const privacyPage = readFileSync(
@@ -43,6 +51,18 @@ describe("Legal document links", () => {
     expect(auth).toContain("LegalConsentLine");
     expect(auth).toContain("Lees het privacyoverzicht");
     expect(auth).toContain("neem kennis van het");
+  });
+
+  it("toont het juridisch colofon in login, settings en over-deze-applicatie", () => {
+    expect(attribution).toContain("Modellicentie voor Gratis Hergebruik Vlaanderen v1.0");
+    expect(attribution).toContain("art. XI.189 WER");
+    expect(legalColophon).toContain("Verordening 2024/1689");
+    expect(legalColophon).toContain("Over deze applicatie");
+    expect(legalColophon).toContain("CURRICULUM_ATTRIBUTION_ITEMS");
+    expect(settings).toContain("LegalColophon");
+    expect(settings).toContain("AboutAppDialog");
+    expect(sidebar).toContain("AboutAppDialog");
+    expect(auth).toContain("LegalColophon");
   });
 
   it("stuurt oude in-app paden door naar Generative Labs", () => {

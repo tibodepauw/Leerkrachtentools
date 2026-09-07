@@ -1,17 +1,26 @@
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
 import { collectMinimumGoalCandidates } from "@/lib/rag/minimumGoalCandidates";
-import {
-  MINIMUM_GOALS_TOP_N,
-  rankMinimumGoalResults,
-} from "@/lib/rag/minimumGoalRanking";
+import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
 import { runProCurriculumAnalysis } from "@/lib/rag/runProCurriculumAnalysis";
 import { CURRICULUM_PRO_RETRIEVAL_N } from "@/lib/rag/selectProCurriculumGoals";
 import type { CurriculumSearchResult } from "@/types";
+import {
+  CURRICULUM_MATCH_LIMIT_DEFAULT,
+  CURRICULUM_MATCH_LIMIT_MAX,
+} from "@/lib/b2b/schemas";
 import {
   resolveMatchSearchTarget,
   type PublisherLevel,
   type PublisherNetwork,
 } from "@/lib/b2b/publisherNetwork";
+
+export const CURRICULUM_MATCH_RESULT_KEYS = [
+  "code",
+  "text",
+  "network",
+  "score",
+  "didactic_note",
+] as const;
 
 export type CurriculumMatchResult = {
   code: string;
@@ -21,10 +30,14 @@ export type CurriculumMatchResult = {
   didactic_note?: string;
 };
 
-function resultText(result: CurriculumSearchResult) {
+const CITATION_TEXT_MAX = 500;
+
+function citationText(result: CurriculumSearchResult) {
   const minimum = result.gelinktMinimumdoel?.tekst?.trim();
-  if (minimum) return minimum;
-  return result.titel.trim() || result.toelichting.trim();
+  const core = (minimum || result.titel.trim()).replace(/\s+/g, " ").trim();
+  const paragraph = core.split(/\n{2,}/)[0]?.trim() || core;
+  if (paragraph.length <= CITATION_TEXT_MAX) return paragraph;
+  return `${paragraph.slice(0, CITATION_TEXT_MAX - 3).trimEnd()}...`;
 }
 
 function resultCode(result: CurriculumSearchResult) {
@@ -40,9 +53,9 @@ export function toCurriculumMatchResult(
   result: CurriculumSearchResult & { score?: number },
 ): CurriculumMatchResult | null {
   const code = resultCode(result);
-  const text = resultText(result);
+  const text = citationText(result);
   if (!code || !text) return null;
-  const note = (result.proWhy || result.toelichting || "").trim();
+  const note = result.proWhy?.trim();
   return {
     code,
     text,
@@ -52,6 +65,16 @@ export function toCurriculumMatchResult(
   };
 }
 
+function clampMatchLimit(limit: number | undefined) {
+  if (typeof limit !== "number" || !Number.isFinite(limit)) {
+    return CURRICULUM_MATCH_LIMIT_DEFAULT;
+  }
+  return Math.min(
+    CURRICULUM_MATCH_LIMIT_MAX,
+    Math.max(1, Math.trunc(limit)),
+  );
+}
+
 export async function matchCurriculumGoals({
   query,
   network,
@@ -59,6 +82,7 @@ export async function matchCurriculumGoals({
   grade,
   mode,
   orgId,
+  limit,
 }: {
   query: string;
   network: PublisherNetwork;
@@ -66,9 +90,14 @@ export async function matchCurriculumGoals({
   grade?: string;
   mode: "snel" | "pro";
   orgId: string;
+  limit?: number;
 }): Promise<CurriculumMatchResult[]> {
+  const outputLimit = clampMatchLimit(limit);
   const target = resolveMatchSearchTarget(network, level);
-  const limit = mode === "pro" ? CURRICULUM_PRO_RETRIEVAL_N : 8;
+  const retrievalLimit =
+    mode === "pro"
+      ? Math.max(CURRICULUM_PRO_RETRIEVAL_N, outputLimit)
+      : outputLimit;
 
   let retrieved: Array<CurriculumSearchResult & { score?: number }> =
     target.kind === "minimum-goals"
@@ -77,9 +106,9 @@ export async function matchCurriculumGoals({
           collectMinimumGoalCandidates({
             query,
             educationLevel: target.educationLevel,
-            limit: Math.max(limit, 50),
+            limit: Math.max(retrievalLimit, 50),
           }),
-          mode === "pro" ? limit : MINIMUM_GOALS_TOP_N,
+          retrievalLimit,
           {
             grade: "",
             educationLevel: target.educationLevel,
@@ -89,7 +118,7 @@ export async function matchCurriculumGoals({
           query,
           network: target.network,
           educationLevel: target.educationLevel,
-          limit,
+          limit: retrievalLimit,
         });
 
   if (mode === "pro" && retrieved.length > 0) {
@@ -112,5 +141,6 @@ export async function matchCurriculumGoals({
 
   return retrieved
     .map((result) => toCurriculumMatchResult(result))
-    .filter((result): result is CurriculumMatchResult => result !== null);
+    .filter((result): result is CurriculumMatchResult => result !== null)
+    .slice(0, outputLimit);
 }

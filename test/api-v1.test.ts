@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { POST as postMatch } from "@/app/api/v1/curriculum/match/route";
 import { POST as postAudit } from "@/app/api/v1/curriculum/audit/route";
 import { POST as postImprove } from "@/app/api/v1/goals/improve/route";
+import { CURRICULUM_MATCH_RESULT_KEYS } from "@/lib/b2b/matchCurriculum";
 import {
   createOrganization,
   generateApiKey,
@@ -78,6 +79,19 @@ describe("B2B API v1", () => {
     };
     expect(payload.success).toBe(true);
     expect(payload.count).toBe(payload.results.length);
+    expect(payload.results.length).toBeLessThanOrEqual(5);
+    const allowed = new Set<string>(CURRICULUM_MATCH_RESULT_KEYS);
+    for (const result of payload.results) {
+      expect(Object.keys(result).every((key) => allowed.has(key))).toBe(true);
+      expect(result).toHaveProperty("code");
+      expect(result).toHaveProperty("text");
+      expect(result).toHaveProperty("network");
+      expect(result).toHaveProperty("score");
+      expect(result).not.toHaveProperty("toelichting");
+      expect(result).not.toHaveProperty("titel");
+      expect(result).not.toHaveProperty("snippet");
+      expect(JSON.stringify(result)).not.toMatch(/pedagogische wenken/i);
+    }
     expect(ok.headers.get("X-RateLimit-Limit")).toBe("10000");
     expect(ok.headers.get("X-RateLimit-Remaining")).toBeTruthy();
     expect(ok.headers.get("X-RateLimit-Reset")).toBeTruthy();
@@ -150,6 +164,14 @@ describe("B2B API v1", () => {
       { query: "ab" },
     );
     expect(tooShort.status).toBe(400);
+
+    const tooMany = await postJson(
+      postMatch,
+      "http://benchmark.local/api/v1/curriculum/match",
+      key.token,
+      { query: "optellen tot 20", limit: 11 },
+    );
+    expect(tooMany.status).toBe(400);
 
     const invalidJson = await postJson(
       postMatch,

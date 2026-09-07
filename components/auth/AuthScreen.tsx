@@ -12,6 +12,7 @@ import { LoadingGate } from "@/components/shared/LoadingGate";
 import { GlowWordmark } from "@/components/shared/GlowWordmark";
 import { useClientMounted } from "@/hooks/useAppReady";
 import { LegalConsentLine, LegalExternalLink } from "@/components/legal/LegalDocuments";
+import { LegalColophon } from "@/components/legal/LegalColophon";
 import { GENERATIVE_LABS_LEGAL } from "@/lib/legal/generativeLabs";
 
 export function AuthScreen() {
@@ -243,6 +244,7 @@ function AuthScreenContent() {
           </LegalExternalLink>
           .
         </p>
+        <LegalColophon className="mx-auto mt-4 max-w-sm text-center" />
       </div>
     </main>
   );

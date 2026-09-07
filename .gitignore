@@ -23,28 +23,36 @@
 /data/*.db-shm
 /data/*.db-wal
 /data/avatars/
+
+# Raw, scraped and converted curriculum corpora (never public git)
+data/**/*.jsonl
+data/**/*.pdf
+data/**/*.json
+data/okan/
+data/bubao/
+data/buso/
+data/dko/
+data/secundair/
+data/basisonderwijs/
 /data/zill/
 /data/go/
 /data/ovsg/
 /data/minimumdoelen/
 /data/opstap/
 /data/go_nieuw/
-/data/secundair/
-/data/okan/
-/data/bubao/
-/data/buso/
-/data/dko/
 /data/volwassenen/
 /data/hoger/
 /dist/secundair_update.zip
+
+# Templates may be committed; un-ignore after the corpus globs
+!data/templates/**
+!data/templates/.gitkeep
+
+# Small CI fixtures only; full secundair dumps stay out of git
+!test/fixtures/**
 test/fixtures/curriculum-secundair.jsonl
 test/fixtures/minimumdoelen-secundair.jsonl
 test/fixtures/curriculum-pov-secundair.jsonl
-
-# Sjablonen en documenten
-data/templates/*.docx
-data/templates/*.pdf
-!data/templates/.gitkeep
 test/fixtures/*.docx
 test/fixtures/*.pdf
 !test/fixtures/.gitkeep
