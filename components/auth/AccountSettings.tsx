@@ -41,6 +41,7 @@ import { LoaderSettingsView } from "@/components/settings/LoaderSettingsView";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { LegalDocumentNav } from "@/components/legal/LegalDocuments";
 import { AboutAppDialog, LegalColophon } from "@/components/legal/LegalColophon";
+import { resetPostHogIdentity } from "@/components/providers/posthog-provider";
 
 interface AccountSettingsProps {
   userId: string;
@@ -114,6 +115,7 @@ export function AccountSettings({
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
+    resetPostHogIdentity();
     detachClientUserStorage();
     router.push("/");
     router.refresh();
@@ -125,6 +127,7 @@ export function AccountSettings({
       toast.error("Account kon niet worden verwijderd.");
       return;
     }
+    resetPostHogIdentity();
     try {
       await deleteClientUserStorage(userId);
     } catch {
@@ -338,7 +341,13 @@ export function AccountSettings({
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Account definitief verwijderen?</AlertDialogTitle>
-                    <AlertDialogDescription>Je e-mailadres, profiel, toestemming en alle sessies worden onmiddellijk gewist.</AlertDialogDescription>
+                    <AlertDialogDescription>
+                      Profiel, sessies, documenten en openstaande logincodes worden
+                      nu gewist. Een nieuwe code is nodig om opnieuw te registreren.
+                      Het resterende dagelijkse AI-budget blijft tot het einde van
+                      het venster gekoppeld aan dit e-mailadres, zonder dat we dat
+                      adres bewaren. Anti-abuselogs verdwijnen daarna vanzelf.
+                    </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Annuleren</AlertDialogCancel>

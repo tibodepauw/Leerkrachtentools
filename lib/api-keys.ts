@@ -1,5 +1,9 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
+import { getOrgQuotaSnapshot } from "@/lib/api/orgQuota";
+import { startOfNextUtcMonth, startOfUtcMonth } from "@/lib/api/utcMonth";
 import { getDatabase } from "@/lib/db/sqlite";
+
+export { startOfNextUtcMonth, startOfUtcMonth };
 
 export const API_KEY_PREFIX = "lt_live_";
 
@@ -25,6 +29,7 @@ export class ApiAuthError extends Error {
   readonly status: 401 | 403 | 429;
   readonly retryAfterSeconds?: number;
   readonly keyId?: string;
+  readonly orgId?: string;
   readonly monthlyQuota?: number;
   readonly usedThisMonth?: number;
   readonly resetAt?: number;
@@ -35,6 +40,7 @@ export class ApiAuthError extends Error {
     extras?: {
       retryAfterSeconds?: number;
       keyId?: string;
+      orgId?: string;
       monthlyQuota?: number;
       usedThisMonth?: number;
       resetAt?: number;
@@ -45,6 +51,7 @@ export class ApiAuthError extends Error {
     this.status = status;
     this.retryAfterSeconds = extras?.retryAfterSeconds;
     this.keyId = extras?.keyId;
+    this.orgId = extras?.orgId;
     this.monthlyQuota = extras?.monthlyQuota;
     this.usedThisMonth = extras?.usedThisMonth;
     this.resetAt = extras?.resetAt;
@@ -120,26 +127,8 @@ export function normalizeApiKeyScopes(scopes: string[]) {
   return unique;
 }
 
-export function startOfUtcMonth(now = Date.now()) {
-  const date = new Date(now);
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
-}
-
-export function startOfNextUtcMonth(now = Date.now()) {
-  const date = new Date(now);
-  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
-}
-
-function countMonthlyUsage(keyId: string, now = Date.now()) {
-  const db = getDatabase();
-  const row = db
-    .prepare(
-      `SELECT COUNT(*) AS count
-       FROM api_usage_logs
-       WHERE key_id = ? AND created_at >= ?`,
-    )
-    .get(keyId, startOfUtcMonth(now)) as { count: number };
-  return row.count;
+function orgUsedThisMonth(orgId: string, now = Date.now()) {
+  return getOrgQuotaSnapshot(orgId, now).consumed;
 }
 
 function parseOrganizationTier(value: string): ApiOrganizationTier {
@@ -301,10 +290,11 @@ export function validateApiKey(
     throw new ApiAuthError("Ongeldige API-sleutel.", 401);
   }
 
-  const usedThisMonth = countMonthlyUsage(row.id, now);
+  const usedThisMonth = orgUsedThisMonth(organization.id, now);
   const resetAt = startOfNextUtcMonth(now);
   const quotaExtras = {
     keyId: row.id,
+    orgId: organization.id,
     monthlyQuota: organization.monthly_quota,
     usedThisMonth,
     resetAt,
@@ -317,13 +307,6 @@ export function validateApiKey(
       403,
       quotaExtras,
     );
-  }
-
-  if (usedThisMonth >= organization.monthly_quota) {
-    throw new ApiAuthError("Maandelijks API-quota is bereikt.", 429, {
-      ...quotaExtras,
-      retryAfterSeconds: Math.max(1, Math.ceil((resetAt - now) / 1000)),
-    });
   }
 
   touchLastUsedAt(row.id);
@@ -347,6 +330,7 @@ export function logApiUsage({
   durationMs,
   tokensUsed = 0,
   createdAt = Date.now(),
+  requestId = "",
 }: {
   keyId: string;
   endpoint: string;
@@ -354,12 +338,13 @@ export function logApiUsage({
   durationMs: number;
   tokensUsed?: number;
   createdAt?: number;
+  requestId?: string;
 }) {
   getDatabase()
     .prepare(
       `INSERT INTO api_usage_logs
-        (key_id, endpoint, status_code, tokens_used, duration_ms, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+        (key_id, endpoint, status_code, tokens_used, duration_ms, created_at, request_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       keyId,
@@ -368,6 +353,7 @@ export function logApiUsage({
       Math.max(0, Math.round(tokensUsed)),
       Math.max(0, Math.round(durationMs)),
       createdAt,
+      requestId.slice(0, 80),
     );
 }
 
@@ -416,7 +402,7 @@ export function inspectOrganization(orgId: string, now = Date.now()) {
       expiresAt: key.expires_at,
       lastUsedAt: key.last_used_at,
       createdAt: key.created_at,
-      usedThisMonth: countMonthlyUsage(key.id, now),
+      usedThisMonth: orgUsedThisMonth(organization.id, now),
     })),
   };
 }

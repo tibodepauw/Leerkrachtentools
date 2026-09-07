@@ -1,25 +1,54 @@
-export function clientIpFromRequest(request: Request): string {
-  const trustProxyHeaders =
-    process.env.VERCEL === "1" ||
-    process.env.TRUST_PROXY_IP_HEADERS === "true";
-  if (!trustProxyHeaders) return "unknown";
+export type ClientIpSource = "vercel" | "trusted-proxy" | "unavailable";
 
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    const parts = forwarded
+export type ClientIpResolution = {
+  address: string;
+  trusted: boolean;
+  source: ClientIpSource;
+};
+
+function firstHop(value: string | null) {
+  if (!value) return "";
+  return (
+    value
       .split(",")
       .map((part) => part.trim())
-      .filter(Boolean);
-    const trusted = parts[0];
-    if (trusted) {
-      return trusted;
+      .find(Boolean) ?? ""
+  );
+}
+
+/**
+ * Client IP for rate limits. Headers are only used when this process sits
+ * behind a proxy that overwrites them (Vercel, or TRUST_PROXY_IP_HEADERS=true).
+ * Missing or untrusted IP is `unavailable`, never a shared "unknown" visitor bucket.
+ */
+export function resolveClientIp(request: Request): ClientIpResolution {
+  if (process.env.VERCEL === "1") {
+    const vercel = firstHop(request.headers.get("x-vercel-forwarded-for"));
+    if (vercel) {
+      return { address: vercel, trusted: true, source: "vercel" };
     }
+    const forwarded = firstHop(request.headers.get("x-forwarded-for"));
+    if (forwarded) {
+      return { address: forwarded, trusted: true, source: "vercel" };
+    }
+    return { address: "unavailable", trusted: false, source: "unavailable" };
   }
 
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  if (realIp) {
-    return realIp;
+  if (process.env.TRUST_PROXY_IP_HEADERS === "true") {
+    const forwarded = firstHop(request.headers.get("x-forwarded-for"));
+    if (forwarded) {
+      return { address: forwarded, trusted: true, source: "trusted-proxy" };
+    }
+    const realIp = request.headers.get("x-real-ip")?.trim();
+    if (realIp) {
+      return { address: realIp, trusted: true, source: "trusted-proxy" };
+    }
+    return { address: "unavailable", trusted: false, source: "unavailable" };
   }
 
-  return "unknown";
+  return { address: "unavailable", trusted: false, source: "unavailable" };
+}
+
+export function clientIpFromRequest(request: Request): string {
+  return resolveClientIp(request).address;
 }

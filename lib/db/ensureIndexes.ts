@@ -19,5 +19,8 @@ export function ensureDatabaseIndexes(db: Database.Database): void {
 
     CREATE INDEX IF NOT EXISTS users_created_at
       ON users(created_at);
+
+    CREATE INDEX IF NOT EXISTS ai_budget_usage_created_at
+      ON ai_budget_usage(created_at);
   `);
 }

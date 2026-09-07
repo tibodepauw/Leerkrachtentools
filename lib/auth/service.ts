@@ -11,11 +11,15 @@ import {
   cleanExpiredAuthRecords,
   getDatabase,
 } from "@/lib/auth/database";
+import { normalizeEmail } from "@/lib/auth/normalizeEmail";
 import { parsePinnedModules } from "@/lib/auth/pinnedModules";
 import { profileImageUrl } from "@/lib/auth/profileImage";
+import { getAuthSecret } from "@/lib/auth/secret";
 import { hasAppAccess, inviteOnlyMessage, resolveTierFromEmail } from "@/lib/auth/tiers";
 import { isBrevoConfigured, sendBrevoEmail } from "@/lib/email/brevo";
 import { buildVerificationEmail } from "@/lib/email/verificationEmail";
+
+export { normalizeEmail };
 
 export const SESSION_COOKIE =
   process.env.NODE_ENV === "production"
@@ -25,21 +29,8 @@ const CODE_TTL = 10 * 60 * 1000;
 const SESSION_TTL = 7 * 24 * 60 * 60 * 1000;
 const SESSION_IDLE_TTL = 24 * 60 * 60 * 1000;
 
-function authSecret() {
-  const secret = process.env.AUTH_SECRET;
-  if (secret && secret.length >= 32) return secret;
-  if (process.env.NODE_ENV === "test") {
-    return "local-development-secret-change-before-production";
-  }
-  throw new Error("AUTH_SECRET moet minstens 32 tekens bevatten.");
-}
-
 function digest(value: string) {
-  return createHmac("sha256", authSecret()).update(value).digest("hex");
-}
-
-export function normalizeEmail(value: string) {
-  return value.trim().toLocaleLowerCase("en-US");
+  return createHmac("sha256", getAuthSecret()).update(value).digest("hex");
 }
 
 export function isValidEmail(email: string) {
@@ -92,12 +83,14 @@ export async function requestLoginCode({
   marketingOptIn,
   privacyAccepted,
   ipHash,
+  ipTrusted,
   exposeDevCode = false,
 }: {
   email: string;
   marketingOptIn: boolean;
   privacyAccepted: boolean;
   ipHash: string;
+  ipTrusted: boolean;
   exposeDevCode?: boolean;
 }) {
   const email = normalizeEmail(rawEmail);
@@ -117,18 +110,27 @@ export async function requestLoginCode({
       "SELECT COUNT(*) AS count FROM login_codes WHERE email = ? AND created_at >= ?",
     )
     .get(email, windowStart) as CountRow;
-  const ipCount = db
-    .prepare(
-      "SELECT COUNT(*) AS count FROM login_codes WHERE ip_hash = ? AND created_at >= ?",
-    )
-    .get(ipHash, windowStart) as CountRow;
+  const ipCount = ipTrusted
+    ? (db
+        .prepare(
+          "SELECT COUNT(*) AS count FROM login_codes WHERE ip_hash = ? AND created_at >= ?",
+        )
+        .get(ipHash, windowStart) as CountRow)
+    : { count: 0 };
+  const globalCount = ipTrusted
+    ? { count: 0 }
+    : (db
+        .prepare(
+          "SELECT COUNT(*) AS count FROM login_codes WHERE created_at >= ?",
+        )
+        .get(windowStart) as CountRow);
   const latest = db
     .prepare(
       "SELECT created_at FROM login_codes WHERE email = ? ORDER BY created_at DESC LIMIT 1",
     )
     .get(email) as LatestRow | undefined;
 
-  if (emailCount.count >= 5 || ipCount.count >= 20) {
+  if (emailCount.count >= 5 || ipCount.count >= 20 || globalCount.count >= 500) {
     throw new Error("Te veel aanvragen. Probeer het over 15 minuten opnieuw.");
   }
   if (latest && now - latest.created_at < 60_000) {

@@ -19,5 +19,5 @@ export const POST = withApiAuth(
       { headers: { "Cache-Control": "no-store" } },
     );
   },
-  { requiredScope: "goals:improve" },
+  { requiredScope: "goals:improve", bodySchema: goalImproveBodySchema },
 );

@@ -38,20 +38,22 @@ function fallbackResult(
   };
 }
 
+export type ProCurriculumBudget =
+  | { kind: "user"; userId: string; tier: string }
+  | { kind: "org"; orgId: string };
+
 export async function runProCurriculumAnalysis({
   query,
   retrieved,
   lesson,
-  userId,
-  tier,
+  budget,
   kind = "leerplandoel",
   fallbackLimit = CURRICULUM_TOP_N,
 }: {
   query: string;
   retrieved: CurriculumSearchResult[];
   lesson: ProLessonContext;
-  userId: string;
-  tier: string;
+  budget: ProCurriculumBudget;
   kind?: ProCurriculumKind;
   fallbackLimit?: number;
 }): Promise<ProCurriculumAnalysisResult> {
@@ -65,21 +67,13 @@ export async function runProCurriculumAnalysis({
   }
 
   try {
-    const userAiConfig = getUserAiConfig(userId);
+    const userId = budget.kind === "user" ? budget.userId : undefined;
+    const userAiConfig = userId ? getUserAiConfig(userId) : null;
     if (!hasAnyAiProvider(userAiConfig)) {
       return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.noProvider, fallbackLimit);
     }
 
-    const access = checkServerAiAccess({ userId, tier, userAiConfig });
-    if (!access.allowed) {
-      const notice =
-        access.status === 429
-          ? PRO_FALLBACK_NOTICES.quota
-          : withProFallbackSentence(access.message);
-      return fallbackResult(retrieved, notice, fallbackLimit);
-    }
-
-    const tracked = await runWithServerAiQuota(access, userId, () =>
+    const runAnalysis = () =>
       runStructured({
         schema: proCurriculumPicksSchema,
         system: prompts.curriculumPro,
@@ -96,8 +90,35 @@ export async function runProCurriculumAnalysis({
         allowLocalMock: false,
         userAiConfig,
         maxOutputTokens: 1200,
-      }),
-    );
+      });
+
+    let tracked:
+      | { ok: true; result: Awaited<ReturnType<typeof runAnalysis>> }
+      | { ok: false };
+
+    if (budget.kind === "org") {
+      try {
+        tracked = { ok: true, result: await runAnalysis() };
+      } catch (error) {
+        console.error("[rag-curriculum:pro]", error);
+        return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.aiError, fallbackLimit);
+      }
+    } else {
+      const access = checkServerAiAccess({
+        userId: budget.userId,
+        tier: budget.tier,
+        userAiConfig,
+      });
+      if (!access.allowed) {
+        const notice =
+          access.status === 429
+            ? PRO_FALLBACK_NOTICES.quota
+            : withProFallbackSentence(access.message);
+        return fallbackResult(retrieved, notice, fallbackLimit);
+      }
+
+      tracked = await runWithServerAiQuota(access, budget.userId, runAnalysis);
+    }
 
     if (!tracked.ok) {
       return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.quota, fallbackLimit);

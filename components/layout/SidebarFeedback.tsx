@@ -130,7 +130,7 @@ export function SidebarFeedback({
           }
         }}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="ph-no-capture sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-lg">Idee of feedback</DialogTitle>
             <DialogDescription>

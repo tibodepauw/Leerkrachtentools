@@ -509,8 +509,7 @@ async function handleCurriculumSearch(request: Request) {
           query,
           retrieved: searchResult.merged,
           lesson: lessonContext,
-          userId: session.id,
-          tier: session.tier,
+          budget: { kind: "user", userId: session.id, tier: session.tier },
         });
         return curriculumSearchResponse({
           merged: pro.merged,

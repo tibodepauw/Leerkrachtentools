@@ -1,32 +1,23 @@
 import { NextResponse } from "next/server";
 import {
-  hashRequestIp,
   SESSION_COOKIE,
   verifyLoginCode,
 } from "@/lib/auth/service";
 import { getSessionCookieOptions } from "@/lib/auth/cookies";
 import { publicErrorMessage } from "@/lib/http/clientError";
-import { clientIpFromRequest } from "@/lib/http/requestIp";
+import { assertOtpVerifyRateLimits } from "@/lib/http/otpRateLimit";
 import { readJsonBody } from "@/lib/http/requestBody";
-import {
-  assertRequestRateLimit,
-  RequestRateLimitError,
-} from "@/lib/http/rateLimit";
+import { RequestRateLimitError } from "@/lib/http/rateLimit";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    assertRequestRateLimit({
-      scope: "otp-verify-ip",
-      subject: hashRequestIp(clientIpFromRequest(request)),
-      limit: 30,
-      windowMs: 15 * 60 * 1000,
-    });
     const body = (await readJsonBody(request, 16_384)) as {
       email?: string;
       code?: string;
     };
+    assertOtpVerifyRateLimits(request, body.email ?? "");
     const result = verifyLoginCode(body.email ?? "", body.code ?? "");
     const response = NextResponse.json(
       { user: result.user },

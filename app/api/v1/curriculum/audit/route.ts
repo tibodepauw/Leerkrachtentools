@@ -29,5 +29,5 @@ export const POST = withApiAuth(
       { headers: { "Cache-Control": "no-store" } },
     );
   },
-  { requiredScope: "curriculum:audit" },
+  { requiredScope: "curriculum:audit", bodySchema: curriculumAuditBodySchema },
 );

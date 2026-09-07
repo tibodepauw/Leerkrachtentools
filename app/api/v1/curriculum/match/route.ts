@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const POST = withApiAuth(
   async (_request, context) => {
     const input = curriculumMatchBodySchema.parse(context.body);
-    const results = await matchCurriculumGoals({
+    const matched = await matchCurriculumGoals({
       query: input.query,
       network: input.network,
       level: input.level,
@@ -22,11 +22,14 @@ export const POST = withApiAuth(
     return NextResponse.json(
       {
         success: true,
-        count: results.length,
-        results,
+        count: matched.results.length,
+        results: matched.results,
+        requestedMode: matched.requestedMode,
+        executedMode: matched.executedMode,
+        proFallback: matched.proFallback,
       },
       { headers: { "Cache-Control": "no-store" } },
     );
   },
-  { requiredScope: "curriculum:match" },
+  { requiredScope: "curriculum:match", bodySchema: curriculumMatchBodySchema },
 );

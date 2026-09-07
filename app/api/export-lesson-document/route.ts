@@ -10,7 +10,7 @@ import {
   lessonDocumentExtension,
   LESSON_DOCUMENT_MAX_BYTES,
 } from "@/lib/documents/supportedFormats";
-import { assertSafeZipArchive } from "@/lib/documents/extractText";
+import { sanitizeZipArchive } from "@/lib/documents/extractText";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import {
   assertContentLength,
@@ -87,7 +87,7 @@ async function readExportInput(request: Request) {
           "De bestandsinhoud komt niet overeen met een DOCX-bestand.",
         );
       }
-      await assertSafeZipArchive(sourceBuffer);
+      sourceBuffer = Buffer.from(await sanitizeZipArchive(sourceBuffer));
       sourceFileName = sourceDocument.name;
     }
 

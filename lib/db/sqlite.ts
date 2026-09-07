@@ -132,11 +132,61 @@ export function getDatabase() {
       status_code INTEGER NOT NULL,
       tokens_used INTEGER DEFAULT 0,
       duration_ms INTEGER NOT NULL,
-      created_at INTEGER NOT NULL
+      created_at INTEGER NOT NULL,
+      request_id TEXT NOT NULL DEFAULT ''
     );
 
     CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON api_keys(key_hash);
     CREATE INDEX IF NOT EXISTS idx_usage_quota ON api_usage_logs(key_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_usage_created ON api_usage_logs(created_at);
+
+    CREATE TABLE IF NOT EXISTS api_org_quota (
+      org_id TEXT NOT NULL,
+      period TEXT NOT NULL,
+      consumed INTEGER NOT NULL DEFAULT 0,
+      in_flight INTEGER NOT NULL DEFAULT 0,
+      burst_window_start INTEGER NOT NULL DEFAULT 0,
+      burst_count INTEGER NOT NULL DEFAULT 0,
+      denial_window_start INTEGER NOT NULL DEFAULT 0,
+      denial_count INTEGER NOT NULL DEFAULT 0,
+      denial_logs_written INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL,
+      PRIMARY KEY (org_id, period)
+    );
+
+    CREATE TABLE IF NOT EXISTS api_idempotency_keys (
+      org_id TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      status TEXT NOT NULL,
+      status_code INTEGER,
+      response_body TEXT,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (org_id, idempotency_key)
+    );
+
+    CREATE TABLE IF NOT EXISTS ai_budget_usage (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      subject TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS ai_budget_usage_subject_created
+      ON ai_budget_usage(subject, created_at);
+
+    CREATE TABLE IF NOT EXISTS security_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at INTEGER NOT NULL,
+      request_id TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      org_id TEXT,
+      key_id TEXT,
+      detail TEXT NOT NULL DEFAULT ''
+    );
+
+    CREATE INDEX IF NOT EXISTS security_events_created_at
+      ON security_events(created_at);
+    CREATE INDEX IF NOT EXISTS security_events_kind_created
+      ON security_events(kind, created_at);
   `);
   ensureDatabaseIndexes(database);
   const userColumns = new Set(
@@ -194,6 +244,18 @@ export function getDatabase() {
   if (!loginCodeColumns.has("privacy_accepted")) {
     database.exec(
       "ALTER TABLE login_codes ADD COLUMN privacy_accepted INTEGER NOT NULL DEFAULT 0",
+    );
+  }
+  const usageLogColumns = new Set(
+    (
+      database.prepare("PRAGMA table_info(api_usage_logs)").all() as Array<{
+        name: string;
+      }>
+    ).map((column) => column.name),
+  );
+  if (!usageLogColumns.has("request_id")) {
+    database.exec(
+      "ALTER TABLE api_usage_logs ADD COLUMN request_id TEXT NOT NULL DEFAULT ''",
     );
   }
   return database;

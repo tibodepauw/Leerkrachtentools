@@ -102,6 +102,7 @@ function LoadedLessonDocumentPreview({
           ignoreWidth: false,
           ignoreHeight: false,
           breakPages: true,
+          renderAltChunks: false,
         }),
       )
       .catch(() => {
@@ -117,7 +118,7 @@ function LoadedLessonDocumentPreview({
   }, [blob, previewMode]);
 
   return (
-    <div className="flex min-h-[32rem] flex-col overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
+    <div className="ph-no-capture flex min-h-[32rem] flex-col overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-800 px-4 py-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{document.fileName}</p>

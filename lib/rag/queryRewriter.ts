@@ -1,9 +1,13 @@
 import "server-only";
 
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateText, Output } from "ai";
 import { z } from "zod";
-import { getGoogleModelId } from "@/lib/ai/googleModel";
+import { getModelCandidates } from "@/lib/ai/providers";
+import {
+  getUserAiConfig,
+  userAiConfigHasCredentials,
+} from "@/lib/ai/userCredentials";
+import { recordSecurityEvent } from "@/lib/security/events";
 
 const rewriteSchema = z.object({
   expandedQuery: z.string(),
@@ -12,23 +16,52 @@ const rewriteSchema = z.object({
 
 export type QueryRewriteResult = z.infer<typeof rewriteSchema> & {
   usedLlm: boolean;
+  dispatched: boolean;
 };
 
 const REWRITE_SYSTEM_PROMPT =
   "Herschrijf de zoekopdracht van de leerkracht naar een verrijkte zoekterm voor RAG-retrieval in Vlaamse leerplannen. Bepaal de discipline/vak en onderwijssynoniemen. Geef enkel een JSON-object terug: { expandedQuery: string, disciplineHint: string }.";
 
-export async function rewriteRagQuery(query: string): Promise<QueryRewriteResult> {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  if (!apiKey?.trim()) {
-    return { expandedQuery: query, disciplineHint: "", usedLlm: false };
+function localRewrite(query: string): QueryRewriteResult {
+  return {
+    expandedQuery: query,
+    disciplineHint: "",
+    usedLlm: false,
+    dispatched: false,
+  };
+}
+
+export async function rewriteRagQuery(
+  query: string,
+  options: { userId?: string; requestId?: string } = {},
+): Promise<QueryRewriteResult> {
+  let userAiConfig = null;
+  if (options.userId) {
+    userAiConfig = getUserAiConfig(options.userId);
+    if (userAiConfig?.enabled && !userAiConfigHasCredentials(userAiConfig)) {
+      recordSecurityEvent({
+        kind: "rag_rewrite_skipped",
+        requestId: options.requestId ?? "rag-rewrite",
+        detail: "credential_error",
+      });
+      return localRewrite(query);
+    }
   }
 
-  const google = createGoogleGenerativeAI({ apiKey });
-  const model = google(getGoogleModelId());
+  const candidates = getModelCandidates(undefined, userAiConfig);
+  const candidate = candidates[0];
+  if (!candidate) {
+    recordSecurityEvent({
+      kind: "rag_rewrite_skipped",
+      requestId: options.requestId ?? "rag-rewrite",
+      detail: "no_provider",
+    });
+    return localRewrite(query);
+  }
 
   try {
     const result = await generateText({
-      model,
+      model: candidate.model,
       system: REWRITE_SYSTEM_PROMPT,
       prompt: query,
       output: Output.object({ schema: rewriteSchema }),
@@ -39,13 +72,29 @@ export async function rewriteRagQuery(query: string): Promise<QueryRewriteResult
     });
 
     const parsed = rewriteSchema.parse(result.output);
+    recordSecurityEvent({
+      kind: "rag_rewrite_ok",
+      requestId: options.requestId ?? "rag-rewrite",
+      detail: candidate.name,
+    });
     return {
       expandedQuery: parsed.expandedQuery.trim() || query,
       disciplineHint: parsed.disciplineHint.trim(),
       usedLlm: true,
+      dispatched: true,
     };
   } catch {
-    return { expandedQuery: query, disciplineHint: "", usedLlm: false };
+    recordSecurityEvent({
+      kind: "rag_rewrite_failed",
+      requestId: options.requestId ?? "rag-rewrite",
+      detail: candidate.name,
+    });
+    return {
+      expandedQuery: query,
+      disciplineHint: "",
+      usedLlm: true,
+      dispatched: true,
+    };
   }
 }
 
@@ -61,6 +110,7 @@ export function buildSearchQueryFromRewrite(
 export async function resolveRagSearchQuery(
   query: string,
   enableLlmQueryRewriting: boolean,
+  options: { userId?: string; requestId?: string } = {},
 ): Promise<{
   searchQuery: string;
   rewrite: QueryRewriteResult | null;
@@ -69,7 +119,7 @@ export async function resolveRagSearchQuery(
     return { searchQuery: query, rewrite: null };
   }
 
-  const rewrite = await rewriteRagQuery(query);
+  const rewrite = await rewriteRagQuery(query, options);
   return {
     searchQuery: buildSearchQueryFromRewrite(query, rewrite),
     rewrite,

@@ -17,7 +17,10 @@ describe("PostHog EU Cloud", () => {
     expect(provider).toContain("https://eu.posthog.com");
     expect(provider).toContain('person_profiles: "identified_only"');
     expect(provider).toContain("capture_pageview: false");
-    expect(provider).toContain("maskAllInputs: true");
+    expect(provider).toContain("disable_session_recording: true");
+    expect(provider).toContain("mask_all_text: true");
+    expect(provider).toContain("maskTextSelector: \"*\"");
+    expect(provider).toContain("export function resetPostHogIdentity");
   });
 
   it("wrapt de root layout en documenteert de env vars", () => {

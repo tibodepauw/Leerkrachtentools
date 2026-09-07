@@ -1,13 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getDatabase } from "@/lib/auth/database";
+import { aiBudgetSubjectFromEmail } from "@/lib/auth/aiBudgetIdentity";
 import {
+  countRecentAiBudgetUsage,
   countRecentServerAiUsage,
   evaluateServerAiAccess,
   recordServerAiUsage,
   tryReserveServerAiUsage,
 } from "@/lib/ai/usageLimits";
 
-function seedUser(userId: string, tier: string) {
+function seedUser(userId: string, tier: string, email = `${userId}@example.com`) {
   const now = Date.now();
   getDatabase()
     .prepare(
@@ -15,13 +17,15 @@ function seedUser(userId: string, tier: string) {
         (id, email, tier, email_verified_at, marketing_opt_in, created_at, updated_at)
        VALUES (?, ?, ?, ?, 0, ?, ?)`,
     )
-    .run(userId, `${userId}@example.com`, tier, now, now, now);
+    .run(userId, email, tier, now, now, now);
 }
 
 describe("server AI usage limits", () => {
   const userId = "usage-test-user";
 
   afterEach(() => {
+    const subject = aiBudgetSubjectFromEmail(`${userId}@example.com`);
+    getDatabase().prepare("DELETE FROM ai_budget_usage WHERE subject = ?").run(subject);
     getDatabase().prepare("DELETE FROM user_ai_usage WHERE user_id = ?").run(userId);
     getDatabase().prepare("DELETE FROM users WHERE id = ?").run(userId);
   });
@@ -97,5 +101,31 @@ describe("server AI usage limits", () => {
     expect(first.ok).toBe(true);
     expect(second.ok).toBe(false);
     expect(countRecentServerAiUsage(userId, now)).toBe(40);
+  });
+
+  it("houdt het dagbudget na accountverwijderen binnen hetzelfde venster", () => {
+    seedUser(userId, "student");
+    const now = Date.now();
+    const email = `${userId}@example.com`;
+    for (let index = 0; index < 40; index += 1) {
+      recordServerAiUsage(userId, now);
+    }
+    getDatabase().prepare("DELETE FROM users WHERE id = ?").run(userId);
+
+    const newId = `${userId}-recreated`;
+    seedUser(newId, "student", email);
+    try {
+      expect(countRecentAiBudgetUsage(aiBudgetSubjectFromEmail(email), now)).toBe(40);
+      expect(countRecentServerAiUsage(newId, now)).toBe(40);
+      const access = evaluateServerAiAccess({
+        userId: newId,
+        tier: "student",
+        userAiConfig: null,
+        now,
+      });
+      expect(access.allowed).toBe(false);
+    } finally {
+      getDatabase().prepare("DELETE FROM users WHERE id = ?").run(newId);
+    }
   });
 });

@@ -233,6 +233,36 @@ describe("B2B API v1", () => {
     expect(payload.success).toBe(true);
     expect(payload.result.improved.length).toBeGreaterThan(10);
   });
+
+  it("geeft B2B Pro-status terug zonder een users-FK te gebruiken", async () => {
+    const { organization, key } = seedPublisher(["curriculum:match"]);
+    const response = await postJson(
+      postMatch,
+      "http://benchmark.local/api/v1/curriculum/match",
+      key.token,
+      {
+        query: "optellen tot 20",
+        network: "AHOVOKS",
+        level: "basis",
+        mode: "pro",
+      },
+    );
+    expect(response.status).toBe(200);
+    const payload = (await response.json()) as {
+      success: boolean;
+      requestedMode: string;
+      executedMode: string;
+      proFallback: boolean;
+    };
+    expect(payload.success).toBe(true);
+    expect(payload.requestedMode).toBe("pro");
+    expect(["snel", "pro"]).toContain(payload.executedMode);
+    expect(typeof payload.proFallback).toBe("boolean");
+    const leaked = getDatabase()
+      .prepare("SELECT user_id FROM user_ai_usage WHERE user_id = ?")
+      .all(`b2b:${organization.id}`) as Array<{ user_id: string }>;
+    expect(leaked).toEqual([]);
+  });
 });
 
 describe("B2B proxy CSRF-uitzondering", () => {

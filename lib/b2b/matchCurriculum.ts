@@ -75,6 +75,13 @@ function clampMatchLimit(limit: number | undefined) {
   );
 }
 
+export type CurriculumMatchPayload = {
+  results: CurriculumMatchResult[];
+  requestedMode: "snel" | "pro";
+  executedMode: "snel" | "pro";
+  proFallback: boolean;
+};
+
 export async function matchCurriculumGoals({
   query,
   network,
@@ -91,7 +98,7 @@ export async function matchCurriculumGoals({
   mode: "snel" | "pro";
   orgId: string;
   limit?: number;
-}): Promise<CurriculumMatchResult[]> {
+}): Promise<CurriculumMatchPayload> {
   const outputLimit = clampMatchLimit(limit);
   const target = resolveMatchSearchTarget(network, level);
   const retrievalLimit =
@@ -121,6 +128,9 @@ export async function matchCurriculumGoals({
           limit: retrievalLimit,
         });
 
+  let executedMode: "snel" | "pro" = "snel";
+  let proFallback = false;
+
   if (mode === "pro" && retrieved.length > 0) {
     const analysis = await runProCurriculumAnalysis({
       query,
@@ -132,15 +142,23 @@ export async function matchCurriculumGoals({
         ageRange: "",
         phases: [],
       },
-      userId: `b2b:${orgId}`,
-      tier: "partner",
+      budget: { kind: "org", orgId },
       kind: target.kind === "minimum-goals" ? "minimumdoel" : "leerplandoel",
     });
     retrieved = analysis.merged;
+    executedMode = analysis.proFallback ? "snel" : "pro";
+    proFallback = analysis.proFallback;
   }
 
-  return retrieved
+  const results = retrieved
     .map((result) => toCurriculumMatchResult(result))
     .filter((result): result is CurriculumMatchResult => result !== null)
     .slice(0, outputLimit);
+
+  return {
+    results,
+    requestedMode: mode,
+    executedMode,
+    proFallback: mode === "pro" ? proFallback : false,
+  };
 }

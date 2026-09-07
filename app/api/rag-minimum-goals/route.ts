@@ -222,8 +222,7 @@ export async function POST(request: Request) {
           query,
           retrieved: ranked,
           lesson: lessonContext,
-          userId: session.id,
-          tier: session.tier,
+          budget: { kind: "user", userId: session.id, tier: session.tier },
           kind: "minimumdoel",
           fallbackLimit: MINIMUM_GOALS_TOP_N,
         });

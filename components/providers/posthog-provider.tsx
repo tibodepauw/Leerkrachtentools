@@ -7,6 +7,10 @@ import { PostHogProvider as PHProvider } from "posthog-js/react";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
+/**
+ * Product analytics is optional and separate from marketing consent.
+ * Session replay stays off: this app shows leerling- and lesinhoud in the DOM.
+ */
 export function PostHogProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
@@ -15,8 +19,11 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.posthog.com",
       person_profiles: "identified_only",
       capture_pageview: false,
+      disable_session_recording: true,
+      mask_all_text: true,
       session_recording: {
         maskAllInputs: true,
+        maskTextSelector: "*",
       },
     });
   }, []);
@@ -31,6 +38,11 @@ export function PostHogProvider({ children }: { children: ReactNode }) {
       {children}
     </PHProvider>
   );
+}
+
+export function resetPostHogIdentity() {
+  if (!POSTHOG_KEY) return;
+  posthog.reset();
 }
 
 function PostHogPageView() {

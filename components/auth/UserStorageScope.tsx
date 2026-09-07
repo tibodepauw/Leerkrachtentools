@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { resetPostHogIdentity } from "@/components/providers/posthog-provider";
 import { LoadingGate } from "@/components/shared/LoadingGate";
 import {
   pinnedModulesEqual,
@@ -85,6 +86,7 @@ export function UserStorageScope({
 
       const previousUserId = useLessonStore.getState().storageUserId;
       if (previousUserId && previousUserId !== userId) {
+        resetPostHogIdentity();
         clearRagQueryCache();
         resetLessonStoreState();
         resetSettingsStoreState();

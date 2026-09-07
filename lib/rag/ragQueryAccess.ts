@@ -4,7 +4,9 @@ import { dailyServerAiLimit } from "@/lib/auth/tiers";
 import {
   releaseServerAiUsage,
   tryReserveServerAiUsage,
+  usesOwnAiKeys,
 } from "@/lib/ai/usageLimits";
+import { getUserAiConfig } from "@/lib/ai/userCredentials";
 import {
   resolveRagSearchQuery,
   type QueryRewriteResult,
@@ -15,16 +17,27 @@ export async function resolveTrackedRagSearchQuery({
   enableLlmQueryRewriting,
   userId,
   tier,
+  requestId,
 }: {
   query: string;
   enableLlmQueryRewriting: boolean;
   userId: string;
   tier: string;
+  requestId?: string;
 }): Promise<{
   searchQuery: string;
   rewrite: QueryRewriteResult | null;
 }> {
   if (!enableLlmQueryRewriting) {
+    return { searchQuery: query, rewrite: null };
+  }
+
+  const userAiConfig = getUserAiConfig(userId);
+  if (usesOwnAiKeys(userAiConfig)) {
+    return resolveRagSearchQuery(query, true, { userId, requestId });
+  }
+
+  if (userAiConfig?.enabled) {
     return { searchQuery: query, rewrite: null };
   }
 
@@ -39,8 +52,11 @@ export async function resolveTrackedRagSearchQuery({
   }
 
   try {
-    const resolved = await resolveRagSearchQuery(query, true);
-    if (!resolved.rewrite?.usedLlm) {
+    const resolved = await resolveRagSearchQuery(query, true, {
+      userId,
+      requestId,
+    });
+    if (!resolved.rewrite?.dispatched) {
       releaseServerAiUsage(reserved.id);
     }
     return resolved;

@@ -17,21 +17,32 @@ describe("queryRewriter", () => {
         expandedQuery: "eerstegraadsfunctie grafiek snijpunt",
         disciplineHint: "Wiskunde",
         usedLlm: false,
+        dispatched: false,
       }),
     ).toBe("eerstegraadsfunctie grafiek snijpunt Wiskunde");
   });
 
-  it("valt terug op originele query zonder API-key", async () => {
-    const originalKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    delete process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  it("valt terug op originele query zonder provider", async () => {
+    const keys = [
+      "GOOGLE_GENERATIVE_AI_API_KEY",
+      "GROQ_API_KEY",
+      "CEREBRAS_API_KEY",
+      "SAMBANOVA_API_KEY",
+      "CLOUDFLARE_API_TOKEN",
+    ] as const;
+    const previous = Object.fromEntries(
+      keys.map((key) => [key, process.env[key]]),
+    );
+    for (const key of keys) delete process.env[key];
 
     const result = await resolveRagSearchQuery("vage zoekterm", true);
     expect(result.searchQuery).toBe("vage zoekterm");
     expect(result.rewrite?.expandedQuery).toBe("vage zoekterm");
     expect(result.rewrite?.usedLlm).toBe(false);
+    expect(result.rewrite?.dispatched).toBe(false);
 
-    if (originalKey) {
-      process.env.GOOGLE_GENERATIVE_AI_API_KEY = originalKey;
+    for (const key of keys) {
+      if (previous[key]) process.env[key] = previous[key];
     }
   });
 });

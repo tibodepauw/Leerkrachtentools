@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { hashRequestIp, requestLoginCode } from "@/lib/auth/service";
 import { isDevLoginCodeAllowed } from "@/lib/auth/devLogin";
 import { publicErrorMessage } from "@/lib/http/clientError";
-import { clientIpFromRequest } from "@/lib/http/requestIp";
+import { resolveClientIp } from "@/lib/http/requestIp";
 import { readJsonBody } from "@/lib/http/requestBody";
 
 export const runtime = "nodejs";
@@ -14,12 +14,13 @@ export async function POST(request: Request) {
       marketingOptIn?: boolean;
       privacyAccepted?: boolean;
     };
-    const clientIp = clientIpFromRequest(request);
+    const clientIp = resolveClientIp(request);
     const result = await requestLoginCode({
       email: body.email ?? "",
       marketingOptIn: body.marketingOptIn === true,
       privacyAccepted: body.privacyAccepted === true,
-      ipHash: hashRequestIp(clientIp),
+      ipHash: hashRequestIp(clientIp.trusted ? clientIp.address : "unavailable"),
+      ipTrusted: clientIp.trusted,
       exposeDevCode: isDevLoginCodeAllowed(request.url),
     });
     return NextResponse.json(result, {
