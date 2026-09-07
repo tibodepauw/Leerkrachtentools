@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Geist_Mono, Rubik } from "next/font/google";
 import { connection } from "next/server";
 import { PwaRegister } from "@/components/pwa/PwaRegister";
+import { PostHogProvider } from "@/components/providers/posthog-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -64,9 +65,11 @@ export default async function RootLayout({
     >
       <body suppressHydrationWarning className="min-h-full bg-black text-neutral-100">
         <div className="lt-app">
-          <PwaRegister />
-          <TooltipProvider>{children}</TooltipProvider>
-          <Toaster theme="dark" richColors />
+          <PostHogProvider>
+            <PwaRegister />
+            <TooltipProvider>{children}</TooltipProvider>
+            <Toaster theme="dark" richColors />
+          </PostHogProvider>
         </div>
       </body>
     </html>
