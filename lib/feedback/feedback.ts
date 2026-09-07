@@ -16,7 +16,7 @@ export function feedbackRecipientEmail() {
   if (process.env.NODE_ENV === "production") {
     throw new Error("FEEDBACK_TO_EMAIL is not configured.");
   }
-  return "feedback-not-configured@localhost";
+  return "feedback-not-configured@invalid";
 }
 
 export function normalizeFeedbackMessage(value: string) {

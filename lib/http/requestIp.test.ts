@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clientIpFromRequest } from "@/lib/http/requestIp";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 
 describe("clientIpFromRequest", () => {
   beforeEach(() => {
@@ -11,7 +12,7 @@ describe("clientIpFromRequest", () => {
   });
 
   it("gebruikt de eerste forwarded hop van een vertrouwde proxy", () => {
-    const request = new Request("http://localhost/api", {
+    const request = new Request(absoluteAppUrl("/api"), {
       headers: {
         "x-forwarded-for": "1.1.1.1, 10.0.0.1",
         "x-real-ip": "9.9.9.9",
@@ -21,7 +22,7 @@ describe("clientIpFromRequest", () => {
   });
 
   it("gebruikt de eerste hop in x-forwarded-for", () => {
-    const request = new Request("http://localhost/api", {
+    const request = new Request(absoluteAppUrl("/api"), {
       headers: { "x-forwarded-for": "1.2.3.4, 10.0.0.8" },
     });
     expect(clientIpFromRequest(request)).toBe("1.2.3.4");
@@ -29,7 +30,7 @@ describe("clientIpFromRequest", () => {
 
   it("vertrouwt clientheaders niet zonder proxyconfiguratie", () => {
     vi.stubEnv("TRUST_PROXY_IP_HEADERS", "false");
-    const request = new Request("http://localhost/api", {
+    const request = new Request(absoluteAppUrl("/api"), {
       headers: { "x-real-ip": "9.9.9.9" },
     });
     expect(clientIpFromRequest(request)).toBe("unknown");

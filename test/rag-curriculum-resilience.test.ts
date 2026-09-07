@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { POST as postCurriculum } from "@/app/api/rag-curriculum/route";
 import { readJsonBody } from "@/lib/http/requestBody";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 
 vi.mock("@/lib/auth/guard", () => ({
   sessionFromRequest: () => ({
@@ -51,7 +52,7 @@ describe("RAG curriculum route-robuustheid", () => {
     );
 
     const response = await postCurriculum(
-      new Request("http://localhost/api/rag-curriculum", {
+      new Request(absoluteAppUrl("/api/rag-curriculum"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

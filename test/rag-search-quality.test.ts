@@ -9,6 +9,7 @@ import {
   tokenizeCurriculumQuery,
 } from "@/lib/rag/curriculumQueryTokens";
 import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 import type { CurriculumSearchResult } from "@/types";
 
 vi.mock("@/lib/auth/guard", () => ({
@@ -122,7 +123,7 @@ describe("RAG zoekkwaliteit", () => {
   it("stuurt slordige invoer altijd naar Discovery Engine", async () => {
     const query = "tikkertje spele me bal en mikken op pionnekes over de lijn";
     const response = await postCurriculum(
-      new Request("http://localhost/api/rag-curriculum", {
+      new Request(absoluteAppUrl("/api/rag-curriculum"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,7 +142,7 @@ describe("RAG zoekkwaliteit", () => {
 
   it("vangt een Discovery Engine time-out af met HTTP 200", async () => {
     const response = await postCurriculum(
-      new Request("http://localhost/api/rag-curriculum", {
+      new Request(absoluteAppUrl("/api/rag-curriculum"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -167,7 +168,7 @@ describe("RAG zoekkwaliteit", () => {
     );
 
     const response = await postCurriculum(
-      new Request("http://localhost/api/rag-curriculum", {
+      new Request(absoluteAppUrl("/api/rag-curriculum"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -189,7 +190,7 @@ describe("RAG zoekkwaliteit", () => {
 
   it("geeft HTTP 200 met JSON voor een lokale maaltafel-zoekopdracht", async () => {
     const response = await postCurriculum(
-      new Request("http://localhost/api/rag-curriculum", {
+      new Request(absoluteAppUrl("/api/rag-curriculum"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

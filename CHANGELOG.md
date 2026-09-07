@@ -13,6 +13,9 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ### Changed
 - `.gitignore` ignores raw curriculum `.json`, `.jsonl` and `.pdf` under `data/`
 - B2B `POST /api/v1/curriculum/match` returns at most 5 citation fields by default: `code`, `text`, `network`, `score`, and optional `didactic_note`
+- Standalone build copies `public` and `.next/static` into `.next/standalone`
+- Dev login codes are ignored whenever `NODE_ENV` is production
+- External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds
 
 ---
 

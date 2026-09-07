@@ -1,6 +1,7 @@
 import "server-only";
 
 import { parseSenderAddress } from "@/lib/email/sender";
+import { externalApiAbortSignal } from "@/lib/http/externalTimeout";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
@@ -41,6 +42,7 @@ export async function sendBrevoEmail({
       textContent: text,
       htmlContent: html,
     }),
+    signal: externalApiAbortSignal(),
   });
 
   if (!response.ok) {

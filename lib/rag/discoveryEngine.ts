@@ -1,3 +1,4 @@
+import { EXTERNAL_API_TIMEOUT_MS } from "@/lib/http/externalTimeout";
 import { SearchServiceClient } from "@google-cloud/discoveryengine/build/src/v1/search_service_client";
 import type { CurriculumNetworkFilter } from "@/types";
 
@@ -463,8 +464,11 @@ export async function searchDiscoveryEngine(
   if (existing) return existing;
 
   const abortController = new AbortController();
+  const hangSignal = AbortSignal.any
+    ? AbortSignal.any([abortController.signal, AbortSignal.timeout(EXTERNAL_API_TIMEOUT_MS)])
+    : abortController.signal;
   const googleSearch = swallowBackgroundRejection(
-    performDiscoverySearch(options, abortController.signal),
+    performDiscoverySearch(options, hangSignal),
   );
 
   const pending = raceWithTimeout(googleSearch, DISCOVERY_SEARCH_TIMEOUT_MS, {

@@ -4,10 +4,11 @@ import {
   readJsonBody,
   RequestBodyTooLargeError,
 } from "@/lib/http/requestBody";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 
 describe("begrensde request bodies", () => {
   it("leest JSON binnen de limiet", async () => {
-    const request = new Request("http://localhost/api", {
+    const request = new Request(absoluteAppUrl("/api"), {
       method: "POST",
       body: JSON.stringify({ value: "ok" }),
     });
@@ -24,7 +25,7 @@ describe("begrensde request bodies", () => {
         controller.close();
       },
     });
-    const request = new Request("http://localhost/api", {
+    const request = new Request(absoluteAppUrl("/api"), {
       method: "POST",
       body,
       duplex: "half",
@@ -43,7 +44,7 @@ describe("begrensde request bodies", () => {
         controller.close();
       },
     });
-    const request = new Request("http://localhost/upload", {
+    const request = new Request(absoluteAppUrl("/upload"), {
       method: "POST",
       body,
       duplex: "half",

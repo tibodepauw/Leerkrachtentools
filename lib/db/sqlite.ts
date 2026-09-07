@@ -5,6 +5,15 @@ import { ensureDatabaseIndexes } from "@/lib/db/ensureIndexes";
 
 let database: Database.Database | null = null;
 
+function applySqlitePragmas(db: Database.Database, filename: string) {
+  if (filename !== ":memory:") {
+    db.pragma("journal_mode = WAL");
+  }
+  db.pragma("synchronous = NORMAL");
+  db.pragma("foreign_keys = ON");
+  db.pragma("busy_timeout = 5000");
+}
+
 function databasePath() {
   const configured =
     process.env.DATABASE_PATH ?? "./data/leerkrachtentools.db";
@@ -21,12 +30,7 @@ export function getDatabase() {
     mkdirSync(path.dirname(filename), { recursive: true });
   }
   database = new Database(filename);
-  if (filename !== ":memory:") {
-    database.pragma("journal_mode = WAL");
-  }
-  database.pragma("synchronous = NORMAL");
-  database.pragma("foreign_keys = ON");
-  database.pragma("busy_timeout = 5000");
+  applySqlitePragmas(database, filename);
   database.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as postMinimumGoals } from "@/app/api/rag-minimum-goals/route";
 import { runStructured } from "@/lib/ai/router";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 import type { CurriculumSearchResult } from "@/types";
 
 vi.mock("@/lib/auth/guard", () => ({
@@ -73,7 +74,7 @@ function resultCodes(results: CurriculumSearchResult[] | undefined): string[] {
 
 async function postSearch(query: string, searchMode: "snel" | "pro") {
   return postMinimumGoals(
-    new Request("http://localhost/api/rag-minimum-goals", {
+    new Request(absoluteAppUrl("/api/rag-minimum-goals"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

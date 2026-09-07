@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getDatabase } from "@/lib/auth/database";
 import { GET, PATCH } from "@/app/api/account/api-keys/route";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 
 vi.mock("@/lib/auth/guard", () => ({
   sessionFromRequest: vi.fn(),
@@ -58,7 +59,7 @@ describe("account api-keys", () => {
     mockedSessionFromRequest.mockReturnValue(session(id));
 
     const create = await PATCH(
-      new Request("http://localhost/api/account/api-keys", {
+      new Request(absoluteAppUrl("/api/account/api-keys"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,7 +73,7 @@ describe("account api-keys", () => {
     expect(create.status).toBe(200);
 
     const update = await PATCH(
-      new Request("http://localhost/api/account/api-keys", {
+      new Request(absoluteAppUrl("/api/account/api-keys"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,7 +94,7 @@ describe("account api-keys", () => {
     expect(stored.ai_model).toBe("gemini-2.5-flash");
 
     const loaded = await GET(
-      new Request("http://localhost/api/account/api-keys"),
+      new Request(absoluteAppUrl("/api/account/api-keys")),
     );
     const settings = (await loaded.json()) as { model: string };
     expect(settings.model).toBe("gemini-2.5-flash");

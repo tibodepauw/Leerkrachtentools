@@ -176,10 +176,14 @@ export async function requestLoginCode({
   }
 
   await waitUntil(responseNotBefore);
+  const allowDevCode =
+    process.env.NODE_ENV !== "production" &&
+    exposeDevCode &&
+    !isBrevoConfigured();
   return {
     email,
     expiresInSeconds: CODE_TTL / 1000,
-    devCode: exposeDevCode && !isBrevoConfigured() ? code : undefined,
+    devCode: allowDevCode ? code : undefined,
   };
 }
 

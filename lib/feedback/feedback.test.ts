@@ -19,6 +19,6 @@ describe("feedback", () => {
   });
 
   it("gebruikt geconfigureerde ontvanger of dev fallback", () => {
-    expect(feedbackRecipientEmail()).toBe("feedback-not-configured@localhost");
+    expect(feedbackRecipientEmail()).toBe("feedback-not-configured@invalid");
   });
 });

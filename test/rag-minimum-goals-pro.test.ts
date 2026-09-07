@@ -4,6 +4,7 @@ import { runStructured } from "@/lib/ai/router";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
 import { collectMinimumGoalCandidates } from "@/lib/rag/minimumGoalCandidates";
 import { PRO_FALLBACK_NOTICES } from "@/lib/rag/selectProCurriculumGoals";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 import type { CurriculumSearchResult } from "@/types";
 
 vi.mock("@/lib/auth/guard", () => ({
@@ -115,7 +116,7 @@ function requestBody(searchMode: "snel" | "pro") {
 
 async function postSearch(searchMode: "snel" | "pro") {
   return postMinimumGoals(
-    new Request("http://localhost/api/rag-minimum-goals", {
+    new Request(absoluteAppUrl("/api/rag-minimum-goals"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody(searchMode)),

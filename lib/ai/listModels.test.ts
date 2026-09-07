@@ -60,5 +60,8 @@ describe("listProviderModels", () => {
     ).resolves.toEqual([
       { id: "llama-3.3-70b-versatile", label: "llama-3.3-70b-versatile" },
     ]);
+    expect(vi.mocked(fetch).mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 });

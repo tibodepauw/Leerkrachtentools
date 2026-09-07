@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { POST as postCurriculum } from "@/app/api/rag-curriculum/route";
 import { runStructured } from "@/lib/ai/router";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
 import { PRO_FALLBACK_NOTICES } from "@/lib/rag/selectProCurriculumGoals";
 import type { CurriculumSearchResult } from "@/types";
@@ -82,7 +83,7 @@ function requestBody(searchMode: "snel" | "pro") {
 
 async function postSearch(searchMode: "snel" | "pro") {
   return postCurriculum(
-    new Request("http://localhost/api/rag-curriculum", {
+    new Request(absoluteAppUrl("/api/rag-curriculum"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody(searchMode)),

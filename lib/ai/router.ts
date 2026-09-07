@@ -7,6 +7,7 @@ import {
 } from "@/lib/ai/providers";
 import type { ProviderName } from "@/lib/ai/providers";
 import type { UserAiConfig } from "@/lib/ai/userCredentials";
+import { EXTERNAL_API_TIMEOUT_MS } from "@/lib/http/externalTimeout";
 
 export interface StructuredRequest<T> {
   schema: z.ZodType<T>;
@@ -119,7 +120,7 @@ export async function runStructured<T>(
         maxOutputTokens: Math.min(request.maxOutputTokens ?? 2400, 4096),
         temperature: 0.2,
         maxRetries: 0,
-        abortSignal: AbortSignal.timeout(Math.min(20_000, remaining)),
+        abortSignal: AbortSignal.timeout(Math.min(EXTERNAL_API_TIMEOUT_MS, remaining)),
       });
       return {
         data: request.schema.parse(result.output),
@@ -143,7 +144,7 @@ export async function runStructured<T>(
       return {
         data: await callCloudflare(
           request,
-          Math.min(20_000, deadline - Date.now()),
+          Math.min(EXTERNAL_API_TIMEOUT_MS, deadline - Date.now()),
         ),
         provider: "cloudflare",
         fallbackErrors: [],

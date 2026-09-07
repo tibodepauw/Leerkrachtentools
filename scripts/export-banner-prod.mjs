@@ -5,7 +5,10 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = process.env.EXPORT_PORT ?? "43123";
-const baseUrl = `http://127.0.0.1:${port}`;
+const baseUrl =
+  process.env.APP_ORIGIN?.trim() ||
+  process.env.WORDMARK_EXPORT_URL?.trim() ||
+  `http://127.0.0.1:${port}`;
 
 function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {

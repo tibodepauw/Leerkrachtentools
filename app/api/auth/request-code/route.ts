@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hashRequestIp, requestLoginCode } from "@/lib/auth/service";
+import { isDevLoginCodeAllowed } from "@/lib/auth/devLogin";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { clientIpFromRequest } from "@/lib/http/requestIp";
 import { readJsonBody } from "@/lib/http/requestBody";
@@ -14,16 +15,12 @@ export async function POST(request: Request) {
       privacyAccepted?: boolean;
     };
     const clientIp = clientIpFromRequest(request);
-    const requestHost = new URL(request.url).hostname;
     const result = await requestLoginCode({
       email: body.email ?? "",
       marketingOptIn: body.marketingOptIn === true,
       privacyAccepted: body.privacyAccepted === true,
       ipHash: hashRequestIp(clientIp),
-      exposeDevCode:
-        process.env.NODE_ENV !== "production" &&
-        process.env.ALLOW_DEV_LOGIN_CODE === "true" &&
-        ["127.0.0.1", "::1", "localhost"].includes(requestHost),
+      exposeDevCode: isDevLoginCodeAllowed(request.url),
     });
     return NextResponse.json(result, {
       headers: { "Cache-Control": "no-store" },

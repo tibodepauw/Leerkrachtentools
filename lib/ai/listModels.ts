@@ -2,6 +2,7 @@ import "server-only";
 
 import type { ProviderName } from "@/lib/ai/providers";
 import { isUsableChatModelId } from "@/lib/ai/usableModels";
+import { externalApiAbortSignal } from "@/lib/http/externalTimeout";
 
 export { defaultModelForProvider } from "@/lib/ai/usableModels";
 
@@ -53,7 +54,7 @@ export async function listProviderModels(
         "https://generativelanguage.googleapis.com/v1beta/models",
         {
           headers: { "x-goog-api-key": apiKey },
-          signal: AbortSignal.timeout(20_000),
+          signal: externalApiAbortSignal(),
         },
       );
       if (!response.ok) {
@@ -89,7 +90,7 @@ export async function listProviderModels(
     case "groq": {
       const response = await fetch("https://api.groq.com/openai/v1/models", {
         headers: { Authorization: `Bearer ${apiKey}` },
-        signal: AbortSignal.timeout(20_000),
+        signal: externalApiAbortSignal(),
       });
       if (!response.ok) {
         throw new Error(`Groq-modellen konden niet worden opgehaald (${response.status}).`);
@@ -99,7 +100,7 @@ export async function listProviderModels(
     case "cerebras": {
       const response = await fetch("https://api.cerebras.ai/v1/models", {
         headers: { Authorization: `Bearer ${apiKey}` },
-        signal: AbortSignal.timeout(20_000),
+        signal: externalApiAbortSignal(),
       });
       if (!response.ok) {
         throw new Error(
@@ -113,7 +114,7 @@ export async function listProviderModels(
         process.env.SAMBANOVA_BASE_URL ?? "https://api.sambanova.ai/v1";
       const response = await fetch(`${baseUrl}/models`, {
         headers: { Authorization: `Bearer ${apiKey}` },
-        signal: AbortSignal.timeout(20_000),
+        signal: externalApiAbortSignal(),
       });
       if (!response.ok) {
         throw new Error(

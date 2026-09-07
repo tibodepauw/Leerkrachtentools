@@ -4,7 +4,10 @@ import path from "node:path";
 import { chromium } from "playwright";
 import sharp from "sharp";
 
-const baseHost = process.env.WORDMARK_EXPORT_URL ?? "http://127.0.0.1:43123";
+const baseHost =
+  process.env.WORDMARK_EXPORT_URL?.trim() ||
+  process.env.APP_ORIGIN?.trim() ||
+  `http://127.0.0.1:${process.env.EXPORT_PORT ?? "43123"}`;
 const framesDir = path.join("/tmp", "wordmark-gather-frames");
 const pngOutput = path.join("docs", "assets", "banner-huisstijl.png");
 const gifOutput = path.join("docs", "assets", "banner-huisstijl.gif");

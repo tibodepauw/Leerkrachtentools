@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getDatabase } from "@/lib/auth/database";
 import { GET, PUT } from "@/app/api/account/pinned-modules/route";
+import { absoluteAppUrl } from "@/lib/http/appUrl";
 
 vi.mock("@/lib/auth/guard", () => ({
   sessionFromRequest: vi.fn(),
@@ -40,7 +41,7 @@ describe("account pinned-modules API", () => {
 
   it("weigert verzoeken zonder sessie", async () => {
     mockedSessionFromRequest.mockReturnValue(null);
-    const response = await GET(new Request("http://localhost/api/account/pinned-modules"));
+    const response = await GET(new Request(absoluteAppUrl("/api/account/pinned-modules")));
     expect(response.status).toBe(401);
   });
 
@@ -60,7 +61,7 @@ describe("account pinned-modules API", () => {
     });
 
     const put = await PUT(
-      new Request("http://localhost/api/account/pinned-modules", {
+      new Request(absoluteAppUrl("/api/account/pinned-modules"), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,7 +96,7 @@ describe("account pinned-modules API", () => {
     });
 
     const response = await PUT(
-      new Request("http://localhost/api/account/pinned-modules", {
+      new Request(absoluteAppUrl("/api/account/pinned-modules"), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pinnedModules: "spellcheck" }),
