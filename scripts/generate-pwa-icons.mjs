@@ -14,9 +14,11 @@ const iconsDir = path.join(root, "public", "icons");
 
 const CANVAS = 512;
 const GAP = 24;
-const PAD = 12;
+const PAD = 40;
 const ROT_L = -12;
 const ROT_T = 12;
+/** Superellipse exponent: 2 is a circle, infinity is a square. 4.5 is a mild squircle. */
+const SQUIRCLE_N = 4.5;
 const TRIAL = 1800;
 const L_ORIGIN_X = 80;
 const ORIGIN_Y = 1400;
@@ -48,7 +50,25 @@ function lettersGroup() {
   </g>`;
 }
 
-function brandChrome(width, height) {
+function squirclePath(size, n = SQUIRCLE_N) {
+  const steps = 80;
+  const r = size / 2;
+  const parts = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const t = (i / steps) * Math.PI * 2;
+    const c = Math.cos(t);
+    const s = Math.sin(t);
+    const x = r + r * Math.sign(c) * Math.abs(c) ** (2 / n);
+    const y = r + r * Math.sign(s) * Math.abs(s) ** (2 / n);
+    parts.push(`${i === 0 ? "M" : "L"}${x.toFixed(3)} ${y.toFixed(3)}`);
+  }
+  return `${parts.join(" ")} Z`;
+}
+
+function brandDefs(width, height, squircle) {
+  const clip = squircle
+    ? `<clipPath id="iconShape"><path d="${squirclePath(width)}"/></clipPath>`
+    : "";
   return `<defs>
     <pattern id="hsGrid" width="32" height="32" patternUnits="userSpaceOnUse">
       <circle cx="16" cy="16" r="1" fill="rgba(255,255,255,0.1)"/>
@@ -64,25 +84,43 @@ function brandChrome(width, height) {
       <stop offset="0.3" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#71717a"/>
     </linearGradient>
-  </defs>
-  <rect width="${width}" height="${height}" fill="#000000"/>
+    ${clip}
+  </defs>`;
+}
+
+function paintedField(width, height) {
+  return `<rect width="${width}" height="${height}" fill="#000000"/>
   <rect width="${width}" height="${height}" fill="url(#hsGrid)" mask="url(#hsGridMask)"/>`;
 }
 
-function svgMarkup(width, height, extraGroupTransform, includeChrome = true) {
-  const chrome = includeChrome
-    ? brandChrome(width, height)
-    : `<rect width="${width}" height="${height}" fill="#000000"/>
+function svgMarkup(
+  width,
+  height,
+  extraGroupTransform,
+  { chrome = true, squircle = false } = {},
+) {
+  const letters = `<g transform="${extraGroupTransform}">
+    ${lettersGroup()}
+  </g>`;
+  if (!chrome) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Leerkrachtentools">
+  <rect width="${width}" height="${height}" fill="#000000"/>
   <defs>
     <linearGradient id="lt" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0.3" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#71717a"/>
     </linearGradient>
-  </defs>`;
+  </defs>
+  ${letters}
+</svg>
+`;
+  }
+  const clipAttr = squircle ? ' clip-path="url(#iconShape)"' : "";
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Leerkrachtentools">
-  ${chrome}
-  <g transform="${extraGroupTransform}">
-    ${lettersGroup()}
+  ${brandDefs(width, height, squircle)}
+  <g${clipAttr}>
+    ${paintedField(width, height)}
+    ${letters}
   </g>
 </svg>
 `;
@@ -110,8 +148,8 @@ async function inkBox(svg, size) {
   return { minX, minY, maxX, maxY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 
-async function buildSvg() {
-  const trial = svgMarkup(TRIAL, TRIAL, "", false);
+async function buildSvg(squircle) {
+  const trial = svgMarkup(TRIAL, TRIAL, "", { chrome: false });
   const box = await inkBox(trial, TRIAL);
   const scale = Math.min((CANVAS - PAD * 2) / box.w, (CANVAS - PAD * 2) / box.h);
   const ox = (CANVAS - box.w * scale) / 2 - box.minX * scale;
@@ -120,7 +158,7 @@ async function buildSvg() {
     CANVAS,
     CANVAS,
     `translate(${ox.toFixed(3)} ${oy.toFixed(3)}) scale(${scale.toFixed(6)})`,
-    true,
+    { chrome: true, squircle },
   );
 }
 
@@ -205,18 +243,23 @@ async function assertReadableIcon(pngPath) {
 }
 
 async function raster(svg, size, dest) {
-  await sharp(Buffer.from(svg), { density: 512 }).resize(size, size).png().toFile(dest);
+  await sharp(Buffer.from(svg), { density: 512 })
+    .resize(size, size)
+    .ensureAlpha()
+    .png()
+    .toFile(dest);
 }
 
 async function main() {
-  const svg = await buildSvg();
-  await fs.writeFile(path.join(iconsDir, "icon.svg"), svg);
-  await raster(svg, 512, path.join(iconsDir, "icon-512.png"));
-  await raster(svg, 192, path.join(iconsDir, "icon-192.png"));
-  await raster(svg, 180, path.join(root, "public", "apple-touch-icon.png"));
-  await raster(svg, 32, path.join(root, "public", "favicon-32.png"));
+  const squircleSvg = await buildSvg(true);
+  const squareSvg = await buildSvg(false);
+  await fs.writeFile(path.join(iconsDir, "icon.svg"), squircleSvg);
+  await raster(squircleSvg, 512, path.join(iconsDir, "icon-512.png"));
+  await raster(squircleSvg, 192, path.join(iconsDir, "icon-192.png"));
+  await raster(squircleSvg, 32, path.join(root, "public", "favicon-32.png"));
+  await raster(squareSvg, 180, path.join(root, "public", "apple-touch-icon.png"));
 
-  const inner = await sharp(Buffer.from(svg), { density: 512 })
+  const inner = await sharp(Buffer.from(squareSvg), { density: 512 })
     .resize(400, 400)
     .png()
     .toBuffer();

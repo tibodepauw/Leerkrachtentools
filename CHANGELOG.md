@@ -9,6 +9,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 ### Added
 - B2B curriculum API for publishers: hashed `lt_live_` keys, monthly quota, `POST /api/v1/curriculum/match`, `POST /api/v1/curriculum/audit`, and `POST /api/v1/goals/improve`
 - Consent line under the login e-mail and one-time code fields, with Algemene Voorwaarden and Privacybeleid in a new tab
+- PostHog EU Cloud analytics with identified-only profiles and masked session-recording inputs
 
 ### Changed
 - README documents Snel and Pro curriculum search, tester module visibility, and the current test count
@@ -16,6 +17,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - `/privacy`, `/voorwaarden` and `/juridisch` redirect to generativelabs.be instead of hosting copies in this app
 - Required login checkbox agrees to algemene voorwaarden and acknowledges the privacybeleid
 - Login footer link "Lees het privacyoverzicht" opens the Generative Labs privacy page in a new tab
+- Favicon uses a mild squircle and slightly smaller gather LT letters
 
 ---
 
