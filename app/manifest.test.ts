@@ -44,6 +44,8 @@ describe("web app manifest", () => {
     expect(svg).toContain("L309 -205L586 -205");
     expect(svg).toContain("L210 -485L44 -485");
     expect(generator).toContain("GAP = 24");
+    expect(generator).toContain("PAD = 40");
+    expect(generator).toContain("SQUIRCLE_N = 4.5");
     expect(generator).toContain("L_ADVANCE = 626");
     expect(generator).toContain("ROT_L = -12");
     expect(generator).toContain("ROT_T = 12");
@@ -51,7 +53,7 @@ describe("web app manifest", () => {
     const { data, info } = await sharp("public/icons/icon-512.png")
       .raw()
       .toBuffer({ resolveWithObject: true });
-    const y = 130;
+    const y = 180;
     const runs: number[] = [];
     let start = -1;
     for (let x = 0; x <= info.width; x += 1) {
@@ -64,5 +66,23 @@ describe("web app manifest", () => {
       }
     }
     expect(runs.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("houdt een milde squircle met transparante hoeken", async () => {
+    const svg = readFileSync("public/icons/icon.svg", "utf8");
+    expect(svg).toContain('clipPath id="iconShape"');
+    expect(svg).toContain("<path d=");
+
+    const favicon = await sharp("public/icons/icon-512.png")
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    expect(favicon.data[3]).toBe(0);
+
+    const apple = await sharp("public/apple-touch-icon.png")
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    expect(apple.data[3]).toBe(255);
   });
 });
