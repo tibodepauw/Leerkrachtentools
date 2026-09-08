@@ -8,35 +8,57 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ---
 
-## [5.20.0] - 2026-09-07
+## [5.20.1] - 2026-09-08
 
-Quota ledger, ZIP bounds, PostHog privacy, and B2B Pro identity.
-
-### Added
-- Legal colophon with AHOVOKS modellicentie, koepel citation (art. XI.189 WER), non-affiliation, and EU AI Act art. 50 transparency
-- Corpus hygiene test so full `.jsonl` corpora cannot enter git outside `test/fixtures/`
-- Shared organization API quota ledger with burst, concurrency, and idempotency keys
-- HMAC e-mail identity for the daily server-AI budget so delete/recreate keeps the same window
-
-### Changed
-- `.gitignore` ignores raw curriculum `.json`, `.jsonl` and `.pdf` under `data/`
-- B2B `POST /api/v1/curriculum/match` returns at most 5 citation fields by default: `code`, `text`, `network`, `score`, and optional `didactic_note`
-- Match responses include `requestedMode`, `executedMode`, and `proFallback`
-- Standalone build copies `public` and `.next/static` into `.next/standalone`
-- Dev login codes are ignored whenever `NODE_ENV` is production
-- External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds
-- PostHog session replay is off; lesson, preview and feedback UI use `ph-no-capture`
-- RAG query rewriting uses the same BYOK provider policy as other AI calls
-- B2B Pro analysis uses an organization budget path instead of a synthetic user-id
-- README documents the organization quota ledger, match citation fields, PostHog privacy, standalone asset copy, and the current test count
+Quota-backfill, uploads en leases.
 
 ### Fixed
-- Exhausted B2B keys no longer write one usage-log row per 429
-- Account deletion invalidates pending login codes and no longer resets the daily AI budget
-- Login rate limits no longer share one bucket when client IP headers are untrusted
-- ZIP import/export counts actual inflated bytes instead of declared metadata
-- Word preview disables `renderAltChunks` so altChunk HTML is not rendered
-- Failed RAG rewrite after dispatch keeps the reserved AI unit
+- B2B-audit gebruikt `payload.results`, zodat `linked_curriculum` gevuld is als de matcher een treffer heeft
+- ZIP-inflate met bytegrens gebruikt een runtime-gecontroleerde streamadapter die typecheckt
+- Idempotency-cache is gebonden aan API-sleutel, methode, endpoint en bodydigest; oude rijen alleen op organisatie worden gedropt
+- Grote idempotente antwoorden spelen het originele body terug in plaats van een foutobject met HTTP 200
+- AI-bestand- en audiovelden weigeren URL-strings en decoderen begrensde base64 vóór de SDK
+- Import en export tellen de volledige multipart-body, inclusief genegeerde velden, vóór het parsen
+- Security-event-sampling gebruikt dezelfde denial-cap als usage-logs, ook als B2B-werk nooit start
+- API-leases houden hun geboekte maand, owner-heartbeat en late completion; denials verlengen geen stale slot
+- Guard-timeout houdt de oorspronkelijke lease tot de handler stopt of de lease verloopt, en geeft AbortSignal door
+
+### Added
+- Herhaalbare quota-ledger-backfill mengt pre-5.20 usage-logs met een bestaand v5.20-ledger als `opened_at` of `QUOTA_LEDGER_EPOCH_MS` bekend is. Gemengde periodes zonder betrouwbare start worden geweigerd in plaats van `max(ledger, logs)`, tenzij jij expliciet `QUOTA_LEDGER_RECONCILE` toestaat (`QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`)
+- Cutovervolgorde en rollback voor die backfill in `docs/production-cutover-v20.md` (backup, migratie, gecontroleerde start). Mergen naar GitHub `main` start alleen CI, geen productie-deploy. V20-08 en H-01 tot H-06 blijven open
+- Hardeningtickets H-01 tot H-06 apart gedocumenteerd in `docs/hardening-h01-h06.md`
+
+---
+
+## [5.20.0] - 2026-09-07
+
+Quota-ledger, ZIP-grenzen, PostHog-privacy en B2B Pro-identiteit.
+
+### Added
+- Juridisch colofon met AHOVOKS-modellicentie, koepelcitatie (art. XI.189 WER), non-affiliation en EU AI Act art. 50-transparantie
+- Corpus-hygienetest zodat volledige `.jsonl`-corpora niet in git komen buiten `test/fixtures/`
+- Gedeeld organisatie-API-quota-ledger met burst, concurrency en idempotency-keys
+- HMAC-e-mailidentiteit voor het dagelijkse server-AI-budget, zodat delete/recreate hetzelfde venster houdt
+
+### Changed
+- `.gitignore` negeert ruwe curriculum-`.json`, `.jsonl` en `.pdf` onder `data/`
+- B2B `POST /api/v1/curriculum/match` geeft standaard hoogstens 5 citatievelden: `code`, `text`, `network`, `score` en optioneel `didactic_note`
+- Match-responses bevatten `requestedMode`, `executedMode` en `proFallback`
+- Standalone build kopieert `public` en `.next/static` naar `.next/standalone`
+- Dev-logincodes worden genegeerd wanneer `NODE_ENV` production is
+- Externe Groq-, Cerebras-, Discovery Engine- en fetch-calls stoppen na 12 seconden
+- PostHog session replay staat uit; les-, preview- en feedback-UI gebruiken `ph-no-capture`
+- RAG query rewriting volgt dezelfde BYOK-providerregel als andere AI-calls
+- B2B Pro-analyse gebruikt een organisatiebudgetpad in plaats van een synthetische user-id
+- README documenteert het organisatie-quota-ledger, match-citatievelden, PostHog-privacy, standalone asset-copy en het huidige testaantal
+
+### Fixed
+- Uitgeputte B2B-sleutels schrijven geen usage-logrij meer per 429
+- Accountverwijdering maakt pending logincodes ongeldig en reset het dagelijkse AI-budget niet
+- Login-rate-limits delen geen emmer meer als client-IP-headers onbetrouwbaar zijn
+- ZIP-import/export telt echte inflated bytes in plaats van gedeclareerde metadata
+- Word-preview zet `renderAltChunks` uit zodat altChunk-HTML niet gerenderd wordt
+- Een mislukte RAG-rewrite na dispatch houdt de gereserveerde AI-eenheid
 
 
 ## [5.19.0] - 2026-09-07

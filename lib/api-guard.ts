@@ -4,10 +4,17 @@ import { z } from "zod";
 import {
   completeOrgApiCall,
   noteOrgDenial,
-  ORG_API_MAX_EXECUTION_MS,
+  orgApiExecutionLimitMs,
   reserveOrgApiCall,
   type OrgQuotaDenied,
+  type OrgQuotaReservation,
 } from "@/lib/api/orgQuota";
+import {
+  parseIdempotencyKey,
+  requestFingerprint,
+  utf8ByteLength,
+  API_IDEMPOTENCY_BODY_MAX_BYTES,
+} from "@/lib/api/idempotency";
 import {
   ApiAuthError,
   hasLiveApiKeyAuthorization,
@@ -18,7 +25,9 @@ import {
 import { publicErrorMessage } from "@/lib/http/clientError";
 import {
   RequestBodyTooLargeError,
+  RequestBodyTimeoutError,
   readJsonBody,
+  readResponseTextBounded,
 } from "@/lib/http/requestBody";
 import { recordSecurityEvent } from "@/lib/security/events";
 
@@ -28,6 +37,8 @@ export type ApiAuthContext = ValidatedApiKey & {
   body: unknown;
   endpoint: string;
   requestId: string;
+  signal: AbortSignal;
+  leaseId?: string;
 };
 
 function jsonError(
@@ -101,7 +112,23 @@ function quotaDenialMessage(reason: OrgQuotaDenied["reason"]) {
   if (reason === "idempotency-pending") {
     return "Dit verzoek loopt al. Wacht tot het is afgerond.";
   }
+  if (reason === "idempotency-conflict") {
+    return "Idempotency-Key is al gebruikt voor een ander verzoek.";
+  }
+  if (reason === "idempotency-expired") {
+    return "Dit verzoek is verlopen. Gebruik een nieuwe Idempotency-Key.";
+  }
   return "Te veel gelijktijdige aanvragen. Probeer het zo meteen opnieuw.";
+}
+
+function denialStatus(reason: OrgQuotaDenied["reason"]) {
+  if (
+    reason === "idempotency-conflict" ||
+    reason === "idempotency-expired"
+  ) {
+    return 409;
+  }
+  return 429;
 }
 
 async function recordCappedDenial({
@@ -119,22 +146,43 @@ async function recordCappedDenial({
   reason: OrgQuotaDenied["reason"] | "scope" | "validation";
   durationMs: number;
 }) {
-  const noted = noteOrgDenial(auth.orgId);
-  recordSecurityEvent({
-    kind: denialKind(reason),
-    requestId,
-    orgId: auth.orgId,
-    keyId: auth.keyId,
-    detail: reason,
-  });
-  if (!noted.shouldLog) return;
-  logApiUsage({
-    keyId: auth.keyId,
-    endpoint,
-    statusCode,
-    durationMs,
-    requestId,
-  });
+  let shouldLog = true;
+  try {
+    shouldLog = noteOrgDenial(auth.orgId).shouldLog;
+  } catch (error) {
+    console.error("[api-guard] denial ledger", error);
+  }
+  try {
+    recordSecurityEvent({
+      kind: denialKind(reason),
+      requestId,
+      orgId: auth.orgId,
+      keyId: auth.keyId,
+      detail: reason,
+    });
+  } catch (error) {
+    console.error("[api-guard] security event", error);
+  }
+  if (!shouldLog) return;
+  try {
+    logApiUsage({
+      keyId: auth.keyId,
+      endpoint,
+      statusCode,
+      durationMs,
+      requestId,
+    });
+  } catch (error) {
+    console.error("[api-guard] usage log", error);
+  }
+}
+
+function lateComplete(params: Parameters<typeof completeOrgApiCall>[0]) {
+  try {
+    completeOrgApiCall(params);
+  } catch (error) {
+    console.error("[api-guard] late quota complete", error);
+  }
 }
 
 export function withApiAuth(
@@ -152,13 +200,16 @@ export function withApiAuth(
     const requestId =
       request.headers.get("x-request-id")?.trim() || randomUUID();
     const endpoint = new URL(request.url).pathname;
+    const method = request.method.toUpperCase();
     let auth: ValidatedApiKey | null = null;
     let reserved = false;
+    let completeInFinally = false;
+    let reservation: OrgQuotaReservation | undefined;
     let idempotencyKey: string | undefined;
     let statusCode = 500;
     let remainingAfter: number | undefined;
-    let replayResponse: Response | undefined;
     let capturedBody: string | undefined;
+    const abortController = new AbortController();
 
     try {
       if (!hasLiveApiKeyAuthorization(request)) {
@@ -172,6 +223,9 @@ export function withApiAuth(
         body = await readJsonBody(request, JSON_BODY_LIMIT_BYTES);
       } catch (error) {
         if (error instanceof RequestBodyTooLargeError) {
+          throw error;
+        }
+        if (error instanceof RequestBodyTimeoutError) {
           throw error;
         }
         statusCode = 400;
@@ -234,43 +288,76 @@ export function withApiAuth(
         }
       }
 
-      idempotencyKey = request.headers.get("idempotency-key")?.trim() || undefined;
-      const reservation = reserveOrgApiCall({
-        orgId: auth.orgId,
-        monthlyLimit: auth.monthlyQuota,
-        idempotencyKey,
-        now: started,
-      });
-
-      if (!reservation.ok) {
-        statusCode = 429;
-        auth = { ...auth, usedThisMonth: reservation.consumed };
-        remainingAfter = 0;
+      const parsedKey = parseIdempotencyKey(
+        request.headers.get("idempotency-key"),
+      );
+      if (!parsedKey.ok) {
+        statusCode = 400;
         await recordCappedDenial({
           auth,
           requestId,
           endpoint,
           statusCode,
-          reason: reservation.reason,
+          reason: "validation",
           durationMs: Date.now() - started,
         });
-        throw new ApiAuthError(quotaDenialMessage(reservation.reason), 429, {
-          retryAfterSeconds: reservation.retryAfterSeconds,
+        return withRateLimitHeaders(
+          jsonError("Idempotency-Key is ongeldig.", 400),
+          auth,
+          undefined,
+          requestId,
+        );
+      }
+      idempotencyKey = parsedKey.key;
+      const digest = requestFingerprint({ method, endpoint, body });
+      const quota = reserveOrgApiCall({
+        orgId: auth.orgId,
+        keyId: auth.keyId,
+        monthlyLimit: auth.monthlyQuota,
+        method,
+        endpoint,
+        requestDigest: digest,
+        idempotencyKey,
+        now: started,
+      });
+
+      if (!quota.ok) {
+        statusCode = denialStatus(quota.reason);
+        auth = { ...auth, usedThisMonth: quota.consumed };
+        remainingAfter = statusCode === 429 ? 0 : Math.max(0, auth.monthlyQuota - quota.consumed);
+        await recordCappedDenial({
+          auth,
+          requestId,
+          endpoint,
+          statusCode,
+          reason: quota.reason,
+          durationMs: Date.now() - started,
+        });
+        if (statusCode === 409) {
+          return withRateLimitHeaders(
+            jsonError(quotaDenialMessage(quota.reason), 409),
+            auth,
+            remainingAfter,
+            requestId,
+          );
+        }
+        throw new ApiAuthError(quotaDenialMessage(quota.reason), 429, {
+          retryAfterSeconds: quota.retryAfterSeconds,
           keyId: auth.keyId,
           orgId: auth.orgId,
           monthlyQuota: auth.monthlyQuota,
-          usedThisMonth: reservation.consumed,
+          usedThisMonth: quota.consumed,
           resetAt: auth.resetAt,
         });
       }
 
-      auth = { ...auth, usedThisMonth: reservation.consumed };
-      remainingAfter = Math.max(0, auth.monthlyQuota - reservation.consumed);
+      auth = { ...auth, usedThisMonth: quota.consumed };
+      remainingAfter = Math.max(0, auth.monthlyQuota - quota.consumed);
 
-      if (reservation.replay) {
-        statusCode = reservation.statusCode;
-        replayResponse = new NextResponse(reservation.body, {
-          status: reservation.statusCode,
+      if (quota.replay) {
+        statusCode = quota.statusCode;
+        const replayResponse = new NextResponse(quota.body, {
+          status: quota.statusCode,
           headers: {
             "Content-Type": "application/json",
             "X-Idempotent-Replay": "1",
@@ -286,17 +373,49 @@ export function withApiAuth(
       }
 
       reserved = true;
+      completeInFinally = true;
+      reservation = quota;
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let handlerFinished = false;
+
+      const work = handler(request, {
+        ...auth,
+        body,
+        endpoint,
+        requestId,
+        signal: abortController.signal,
+        leaseId: quota.leaseId,
+      }).then(async (response) => {
+        handlerFinished = true;
+        statusCode = response.status;
+        const bounded = await readResponseTextBounded(
+          response,
+          API_IDEMPOTENCY_BODY_MAX_BYTES,
+        );
+        if (bounded.truncated || utf8ByteLength(bounded.text) > API_IDEMPOTENCY_BODY_MAX_BYTES) {
+          capturedBody = JSON.stringify({
+            error: "Het antwoord is te groot om idempotent te bewaren.",
+            code: "idempotency_payload_too_large",
+          });
+          statusCode = 413;
+          return jsonError(
+            "Het antwoord is te groot om idempotent te bewaren.",
+            413,
+          );
+        }
+        capturedBody = bounded.text;
+        return new NextResponse(bounded.text, {
+          status: response.status,
+          headers: response.headers,
+        });
+      });
+
       try {
         const response = await Promise.race([
-          handler(request, {
-            ...auth,
-            body,
-            endpoint,
-            requestId,
-          }),
+          work,
           new Promise<never>((_, reject) => {
             timeoutId = setTimeout(() => {
+              abortController.abort();
               reject(
                 new ApiAuthError(
                   "De aanvraag duurde te lang. Probeer het later opnieuw.",
@@ -304,20 +423,60 @@ export function withApiAuth(
                   { retryAfterSeconds: 30, orgId: auth?.orgId, keyId: auth?.keyId },
                 ),
               );
-            }, ORG_API_MAX_EXECUTION_MS);
+            }, orgApiExecutionLimitMs());
           }),
         ]);
-        statusCode = response.status;
-        if (idempotencyKey) {
-          try {
-            capturedBody = await response.clone().text();
-          } catch {
-            capturedBody = undefined;
-          }
-        }
         return withRateLimitHeaders(response, auth, remainingAfter, requestId);
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
+        if (!handlerFinished && reservation && auth) {
+          completeInFinally = false;
+          lateComplete({
+            orgId: auth.orgId,
+            keyId: auth.keyId,
+            leaseId: reservation.leaseId,
+            ownerToken: reservation.ownerToken,
+            period: reservation.period,
+            idempotencyKey,
+            statusCode: 429,
+            responseBody: JSON.stringify({
+              error: "De aanvraag duurde te lang. Probeer het later opnieuw.",
+            }),
+            releaseLease: false,
+            storeIdempotency: true,
+          });
+          void work.then(
+            () => {
+              if (!auth || !reservation) return;
+              lateComplete({
+                orgId: auth.orgId,
+                keyId: auth.keyId,
+                leaseId: reservation.leaseId,
+                ownerToken: reservation.ownerToken,
+                period: reservation.period,
+                idempotencyKey,
+                statusCode,
+                responseBody: capturedBody,
+                releaseLease: true,
+                storeIdempotency: false,
+              });
+            },
+            () => {
+              if (!auth || !reservation) return;
+              lateComplete({
+                orgId: auth.orgId,
+                keyId: auth.keyId,
+                leaseId: reservation.leaseId,
+                ownerToken: reservation.ownerToken,
+                period: reservation.period,
+                idempotencyKey,
+                statusCode: 500,
+                releaseLease: true,
+                storeIdempotency: false,
+              });
+            },
+          );
+        }
       }
     } catch (error) {
       if (error instanceof ApiAuthError) {
@@ -369,7 +528,11 @@ export function withApiAuth(
           requestId,
         );
       }
-      if (error instanceof RequestBodyTooLargeError || error instanceof z.ZodError) {
+      if (
+        error instanceof RequestBodyTooLargeError ||
+        error instanceof RequestBodyTimeoutError ||
+        error instanceof z.ZodError
+      ) {
         statusCode = 400;
         if (auth) {
           await recordCappedDenial({
@@ -403,10 +566,14 @@ export function withApiAuth(
         requestId,
       );
     } finally {
-      if (reserved && auth) {
+      if (reserved && completeInFinally && auth && reservation) {
         try {
           completeOrgApiCall({
             orgId: auth.orgId,
+            keyId: auth.keyId,
+            leaseId: reservation.leaseId,
+            ownerToken: reservation.ownerToken,
+            period: reservation.period,
             idempotencyKey,
             statusCode,
             responseBody: capturedBody,

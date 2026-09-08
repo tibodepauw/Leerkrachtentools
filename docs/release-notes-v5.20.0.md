@@ -1,44 +1,44 @@
 # Leerkrachtentools v5.20.0
 
-Quota ledger, ZIP bounds, PostHog privacy, and a correct B2B Pro identity.
+Quota-ledger, ZIP-grenzen, PostHog-privacy, en een correcte B2B Pro-identiteit.
 
 ---
 
-## B2B quota
+## B2B-quota
 
-- Organization budget is reserved in one SQLite transaction before the heavy handler
-- Burst, concurrency and a global in-flight cap sit on that same ledger
-- Validation errors do not consume; started work stays consumed if logging fails
-- `Idempotency-Key` does not double-spend
-- Two keys of the same organization share the monthly budget
-- A flood of 429s no longer writes one usage-log row per request
+- Organisatiebudget wordt in één SQLite-transactie gereserveerd vóór de zware handler
+- Burst, concurrency en een globaal in-flight-plafond zitten op datzelfde ledger
+- Validatiefouten tellen niet; gestart werk blijft geteld als het loggen faalt
+- `Idempotency-Key` telt niet dubbel
+- Twee sleutels van dezelfde organisatie delen het maandbudget
+- Een vloed van 429's schrijft niet langer één usage-logrij per request
 
-## Documents and preview
+## Documenten en preview
 
-- ZIP import and export count actual inflated bytes and stop before the entry limit
-- Honest and forged oversized metadata are both rejected
-- Word preview sets `renderAltChunks: false`
+- ZIP-import en -export tellen echte inflated bytes en stoppen vóór de entry-limiet
+- Eerlijke én vervalste oversized metadata worden allebei geweigerd
+- Word-preview zet `renderAltChunks: false`
 
-## Privacy and login
+## Privacy en login
 
-- PostHog session replay is off; lesson and feedback UI use `ph-no-capture`
-- PostHog identity resets on logout and account switch
-- Account deletion wipes pending login codes; the daily AI budget stays bound to the e-mail HMAC for the rest of the window
-- Untrusted IP headers no longer share one login bucket for every visitor
+- PostHog session replay staat uit; les- en feedback-UI gebruiken `ph-no-capture`
+- PostHog-identiteit reset bij logout en accountwissel
+- Accountverwijdering wist pending logincodes; het dagelijkse AI-budget blijft via e-mail-HMAC gebonden tot het einde van het venster
+- Onbetrouwbare IP-headers delen geen login-emmer meer voor elke bezoeker
 
-## RAG and Pro
+## RAG en Pro
 
-- Query rewriting follows the same BYOK provider as other AI calls
-- A rewrite that starts and then fails keeps the reserved unit
-- B2B Pro uses an organization budget path and returns `requestedMode`, `executedMode` and `proFallback`
+- Query rewriting volgt dezelfde BYOK-provider als andere AI-calls
+- Een rewrite die start en daarna faalt houdt de gereserveerde eenheid
+- B2B Pro gebruikt een organisatiebudgetpad en geeft `requestedMode`, `executedMode` en `proFallback` terug
 
-## Operations
+## Operatie
 
-- Standalone build copies `public` and `.next/static`
-- Dev login codes are ignored in production
-- External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds
-- Legal colophon for AHOVOKS, koepelrechten and EU AI Act art. 50
-- README documents the organization quota ledger, match citation fields, PostHog privacy, standalone asset copy, and the current test count
+- Standalone build kopieert `public` en `.next/static`
+- Dev-logincodes worden in productie genegeerd
+- Externe Groq-, Cerebras-, Discovery Engine- en fetch-calls stoppen na 12 seconden
+- Juridisch colofon voor AHOVOKS, koepelrechten en EU AI Act art. 50
+- README documenteert het organisatie-quota-ledger, match-citatievelden, PostHog-privacy, standalone asset-copy en het huidige testaantal
 
 ---
 

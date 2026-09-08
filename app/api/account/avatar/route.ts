@@ -14,7 +14,7 @@ import {
   saveProfileImageFile,
 } from "@/lib/auth/profileImage";
 import { publicErrorMessage } from "@/lib/http/clientError";
-import { readBodyBuffer } from "@/lib/http/requestBody";
+import { readBoundedFormData } from "@/lib/http/requestBody";
 
 export const runtime = "nodejs";
 const PROFILE_IMAGE_REQUEST_MAX_BYTES =
@@ -56,18 +56,10 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
-    const rawBody = await readBodyBuffer(
+    const formData = await readBoundedFormData(
       request,
       PROFILE_IMAGE_REQUEST_MAX_BYTES,
     );
-    const headers = new Headers(request.headers);
-    headers.delete("content-length");
-    headers.delete("transfer-encoding");
-    const formData = await new Request(request.url, {
-      method: "POST",
-      headers,
-      body: rawBody,
-    }).formData();
     const file = formData.get("file");
 
     if (!(file instanceof File)) {

@@ -4,6 +4,7 @@ import {
   REFLECTION_AUDIO_MEDIA_TYPES,
 } from "@/lib/ai/audioMediaType";
 import { WRITING_STYLES } from "@/lib/ai/writingStyle";
+import { binaryUploadString } from "@/lib/ai/binaryUpload";
 
 export const MAX_AI_TEXT_CHARS = 200_000;
 export const MAX_BASE64_CHARS = 8_000_000;
@@ -65,7 +66,7 @@ export const manualExtractionRequestSchema = z
   .object({
     fileName: z.string().max(500).optional(),
     content: z.string().max(MAX_AI_TEXT_CHARS).optional(),
-    fileData: z.string().max(MAX_BASE64_CHARS).optional(),
+    fileData: binaryUploadString.optional(),
     mediaType: z.enum(manualMediaTypes).optional(),
   })
   .refine((value) => Boolean(value.fileData?.trim() || value.content?.trim()), {
@@ -76,7 +77,7 @@ export const reflectionRequestSchema = z
   .object({
     goals: z.array(z.string().max(10_000)).max(20).optional(),
     content: z.string().max(MAX_AI_TEXT_CHARS).optional(),
-    audioData: z.string().max(MAX_BASE64_CHARS).optional(),
+    audioData: binaryUploadString.optional(),
     mediaType: z
       .string()
       .optional()

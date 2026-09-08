@@ -208,12 +208,31 @@ describe("B2B API v1", () => {
     expect(response.status).toBe(200);
     const payload = (await response.json()) as {
       success: boolean;
-      coverage: Array<{ goal: string; status: string; matched_units: string[] }>;
+      coverage: Array<{
+        goal: string;
+        status: string;
+        matched_units: string[];
+        linked_curriculum?: {
+          code: string;
+          text: string;
+          network: string;
+          score: number;
+        };
+      }>;
       missing: string[];
     };
     expect(payload.success).toBe(true);
     expect(payload.coverage[0]?.status).toBe("gedekt");
     expect(payload.coverage[0]?.matched_units).toContain("instap");
+    expect(payload.coverage[0]?.linked_curriculum).toEqual(
+      expect.objectContaining({
+        code: expect.any(String),
+        text: expect.any(String),
+        network: expect.any(String),
+        score: expect.any(Number),
+      }),
+    );
+    expect(payload.coverage[0]?.linked_curriculum?.code.length).toBeGreaterThan(0);
     expect(payload.missing.length).toBeGreaterThan(0);
   });
 

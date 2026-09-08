@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v5.20.0-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Version](https://img.shields.io/badge/version-v5.20.1-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 [![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
@@ -222,7 +222,7 @@ The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Rev
 | `POST /api/v1/curriculum/audit` | `curriculum:audit` | Coverage of `target_goals` against `lesson_units` |
 | `POST /api/v1/goals/improve` | `goals:improve` | Same lesson-goal rules as Doelverbeteraar |
 
-Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` so retries do not double-spend. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
+Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` (max 128 characters) so the same authorized key, endpoint and body retry without a second consume. A different endpoint, key or body with that header gets 409, not a replay. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
 
 ## Quality checks
 
@@ -235,7 +235,7 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-438 automated tests across 107 test files cover curriculum retrieval and ranking,
+457 automated tests across 111 test files cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
 The test total is the Vitest case count, not a code-coverage percentage.
@@ -253,7 +253,7 @@ PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js
 
 Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs. External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds.
 
-Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, hashed B2B organisation keys, a shared organization quota ledger, idempotency keys, HMAC-bound daily AI budget rows, usage logs, security events, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database. ZIP import and export count actual inflated bytes and stop before the entry limit.
+Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, hashed B2B organisation keys, a shared organization quota ledger, idempotency keys, HMAC-bound daily AI budget rows, usage logs, security events, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database. ZIP import and export count actual inflated bytes and stop before the entry limit. Quota-ledger backfill after v5.20 is manual: see `docs/production-cutover-v20.md` (backup, then `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, then a controlled start). Mixed months without a known v5.20 start are refused until `QUOTA_LEDGER_EPOCH_MS` or an explicit `QUOTA_LEDGER_RECONCILE` is set. The app does not apply that backfill on boot.
 
 Before exposing the service publicly:
 
@@ -312,6 +312,6 @@ Before exposing the service publicly:
 
 ## Releases
 
-Current version: **5.20.0**
+Current version: **5.20.1**
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).
