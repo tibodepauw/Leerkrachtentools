@@ -93,4 +93,13 @@ export function ensureFollowupSchema(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS api_idempotency_keys_org_created
       ON api_idempotency_keys(org_id, created_at);
   `);
+
+  if (tableExists(db, "api_org_quota")) {
+    const quotaColumns = columnNames(db, "api_org_quota");
+    if (!quotaColumns.has("opened_at")) {
+      db.exec(
+        "ALTER TABLE api_org_quota ADD COLUMN opened_at INTEGER NOT NULL DEFAULT 0",
+      );
+    }
+  }
 }

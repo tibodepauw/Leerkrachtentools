@@ -152,6 +152,7 @@ export function getDatabase() {
       denial_window_start INTEGER NOT NULL DEFAULT 0,
       denial_count INTEGER NOT NULL DEFAULT 0,
       denial_logs_written INTEGER NOT NULL DEFAULT 0,
+      opened_at INTEGER NOT NULL DEFAULT 0,
       updated_at INTEGER NOT NULL,
       PRIMARY KEY (org_id, period)
     );

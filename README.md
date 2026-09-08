@@ -253,7 +253,7 @@ PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js
 
 Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs. External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds.
 
-Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, hashed B2B organisation keys, a shared organization quota ledger, idempotency keys, HMAC-bound daily AI budget rows, usage logs, security events, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database. ZIP import and export count actual inflated bytes and stop before the entry limit.
+Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, hashed B2B organisation keys, a shared organization quota ledger, idempotency keys, HMAC-bound daily AI budget rows, usage logs, security events, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database. ZIP import and export count actual inflated bytes and stop before the entry limit. Quota-ledger backfill after v5.20 is manual: see `docs/production-cutover-v20.md` (backup, then `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npx tsx scripts/migrate-quota-ledgers.ts`, then a controlled start). The app does not apply that backfill on boot.
 
 Before exposing the service publicly:
 

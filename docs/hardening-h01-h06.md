@@ -1,6 +1,6 @@
 # Hardening tickets H-01 tot H-06
 
-Deze tickets blijven aparte product- en operationskeuzes. Ze zijn geen bewezen exploits uit de v5.20.0-vervolgaudit.
+Deze tickets blijven open. Ze zijn aparte product- en operationskeuzes, geen bewezen exploits uit de v5.20.0-vervolgaudit, en zitten niet in de follow-upfixes.
 
 ## H-01 Gedeeld-apparaatmodus
 

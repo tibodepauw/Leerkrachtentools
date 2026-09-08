@@ -163,11 +163,11 @@ function ensureQuotaRow(orgId: string, period: string, now: number) {
     .prepare(
       `INSERT INTO api_org_quota (
          org_id, period, consumed, in_flight, burst_window_start, burst_count,
-         denial_window_start, denial_count, denial_logs_written, updated_at
-       ) VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0, ?)
+         denial_window_start, denial_count, denial_logs_written, opened_at, updated_at
+       ) VALUES (?, ?, 0, 0, 0, 0, 0, 0, 0, ?, ?)
        ON CONFLICT(org_id, period) DO NOTHING`,
     )
-    .run(orgId, period, now);
+    .run(orgId, period, now, now);
 }
 
 export function reserveOrgApiCall({
@@ -496,8 +496,8 @@ export function noteOrgDenial(orgId: string, now = Date.now()) {
   db.prepare(
     `INSERT INTO api_org_quota (
        org_id, period, consumed, in_flight, burst_window_start, burst_count,
-       denial_window_start, denial_count, denial_logs_written, updated_at
-     ) VALUES (?, ?, 0, 0, 0, 0, ?, 1, 0, ?)
+       denial_window_start, denial_count, denial_logs_written, opened_at, updated_at
+     ) VALUES (?, ?, 0, 0, 0, 0, ?, 1, 0, ?, ?)
      ON CONFLICT(org_id, period) DO UPDATE SET
        denial_count = CASE
          WHEN api_org_quota.denial_window_start = excluded.denial_window_start
@@ -510,7 +510,7 @@ export function noteOrgDenial(orgId: string, now = Date.now()) {
          THEN api_org_quota.denial_logs_written
          ELSE 0
        END`,
-  ).run(orgId, period, windowStart, now);
+  ).run(orgId, period, windowStart, now, now);
 
   const row = db
     .prepare(

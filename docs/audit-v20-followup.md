@@ -48,22 +48,28 @@ Bestanden: `lib/security/events.ts`, `lib/api/orgQuota.ts`, `lib/api-guard.ts`.
 
 Negatief vóór fix: 20 denials, 20 events. Daarna: sampling cap 8 plus windowteller; prune op denials; writerfout onderbreekt 429 niet.
 
-## V20-04, V20-05, V20-08 Leases
+## V20-04 en V20-05 Leases (periode en denial-heartbeat)
 
-Oorzaak: completion herberekende de UTC-maand; `updated_at` werd ook door denials ververst; timeout decrementeerde in-flight terwijl de handler doorliep.
+Oorzaak: completion herberekende de UTC-maand; `updated_at` werd ook door denials ververst.
 
 Bestanden: `lib/api/orgQuota.ts`, `lib/api-guard.ts`.
 
-Negatief vóór fix: maandwissel verlaagde de verkeerde teller; 429-retries hielden slots vast; timeout zette in-flight op 0 met lopend werk. Daarna: per-request lease met immutable periode en owner-heartbeat; denials verlengen geen lease; timeout houdt de lease tot late completion of expiry; AbortSignal naar de handler. Bestaande match/audit/improve-handlers krijgen het signal; harde worker-kill is niet gebouwd.
+Negatief vóór fix: maandwissel verlaagde de verkeerde teller; 429-retries hielden slots vast. Daarna: per-request lease met immutable periode; denials verlengen geen lease.
+
+## V20-08 Leases / worker-kill (blijft open)
+
+Timeout houdt de lease tot late completion of expiry en geeft AbortSignal aan de handler. Bestaande match/audit/improve-handlers krijgen het signal.
+
+Resterend werk, expliciet open: geen geïsoleerde worker-kill; handlers die AbortSignal negeren of CPU-gebonden blijven kunnen doorlopen tot lease-expiry. Niet bewezen als onbegrensde exploit op de huidige productiehandlers. Dit ticket is niet gesloten in deze ronde.
 
 ## V20-06 Migratie
 
-Oorzaak: nieuwe ledgers startten leeg.
+Oorzaak: nieuwe ledgers startten leeg; een v5.19-only som mist unlogged v5.20-verbruik of telt overlapping logs dubbel.
 
-Bestanden: `lib/db/migrateQuotaLedgers.ts`, `scripts/migrate-quota-ledgers.ts`.
+Bestanden: `lib/db/migrateQuotaLedgers.ts`, `scripts/migrate-quota-ledgers.ts`, `docs/production-cutover-v20.md`.
 
-Negatief vóór fix: oude usage-rijen lazen als 0. Daarna: versioned, transactionele, herhaalbare backfill op een synthetische v5.19-DB. Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC. Productie: eerst backup, daarna `npx tsx scripts/migrate-quota-ledgers.ts`. Start de app de migratie niet automatisch.
+Negatief vóór fix: oude usage-rijen lazen als 0; `ledger + alle logs` zou overlapping nieuwe rijen dubbel tellen. Daarna: versioned, transactionele, herhaalbare backfill. Gemengd: oude billable logs van vóór `opened_at` (of `QUOTA_LEDGER_EPOCH_MS`) plus `max(ledger, nieuwe logs)`. Onbekende start: `max(ledger, alle billable logs)`. Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC, bestaande `(subject, created_at)` blijven uniek. Productie: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npx tsx scripts/migrate-quota-ledgers.ts`, daarna gecontroleerde start. De app past de backfill niet automatisch toe. Geen productiemigratie zonder akkoord.
 
-## H-01 tot H-06
+## H-01 tot H-06 (blijven open)
 
-Zie `docs/hardening-h01-h06.md`. Niet in deze wijziging geïmplementeerd.
+Zie `docs/hardening-h01-h06.md`. H-01, H-02, H-03, H-04, H-05 en H-06 zijn niet geïmplementeerd en blijven open.
