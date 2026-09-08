@@ -43,10 +43,11 @@ Voer dit pas uit na akkoord, op een kopie van de productiedatabase eerst.
 4. **Migreer eenmalig** met de backupbevestiging:
 
    ```bash
-   QUOTA_LEDGER_BACKUP_CONFIRMED=1 npx tsx scripts/migrate-quota-ledgers.ts
+   QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers
    ```
 
    Verwacht `v20_quota_ledger_backfill_v1 applied=true` de eerste keer, daarna `applied=false` zonder extra telling.
+   Gebruik dezelfde `AUTH_SECRET` als de app (minstens 32 tekens). Anders krijgen AI-budgetrijen een andere HMAC en tellen ze naast de bestaande subjects.
 5. **Gecontroleerde start** van één instance. Controleer logs op de backfill-waarschuwing (die moet weg zijn), een B2B-call, en dat `consumed` niet sprong naar de som van ledger plus alle logs.
 
 Telregel: 2xx en 5xx tellen; 4xx en 429 niet. AI-rijen gaan via e-mail-HMAC naar `ai_budget_usage` en slaan bestaande `(subject, created_at)` over.

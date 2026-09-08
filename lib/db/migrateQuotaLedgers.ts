@@ -170,7 +170,11 @@ export function applyQuotaLedgerBackfill(
            denial_window_start, denial_count, denial_logs_written, opened_at, updated_at
          ) VALUES (?, ?, ?, 0, 0, 0, 0, 0, 0, ?, ?)
          ON CONFLICT(org_id, period) DO UPDATE SET
-           consumed = excluded.consumed`,
+           consumed = excluded.consumed,
+           opened_at = CASE
+             WHEN api_org_quota.opened_at > 0 THEN api_org_quota.opened_at
+             ELSE excluded.opened_at
+           END`,
       ).run(orgId, period, consumed, persistOpenedAt, now);
       orgRows += 1;
     }
@@ -215,6 +219,7 @@ export function applyQuotaLedgerBackfill(
 
 export function warnIfQuotaBackfillPending(db: Database.Database, now = Date.now()) {
   if (process.env.VITEST) return;
+  if (process.env.QUOTA_LEDGER_BACKUP_CONFIRMED === "1") return;
   if (migrationApplied(db, QUOTA_LEDGER_BACKFILL_MIGRATION)) return;
   const period = utcMonthPeriod(now);
   const monthStart = Date.UTC(
@@ -232,7 +237,7 @@ export function warnIfQuotaBackfillPending(db: Database.Database, now = Date.now
     .get(now - 48 * 60 * 60 * 1000) as { count: number };
   if (logs.count > 0 || ai.count > 0) {
     console.warn(
-      "[db] quota ledger backfill is not applied. Back up the database, then run: QUOTA_LEDGER_BACKUP_CONFIRMED=1 npx tsx scripts/migrate-quota-ledgers.ts",
+      "[db] quota ledger backfill is not applied. Back up the database, then run: QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers",
     );
   }
 }

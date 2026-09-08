@@ -342,6 +342,10 @@ describe("quota ledger backfill", () => {
 
     applyQuotaLedgerBackfill(db, now);
     expect(quotaConsumed(db, "org-epoch", period)).toBe(5);
+    const opened = db
+      .prepare("SELECT opened_at AS openedAt FROM api_org_quota WHERE org_id = ? AND period = ?")
+      .get("org-epoch", period) as { openedAt: number };
+    expect(opened.openedAt).toBe(epoch);
     db.close();
   });
 

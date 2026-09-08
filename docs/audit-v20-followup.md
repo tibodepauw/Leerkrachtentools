@@ -68,7 +68,7 @@ Oorzaak: nieuwe ledgers startten leeg; een v5.19-only som mist unlogged v5.20-ve
 
 Bestanden: `lib/db/migrateQuotaLedgers.ts`, `scripts/migrate-quota-ledgers.ts`, `docs/production-cutover-v20.md`.
 
-Negatief vóór fix: oude usage-rijen lazen als 0; `ledger + alle logs` zou overlapping nieuwe rijen dubbel tellen. Daarna: versioned, transactionele, herhaalbare backfill. Gemengd: oude billable logs van vóór `opened_at` (of `QUOTA_LEDGER_EPOCH_MS`) plus `max(ledger, nieuwe logs)`. Onbekende start: `max(ledger, alle billable logs)`. Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC, bestaande `(subject, created_at)` blijven uniek. Productie: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npx tsx scripts/migrate-quota-ledgers.ts`, daarna gecontroleerde start. De app past de backfill niet automatisch toe. Geen productiemigratie zonder akkoord.
+Negatief vóór fix: oude usage-rijen lazen als 0; `ledger + alle logs` zou overlapping nieuwe rijen dubbel tellen. Daarna: versioned, transactionele, herhaalbare backfill. Gemengd: oude billable logs van vóór `opened_at` (of `QUOTA_LEDGER_EPOCH_MS`) plus `max(ledger, nieuwe logs)`. Onbekende start: `max(ledger, alle billable logs)`. Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC, bestaande `(subject, created_at)` blijven uniek. Productie: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, daarna gecontroleerde start. De app past de backfill niet automatisch toe. Geen productiemigratie zonder akkoord.
 
 ## H-01 tot H-06 (blijven open)
 
