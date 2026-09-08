@@ -68,7 +68,17 @@ async function post(
 
 describe("B2B org quota ledger", () => {
   afterEach(() => {
-    getDatabase().prepare("DELETE FROM api_usage_logs WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'quota-test')").run();
+    const db = getDatabase();
+    db.prepare(
+      "DELETE FROM api_request_leases WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'quota-test')",
+    ).run();
+    db.prepare(
+      `UPDATE api_org_quota SET in_flight = 0
+       WHERE org_id IN (SELECT org_id FROM api_keys WHERE name = 'quota-test')`,
+    ).run();
+    db.prepare(
+      "DELETE FROM api_usage_logs WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'quota-test')",
+    ).run();
   });
 
   it("laat bij één resterende eenheid hoogstens één zware handler starten", async () => {

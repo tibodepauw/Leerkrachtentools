@@ -21,16 +21,24 @@ function trackAbortListeners(signal: AbortSignal) {
   let peak = 0;
   const add = signal.addEventListener.bind(signal);
   const remove = signal.removeEventListener.bind(signal);
-  signal.addEventListener = ((type, listener, options) => {
+  signal.addEventListener = ((
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | AddEventListenerOptions,
+  ) => {
     if (type === "abort" && listener) {
       live.add(listener);
       peak = Math.max(peak, live.size);
     }
-    return add(type, listener, options);
+    return add(type as never, listener as never, options as never);
   }) as AbortSignal["addEventListener"];
-  signal.removeEventListener = ((type, listener, options) => {
+  signal.removeEventListener = ((
+    type: string,
+    listener: EventListenerOrEventListenerObject | null,
+    options?: boolean | EventListenerOptions,
+  ) => {
     if (type === "abort" && listener) live.delete(listener);
-    return remove(type, listener, options);
+    return remove(type as never, listener as never, options as never);
   }) as AbortSignal["removeEventListener"];
   return {
     live: () => live.size,
@@ -100,7 +108,13 @@ describe("begrensde request bodies", () => {
   it("PR1-01 weigert een late EOF na de deadline", async () => {
     const request = streamRequest((controller) => {
       controller.enqueue(new TextEncoder().encode("{}"));
-      setTimeout(() => controller.close(), 200);
+      setTimeout(() => {
+        try {
+          controller.close();
+        } catch {
+          // The reader may already be cancelled after the deadline.
+        }
+      }, 200);
     });
     await expect(readBodyBuffer(request, 1_000, 80)).rejects.toBeInstanceOf(
       RequestBodyTimeoutError,
@@ -127,13 +141,13 @@ describe("begrensde request bodies", () => {
 
   it("stapelt geen abort-listeners bij veel kleine chunks tot EOF", async () => {
     const abort = new AbortController();
-    const tracked = trackAbortListeners(abort.signal);
     const request = streamRequestWithSignal((controller) => {
       for (let index = 0; index < 8; index += 1) {
         controller.enqueue(new Uint8Array([index]));
       }
       controller.close();
     }, abort.signal);
+    const tracked = trackAbortListeners(abort.signal);
 
     await expect(readBodyBuffer(request, 1_000, 5_000, abort.signal)).resolves.toBeInstanceOf(
       ArrayBuffer,
@@ -144,12 +158,12 @@ describe("begrensde request bodies", () => {
 
   it("ruimt abort-listeners op bij oversize, timeout en client-abort", async () => {
     const oversizeAbort = new AbortController();
-    const oversizeTracked = trackAbortListeners(oversizeAbort.signal);
     const oversize = streamRequestWithSignal((controller) => {
       controller.enqueue(new Uint8Array(40));
       controller.enqueue(new Uint8Array(40));
       controller.close();
     }, oversizeAbort.signal);
+    const oversizeTracked = trackAbortListeners(oversizeAbort.signal);
     await expect(
       readBodyBuffer(oversize, 64, 5_000, oversizeAbort.signal),
     ).rejects.toBeInstanceOf(RequestBodyTooLargeError);
@@ -157,10 +171,10 @@ describe("begrensde request bodies", () => {
     expect(oversizeTracked.live()).toBe(0);
 
     const timeoutAbort = new AbortController();
-    const timeoutTracked = trackAbortListeners(timeoutAbort.signal);
     const hanging = streamRequestWithSignal((controller) => {
       controller.enqueue(new TextEncoder().encode("{}"));
     }, timeoutAbort.signal);
+    const timeoutTracked = trackAbortListeners(timeoutAbort.signal);
     await expect(
       readBodyBuffer(hanging, 1_000, 80, timeoutAbort.signal),
     ).rejects.toBeInstanceOf(RequestBodyTimeoutError);
@@ -168,10 +182,10 @@ describe("begrensde request bodies", () => {
     expect(timeoutTracked.live()).toBe(0);
 
     const clientAbort = new AbortController();
-    const clientTracked = trackAbortListeners(clientAbort.signal);
     const pendingRequest = streamRequestWithSignal((controller) => {
       controller.enqueue(new TextEncoder().encode("{}"));
     }, clientAbort.signal);
+    const clientTracked = trackAbortListeners(clientAbort.signal);
     const pending = readBodyBuffer(pendingRequest, 1_000, 5_000, clientAbort.signal);
     setTimeout(() => clientAbort.abort(), 30);
     await expect(pending).rejects.toBeInstanceOf(RequestBodyTimeoutError);
@@ -181,11 +195,11 @@ describe("begrensde request bodies", () => {
 
   it("ruimt abort-listeners op als de annulering zelf nooit afvuurt", async () => {
     const abort = new AbortController();
-    const tracked = trackAbortListeners(abort.signal);
     const request = streamRequestWithSignal((controller) => {
       controller.enqueue(new TextEncoder().encode('{"ok":true}'));
       controller.close();
     }, abort.signal);
+    const tracked = trackAbortListeners(abort.signal);
 
     await expect(
       readBodyBuffer(request, 100, 5_000, abort.signal),
