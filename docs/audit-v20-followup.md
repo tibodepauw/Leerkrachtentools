@@ -76,8 +76,31 @@ Oorzaak: nieuwe ledgers startten leeg; een v5.19-only som mist unlogged v5.20-ve
 
 Bestanden: `lib/db/migrateQuotaLedgers.ts`, `scripts/migrate-quota-ledgers.ts`, `docs/production-cutover-v20.md`.
 
-Negatief vóór fix: oude usage-rijen lazen als 0; `ledger + alle logs` zou overlapping nieuwe rijen dubbel tellen; `max(ledger, logs)` bij onbekende start laat unlogged nieuw verbruik vallen (3 gelogde oude calls + 2 ongelogde nieuwe = 3 in plaats van 5). Daarna: versioned, transactionele, herhaalbare backfill. Gemengd met bekende start (`opened_at` of `QUOTA_LEDGER_EPOCH_MS`): oude billable logs plus `max(ledger, nieuwe logs)`. Onbekende start met zowel logs als ledger: weigering, geen marker, tot epoch of expliciete `QUOTA_LEDGER_RECONCILE` (`sum-pre-ledger` of `max-overlap`). Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC en `user_ai_usage.id` als `source_event_id`, zodat twee oude calls in dezelfde milliseconde twee eenheden blijven. Een live rij zonder source-id met dezelfde `(subject, created_at)` wordt als dat ene oude event geclaimd, niet als timestamp-uniciteit voor alle ids. Productie: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, daarna gecontroleerde start. De app past de backfill niet automatisch toe. Mergen naar GitHub `main` start alleen `ci.yml`, geen live process. Geen productiemigratie zonder akkoord. V20-08 en H-01 tot H-06 blijven open.
+Negatief vóór fix: oude usage-rijen lazen als 0; `ledger + alle logs` zou overlapping nieuwe rijen dubbel tellen; `max(ledger, logs)` bij onbekende start laat unlogged nieuw verbruik vallen (3 gelogde oude calls + 2 ongelogde nieuwe = 3 in plaats van 5). Daarna: versioned, transactionele, herhaalbare backfill. Gemengd met bekende start (`opened_at` of `QUOTA_LEDGER_EPOCH_MS`): oude billable logs plus `max(ledger, nieuwe logs)`. Onbekende start met zowel logs als ledger: weigering, geen marker, tot epoch of expliciete `QUOTA_LEDGER_RECONCILE` (`sum-pre-ledger` of `max-overlap`). Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC en `user_ai_usage.id` als `source_event_id`, zodat twee oude calls in dezelfde milliseconde twee eenheden blijven. Live rijen die die bron-id al dragen worden overgeslagen. Live rijen zonder `source_event_id` met alleen dezelfde `(subject, created_at)` zijn ambigu: default weigering, geen marker. `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=claim` behandelt de live-rij als dat ene oude event; `insert` houdt de live-rij en voegt oude events ernaast in. Timestampgelijkheid is geen herkomstbewijs. Een bestaande marker `v20_quota_ledger_backfill_v1` wordt niet verwijderd en herstelt eerder fout gemigreerde data niet. Productie: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, daarna gecontroleerde start. De app past de backfill niet automatisch toe. Mergen naar GitHub `main` start alleen `ci.yml`, geen live process. Geen productiemigratie zonder akkoord. V20-08 en H-01 tot H-06 blijven open.
 
 ## H-01 tot H-06 (blijven open)
 
 Zie `docs/hardening-h01-h06.md`. H-01, H-02, H-03, H-04, H-05 en H-06 zijn niet geïmplementeerd en blijven open.
+
+## CONTROL-mapping (oorspronkelijke vijf)
+
+Dit zijn bestaande tests, geen nieuwe suite-naam `CONTROL`. URL-upload, multipart-bytes, 409, unknown-start en `linked_curriculum` overlappen deels, maar zijn niet dezelfde vijf cases. Mapping:
+
+1. Cross-key-autorisatie via echte audit/improve-routes, plus gewijzigd-bodyconflict
+   - `lib/api/orgQuota.test.ts` `levert geen auditdata via een goals:improve-sleutel met dezelfde Idempotency-Key`: echte `POST` van `/api/v1/curriculum/audit` en `/api/v1/goals/improve`; improve-sleutel krijgt 403 op audit; daarna 200 audit; improve met dezelfde header is geen replay en bevat de geheime titel niet; `consumed === 2`.
+   - `lib/api/orgQuota.test.ts` `geeft 409 bij dezelfde Idempotency-Key en een gewijzigde body`: dummy match-handler, 409, `consumed === 1`.
+   - `lib/api/orgQuota.test.ts` `geeft 409 op de echte auditroute bij dezelfde Idempotency-Key en een gewijzigde body`: echte auditroute, 409, `consumed === 1`.
+2. Sampling van deniallogs en windowteller
+   - `lib/api/orgQuota.test.ts` `groeit niet onbeperkt bij een reeks 429's`: 20 denials; `api_usage_logs` en `security_events` `<= API_DENIAL_LOG_CAP` (8); `denial_logs_written <= 8`; `denial_count === 20`.
+3. Completion over maandgrens, dubbele completion en herstel van verlopen leases
+   - `lib/api/orgQuota.test.ts` `rondt een reservering af op de geboekte periode na een maandwissel`: September-lease completed in oktober verlaagt september-`inFlight`; dubbele completion van dezelfde lease is een no-op; oktober-slot blijft tot zijn eigen complete.
+   - `lib/api/orgQuota.test.ts` `herstelt vastgelopen slots ondanks denialverkeer`: vier leases blokkeren; na 120s plus denials is een nieuwe reserve ok.
+4. Geweigerde URL, ongeldige base64 en begrensde geldige bytes
+   - `lib/ai/binaryUpload.test.ts` `herkent URL-strings`, `weigert URL-strings als uploadveld`, `decodeert geldige kleine base64 binnen de bytegrens`, `weigert ongeldige base64`.
+   - `app/api/extract-manual/route.test.ts` `stuurt geen URL-string naar de SDK`, `stuurt gedecodeerde bytes voor geldige base64`.
+   - Multipart-bytegrens (apart van deze CONTROL-case): `app/api/import-lesson-document/route.test.ts` `telt genegeerde velden mee vóór formData-parsing`.
+5. Weigering bij onbekende gemengde migratiestart, ongewijzigd budget, geen marker
+   - `lib/db/migrateQuotaLedgers.test.ts` `weiger drie oude gelogde calls en twee nieuwe ongelogde calls zonder starttijd`: `applied === false`, `refused === true`, `consumed` blijft 2, marker ontbreekt.
+   - `linked_curriculum` hoort bij V20-03, niet bij deze vijf: `test/api-v1.test.ts` assert `payload.coverage[0]?.linked_curriculum`.
+
+PR1-05 / V20-08 blijft open. De acht PR1-tests vervangen deze CONTROL-cases niet één-op-één. `lib/api/orgQuota.test.ts` heeft `it.todo("PR1-05 / V20-08: lease blijft tot een gestreamde responsebody is uitgelezen")`.

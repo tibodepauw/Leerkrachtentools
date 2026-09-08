@@ -27,10 +27,16 @@ function migrationApplied(db: Database.Database, id: string) {
 
 export const QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER = "sum-pre-ledger";
 export const QUOTA_LEDGER_RECONCILE_MAX_OVERLAP = "max-overlap";
+export const QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM = "claim";
+export const QUOTA_LEDGER_AI_NULL_SOURCE_INSERT = "insert";
 
 export type QuotaLedgerReconcile =
   | typeof QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER
   | typeof QUOTA_LEDGER_RECONCILE_MAX_OVERLAP;
+
+export type QuotaLedgerAiNullSourceOverlap =
+  | typeof QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM
+  | typeof QUOTA_LEDGER_AI_NULL_SOURCE_INSERT;
 
 export type QuotaBackfillResult = {
   id: typeof QUOTA_LEDGER_BACKFILL_MIGRATION;
@@ -38,6 +44,7 @@ export type QuotaBackfillResult = {
   refused: boolean;
   reason?: string;
   ambiguousOrgIds?: string[];
+  ambiguousAiOverlaps?: number;
   orgRows: number;
   aiRows: number;
 };
@@ -91,6 +98,21 @@ export function parseQuotaLedgerReconcile(
   }
   throw new Error(
     `Unknown QUOTA_LEDGER_RECONCILE=${env}. Use ${QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER} (all current logs are pre-ledger) or ${QUOTA_LEDGER_RECONCILE_MAX_OVERLAP} (all new work is also logged).`,
+  );
+}
+
+export function parseQuotaLedgerAiNullSourceOverlap(
+  env = process.env.QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP,
+): QuotaLedgerAiNullSourceOverlap | null {
+  if (!env) return null;
+  if (
+    env === QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM ||
+    env === QUOTA_LEDGER_AI_NULL_SOURCE_INSERT
+  ) {
+    return env;
+  }
+  throw new Error(
+    `Unknown QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=${env}. Use ${QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM} (the live NULL-source row is that one old event) or ${QUOTA_LEDGER_AI_NULL_SOURCE_INSERT} (keep the live row and insert old events beside it).`,
   );
 }
 
@@ -192,6 +214,89 @@ export function ambiguousStartMessage(orgIds: string[]) {
   ].join("\n");
 }
 
+export function ambiguousAiOverlapMessage(count: number) {
+  const rows = count === 1 ? "1 old user_ai_usage row" : `${count} old user_ai_usage rows`;
+  return [
+    `Refusing quota backfill: ${rows} share a (subject, created_at) with a live ai_budget_usage row that has no source_event_id.`,
+    "A shared timestamp is not proof that those rows are the same call. Claiming would merge an independent live event into an old id. Inserting would double-count a dual-written copy.",
+    "Leave the marker unset. Do not delete v20_quota_ledger_backfill_v1 on an already migrated database.",
+    "Set one documented choice:",
+    `  QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=${QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM}   # treat the live NULL-source row as that one old event`,
+    `  QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=${QUOTA_LEDGER_AI_NULL_SOURCE_INSERT}  # keep the live row and insert old events beside it`,
+  ].join("\n");
+}
+
+type HistoricalAiUsage = {
+  sourceId: number;
+  email: string;
+  createdAt: number;
+};
+
+function loadRecentAiUsage(db: Database.Database, cutoff: number) {
+  return db
+    .prepare(
+      `SELECT a.id AS sourceId, u.email AS email, a.created_at AS createdAt
+       FROM user_ai_usage a
+       JOIN users u ON u.id = a.user_id
+       WHERE a.created_at >= ?`,
+    )
+    .all(cutoff) as HistoricalAiUsage[];
+}
+
+function countAiNullSourceOverlaps(db: Database.Database, rows: HistoricalAiUsage[]) {
+  const hasSource = db.prepare(
+    `SELECT 1 AS ok FROM ai_budget_usage WHERE source_event_id = ? LIMIT 1`,
+  );
+  const findNull = db.prepare(
+    `SELECT 1 AS ok FROM ai_budget_usage
+     WHERE subject = ? AND created_at = ? AND source_event_id IS NULL
+     LIMIT 1`,
+  );
+  let count = 0;
+  for (const row of rows) {
+    const subject = aiBudgetSubjectFromEmail(row.email);
+    if (hasSource.get(userAiUsageSourceEventId(row.sourceId))) continue;
+    if (findNull.get(subject, row.createdAt)) count += 1;
+  }
+  return count;
+}
+
+function insertAiFromUsage(
+  db: Database.Database,
+  rows: HistoricalAiUsage[],
+  mode: QuotaLedgerAiNullSourceOverlap | null,
+) {
+  const hasSource = db.prepare(
+    `SELECT 1 AS ok FROM ai_budget_usage WHERE source_event_id = ? LIMIT 1`,
+  );
+  const claimLive = db.prepare(
+    `UPDATE ai_budget_usage
+     SET source_event_id = ?
+     WHERE id = (
+       SELECT id FROM ai_budget_usage
+       WHERE subject = ? AND created_at = ? AND source_event_id IS NULL
+       LIMIT 1
+     )`,
+  );
+  const insertAi = db.prepare(
+    `INSERT INTO ai_budget_usage (subject, created_at, source_event_id)
+     VALUES (?, ?, ?)`,
+  );
+  let inserted = 0;
+  for (const row of rows) {
+    const subject = aiBudgetSubjectFromEmail(row.email);
+    const sourceEventId = userAiUsageSourceEventId(row.sourceId);
+    if (hasSource.get(sourceEventId)) continue;
+    if (mode === QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM) {
+      const claimed = claimLive.run(sourceEventId, subject, row.createdAt);
+      if (Number(claimed.changes ?? 0) > 0) continue;
+    }
+    insertAi.run(subject, row.createdAt, sourceEventId);
+    inserted += 1;
+  }
+  return inserted;
+}
+
 export function applyQuotaLedgerBackfill(
   db: Database.Database,
   now = Date.now(),
@@ -202,6 +307,7 @@ export function applyQuotaLedgerBackfill(
   }
 
   const reconcile = parseQuotaLedgerReconcile();
+  const aiOverlapMode = parseQuotaLedgerAiNullSourceOverlap();
 
   return db.transaction((): QuotaBackfillResult => {
     if (migrationApplied(db, QUOTA_LEDGER_BACKFILL_MIGRATION)) {
@@ -305,6 +411,18 @@ export function applyQuotaLedgerBackfill(
       };
     }
 
+    const cutoff = now - 48 * 60 * 60 * 1000;
+    const historicalAi = loadRecentAiUsage(db, cutoff);
+    const ambiguousAiOverlaps = countAiNullSourceOverlaps(db, historicalAi);
+    if (ambiguousAiOverlaps > 0 && !aiOverlapMode) {
+      return {
+        ...idleBackfill,
+        refused: true,
+        reason: ambiguousAiOverlapMessage(ambiguousAiOverlaps),
+        ambiguousAiOverlaps,
+      };
+    }
+
     let orgRows = 0;
     for (const plan of plans) {
       db.prepare(
@@ -322,46 +440,7 @@ export function applyQuotaLedgerBackfill(
       orgRows += 1;
     }
 
-    // AI events keep user_ai_usage.id as source_event_id. Same-millisecond
-    // rows stay separate. A live (subject, created_at) row without a source
-    // id is claimed as that one old event, not as a blanket timestamp collapse.
-    const cutoff = now - 48 * 60 * 60 * 1000;
-    const aiRows = db
-      .prepare(
-        `SELECT a.id AS sourceId, u.email AS email, a.created_at AS createdAt
-         FROM user_ai_usage a
-         JOIN users u ON u.id = a.user_id
-         WHERE a.created_at >= ?`,
-      )
-      .all(cutoff) as Array<{ sourceId: number; email: string; createdAt: number }>;
-
-    let insertedAi = 0;
-    const hasSource = db
-      .prepare(
-        `SELECT 1 AS ok FROM ai_budget_usage WHERE source_event_id = ? LIMIT 1`,
-      );
-    const claimLive = db.prepare(
-      `UPDATE ai_budget_usage
-       SET source_event_id = ?
-       WHERE id = (
-         SELECT id FROM ai_budget_usage
-         WHERE subject = ? AND created_at = ? AND source_event_id IS NULL
-         LIMIT 1
-       )`,
-    );
-    const insertAi = db.prepare(
-      `INSERT INTO ai_budget_usage (subject, created_at, source_event_id)
-       VALUES (?, ?, ?)`,
-    );
-    for (const row of aiRows) {
-      const subject = aiBudgetSubjectFromEmail(row.email);
-      const sourceEventId = userAiUsageSourceEventId(row.sourceId);
-      if (hasSource.get(sourceEventId)) continue;
-      const claimed = claimLive.run(sourceEventId, subject, row.createdAt);
-      if (Number(claimed.changes ?? 0) > 0) continue;
-      insertAi.run(subject, row.createdAt, sourceEventId);
-      insertedAi += 1;
-    }
+    const insertedAi = insertAiFromUsage(db, historicalAi, aiOverlapMode);
 
     db.prepare(
       "INSERT INTO schema_migrations (id, applied_at) VALUES (?, ?)",

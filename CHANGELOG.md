@@ -11,6 +11,8 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Idempotency eerste antwoord en replay blijven gelijk als de orgcache vol is (PR1-02)
 - Organisatieconcurrency telt alle actieve leases, niet alleen de huidige UTC-maand (PR1-03)
 - AI-quota-backfill bewaart `user_ai_usage.id` als bron-event, zodat dezelfde milliseconde twee eenheden blijft (PR1-04)
+- Requestbody-reader registreert één abort-listener per aanvraag en verwijdert die na EOF, oversize, timeout of client-abort
+- AI-quota-backfill weigert live rijen zonder `source_event_id` die alleen op timestamp met oude events overlappen, tot `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=claim` of `insert`
 
 ---
 

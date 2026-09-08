@@ -55,6 +55,11 @@ Voer dit pas uit na akkoord, op een kopie van de productiedatabase eerst.
    Alleen als de epoch onbekend blijft, keur je een gedocumenteerde reconciliatie goed:
    - `QUOTA_LEDGER_RECONCILE=sum-pre-ledger`: huidige logs zijn allemaal van vóór het ledger. Telling = logs + ledger. Juist voor 3 gelogd + 2 ongelogd. Dubbelt als nieuwe calls ook in `api_usage_logs` staan.
    - `QUOTA_LEDGER_RECONCILE=max-overlap`: nieuwe verbruik staat ook in de logs. Telling = max(ledger, logs). Kan ongelogd nieuw verbruik laten vallen.
+
+   Live `ai_budget_usage`-rijen zonder `source_event_id` die alleen op `(subject, created_at)` met `user_ai_usage` overlappen, zijn ambigu. Default: weigeren, geen marker. Timestampgelijkheid is geen herkomstbewijs. Kies daarna één gedocumenteerde optie:
+   - `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=claim`: de live-rij is dat ene oude event.
+   - `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=insert`: houd de live-rij en voeg oude events ernaast in.
+   Verwijder `v20_quota_ledger_backfill_v1` niet om een eerdere AI-claim te herstellen. Dat vraagt een apart gecontroleerd plan.
 4. **Migreer eenmalig** met de backupbevestiging:
 
    ```bash
@@ -65,7 +70,7 @@ Voer dit pas uit na akkoord, op een kopie van de productiedatabase eerst.
    Gebruik dezelfde `AUTH_SECRET` als de app (minstens 32 tekens). Anders krijgen AI-budgetrijen een andere HMAC en tellen ze naast de bestaande subjects.
 5. **Gecontroleerde start** van één instance. Controleer logs op de backfill-waarschuwing (die moet weg zijn), een B2B-call, en dat `consumed` niet sprong naar de som van ledger plus alle logs.
 
-Telregel: 2xx en 5xx tellen; 4xx en 429 niet. AI-rijen gaan via e-mail-HMAC naar `ai_budget_usage`, bewaren `user_ai_usage.id` als `source_event_id`, en slaan bestaande bron-events over. Twee oude records in dezelfde milliseconde blijven twee eenheden.
+Telregel: 2xx en 5xx tellen; 4xx en 429 niet. AI-rijen gaan via e-mail-HMAC naar `ai_budget_usage` en bewaren `user_ai_usage.id` als `source_event_id`. Rijen die die bron-id al hebben worden overgeslagen. Twee oude records in dezelfde milliseconde blijven twee eenheden. Live rijen zonder bron-id met alleen dezelfde timestamp worden niet stil geclaimd.
 
 ## Rollback
 

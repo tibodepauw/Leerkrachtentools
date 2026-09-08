@@ -65,6 +65,8 @@ export async function readBodyBuffer(
   let total = 0;
   const chunks: Uint8Array[] = [];
   const deadline = Date.now() + timeoutMs;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let abortReject: ((error: Error) => void) | undefined;
 
   const throwIfDeadlinePassed = () => {
     if (signal?.aborted || Date.now() > deadline) {
@@ -72,29 +74,29 @@ export async function readBodyBuffer(
     }
   };
 
+  const onAbort = () => {
+    abortReject?.(abortError(signal));
+  };
+  const disconnect = signal
+    ? new Promise<never>((_, reject) => {
+        abortReject = reject;
+      })
+    : null;
+
   try {
+    if (signal) {
+      if (signal.aborted) throw abortError(signal);
+      signal.addEventListener("abort", onAbort);
+    }
+
     while (true) {
       throwIfDeadlinePassed();
       const remaining = Math.max(1, deadline - Date.now());
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
       const timeout = new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
           reject(new RequestBodyTimeoutError());
         }, remaining);
       });
-      const disconnect = signal
-        ? new Promise<never>((_, reject) => {
-            if (signal.aborted) {
-              reject(abortError(signal));
-              return;
-            }
-            signal.addEventListener(
-              "abort",
-              () => reject(abortError(signal)),
-              { once: true },
-            );
-          })
-        : null;
 
       let done = false;
       let value: Uint8Array | undefined;
@@ -107,7 +109,10 @@ export async function readBodyBuffer(
         done = raced.done;
         value = raced.value;
       } finally {
-        if (timeoutId) clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
       }
 
       if (done) {
@@ -128,6 +133,10 @@ export async function readBodyBuffer(
       throw new RequestBodyTimeoutError();
     }
     throw error;
+  } finally {
+    abortReject = undefined;
+    if (timeoutId) clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", onAbort);
   }
 
   return concatUint8(chunks, total).buffer;

@@ -157,6 +157,14 @@ describe("B2B org quota ledger", () => {
     expect(after - before).toBeLessThanOrEqual(API_DENIAL_LOG_CAP);
     expect(after - before).toBeGreaterThan(0);
     expect(events - eventsBefore).toBeLessThanOrEqual(API_DENIAL_LOG_CAP);
+    const denial = getDatabase()
+      .prepare(
+        `SELECT denial_count AS denialCount, denial_logs_written AS denialLogsWritten
+         FROM api_org_quota WHERE org_id = ? ORDER BY updated_at DESC LIMIT 1`,
+      )
+      .get(organization.id) as { denialCount: number; denialLogsWritten: number };
+    expect(denial.denialLogsWritten).toBeLessThanOrEqual(API_DENIAL_LOG_CAP);
+    expect(denial.denialCount).toBe(20);
   });
 
   it("boekhoudt validatiefouten niet als maandverbruik", async () => {
@@ -256,6 +264,47 @@ describe("B2B org quota ledger", () => {
     const headers = { "Idempotency-Key": "same-call-conflict" };
     const first = await post(handler, key.token, { query: "optellen tot 20" }, headers);
     const second = await post(handler, key.token, { query: "aftrekken tot 20" }, headers);
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(409);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+  });
+
+  it("geeft 409 op de echte auditroute bij dezelfde Idempotency-Key en een gewijzigde body", async () => {
+    const organization = createOrganization({
+      name: `Org ${randomUUID()}`,
+      email: `${randomUUID()}@publisher.test`,
+      tier: "enterprise",
+      quota: 20,
+    });
+    const key = generateApiKey(organization.id, "quota-test", ["curriculum:audit"]);
+    const { POST: postAudit } = await import("@/app/api/v1/curriculum/audit/route");
+    const headers = {
+      "content-type": "application/json",
+      authorization: `Bearer ${key.token}`,
+      "Idempotency-Key": "audit-body-conflict",
+    };
+    const firstBody = {
+      method_title: "Eerste methode",
+      grade: "4de leerjaar",
+      target_goals: ["De leerlingen tellen tot 20."],
+      lesson_units: [
+        { unit_id: "u1", title: "Tellen", content: "De leerlingen tellen tot 20." },
+      ],
+    };
+    const first = await postAudit(
+      new Request("http://benchmark.local/api/v1/curriculum/audit", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(firstBody),
+      }),
+    );
+    const second = await postAudit(
+      new Request("http://benchmark.local/api/v1/curriculum/audit", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...firstBody, method_title: "Andere methode" }),
+      }),
+    );
     expect(first.status).toBe(200);
     expect(second.status).toBe(409);
     expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
@@ -641,4 +690,8 @@ describe("B2B org quota ledger", () => {
     expect(getOrgQuotaSnapshot(organization.id, october).inFlight).toBe(0);
     expect(getOrgQuotaSnapshot(organization.id, september).inFlight).toBe(4);
   });
+
+  it.todo(
+    "PR1-05 / V20-08: lease blijft tot een gestreamde responsebody is uitgelezen",
+  );
 });
