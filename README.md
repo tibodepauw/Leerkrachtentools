@@ -222,7 +222,7 @@ The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Rev
 | `POST /api/v1/curriculum/audit` | `curriculum:audit` | Coverage of `target_goals` against `lesson_units` |
 | `POST /api/v1/goals/improve` | `goals:improve` | Same lesson-goal rules as Doelverbeteraar |
 
-Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` so retries do not double-spend. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
+Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` (max 128 characters) so the same authorized key, endpoint and body retry without a second consume. A different endpoint, key or body with that header gets 409, not a replay. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
 
 ## Quality checks
 
@@ -235,7 +235,7 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-438 automated tests across 107 test files cover curriculum retrieval and ranking,
+457 automated tests across 111 test files cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
 The test total is the Vitest case count, not a code-coverage percentage.

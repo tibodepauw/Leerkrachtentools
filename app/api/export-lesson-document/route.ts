@@ -13,7 +13,7 @@ import {
 import { sanitizeZipArchive } from "@/lib/documents/extractText";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import {
-  assertContentLength,
+  readBoundedFormData,
   readJsonBody,
 } from "@/lib/http/requestBody";
 import { withRequestConcurrency } from "@/lib/http/rateLimit";
@@ -42,8 +42,8 @@ const exportSchema = z.object({
 });
 
 async function readExportInput(request: Request) {
-  assertContentLength(request, LESSON_DOCUMENT_MAX_BYTES + 1_000_000);
   const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
+  const maxBytes = LESSON_DOCUMENT_MAX_BYTES + 1_000_000;
 
   if (contentType.includes("application/json")) {
     const lesson = exportSchema.parse(
@@ -60,7 +60,7 @@ async function readExportInput(request: Request) {
     contentType.includes("multipart/form-data") ||
     contentType.includes("application/x-www-form-urlencoded")
   ) {
-    const formData = await request.formData();
+    const formData = await readBoundedFormData(request, maxBytes);
     const lessonPayload = formData.get("lesson");
     const sourceDocument = formData.get("sourceDocument");
 

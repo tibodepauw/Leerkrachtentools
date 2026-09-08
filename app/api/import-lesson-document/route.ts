@@ -10,7 +10,7 @@ import {
   LESSON_DOCUMENT_MAX_BYTES,
 } from "@/lib/documents/supportedFormats";
 import { publicErrorMessage } from "@/lib/http/clientError";
-import { assertContentLength } from "@/lib/http/requestBody";
+import { readBoundedFormData } from "@/lib/http/requestBody";
 import { withRequestConcurrency } from "@/lib/http/rateLimit";
 
 export const runtime = "nodejs";
@@ -20,8 +20,10 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
-    assertContentLength(request, LESSON_DOCUMENT_MAX_BYTES + 256_000);
-    const formData = await request.formData();
+    const formData = await readBoundedFormData(
+      request,
+      LESSON_DOCUMENT_MAX_BYTES + 256_000,
+    );
     const file = formData.get("file");
 
     if (!(file instanceof File)) {

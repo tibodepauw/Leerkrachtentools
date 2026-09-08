@@ -85,7 +85,7 @@ export async function auditCurriculumCoverage({
         mode: "snel",
         orgId,
       })
-    )[0];
+    ).results[0];
 
     coverage.push({
       goal,

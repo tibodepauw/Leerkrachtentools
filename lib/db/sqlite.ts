@@ -2,6 +2,8 @@ import { mkdirSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import { ensureDatabaseIndexes } from "@/lib/db/ensureIndexes";
+import { ensureFollowupSchema } from "@/lib/db/ensureFollowupSchema";
+import { warnIfQuotaBackfillPending } from "@/lib/db/migrateQuotaLedgers";
 
 let database: Database.Database | null = null;
 
@@ -188,7 +190,9 @@ export function getDatabase() {
     CREATE INDEX IF NOT EXISTS security_events_kind_created
       ON security_events(kind, created_at);
   `);
+  ensureFollowupSchema(database);
   ensureDatabaseIndexes(database);
+  warnIfQuotaBackfillPending(database);
   const userColumns = new Set(
     (
       database.prepare("PRAGMA table_info(users)").all() as Array<{

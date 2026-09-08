@@ -54,6 +54,44 @@ function concatChunks(chunks: Uint8Array[], total: number) {
   return out;
 }
 
+type ZipInternalStream = {
+  on(event: "data", listener: (chunk: Uint8Array) => void): ZipInternalStream;
+  on(event: "error", listener: (error: Error) => void): ZipInternalStream;
+  on(event: "end", listener: () => void): ZipInternalStream;
+  pause(): void;
+  resume(): void;
+};
+
+function isZipInternalStream(value: unknown): value is ZipInternalStream {
+  if (!value || typeof value !== "object") return false;
+  const stream = value as {
+    on?: unknown;
+    pause?: unknown;
+    resume?: unknown;
+  };
+  return (
+    typeof stream.on === "function" &&
+    typeof stream.pause === "function" &&
+    typeof stream.resume === "function"
+  );
+}
+
+/**
+ * JSZip's public typings omit `internalStream`. The bounded ZIP reader uses
+ * that library-internal stream only after a runtime shape check, so inflate
+ * still counts actual bytes without a global `any` or `ignoreBuildErrors`.
+ */
+function zipEntryInternalStream(
+  entry: JSZip.JSZipObject,
+): ZipInternalStream | null {
+  const candidate = entry as JSZip.JSZipObject & {
+    internalStream?: (type: "uint8array") => unknown;
+  };
+  if (typeof candidate.internalStream !== "function") return null;
+  const stream = candidate.internalStream("uint8array");
+  return isZipInternalStream(stream) ? stream : null;
+}
+
 function entryCompressedPayload(entry: JSZip.JSZipObject) {
   const data = (
     entry as unknown as {
@@ -137,11 +175,17 @@ export function readZipEntryBounded(
     return inflateRawBounded(payload.bytes, maxBytes, startedAt, maxMs);
   }
 
+  const stream = zipEntryInternalStream(entry);
+  if (!stream) {
+    return Promise.reject(
+      new Error("ZIP-decompressie is niet beschikbaar voor dit onderdeel."),
+    );
+  }
+
   return new Promise((resolve, reject) => {
     const chunks: Uint8Array[] = [];
     let total = 0;
     let settled = false;
-    const stream = entry.internalStream("uint8array");
 
     const fail = (error: Error) => {
       if (settled) return;

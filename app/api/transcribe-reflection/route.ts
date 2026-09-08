@@ -17,6 +17,7 @@ import {
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { readJsonBody } from "@/lib/http/requestBody";
+import { decodeBoundedBase64 } from "@/lib/ai/binaryUpload";
 
 export const runtime = "nodejs";
 
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
         file:
           input.audioData && input.mediaType
             ? {
-                data: input.audioData,
+                data: decodeBoundedBase64(input.audioData),
                 mediaType: input.mediaType,
                 filename: "reflectie-opname.webm",
               }

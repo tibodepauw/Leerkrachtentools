@@ -6,6 +6,21 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Fixed
+- B2B audit uses `payload.results` so `linked_curriculum` is filled when the matcher has a hit
+- ZIP bounded inflate uses a runtime-checked stream adapter that typechecks
+- Idempotency cache is bound to API key, method, endpoint and body digest; old org-only cache rows are dropped
+- Large idempotent responses replay the original body instead of an error object with HTTP 200
+- AI file and audio fields reject URL strings and decode bounded base64 before the SDK
+- Import and export count the full multipart body, including ignored fields, before parsing
+- Security-event sampling uses the same denial cap as usage logs, including when B2B work never starts
+- API leases keep their booked month, owner heartbeat and late completion; denials do not extend a stale slot
+- Guard timeout keeps the original lease until the handler stops or the lease expires, and passes AbortSignal
+
+### Added
+- Repeatable quota-ledger backfill (`npx tsx scripts/migrate-quota-ledgers.ts`) after an explicit database backup
+- Hardening tickets H-01 to H-06 documented separately in `docs/hardening-h01-h06.md`
+
 ---
 
 ## [5.20.0] - 2026-09-07

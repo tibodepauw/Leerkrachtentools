@@ -17,12 +17,13 @@ export interface StructuredRequest<T> {
   preferredProvider?: ProviderName;
   allowLocalMock?: boolean;
   file?: {
-    data: string;
+    data: string | Uint8Array;
     mediaType: string;
     filename?: string;
   };
   maxOutputTokens?: number;
   userAiConfig?: UserAiConfig | null;
+  abortSignal?: AbortSignal;
 }
 
 export interface StructuredResult<T> {
@@ -120,7 +121,12 @@ export async function runStructured<T>(
         maxOutputTokens: Math.min(request.maxOutputTokens ?? 2400, 4096),
         temperature: 0.2,
         maxRetries: 0,
-        abortSignal: AbortSignal.timeout(Math.min(EXTERNAL_API_TIMEOUT_MS, remaining)),
+        abortSignal: request.abortSignal
+          ? AbortSignal.any([
+              request.abortSignal,
+              AbortSignal.timeout(Math.min(EXTERNAL_API_TIMEOUT_MS, remaining)),
+            ])
+          : AbortSignal.timeout(Math.min(EXTERNAL_API_TIMEOUT_MS, remaining)),
       });
       return {
         data: request.schema.parse(result.output),
