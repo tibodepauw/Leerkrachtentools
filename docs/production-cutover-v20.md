@@ -39,7 +39,10 @@ Voer dit pas uit na akkoord, op een kopie van de productiedatabase eerst.
 
 1. **Stop gecontroleerd** het schrijvende app-proces (één SQLite-writer). Laat geen tweede instance tegen hetzelfde bestand starten.
 2. **Backup** van `data/leerkrachtentools.db` plus `-wal` en `-shm` als die bestaan. Bewaar de kopie buiten het volume. Controleer dat de backup opent (`sqlite3 backup.db "PRAGMA integrity_check;"`).
-3. **Zet optioneel** `QUOTA_LEDGER_EPOCH_MS` op de Unix-tijd (ms, of seconden als de waarde `<= 1e12`) van de eerste v5.20-productiestart. Dat is nodig wanneer bestaande `api_org_quota.opened_at` 0 is (oude rijen na `ALTER`) maar de maand zowel pre-5.20 `api_usage_logs` als post-5.20 ledgerverbruik bevat. Zonder epoch telt de migratie `max(ledger, alle billable logs)`: geen dubbeltelling, wel mogelijk verlies van unlogged nieuw verbruik.
+3. **Zet `QUOTA_LEDGER_EPOCH_MS`** op de Unix-tijd (ms, of seconden als de waarde `<= 1e12`) van de eerste v5.20-productiestart wanneer bestaande `api_org_quota.opened_at` 0 is. Zonder betrouwbare scheiding weigert de migratie als een organisatie zowel billable logs als een ledger in dezelfde UTC-maand heeft. `max(ledger, alle logs)` is geen automatische fallback: drie oude gelogde calls plus twee nieuwe ongelogde ledger-units zouden 3 worden in plaats van 5.
+   Alleen als de epoch onbekend blijft, keur je een gedocumenteerde reconciliatie goed:
+   - `QUOTA_LEDGER_RECONCILE=sum-pre-ledger`: huidige logs zijn allemaal van vóór het ledger. Telling = logs + ledger. Juist voor 3 gelogd + 2 ongelogd. Dubbelt als nieuwe calls ook in `api_usage_logs` staan.
+   - `QUOTA_LEDGER_RECONCILE=max-overlap`: nieuwe verbruik staat ook in de logs. Telling = max(ledger, logs). Kan ongelogd nieuw verbruik laten vallen.
 4. **Migreer eenmalig** met de backupbevestiging:
 
    ```bash

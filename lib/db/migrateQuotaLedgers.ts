@@ -25,12 +25,30 @@ function migrationApplied(db: Database.Database, id: string) {
   return Boolean(row);
 }
 
+export const QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER = "sum-pre-ledger";
+export const QUOTA_LEDGER_RECONCILE_MAX_OVERLAP = "max-overlap";
+
+export type QuotaLedgerReconcile =
+  | typeof QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER
+  | typeof QUOTA_LEDGER_RECONCILE_MAX_OVERLAP;
+
 export type QuotaBackfillResult = {
   id: typeof QUOTA_LEDGER_BACKFILL_MIGRATION;
   applied: boolean;
+  refused: boolean;
+  reason?: string;
+  ambiguousOrgIds?: string[];
   orgRows: number;
   aiRows: number;
 };
+
+const idleBackfill = {
+  id: QUOTA_LEDGER_BACKFILL_MIGRATION,
+  applied: false,
+  refused: false,
+  orgRows: 0,
+  aiRows: 0,
+} as const;
 
 type BillableLog = { orgId: string; statusCode: number; createdAt: number };
 
@@ -57,14 +75,54 @@ export function resolveOpenedAt(
   return 0;
 }
 
+export function parseQuotaLedgerReconcile(
+  env = process.env.QUOTA_LEDGER_RECONCILE,
+): QuotaLedgerReconcile | null {
+  if (!env) return null;
+  if (
+    env === QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER ||
+    env === QUOTA_LEDGER_RECONCILE_MAX_OVERLAP
+  ) {
+    return env;
+  }
+  throw new Error(
+    `Unknown QUOTA_LEDGER_RECONCILE=${env}. Use ${QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER} (all current logs are pre-ledger) or ${QUOTA_LEDGER_RECONCILE_MAX_OVERLAP} (all new work is also logged).`,
+  );
+}
+
+export function billableLogsInMonth(
+  logs: Array<{ statusCode: number; createdAt: number }>,
+  monthStart: number,
+) {
+  return logs.filter(
+    (log) =>
+      isHistoricalBillableStatus(log.statusCode) && log.createdAt >= monthStart,
+  );
+}
+
+export function isAmbiguousUnknownStart({
+  ledgerConsumed,
+  openedAt,
+  monthStart,
+  billableCount,
+}: {
+  ledgerConsumed: number;
+  openedAt: number;
+  monthStart: number;
+  billableCount: number;
+}) {
+  return openedAt <= monthStart && ledgerConsumed > 0 && billableCount > 0;
+}
+
 /**
  * Mix old usage-log rows with a v5.20 ledger without losing unlogged new
  * work or counting logged new work twice.
  *
  * When `openedAt` marks the first v5.20 quota row for the period:
  *   old logs (before openedAt) + max(ledger, new logs)
- * When the start is unknown (`openedAt` is 0):
- *   max(ledger, all billable logs) so overlapping rows cannot double-count.
+ * When the start is unknown, only unambiguous periods are counted here
+ * (logs-only or ledger-only). Mixed unknown periods need an explicit
+ * `QUOTA_LEDGER_RECONCILE` mode; `max(ledger, logs)` can drop unlogged work.
  */
 export function mixedPeriodConsumed({
   ledgerConsumed,
@@ -77,17 +135,57 @@ export function mixedPeriodConsumed({
   monthStart: number;
   logs: Array<{ statusCode: number; createdAt: number }>;
 }) {
-  const billable = logs.filter((log) =>
-    isHistoricalBillableStatus(log.statusCode),
-  );
-  const inMonth = billable.filter((log) => log.createdAt >= monthStart);
+  const inMonth = billableLogsInMonth(logs, monthStart);
   const ledger = Math.max(0, ledgerConsumed);
   if (openedAt > monthStart) {
     const oldCount = inMonth.filter((log) => log.createdAt < openedAt).length;
     const newCount = inMonth.filter((log) => log.createdAt >= openedAt).length;
     return oldCount + Math.max(ledger, newCount);
   }
+  if (ledger > 0 && inMonth.length > 0) {
+    throw new Error(
+      "Unknown v5.20 start with both logs and a ledger. Set QUOTA_LEDGER_EPOCH_MS or QUOTA_LEDGER_RECONCILE.",
+    );
+  }
   return Math.max(ledger, inMonth.length);
+}
+
+/**
+ * Explicit operator choice when `opened_at` and `QUOTA_LEDGER_EPOCH_MS` are
+ * both unknown. `sum-pre-ledger` assumes every current log is older than the
+ * ledger (3 logged + 2 unlogged ledger units => 5). `max-overlap` assumes
+ * every new unit is also logged and can drop unlogged new work (same fixture
+ * => 3).
+ */
+export function reconcileUnknownStartConsumed({
+  ledgerConsumed,
+  monthStart,
+  logs,
+  mode,
+}: {
+  ledgerConsumed: number;
+  monthStart: number;
+  logs: Array<{ statusCode: number; createdAt: number }>;
+  mode: QuotaLedgerReconcile;
+}) {
+  const billableCount = billableLogsInMonth(logs, monthStart).length;
+  const ledger = Math.max(0, ledgerConsumed);
+  if (mode === QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER) {
+    return billableCount + ledger;
+  }
+  return Math.max(ledger, billableCount);
+}
+
+export function ambiguousStartMessage(orgIds: string[]) {
+  const subject =
+    orgIds.length === 1 ? `${orgIds[0]} has` : `${orgIds.join(", ")} have`;
+  return [
+    `Refusing quota backfill: ${subject} both billable usage logs and a ledger in this UTC month, but opened_at is unknown.`,
+    "max(ledger, logs) would drop unlogged new work (3 logged calls + 2 unlogged ledger units become 3 instead of 5).",
+    "Set QUOTA_LEDGER_EPOCH_MS to the first v5.20 start, or approve a documented reconcile:",
+    `  QUOTA_LEDGER_RECONCILE=${QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER}  # logs are all pre-ledger; add them to consumed`,
+    `  QUOTA_LEDGER_RECONCILE=${QUOTA_LEDGER_RECONCILE_MAX_OVERLAP}     # all new work is also logged; can drop unlogged units`,
+  ].join("\n");
 }
 
 export function applyQuotaLedgerBackfill(
@@ -96,22 +194,14 @@ export function applyQuotaLedgerBackfill(
 ): QuotaBackfillResult {
   ensureFollowupSchema(db);
   if (migrationApplied(db, QUOTA_LEDGER_BACKFILL_MIGRATION)) {
-    return {
-      id: QUOTA_LEDGER_BACKFILL_MIGRATION,
-      applied: false,
-      orgRows: 0,
-      aiRows: 0,
-    };
+    return { ...idleBackfill };
   }
+
+  const reconcile = parseQuotaLedgerReconcile();
 
   return db.transaction((): QuotaBackfillResult => {
     if (migrationApplied(db, QUOTA_LEDGER_BACKFILL_MIGRATION)) {
-      return {
-        id: QUOTA_LEDGER_BACKFILL_MIGRATION,
-        applied: false,
-        orgRows: 0,
-        aiRows: 0,
-      };
+      return { ...idleBackfill };
     }
 
     const period = utcMonthPeriod(now);
@@ -150,20 +240,69 @@ export function applyQuotaLedgerBackfill(
     const envEpoch = quotaLedgerEpochMs();
 
     const orgIds = new Set<string>([...logsByOrg.keys(), ...quotaByOrg.keys()]);
-    let orgRows = 0;
+    const plans: Array<{
+      orgId: string;
+      consumed: number;
+      persistOpenedAt: number;
+    }> = [];
+    const ambiguousOrgIds: string[] = [];
     for (const orgId of orgIds) {
       const quota = quotaByOrg.get(orgId);
       const openedAt = resolveOpenedAt(quota?.openedAt, monthStart, envEpoch);
+      const orgLogs = logsByOrg.get(orgId) ?? [];
+      const billableCount = billableLogsInMonth(orgLogs, monthStart).length;
+      const ledgerConsumed = quota?.consumed ?? 0;
+      if (
+        isAmbiguousUnknownStart({
+          ledgerConsumed,
+          openedAt,
+          monthStart,
+          billableCount,
+        })
+      ) {
+        if (!reconcile) {
+          ambiguousOrgIds.push(orgId);
+          continue;
+        }
+        plans.push({
+          orgId,
+          consumed: reconcileUnknownStartConsumed({
+            ledgerConsumed,
+            monthStart,
+            logs: orgLogs,
+            mode: reconcile,
+          }),
+          persistOpenedAt:
+            typeof quota?.openedAt === "number" && quota.openedAt > 0
+              ? quota.openedAt
+              : openedAt,
+        });
+        continue;
+      }
       const consumed = mixedPeriodConsumed({
-        ledgerConsumed: quota?.consumed ?? 0,
+        ledgerConsumed,
         openedAt,
         monthStart,
-        logs: logsByOrg.get(orgId) ?? [],
+        logs: orgLogs,
       });
       const persistOpenedAt =
         typeof quota?.openedAt === "number" && quota.openedAt > 0
           ? quota.openedAt
           : openedAt;
+      plans.push({ orgId, consumed, persistOpenedAt });
+    }
+
+    if (ambiguousOrgIds.length > 0) {
+      return {
+        ...idleBackfill,
+        refused: true,
+        reason: ambiguousStartMessage(ambiguousOrgIds),
+        ambiguousOrgIds,
+      };
+    }
+
+    let orgRows = 0;
+    for (const plan of plans) {
       db.prepare(
         `INSERT INTO api_org_quota (
            org_id, period, consumed, in_flight, burst_window_start, burst_count,
@@ -175,7 +314,7 @@ export function applyQuotaLedgerBackfill(
              WHEN api_org_quota.opened_at > 0 THEN api_org_quota.opened_at
              ELSE excluded.opened_at
            END`,
-      ).run(orgId, period, consumed, persistOpenedAt, now);
+      ).run(plan.orgId, period, plan.consumed, plan.persistOpenedAt, now);
       orgRows += 1;
     }
 
@@ -211,6 +350,7 @@ export function applyQuotaLedgerBackfill(
     return {
       id: QUOTA_LEDGER_BACKFILL_MIGRATION,
       applied: true,
+      refused: false,
       orgRows,
       aiRows: insertedAi,
     };

@@ -5,6 +5,9 @@ import {
   applyQuotaLedgerBackfill,
   mixedPeriodConsumed,
   QUOTA_LEDGER_BACKFILL_MIGRATION,
+  QUOTA_LEDGER_RECONCILE_MAX_OVERLAP,
+  QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER,
+  reconcileUnknownStartConsumed,
   resolveOpenedAt,
 } from "@/lib/db/migrateQuotaLedgers";
 import { utcMonthPeriod } from "@/lib/api/utcMonth";
@@ -130,6 +133,7 @@ function quotaConsumed(db: Database.Database, orgId: string, period: string) {
 
 afterEach(() => {
   delete process.env.QUOTA_LEDGER_EPOCH_MS;
+  delete process.env.QUOTA_LEDGER_RECONCILE;
 });
 
 describe("mixedPeriodConsumed", () => {
@@ -204,8 +208,8 @@ describe("mixedPeriodConsumed", () => {
     ).toBe(3);
   });
 
-  it("gebruikt max(ledger, alle logs) als de v5.20-start onbekend is", () => {
-    expect(
+  it("weiger max(ledger, logs) als de v5.20-start onbekend is", () => {
+    expect(() =>
       mixedPeriodConsumed({
         ledgerConsumed: 2,
         openedAt: 0,
@@ -216,7 +220,29 @@ describe("mixedPeriodConsumed", () => {
           { statusCode: 200, createdAt: monthStart + 3_000 },
         ],
       }),
-    ).toBe(3);
+    ).toThrow(/Unknown v5.20 start/);
+  });
+
+  it("telt logs-only of ledger-only zonder starttijd", () => {
+    expect(
+      mixedPeriodConsumed({
+        ledgerConsumed: 0,
+        openedAt: 0,
+        monthStart,
+        logs: [
+          { statusCode: 200, createdAt: monthStart + 1_000 },
+          { statusCode: 200, createdAt: monthStart + 2_000 },
+        ],
+      }),
+    ).toBe(2);
+    expect(
+      mixedPeriodConsumed({
+        ledgerConsumed: 4,
+        openedAt: 0,
+        monthStart,
+        logs: [],
+      }),
+    ).toBe(4);
   });
 });
 
@@ -359,6 +385,93 @@ describe("quota ledger backfill", () => {
     const result = applyQuotaLedgerBackfill(db, now);
     expect(result.orgRows).toBe(1);
     expect(quotaConsumed(db, "org-ledger", period)).toBe(7);
+    db.close();
+  });
+
+  it("weiger drie oude gelogde calls en twee nieuwe ongelogde calls zonder starttijd", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const period = utcMonthPeriod(now);
+    const monthStart = Date.UTC(
+      Number(period.slice(0, 4)),
+      Number(period.slice(5, 7)) - 1,
+      1,
+    );
+    seedOrg(db, "org-unknown", "key-unknown", now);
+    insertLog(db, "key-unknown", 200, monthStart + 1_000);
+    insertLog(db, "key-unknown", 200, monthStart + 2_000);
+    insertLog(db, "key-unknown", 200, monthStart + 3_000);
+    insertQuota(db, "org-unknown", period, 2, 0, now);
+
+    const lossyMax = Math.max(2, 3);
+    expect(lossyMax).toBe(3);
+    expect(
+      reconcileUnknownStartConsumed({
+        ledgerConsumed: 2,
+        monthStart,
+        logs: [
+          { statusCode: 200, createdAt: monthStart + 1_000 },
+          { statusCode: 200, createdAt: monthStart + 2_000 },
+          { statusCode: 200, createdAt: monthStart + 3_000 },
+        ],
+        mode: QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER,
+      }),
+    ).toBe(5);
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(false);
+    expect(result.refused).toBe(true);
+    expect(result.ambiguousOrgIds).toEqual(["org-unknown"]);
+    expect(quotaConsumed(db, "org-unknown", period)).toBe(2);
+    const marker = db
+      .prepare("SELECT id FROM schema_migrations WHERE id = ?")
+      .get(QUOTA_LEDGER_BACKFILL_MIGRATION);
+    expect(marker).toBeFalsy();
+    db.close();
+  });
+
+  it("past sum-pre-ledger alleen toe na expliciete reconciliatie", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const period = utcMonthPeriod(now);
+    const monthStart = Date.UTC(
+      Number(period.slice(0, 4)),
+      Number(period.slice(5, 7)) - 1,
+      1,
+    );
+    seedOrg(db, "org-unknown", "key-unknown", now);
+    insertLog(db, "key-unknown", 200, monthStart + 1_000);
+    insertLog(db, "key-unknown", 200, monthStart + 2_000);
+    insertLog(db, "key-unknown", 200, monthStart + 3_000);
+    insertQuota(db, "org-unknown", period, 2, 0, now);
+    process.env.QUOTA_LEDGER_RECONCILE = QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER;
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(true);
+    expect(result.refused).toBe(false);
+    expect(quotaConsumed(db, "org-unknown", period)).toBe(5);
+    db.close();
+  });
+
+  it("past max-overlap alleen toe na expliciete reconciliatie en kan unlogged werk laten vallen", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const period = utcMonthPeriod(now);
+    const monthStart = Date.UTC(
+      Number(period.slice(0, 4)),
+      Number(period.slice(5, 7)) - 1,
+      1,
+    );
+    seedOrg(db, "org-overlap", "key-overlap", now);
+    insertLog(db, "key-overlap", 200, monthStart + 1_000);
+    insertLog(db, "key-overlap", 200, monthStart + 2_000);
+    insertLog(db, "key-overlap", 200, monthStart + 3_000);
+    insertQuota(db, "org-overlap", period, 2, 0, now);
+    process.env.QUOTA_LEDGER_RECONCILE = QUOTA_LEDGER_RECONCILE_MAX_OVERLAP;
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(true);
+    expect(quotaConsumed(db, "org-overlap", period)).toBe(3);
     db.close();
   });
 

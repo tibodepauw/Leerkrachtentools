@@ -14,8 +14,12 @@ void (async () => {
   );
   const result = applyQuotaLedgerBackfill(getDatabase());
   process.stdout.write(
-    `${result.id} applied=${result.applied} orgRows=${result.orgRows} aiRows=${result.aiRows}\n`,
+    `${result.id} applied=${result.applied} refused=${result.refused} orgRows=${result.orgRows} aiRows=${result.aiRows}\n`,
   );
+  if (result.refused) {
+    process.stderr.write(`${result.reason ?? "Refused."}\n`);
+    process.exit(2);
+  }
   if (!result.applied) {
     process.stdout.write("Already applied; no changes.\n");
   }

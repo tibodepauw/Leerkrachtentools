@@ -18,7 +18,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Guard timeout keeps the original lease until the handler stops or the lease expires, and passes AbortSignal
 
 ### Added
-- Repeatable quota-ledger backfill mixes pre-5.20 usage logs with an existing v5.20 ledger without dropping unlogged work or double-counting overlapping rows (`QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`)
+- Repeatable quota-ledger backfill mixes pre-5.20 usage logs with an existing v5.20 ledger when `opened_at` or `QUOTA_LEDGER_EPOCH_MS` is known. Unknown mixed periods are refused instead of `max(ledger, logs)`, unless `QUOTA_LEDGER_RECONCILE` is set (`QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`)
 - Cutover order and rollback for that backfill in `docs/production-cutover-v20.md` (backup, migrate, controlled start). V20-08 and H-01 through H-06 stay open
 - Hardening tickets H-01 to H-06 documented separately in `docs/hardening-h01-h06.md`
 
