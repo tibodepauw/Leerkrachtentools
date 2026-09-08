@@ -31,10 +31,32 @@ export function concatUint8(chunks: Uint8Array[], total: number) {
   return body;
 }
 
+function abortError(signal?: AbortSignal) {
+  if (signal?.aborted) {
+    const reason = signal.reason;
+    if (reason instanceof RequestBodyTimeoutError) return reason;
+    if (reason instanceof Error) return reason;
+    return new RequestBodyTimeoutError();
+  }
+  return new RequestBodyTimeoutError();
+}
+
+async function cancelReaderSoon(reader: ReadableStreamDefaultReader<Uint8Array>) {
+  try {
+    await Promise.race([
+      reader.cancel().catch(() => undefined),
+      new Promise((resolve) => setTimeout(resolve, 25)),
+    ]);
+  } catch {
+    // The pending read may already be settled.
+  }
+}
+
 export async function readBodyBuffer(
   request: Request,
   maxBytes: number,
   timeoutMs = 15_000,
+  signal: AbortSignal | undefined = request.signal,
 ): Promise<ArrayBuffer> {
   assertContentLength(request, maxBytes);
   if (!request.body) return new ArrayBuffer(0);
@@ -44,19 +66,68 @@ export async function readBodyBuffer(
   const chunks: Uint8Array[] = [];
   const deadline = Date.now() + timeoutMs;
 
-  while (true) {
-    if (Date.now() > deadline) {
-      await reader.cancel();
+  const throwIfDeadlinePassed = () => {
+    if (signal?.aborted || Date.now() > deadline) {
+      throw abortError(signal);
+    }
+  };
+
+  try {
+    while (true) {
+      throwIfDeadlinePassed();
+      const remaining = Math.max(1, deadline - Date.now());
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      const timeout = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new RequestBodyTimeoutError());
+        }, remaining);
+      });
+      const disconnect = signal
+        ? new Promise<never>((_, reject) => {
+            if (signal.aborted) {
+              reject(abortError(signal));
+              return;
+            }
+            signal.addEventListener(
+              "abort",
+              () => reject(abortError(signal)),
+              { once: true },
+            );
+          })
+        : null;
+
+      let done = false;
+      let value: Uint8Array | undefined;
+      try {
+        const raced = (await Promise.race([
+          reader.read(),
+          timeout,
+          ...(disconnect ? [disconnect] : []),
+        ])) as ReadableStreamReadResult<Uint8Array>;
+        done = raced.done;
+        value = raced.value;
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+
+      if (done) {
+        throwIfDeadlinePassed();
+        break;
+      }
+      total += value?.byteLength ?? 0;
+      if (total > maxBytes) {
+        throw new RequestBodyTooLargeError();
+      }
+      if (value) chunks.push(value);
+    }
+  } catch (error) {
+    await cancelReaderSoon(reader);
+    if (error instanceof RequestBodyTooLargeError) throw error;
+    if (error instanceof RequestBodyTimeoutError) throw error;
+    if (signal?.aborted || (error instanceof Error && error.name === "AbortError")) {
       throw new RequestBodyTimeoutError();
     }
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel();
-      throw new RequestBodyTooLargeError();
-    }
-    chunks.push(value);
+    throw error;
   }
 
   return concatUint8(chunks, total).buffer;
@@ -91,7 +162,7 @@ export async function readResponseTextBounded(
     if (done) break;
     total += value.byteLength;
     if (total > maxBytes) {
-      await reader.cancel();
+      await cancelReaderSoon(reader);
       return { text: "", truncated: true };
     }
     chunks.push(value);
@@ -105,8 +176,9 @@ export async function readResponseTextBounded(
 export async function readJsonBody(
   request: Request,
   maxBytes: number,
+  timeoutMs?: number,
 ): Promise<unknown> {
-  const body = await readBodyBuffer(request, maxBytes);
+  const body = await readBodyBuffer(request, maxBytes, timeoutMs);
   const text = new TextDecoder().decode(body);
   return JSON.parse(text || "{}") as unknown;
 }

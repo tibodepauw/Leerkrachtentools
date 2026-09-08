@@ -42,6 +42,10 @@ export type QuotaBackfillResult = {
   aiRows: number;
 };
 
+export function userAiUsageSourceEventId(id: number | string) {
+  return `user_ai_usage:${id}`;
+}
+
 const idleBackfill = {
   id: QUOTA_LEDGER_BACKFILL_MIGRATION,
   applied: false,
@@ -318,29 +322,45 @@ export function applyQuotaLedgerBackfill(
       orgRows += 1;
     }
 
+    // AI events keep user_ai_usage.id as source_event_id. Same-millisecond
+    // rows stay separate. A live (subject, created_at) row without a source
+    // id is claimed as that one old event, not as a blanket timestamp collapse.
     const cutoff = now - 48 * 60 * 60 * 1000;
     const aiRows = db
       .prepare(
-        `SELECT u.email AS email, a.created_at AS createdAt
+        `SELECT a.id AS sourceId, u.email AS email, a.created_at AS createdAt
          FROM user_ai_usage a
          JOIN users u ON u.id = a.user_id
          WHERE a.created_at >= ?`,
       )
-      .all(cutoff) as Array<{ email: string; createdAt: number }>;
+      .all(cutoff) as Array<{ sourceId: number; email: string; createdAt: number }>;
 
     let insertedAi = 0;
-    const insertAi = db.prepare(
-      `INSERT INTO ai_budget_usage (subject, created_at)
-       SELECT ?, ?
-       WHERE NOT EXISTS (
-         SELECT 1 FROM ai_budget_usage
-         WHERE subject = ? AND created_at = ?
+    const hasSource = db
+      .prepare(
+        `SELECT 1 AS ok FROM ai_budget_usage WHERE source_event_id = ? LIMIT 1`,
+      );
+    const claimLive = db.prepare(
+      `UPDATE ai_budget_usage
+       SET source_event_id = ?
+       WHERE id = (
+         SELECT id FROM ai_budget_usage
+         WHERE subject = ? AND created_at = ? AND source_event_id IS NULL
+         LIMIT 1
        )`,
+    );
+    const insertAi = db.prepare(
+      `INSERT INTO ai_budget_usage (subject, created_at, source_event_id)
+       VALUES (?, ?, ?)`,
     );
     for (const row of aiRows) {
       const subject = aiBudgetSubjectFromEmail(row.email);
-      const result = insertAi.run(subject, row.createdAt, subject, row.createdAt);
-      insertedAi += Number(result.changes ?? 0);
+      const sourceEventId = userAiUsageSourceEventId(row.sourceId);
+      if (hasSource.get(sourceEventId)) continue;
+      const claimed = claimLive.run(sourceEventId, subject, row.createdAt);
+      if (Number(claimed.changes ?? 0) > 0) continue;
+      insertAi.run(subject, row.createdAt, sourceEventId);
+      insertedAi += 1;
     }
 
     db.prepare(

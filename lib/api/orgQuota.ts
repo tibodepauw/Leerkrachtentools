@@ -84,17 +84,27 @@ type LeaseRow = { id: string; period: string; owner_token: string };
 
 function countActiveLeases(
   orgId: string | undefined,
-  period: string | undefined,
   now: number,
+  period?: string,
 ) {
   const db = getDatabase();
+  const staleBefore = now - STALE_IN_FLIGHT_MS;
   if (orgId && period) {
     const row = db
       .prepare(
         `SELECT COUNT(*) AS count FROM api_request_leases
          WHERE org_id = ? AND period = ? AND status = 'active' AND heartbeat_at >= ?`,
       )
-      .get(orgId, period, now - STALE_IN_FLIGHT_MS) as { count: number };
+      .get(orgId, period, staleBefore) as { count: number };
+    return row.count;
+  }
+  if (orgId) {
+    const row = db
+      .prepare(
+        `SELECT COUNT(*) AS count FROM api_request_leases
+         WHERE org_id = ? AND status = 'active' AND heartbeat_at >= ?`,
+      )
+      .get(orgId, staleBefore) as { count: number };
     return row.count;
   }
   const row = db
@@ -102,7 +112,7 @@ function countActiveLeases(
       `SELECT COUNT(*) AS count FROM api_request_leases
        WHERE status = 'active' AND heartbeat_at >= ?`,
     )
-    .get(now - STALE_IN_FLIGHT_MS) as { count: number };
+    .get(staleBefore) as { count: number };
   return row.count;
 }
 
@@ -117,7 +127,7 @@ export function getOrgQuotaSnapshot(orgId: string, now = Date.now()) {
   return {
     period,
     consumed: row?.consumed ?? 0,
-    inFlight: countActiveLeases(orgId, period, now),
+    inFlight: countActiveLeases(orgId, now, period),
   };
 }
 
@@ -267,7 +277,7 @@ export function reserveOrgApiCall({
       }
     }
 
-    const globalCount = countActiveLeases(undefined, undefined, now);
+    const globalCount = countActiveLeases(undefined, now);
     if (globalCount >= GLOBAL_API_MAX_IN_FLIGHT) {
       const snapshot = getOrgQuotaSnapshot(orgId, now);
       return {
@@ -302,7 +312,7 @@ export function reserveOrgApiCall({
       };
     }
 
-    const orgInFlight = countActiveLeases(orgId, period, now);
+    const orgInFlight = countActiveLeases(orgId, now);
     if (orgInFlight >= ORG_API_MAX_IN_FLIGHT) {
       return {
         ok: false,
@@ -409,6 +419,11 @@ function orgIdempotencyBytes(orgId: string, now: number) {
   return row.total;
 }
 
+export type OrgQuotaStoredResponse = {
+  statusCode: number;
+  body?: string;
+};
+
 export function completeOrgApiCall({
   orgId,
   keyId,
@@ -432,9 +447,9 @@ export function completeOrgApiCall({
   releaseLease?: boolean;
   storeIdempotency?: boolean;
   now?: number;
-}) {
+}): OrgQuotaStoredResponse {
   const db = getDatabase();
-  db.transaction(() => {
+  return db.transaction((): OrgQuotaStoredResponse => {
     if (releaseLease && leaseId && ownerToken) {
       const lease = db
         .prepare(
@@ -456,9 +471,9 @@ export function completeOrgApiCall({
       }
     }
 
+    let stored = responseBody;
+    let storedStatus = statusCode;
     if (storeIdempotency && idempotencyKey && keyId) {
-      let stored = responseBody;
-      let storedStatus = statusCode;
       if (typeof stored !== "string") {
         stored = JSON.stringify({ error: "Dit verzoek is al verwerkt." });
         if (storedStatus >= 200 && storedStatus < 300) storedStatus = 500;
@@ -484,6 +499,7 @@ export function completeOrgApiCall({
            AND status = 'pending'`,
       ).run(storedStatus, stored, bytes, orgId, keyId, idempotencyKey);
     }
+    return { statusCode: storedStatus, body: stored };
   })();
 }
 
@@ -543,9 +559,9 @@ export function noteOrgDenial(orgId: string, now = Date.now()) {
 }
 
 export function countOrgActiveLeases(orgId: string, now = Date.now()) {
-  return countActiveLeases(orgId, utcMonthPeriod(now), now);
+  return countActiveLeases(orgId, now);
 }
 
 export function countGlobalActiveLeases(now = Date.now()) {
-  return countActiveLeases(undefined, undefined, now);
+  return countActiveLeases(undefined, now);
 }

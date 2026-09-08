@@ -26,7 +26,7 @@ Oorzaak: `fileData`/`audioData` waren vrije strings; de SDK kon een URL download
 
 Bestanden: `lib/ai/binaryUpload.ts`, `lib/ai/inputValidation.ts`, `lib/ai/router.ts`, `app/api/extract-manual/route.ts`, `app/api/transcribe-reflection/route.ts`.
 
-Negatief vóór fix: synthetische URL leverde een grote download zonder abort. Daarna: URL-strings geweigerd vóór de SDK; geldige base64 wordt één keer naar begrensde bytes gedecodeerd.
+Negatief vóór fix: synthetische URL leverde een grote download zonder abort. Daarna: URL-strings geweigerd vóór de SDK; geldige base64 wordt begrensd gedecodeerd vóór de SDK (validatie en route mogen elk decoderen; geen onbeperkte allocatie in het geteste pad).
 
 Onzekerheid: geen live 2 GiB-download of interne SSRF-test. Private-URL-blokkering van de SDK is niet opnieuw bewezen.
 
@@ -60,7 +60,15 @@ Negatief vóór fix: maandwissel verlaagde de verkeerde teller; 429-retries hiel
 
 Timeout houdt de lease tot late completion of expiry en geeft AbortSignal aan de handler. Bestaande match/audit/improve-handlers krijgen het signal.
 
-Resterend werk, expliciet open: geen geïsoleerde worker-kill; handlers die AbortSignal negeren of CPU-gebonden blijven kunnen doorlopen tot lease-expiry. Niet bewezen als onbegrensde exploit op de huidige productiehandlers. Dit ticket is niet gesloten in deze ronde.
+Resterend werk, expliciet open (PR1-05):
+
+- `handlerFinished` wordt gezet zodra de handler een Response teruggeeft, vóór het uitlezen van een eventuele responsestream. Bij een gestreamde body kan de guard de lease te vroeg vrijgeven. De huidige B2B-routes geven gewone JSON terug; dit is geen bewezen exploit op die endpoints.
+- `context.signal` gaat niet door de huidige routes naar `matchCurriculumGoals`, Pro-analyse of `runStructured`.
+- Het Cloudflare-pad combineert het externe signal niet met zijn eigen timeout.
+- `heartbeatOrgApiCall` bestaat, maar de normale guarduitvoering roept die niet aan.
+- Lease-expiry verandert de ledgerstatus, niet het uitvoerende werk. Abort-negerend of CPU-gebonden werk kan ook na expiry doorlopen. Dat is geen bewezen executiegrens.
+
+Geen geïsoleerde worker-kill. Dit ticket is niet gesloten in deze ronde.
 
 ## V20-06 Migratie
 
@@ -68,7 +76,7 @@ Oorzaak: nieuwe ledgers startten leeg; een v5.19-only som mist unlogged v5.20-ve
 
 Bestanden: `lib/db/migrateQuotaLedgers.ts`, `scripts/migrate-quota-ledgers.ts`, `docs/production-cutover-v20.md`.
 
-Negatief vóór fix: oude usage-rijen lazen als 0; `ledger + alle logs` zou overlapping nieuwe rijen dubbel tellen; `max(ledger, logs)` bij onbekende start laat unlogged nieuw verbruik vallen (3 gelogde oude calls + 2 ongelogde nieuwe = 3 in plaats van 5). Daarna: versioned, transactionele, herhaalbare backfill. Gemengd met bekende start (`opened_at` of `QUOTA_LEDGER_EPOCH_MS`): oude billable logs plus `max(ledger, nieuwe logs)`. Onbekende start met zowel logs als ledger: weigering, geen marker, tot epoch of expliciete `QUOTA_LEDGER_RECONCILE` (`sum-pre-ledger` of `max-overlap`). Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC, bestaande `(subject, created_at)` blijven uniek. Productie: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, daarna gecontroleerde start. De app past de backfill niet automatisch toe. Mergen naar GitHub `main` start alleen `ci.yml`, geen live process. Geen productiemigratie zonder akkoord. V20-08 en H-01 tot H-06 blijven open.
+Negatief vóór fix: oude usage-rijen lazen als 0; `ledger + alle logs` zou overlapping nieuwe rijen dubbel tellen; `max(ledger, logs)` bij onbekende start laat unlogged nieuw verbruik vallen (3 gelogde oude calls + 2 ongelogde nieuwe = 3 in plaats van 5). Daarna: versioned, transactionele, herhaalbare backfill. Gemengd met bekende start (`opened_at` of `QUOTA_LEDGER_EPOCH_MS`): oude billable logs plus `max(ledger, nieuwe logs)`. Onbekende start met zowel logs als ledger: weigering, geen marker, tot epoch of expliciete `QUOTA_LEDGER_RECONCILE` (`sum-pre-ledger` of `max-overlap`). Telregel: 2xx en 5xx tellen, 4xx/429 niet. AI-rijen via e-mail-HMAC en `user_ai_usage.id` als `source_event_id`, zodat twee oude calls in dezelfde milliseconde twee eenheden blijven. Een live rij zonder source-id met dezelfde `(subject, created_at)` wordt als dat ene oude event geclaimd, niet als timestamp-uniciteit voor alle ids. Productie: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, daarna gecontroleerde start. De app past de backfill niet automatisch toe. Mergen naar GitHub `main` start alleen `ci.yml`, geen live process. Geen productiemigratie zonder akkoord. V20-08 en H-01 tot H-06 blijven open.
 
 ## H-01 tot H-06 (blijven open)
 

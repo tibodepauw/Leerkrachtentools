@@ -6,6 +6,8 @@ import { withApiAuth } from "@/lib/api-guard";
 import {
   API_DENIAL_LOG_CAP,
   completeOrgApiCall,
+  countGlobalActiveLeases,
+  countOrgActiveLeases,
   getOrgQuotaSnapshot,
   noteOrgDenial,
   reserveOrgApiCall,
@@ -509,4 +511,134 @@ describe("B2B org quota ledger", () => {
     expect(JSON.parse(secondText).error).toBeUndefined();
     expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
   }, 60_000);
+
+  it("PR1-01 reserveert pas na de body met een actuele heartbeat", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const t0 = Date.now();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"query":"optellen tot 20"}'));
+        setTimeout(() => controller.close(), 180);
+      },
+    });
+    const response = await handler(
+      new Request("http://benchmark.local/api/v1/curriculum/match", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...authHeader(key.token),
+        },
+        body,
+        duplex: "half",
+      } as RequestInit & { duplex: "half" }),
+    );
+    expect(response.status).toBe(200);
+    expect(started.count).toBe(1);
+    const lease = getDatabase()
+      .prepare(
+        `SELECT heartbeat_at AS heartbeatAt, created_at AS createdAt
+         FROM api_request_leases WHERE org_id = ? ORDER BY created_at DESC LIMIT 1`,
+      )
+      .get(organization.id) as { heartbeatAt: number; createdAt: number };
+    expect(lease.createdAt).toBeGreaterThanOrEqual(t0 + 150);
+    expect(lease.heartbeatAt).toBeGreaterThanOrEqual(t0 + 150);
+  });
+
+  it("PR1-01 start geen handler na een verlopen body", async () => {
+    vi.stubEnv("ORG_API_BODY_TIMEOUT_MS", "50");
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"query":"optellen tot 20"}'));
+      },
+    });
+    try {
+      const response = await handler(
+        new Request("http://benchmark.local/api/v1/curriculum/match", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            ...authHeader(key.token),
+          },
+          body,
+          duplex: "half",
+        } as RequestInit & { duplex: "half" }),
+      );
+      expect(response.status).toBe(400);
+      expect(started.count).toBe(0);
+      expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(0);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("PR1-02 houdt eerste antwoord en replay gelijk rond de orgcachegrens", async () => {
+    const { organization, key } = seedOrg(40);
+    const pad = `${"é".repeat(50)}${"x".repeat(499_700)}`;
+    const handler = withApiAuth(
+      async () => NextResponse.json({ pad }),
+      { requiredScope: "curriculum:match", bodySchema: dummySchema },
+    );
+    let lastKey = "";
+    for (let index = 0; index < 16; index += 1) {
+      lastKey = `fill-${index}`;
+      const response = await post(handler, key.token, { query: "optellen tot 20" }, {
+        "Idempotency-Key": lastKey,
+      });
+      expect(response.status).toBe(200);
+    }
+    const overflowKey = "overflow-1";
+    const first = await post(handler, key.token, { query: "optellen tot 20" }, {
+      "Idempotency-Key": overflowKey,
+    });
+    const replay = await post(handler, key.token, { query: "optellen tot 20" }, {
+      "Idempotency-Key": overflowKey,
+    });
+    const firstText = await first.text();
+    const replayText = await replay.text();
+    expect(first.status).toBe(replay.status);
+    expect(firstText).toBe(replayText);
+    expect(first.status).toBe(413);
+    expect(JSON.parse(replayText).code).toBe("idempotency_payload_too_large");
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(17);
+  }, 60_000);
+
+  it("PR1-03 telt organisatieconcurrency over maandgrenzen heen", async () => {
+    const { organization, key } = seedOrg(20);
+    const september = Date.UTC(2026, 8, 30, 23, 59, 59);
+    const october = september + 2_000;
+    const leases = [];
+    for (let index = 0; index < 4; index += 1) {
+      const reserved = reserveOrgApiCall({
+        orgId: organization.id,
+        keyId: key.id,
+        monthlyLimit: 20,
+        method: "POST",
+        endpoint: "/api/v1/curriculum/match",
+        requestDigest: `sept-${index}`,
+        now: september,
+      });
+      expect(reserved.ok && !reserved.replay).toBe(true);
+      leases.push(reserved);
+    }
+    const blocked = reserveOrgApiCall({
+      orgId: organization.id,
+      keyId: key.id,
+      monthlyLimit: 20,
+      method: "POST",
+      endpoint: "/api/v1/curriculum/match",
+      requestDigest: "oct-1",
+      now: october,
+    });
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.reason).toBe("org-concurrency");
+    expect(countOrgActiveLeases(organization.id, october)).toBe(4);
+    expect(countGlobalActiveLeases(october)).toBeGreaterThanOrEqual(4);
+    expect(getOrgQuotaSnapshot(organization.id, october).inFlight).toBe(0);
+    expect(getOrgQuotaSnapshot(organization.id, september).inFlight).toBe(4);
+  });
 });

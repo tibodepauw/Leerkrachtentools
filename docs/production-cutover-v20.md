@@ -65,7 +65,7 @@ Voer dit pas uit na akkoord, op een kopie van de productiedatabase eerst.
    Gebruik dezelfde `AUTH_SECRET` als de app (minstens 32 tekens). Anders krijgen AI-budgetrijen een andere HMAC en tellen ze naast de bestaande subjects.
 5. **Gecontroleerde start** van één instance. Controleer logs op de backfill-waarschuwing (die moet weg zijn), een B2B-call, en dat `consumed` niet sprong naar de som van ledger plus alle logs.
 
-Telregel: 2xx en 5xx tellen; 4xx en 429 niet. AI-rijen gaan via e-mail-HMAC naar `ai_budget_usage` en slaan bestaande `(subject, created_at)` over.
+Telregel: 2xx en 5xx tellen; 4xx en 429 niet. AI-rijen gaan via e-mail-HMAC naar `ai_budget_usage`, bewaren `user_ai_usage.id` als `source_event_id`, en slaan bestaande bron-events over. Twee oude records in dezelfde milliseconde blijven twee eenheden.
 
 ## Rollback
 

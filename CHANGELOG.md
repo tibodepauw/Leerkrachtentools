@@ -6,6 +6,12 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Fixed
+- Requestbody-timeout geldt tijdens een wachtende read en weigert late EOF; leases starten op reserveringstijd (PR1-01)
+- Idempotency eerste antwoord en replay blijven gelijk als de orgcache vol is (PR1-02)
+- Organisatieconcurrency telt alle actieve leases, niet alleen de huidige UTC-maand (PR1-03)
+- AI-quota-backfill bewaart `user_ai_usage.id` als bron-event, zodat dezelfde milliseconde twee eenheden blijft (PR1-04)
+
 ---
 
 ## [5.20.1] - 2026-09-08

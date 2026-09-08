@@ -220,7 +220,12 @@ export function withApiAuth(
 
       let body: unknown;
       try {
-        body = await readJsonBody(request, JSON_BODY_LIMIT_BYTES);
+        const bodyTimeoutRaw = Number(process.env.ORG_API_BODY_TIMEOUT_MS);
+        const bodyTimeoutMs =
+          Number.isFinite(bodyTimeoutRaw) && bodyTimeoutRaw >= 10
+            ? bodyTimeoutRaw
+            : undefined;
+        body = await readJsonBody(request, JSON_BODY_LIMIT_BYTES, bodyTimeoutMs);
       } catch (error) {
         if (error instanceof RequestBodyTooLargeError) {
           throw error;
@@ -318,7 +323,7 @@ export function withApiAuth(
         endpoint,
         requestDigest: digest,
         idempotencyKey,
-        now: started,
+        now: Date.now(),
       });
 
       if (!quota.ok) {
@@ -392,21 +397,40 @@ export function withApiAuth(
           response,
           API_IDEMPOTENCY_BODY_MAX_BYTES,
         );
-        if (bounded.truncated || utf8ByteLength(bounded.text) > API_IDEMPOTENCY_BODY_MAX_BYTES) {
+        const tooLarge =
+          bounded.truncated || utf8ByteLength(bounded.text) > API_IDEMPOTENCY_BODY_MAX_BYTES;
+        if (tooLarge) {
           capturedBody = JSON.stringify({
             error: "Het antwoord is te groot om idempotent te bewaren.",
             code: "idempotency_payload_too_large",
           });
           statusCode = 413;
-          return jsonError(
-            "Het antwoord is te groot om idempotent te bewaren.",
-            413,
-          );
+        } else {
+          capturedBody = bounded.text;
         }
-        capturedBody = bounded.text;
-        return new NextResponse(bounded.text, {
-          status: response.status,
-          headers: response.headers,
+        if (auth && reservation) {
+          const stored = completeOrgApiCall({
+            orgId: auth.orgId,
+            keyId: auth.keyId,
+            leaseId: reservation.leaseId,
+            ownerToken: reservation.ownerToken,
+            period: reservation.period,
+            idempotencyKey,
+            statusCode,
+            responseBody: capturedBody,
+          });
+          completeInFinally = false;
+          statusCode = stored.statusCode;
+          capturedBody = stored.body;
+        }
+        return new NextResponse(capturedBody, {
+          status: statusCode,
+          headers: tooLarge
+            ? {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-store",
+              }
+            : response.headers,
         });
       });
 

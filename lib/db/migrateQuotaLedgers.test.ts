@@ -522,4 +522,43 @@ describe("quota ledger backfill", () => {
     expect(rows).toHaveLength(4);
     db.close();
   });
+
+  it("PR1-04 houdt twee AI-calls in dezelfde milliseconde als twee eenheden", async () => {
+    const db = v519Database();
+    const now = Date.now();
+    const email = "twin@school.test";
+    db.prepare(
+      `INSERT INTO users (id, email, tier, email_verified_at, created_at, updated_at)
+       VALUES ('user-twin', ?, 'tester', ?, ?, ?)`,
+    ).run(email, now, now, now);
+    const stamp = now - 60_000;
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-twin', ?)").run(
+      stamp,
+    );
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-twin', ?)").run(
+      stamp,
+    );
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(true);
+    expect(result.aiRows).toBe(2);
+    const subject = aiBudgetSubjectFromEmail(email);
+    const rows = db
+      .prepare(
+        "SELECT created_at AS createdAt, source_event_id AS sourceEventId FROM ai_budget_usage WHERE subject = ? ORDER BY source_event_id",
+      )
+      .all(subject) as Array<{ createdAt: number; sourceEventId: string }>;
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.createdAt).toBe(stamp);
+    expect(rows[1]?.createdAt).toBe(stamp);
+    expect(rows[0]?.sourceEventId).not.toBe(rows[1]?.sourceEventId);
+
+    const again = applyQuotaLedgerBackfill(db, now);
+    expect(again.applied).toBe(false);
+    const after = db
+      .prepare("SELECT COUNT(*) AS count FROM ai_budget_usage WHERE subject = ?")
+      .get(subject) as { count: number };
+    expect(after.count).toBe(2);
+    db.close();
+  });
 });
