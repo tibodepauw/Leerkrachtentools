@@ -8,12 +8,24 @@ Productie volgt **GitHub** `https://github.com/tibodepauw/Leerkrachtentools`, br
 
 | Remote | `main` | Rol |
 |--------|--------|-----|
-| GitHub `tibodepauw/Leerkrachtentools` | productie | CI (`ci.yml` op `main` en pull requests), GitHub Releases, live uitrol |
+| GitHub `tibodepauw/Leerkrachtentools` | productie | CI (`ci.yml` op `main` en pull requests), GitHub Releases. Live process start is handmatig |
 | Origin `tibo-dev/Leerkrachtentools` | niet productie | Cloud-agent werkcopy. Origin `main` kan achterlopen (v5.19.0 terwijl GitHub `main` al v5.20.0 is) |
 
 Merge-base voor deze fixes: GitHub `main` commit `5b071d35474207583e2999926f7e77e724ca131b` (v5.20.0). Open de pull request tegen **GitHub `main`**, niet tegen Origin `main`. Force-push GitHub `main` niet.
 
-Er is geen productiemigratie of deployment zonder expliciet akkoord.
+Er is geen productiemigratie of deployment zonder expliciet akkoord. Houd de GitHub-pull request ongemerged tot de onafhankelijke securityreview klaar is.
+
+## Merge versus deployment
+
+Mergen van de follow-up naar GitHub `main` start **geen** productie-deployment.
+
+- In de repo staat alleen `.github/workflows/ci.yml`. Die job doet audit, `next typegen`, lint, typecheck, Vitest en production build. Er is geen deploy-job, geen `vercel.json`, en geen hook die `node .next/standalone/server.js` herstart.
+- Dit GitHub-repo is niet gekoppeld als Vercel-project (andere `tibodepauw`-repo's wel). Origin-merge voedt productie niet.
+- README-productie blijft: `npm run build`, daarna `PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js`.
+
+Volgorde na review en akkoord: backup, daarna `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, daarna gecontroleerde start van één instance op de nieuwe build. Merge alleen is niet die start. Zet de live process pas na de migratie op de follow-upbuild.
+
+Als buiten deze repo een auto-deploy bestaat (git-pull op de VM, Watchtower, of een hostingkoppeling die hier niet in de tree staat), zet die eerst uit. Anders is mergen wél live, en dan klopt backup, migratie, start niet meer.
 
 ## Open tickets (blijven open)
 
@@ -68,4 +80,4 @@ Als de marker al gezet is en de telling fout is: restore, niet handmatig `consum
 
 ## Checks op het merge-resultaat
 
-GitHub Actions `ci.yml` op de pull request naar GitHub `main`: production-dependency audit, `next typegen`, lint, typecheck, Vitest, production build. De branch bevat `5b071d3`; het merge-resultaat is de branch-tip.
+GitHub Actions `ci.yml` op de pull request naar GitHub `main`: production-dependency audit, `next typegen`, lint, typecheck, Vitest, production build. Groen CI is geen deployment. De branch bevat `5b071d3`; het merge-resultaat is de branch-tip.

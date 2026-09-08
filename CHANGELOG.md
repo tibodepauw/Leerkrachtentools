@@ -19,7 +19,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ### Added
 - Herhaalbare quota-ledger-backfill mengt pre-5.20 usage-logs met een bestaand v5.20-ledger als `opened_at` of `QUOTA_LEDGER_EPOCH_MS` bekend is. Gemengde periodes zonder betrouwbare start worden geweigerd in plaats van `max(ledger, logs)`, tenzij jij expliciet `QUOTA_LEDGER_RECONCILE` toestaat (`QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`)
-- Cutovervolgorde en rollback voor die backfill in `docs/production-cutover-v20.md` (backup, migratie, gecontroleerde start). V20-08 en H-01 tot H-06 blijven open
+- Cutovervolgorde en rollback voor die backfill in `docs/production-cutover-v20.md` (backup, migratie, gecontroleerde start). Mergen naar GitHub `main` start alleen CI, geen productie-deploy. V20-08 en H-01 tot H-06 blijven open
 - Hardeningtickets H-01 tot H-06 apart gedocumenteerd in `docs/hardening-h01-h06.md`
 
 ---
