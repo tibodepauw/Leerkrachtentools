@@ -9,11 +9,11 @@ Productie volgt **GitHub** `https://github.com/tibodepauw/Leerkrachtentools`, br
 | Remote | `main` | Rol |
 |--------|--------|-----|
 | GitHub `tibodepauw/Leerkrachtentools` | productie | CI (`ci.yml` op `main` en pull requests), GitHub Releases. Live process start is handmatig |
-| Origin `tibo-dev/Leerkrachtentools` | niet productie | Cloud-agent werkcopy. Origin `main` kan achterlopen (v5.19.0 terwijl GitHub `main` al v5.20.0 is) |
+| Origin `tibo-dev/Leerkrachtentools` | niet productie | Cloud-agent werkcopy. Origin `main` kan achterlopen (v5.19.0 terwijl GitHub `main` al v5.20.1 is) |
 
 Merge-base voor deze fixes: GitHub `main` commit `5b071d35474207583e2999926f7e77e724ca131b` (v5.20.0). Open de pull request tegen **GitHub `main`**, niet tegen Origin `main`. Force-push GitHub `main` niet.
 
-Er is geen productiemigratie of deployment zonder expliciet akkoord. Houd de GitHub-pull request ongemerged tot de onafhankelijke securityreview klaar is.
+Er is geen productiemigratie of deployment zonder expliciet akkoord. GitHub-merge en GitHub Release zijn niet hetzelfde als live start.
 
 ## Merge versus deployment
 

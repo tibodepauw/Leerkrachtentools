@@ -6,6 +6,12 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+---
+
+## [5.20.1] - 2026-09-08
+
+Quota-backfill, uploads en leases.
+
 ### Fixed
 - B2B-audit gebruikt `payload.results`, zodat `linked_curriculum` gevuld is als de matcher een treffer heeft
 - ZIP-inflate met bytegrens gebruikt een runtime-gecontroleerde streamadapter die typecheckt
