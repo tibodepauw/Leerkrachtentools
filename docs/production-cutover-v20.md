@@ -31,7 +31,7 @@ Als buiten deze repo een auto-deploy bestaat (git-pull op de VM, Watchtower, of 
 
 Deze ronde sluit ze **niet**.
 
-- **V20-08** (leases / worker-kill): per-request leases, immutable periode, owner-heartbeat en AbortSignal zitten in de follow-upcode. Resterend: geen geïsoleerde worker-kill; werk dat AbortSignal negeert of CPU-gebonden blijft kan doorlopen tot lease-expiry. Dat is niet bewezen als onbegrensde exploit op de huidige handlers, maar het ticket blijft open.
+- **V20-08** (leases / worker-kill): in het geteste venster blijft een streamlease actief tot de body is uitgelezen. Restwerk, expliciet open: geen harde stop of worker-kill; de cancellationketen is onvolledig; lease-expiry stopt uitvoerend werk niet. H-01 tot H-06 blijven open.
 - **H-01** Gedeeld-apparaatmodus
 - **H-02** Logout over tabbladen
 - **H-03** PDF/DOC-parserisolatie

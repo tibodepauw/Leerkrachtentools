@@ -60,15 +60,18 @@ Negatief vóór fix: maandwissel verlaagde de verkeerde teller; 429-retries hiel
 
 Timeout houdt de lease tot late completion of expiry en geeft AbortSignal aan de handler. Bestaande match/audit/improve-handlers krijgen het signal.
 
-Resterend werk, expliciet open (PR1-05):
+**Bevestigd in het geteste venster (geen restwerk meer onder deze bullets):**
 
-- `handlerFinished` wordt gezet zodra de handler een Response teruggeeft, vóór het uitlezen van een eventuele responsestream. Bij een gestreamde body kan de guard de lease te vroeg vrijgeven. De huidige B2B-routes geven gewone JSON terug; dit is geen bewezen exploit op die endpoints.
-- `context.signal` gaat niet door de huidige routes naar `matchCurriculumGoals`, Pro-analyse of `runStructured`.
-- Het Cloudflare-pad combineert het externe signal niet met zijn eigen timeout.
-- `heartbeatOrgApiCall` bestaat, maar de normale guarduitvoering roept die niet aan.
-- Lease-expiry verandert de ledgerstatus, niet het uitvoerende werk. Abort-negerend of CPU-gebonden werk kan ook na expiry doorlopen. Dat is geen bewezen executiegrens.
+- Bij een stream-timeout blijft de lease actief tot de responsebody is uitgelezen. Direct na de publieke 429: één actieve lease. Na het uitlezen van de body: nul actieve leases. Dit is geen worker-kill.
+- D1-02: een gewone handlerrejection is geen timeoutcache. Eerste antwoord en replay zijn dezelfde publieke 500.
 
-Geen geïsoleerde worker-kill. Dit ticket is niet gesloten in deze ronde.
+**Nog open restwerk (PR1-05 / V20-08):**
+
+- Harde stop: geen geïsoleerde worker-kill. Abort-negerend of CPU-gebonden werk kan na de publieke timeout en na lease-expiry doorlopen. De producer van een gestreamde body kan na de 429 nog data leveren.
+- Volledige cancellationketen: `context.signal` gaat niet door de huidige routes naar `matchCurriculumGoals`, Pro-analyse of `runStructured`. Het Cloudflare-pad combineert het externe signal niet met zijn eigen timeout. `heartbeatOrgApiCall` bestaat, maar de normale guarduitvoering roept die niet aan.
+- Lease-expiry verandert de ledgerstatus, niet het uitvoerende werk. Een actief blijvende lease tot bodyafronding bewijst niet dat eindeloos werk hard wordt beëindigd.
+
+De huidige B2B-routes geven gewone JSON terug. Dit is geen bewezen exploit op die endpoints. Dit ticket is niet gesloten. Eindcontrole: `docs/EINDCONTROLE_D1_2026-09-09.md`.
 
 ## V20-06 Migratie
 
@@ -103,10 +106,10 @@ Dit zijn bestaande tests, geen nieuwe suite-naam `CONTROL`. URL-upload, multipar
    - `lib/db/migrateQuotaLedgers.test.ts` `weiger drie oude gelogde calls en twee nieuwe ongelogde calls zonder starttijd`: `applied === false`, `refused === true`, `consumed` blijft 2, marker ontbreekt.
    - `linked_curriculum` hoort bij V20-03, niet bij deze vijf: `test/api-v1.test.ts` assert `payload.coverage[0]?.linked_curriculum`.
 
-PR1-05 / V20-08 blijft open. De acht PR1-tests vervangen deze CONTROL-cases niet één-op-één. `lib/api/orgQuota.test.ts` heeft `it.todo("PR1-05 / V20-08: lease blijft tot een gestreamde responsebody is uitgelezen")`. `review-evidence/independent-d1.test.ts` houdt een OPEN-karakterisering: een gestreamde body kan na de publieke 429 verder produceren. Dat is geen worker-kill en geen bewezen exploit op de huidige JSON-endpoints.
+PR1-05 / V20-08 blijft open voor harde stop, volledige cancellationketen en lease-expiry. De bevestigde deellease (streamtimeout houdt de lease tot de body is uitgelezen) heeft een acceptatietest in `lib/api/orgQuota.test.ts` en `review-evidence/independent-d1.test.ts`. De producer kan na de publieke 429 nog data leveren; dat is restwerk, geen worker-kill. De acht PR1-tests vervangen de CONTROL-cases niet één-op-één.
 
 ## D1-01 Usage-log en D1-02 handlerfoutcache
 
 Oorzaak D1-01: vroege quota-completion zette `completeInFinally = false` en sloeg daardoor ook `logApiUsage` over. Daarna: aparte `logExecutedWork`-vlag. Eén usage-log per echte uitvoering; replay logt niet. Een falende logwriter verandert response of consumed niet.
 
-Oorzaak D1-02: `handlerFinished` stond alleen in `.then`, dus een gewone rejection liep het timeoutcachepad in (eerste 500, replay 429). Daarna: time-out alleen als de deadline-timer afgaat; rejection wordt als publieke 500 opgeslagen en teruggegeven. Late completion overschrijft een al opgeslagen antwoord niet (`status = 'pending'`). PR1-05 / V20-08 blijft open.
+Oorzaak D1-02: `handlerFinished` stond alleen in `.then`, dus een gewone rejection liep het timeoutcachepad in (eerste 500, replay 429). Daarna: time-out alleen als de deadline-timer afgaat; rejection wordt als publieke 500 opgeslagen en teruggegeven. Late completion overschrijft een al opgeslagen antwoord niet (`status = 'pending'`). Onafhankelijke eindcontrole: `docs/EINDCONTROLE_D1_2026-09-09.md`. D1-01 en D1-02 zijn daar bevestigd hersteld. V20-08 blijft open voor harde stop, cancellationketen en lease-expiry.

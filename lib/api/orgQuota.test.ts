@@ -765,7 +765,42 @@ describe("B2B org quota ledger", () => {
     expect(getOrgQuotaSnapshot(organization.id).inFlight).toBe(0);
   });
 
+  it("V20-08 deellease: streamtimeout houdt de lease tot de body is uitgelezen", async () => {
+    vi.stubEnv("ORG_API_MAX_EXECUTION_MS", "40");
+    const { organization, key } = seedOrg(10);
+    const produced = { count: 0 };
+    const handler = withApiAuth(
+      async () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            setTimeout(() => {
+              produced.count += 1;
+              controller.enqueue(new TextEncoder().encode('{"late":true}'));
+              controller.close();
+            }, 120);
+          },
+        });
+        return new Response(stream, {
+          headers: { "content-type": "application/json" },
+        });
+      },
+      { requiredScope: "curriculum:match", bodySchema: dummySchema },
+    );
+    try {
+      const response = await post(handler, key.token);
+      expect(response.status).toBe(429);
+      expect(produced.count).toBe(0);
+      expect(countOrgActiveLeases(organization.id)).toBe(1);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(produced.count).toBe(1);
+      expect(countOrgActiveLeases(organization.id)).toBe(0);
+      expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  }, 10_000);
+
   it.todo(
-    "PR1-05 / V20-08: lease blijft tot een gestreamde responsebody is uitgelezen",
+    "OPEN V20-08: harde stop, volledige cancellationketen en lease-expiry die werk stopt",
   );
 });

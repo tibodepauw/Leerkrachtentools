@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { withApiAuth } from "@/lib/api-guard";
-import { getOrgQuotaSnapshot } from "@/lib/api/orgQuota";
+import { countOrgActiveLeases, getOrgQuotaSnapshot } from "@/lib/api/orgQuota";
 import { createOrganization, generateApiKey } from "@/lib/api-keys";
 import { getDatabase } from "@/lib/db/sqlite";
 
@@ -212,7 +212,7 @@ describe("independent D1 assertions", () => {
     }
   });
 
-  it("OPEN PR1-05: een gestreamde body kan na 429 verder lopen; dat is geen worker-kill", async () => {
+  it("V20-08 deellease: streamtimeout houdt de lease tot de body is uitgelezen", async () => {
     vi.stubEnv("ORG_API_MAX_EXECUTION_MS", "40");
     const { organization, key } = seedOrg(10);
     const produced = { count: 0 };
@@ -237,11 +237,17 @@ describe("independent D1 assertions", () => {
       const response = await post(handler, key.token);
       expect(response.status).toBe(429);
       expect(produced.count).toBe(0);
+      expect(countOrgActiveLeases(organization.id)).toBe(1);
       await new Promise((resolve) => setTimeout(resolve, 200));
       expect(produced.count).toBe(1);
+      expect(countOrgActiveLeases(organization.id)).toBe(0);
       expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
     } finally {
       vi.unstubAllEnvs();
     }
   }, 10_000);
+
+  it.todo(
+    "OPEN V20-08: harde stop, volledige cancellationketen en lease-expiry die werk stopt",
+  );
 });
