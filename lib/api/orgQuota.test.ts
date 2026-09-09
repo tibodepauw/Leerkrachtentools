@@ -34,6 +34,14 @@ function seedOrg(quota: number, scopes = ["curriculum:match"]) {
   return { organization, key };
 }
 
+function usageLogCount(keyId: string) {
+  return (
+    getDatabase()
+      .prepare("SELECT COUNT(*) AS count FROM api_usage_logs WHERE key_id = ?")
+      .get(keyId) as { count: number }
+  ).count;
+}
+
 const dummySchema = z.object({ query: z.string().trim().min(3) });
 
 function handlerWithPause(started: { count: number }, pauseMs: number) {
@@ -124,7 +132,8 @@ describe("B2B org quota ledger", () => {
 
   it("zet het budget niet terug als de usage-log faalt", async () => {
     const { organization, key } = seedOrg(3);
-    const logSpy = vi.spyOn(await import("@/lib/api-keys"), "logApiUsage").mockImplementation(() => {
+    const apiKeys = await import("@/lib/api-keys");
+    const logSpy = vi.spyOn(apiKeys, "logApiUsage").mockImplementation(() => {
       throw new Error("log disk full");
     });
     const handler = handlerWithPause({ count: 0 }, 0);
@@ -132,6 +141,7 @@ describe("B2B org quota ledger", () => {
       const response = await post(handler, key.token);
       expect(response.status).toBe(200);
       expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+      expect(logSpy).toHaveBeenCalled();
     } finally {
       logSpy.mockRestore();
     }
@@ -699,6 +709,60 @@ describe("B2B org quota ledger", () => {
     expect(countGlobalActiveLeases(october)).toBeGreaterThanOrEqual(4);
     expect(getOrgQuotaSnapshot(organization.id, october).inFlight).toBe(0);
     expect(getOrgQuotaSnapshot(organization.id, september).inFlight).toBe(4);
+  });
+
+  it("D1-01 REQUIRED schrijft één usage-log voor een normale 200 zonder Idempotency-Key", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const before = usageLogCount(key.id);
+    const response = await post(handler, key.token);
+    expect(response.status).toBe(200);
+    expect(started.count).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    expect(usageLogCount(key.id) - before).toBe(1);
+  });
+
+  it("D1-01 REQUIRED schrijft één usage-log voor de eerste uitvoering, niet voor replay", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const headers = { "Idempotency-Key": "d1-01-replay" };
+    const before = usageLogCount(key.id);
+    const first = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    const replay = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    expect(first.status).toBe(200);
+    expect(replay.status).toBe(200);
+    expect(replay.headers.get("X-Idempotent-Replay")).toBe("1");
+    expect(started.count).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    expect(usageLogCount(key.id) - before).toBe(1);
+  });
+
+  it("D1-02 REQUIRED cachet een handlerrejection als 500, niet als timeout-429", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = withApiAuth(
+      async () => {
+        started.count += 1;
+        throw new Error("controlled handler failure");
+      },
+      { requiredScope: "curriculum:match", bodySchema: dummySchema },
+    );
+    const headers = { "Idempotency-Key": "d1-02-reject" };
+    const first = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    const replay = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    const firstBody = await first.text();
+    const replayBody = await replay.text();
+    expect(first.status).toBe(500);
+    expect(replay.status).toBe(500);
+    expect(replay.headers.get("X-Idempotent-Replay")).toBe("1");
+    expect(firstBody).toContain("niet verwerken");
+    expect(replayBody).toBe(firstBody);
+    expect(replayBody).not.toContain("te lang");
+    expect(started.count).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).inFlight).toBe(0);
   });
 
   it.todo(

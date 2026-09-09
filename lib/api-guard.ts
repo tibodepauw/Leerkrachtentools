@@ -15,10 +15,10 @@ import {
   utf8ByteLength,
   API_IDEMPOTENCY_BODY_MAX_BYTES,
 } from "@/lib/api/idempotency";
+import * as apiKeys from "@/lib/api-keys";
 import {
   ApiAuthError,
   hasLiveApiKeyAuthorization,
-  logApiUsage,
   validateApiKey,
   type ValidatedApiKey,
 } from "@/lib/api-keys";
@@ -165,7 +165,7 @@ async function recordCappedDenial({
   }
   if (!shouldLog) return;
   try {
-    logApiUsage({
+    apiKeys.logApiUsage({
       keyId: auth.keyId,
       endpoint,
       statusCode,
@@ -204,6 +204,7 @@ export function withApiAuth(
     let auth: ValidatedApiKey | null = null;
     let reserved = false;
     let completeInFinally = false;
+    let logExecutedWork = false;
     let reservation: OrgQuotaReservation | undefined;
     let idempotencyKey: string | undefined;
     let statusCode = 500;
@@ -379,9 +380,13 @@ export function withApiAuth(
 
       reserved = true;
       completeInFinally = true;
+      logExecutedWork = true;
       reservation = quota;
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
-      let handlerFinished = false;
+      let timedOut = false;
+      const publicServerErrorBody = JSON.stringify({
+        error: "De server kon de aanvraag niet verwerken. Probeer het opnieuw.",
+      });
 
       const work = handler(request, {
         ...auth,
@@ -390,55 +395,87 @@ export function withApiAuth(
         requestId,
         signal: abortController.signal,
         leaseId: quota.leaseId,
-      }).then(async (response) => {
-        handlerFinished = true;
-        statusCode = response.status;
-        const bounded = await readResponseTextBounded(
-          response,
-          API_IDEMPOTENCY_BODY_MAX_BYTES,
-        );
-        const tooLarge =
-          bounded.truncated || utf8ByteLength(bounded.text) > API_IDEMPOTENCY_BODY_MAX_BYTES;
-        if (tooLarge) {
-          capturedBody = JSON.stringify({
-            error: "Het antwoord is te groot om idempotent te bewaren.",
-            code: "idempotency_payload_too_large",
+      })
+        .then(async (response) => {
+          statusCode = response.status;
+          const bounded = await readResponseTextBounded(
+            response,
+            API_IDEMPOTENCY_BODY_MAX_BYTES,
+          );
+          const tooLarge =
+            bounded.truncated || utf8ByteLength(bounded.text) > API_IDEMPOTENCY_BODY_MAX_BYTES;
+          if (tooLarge) {
+            capturedBody = JSON.stringify({
+              error: "Het antwoord is te groot om idempotent te bewaren.",
+              code: "idempotency_payload_too_large",
+            });
+            statusCode = 413;
+          } else {
+            capturedBody = bounded.text;
+          }
+          if (auth && reservation) {
+            const stored = completeOrgApiCall({
+              orgId: auth.orgId,
+              keyId: auth.keyId,
+              leaseId: reservation.leaseId,
+              ownerToken: reservation.ownerToken,
+              period: reservation.period,
+              idempotencyKey,
+              statusCode,
+              responseBody: capturedBody,
+              storeIdempotency: !timedOut,
+            });
+            completeInFinally = false;
+            if (!timedOut) {
+              statusCode = stored.statusCode;
+              capturedBody = stored.body;
+            }
+          }
+          return new NextResponse(capturedBody, {
+            status: statusCode,
+            headers: tooLarge
+              ? {
+                  "Content-Type": "application/json",
+                  "Cache-Control": "no-store",
+                }
+              : response.headers,
           });
-          statusCode = 413;
-        } else {
-          capturedBody = bounded.text;
-        }
-        if (auth && reservation) {
-          const stored = completeOrgApiCall({
-            orgId: auth.orgId,
-            keyId: auth.keyId,
-            leaseId: reservation.leaseId,
-            ownerToken: reservation.ownerToken,
-            period: reservation.period,
-            idempotencyKey,
-            statusCode,
-            responseBody: capturedBody,
+        })
+        .catch((error) => {
+          if (timedOut) throw error;
+          console.error("[api-guard]", error);
+          statusCode = 500;
+          capturedBody = publicServerErrorBody;
+          if (auth && reservation) {
+            const stored = completeOrgApiCall({
+              orgId: auth.orgId,
+              keyId: auth.keyId,
+              leaseId: reservation.leaseId,
+              ownerToken: reservation.ownerToken,
+              period: reservation.period,
+              idempotencyKey,
+              statusCode,
+              responseBody: capturedBody,
+            });
+            completeInFinally = false;
+            statusCode = stored.statusCode;
+            capturedBody = stored.body ?? capturedBody;
+          }
+          return new NextResponse(capturedBody, {
+            status: statusCode,
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-store",
+            },
           });
-          completeInFinally = false;
-          statusCode = stored.statusCode;
-          capturedBody = stored.body;
-        }
-        return new NextResponse(capturedBody, {
-          status: statusCode,
-          headers: tooLarge
-            ? {
-                "Content-Type": "application/json",
-                "Cache-Control": "no-store",
-              }
-            : response.headers,
         });
-      });
 
       try {
         const response = await Promise.race([
           work,
           new Promise<never>((_, reject) => {
             timeoutId = setTimeout(() => {
+              timedOut = true;
               abortController.abort();
               reject(
                 new ApiAuthError(
@@ -453,7 +490,7 @@ export function withApiAuth(
         return withRateLimitHeaders(response, auth, remainingAfter, requestId);
       } finally {
         if (timeoutId) clearTimeout(timeoutId);
-        if (!handlerFinished && reservation && auth) {
+        if (timedOut && reservation && auth) {
           completeInFinally = false;
           lateComplete({
             orgId: auth.orgId,
@@ -605,8 +642,10 @@ export function withApiAuth(
         } catch (error) {
           console.error("[api-guard] quota complete", error);
         }
+      }
+      if (logExecutedWork && auth) {
         try {
-          logApiUsage({
+          apiKeys.logApiUsage({
             keyId: auth.keyId,
             endpoint,
             statusCode,

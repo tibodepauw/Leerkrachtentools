@@ -13,6 +13,8 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - AI-quota-backfill bewaart `user_ai_usage.id` als bron-event, zodat dezelfde milliseconde twee eenheden blijft (PR1-04)
 - Requestbody-reader registreert één abort-listener per aanvraag en verwijdert die na EOF, oversize, timeout of client-abort
 - AI-quota-backfill weigert live rijen zonder `source_event_id` die alleen op timestamp met oude events overlappen, tot `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=claim` of `insert`
+- B2B-guard logt afgeronde arbeid opnieuw, los van vroege quota-afronding (D1-01)
+- Een gewone handlerrejection wordt als HTTP 500 gecachet, niet als timeout-429 (D1-02)
 
 ---
 
