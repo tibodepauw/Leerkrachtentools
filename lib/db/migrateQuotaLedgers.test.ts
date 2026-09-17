@@ -4,11 +4,15 @@ import { ensureFollowupSchema } from "@/lib/db/ensureFollowupSchema";
 import {
   applyQuotaLedgerBackfill,
   mixedPeriodConsumed,
+  parseQuotaLedgerAiNullSourceOverlap,
+  QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM,
+  QUOTA_LEDGER_AI_NULL_SOURCE_INSERT,
   QUOTA_LEDGER_BACKFILL_MIGRATION,
   QUOTA_LEDGER_RECONCILE_MAX_OVERLAP,
   QUOTA_LEDGER_RECONCILE_SUM_PRE_LEDGER,
   reconcileUnknownStartConsumed,
   resolveOpenedAt,
+  userAiUsageSourceEventId,
 } from "@/lib/db/migrateQuotaLedgers";
 import { utcMonthPeriod } from "@/lib/api/utcMonth";
 import { aiBudgetSubjectFromEmail } from "@/lib/auth/aiBudgetIdentity";
@@ -134,6 +138,7 @@ function quotaConsumed(db: Database.Database, orgId: string, period: string) {
 afterEach(() => {
   delete process.env.QUOTA_LEDGER_EPOCH_MS;
   delete process.env.QUOTA_LEDGER_RECONCILE;
+  delete process.env.QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP;
 });
 
 describe("mixedPeriodConsumed", () => {
@@ -475,7 +480,7 @@ describe("quota ledger backfill", () => {
     db.close();
   });
 
-  it("voegt oude AI-rijen toe zonder bestaande budgetrijen te dupliceren", () => {
+  it("weiger live NULL-source overlap met oude AI-rijen zonder expliciete keuze", () => {
     const db = v519Database();
     const now = Date.now();
     const email = "meng@school.test";
@@ -506,6 +511,55 @@ describe("quota ledger backfill", () => {
     );
 
     const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(false);
+    expect(result.refused).toBe(true);
+    expect(result.ambiguousAiOverlaps).toBe(1);
+    expect(result.reason).toMatch(/source_event_id/);
+    const rows = db
+      .prepare(
+        "SELECT created_at AS createdAt FROM ai_budget_usage WHERE subject = ? ORDER BY created_at",
+      )
+      .all(subject) as Array<{ createdAt: number }>;
+    expect(rows.map((row) => row.createdAt)).toEqual([sharedStamp, now - 120_000]);
+    const marker = db
+      .prepare("SELECT id FROM schema_migrations WHERE id = ?")
+      .get(QUOTA_LEDGER_BACKFILL_MIGRATION);
+    expect(marker).toBeFalsy();
+    db.close();
+  });
+
+  it("claimt live NULL-source overlap alleen met QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=claim", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const email = "meng@school.test";
+    const subject = aiBudgetSubjectFromEmail(email);
+    db.prepare(
+      `INSERT INTO users (id, email, tier, email_verified_at, created_at, updated_at)
+       VALUES ('user-mix', ?, 'tester', ?, ?, ?)`,
+    ).run(email, now, now, now);
+    const oldStamp = now - 3_600_000;
+    const sharedStamp = now - 1_800_000;
+    const extraStamp = now - 60_000;
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-mix', ?)").run(
+      oldStamp,
+    );
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-mix', ?)").run(
+      sharedStamp,
+    );
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-mix', ?)").run(
+      extraStamp,
+    );
+    db.prepare("INSERT INTO ai_budget_usage (subject, created_at) VALUES (?, ?)").run(
+      subject,
+      sharedStamp,
+    );
+    db.prepare("INSERT INTO ai_budget_usage (subject, created_at) VALUES (?, ?)").run(
+      subject,
+      now - 120_000,
+    );
+    process.env.QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP = QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM;
+
+    const result = applyQuotaLedgerBackfill(db, now);
     expect(result.applied).toBe(true);
     expect(result.aiRows).toBe(2);
     const rows = db
@@ -520,6 +574,200 @@ describe("quota ledger backfill", () => {
       extraStamp,
     ]);
     expect(rows).toHaveLength(4);
+    db.close();
+  });
+
+  it("weiger twee oude calls plus een onafhankelijke live-call op hetzelfde tijdstip", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const email = "overlap@school.test";
+    const subject = aiBudgetSubjectFromEmail(email);
+    db.prepare(
+      `INSERT INTO users (id, email, tier, email_verified_at, created_at, updated_at)
+       VALUES ('user-overlap', ?, 'tester', ?, ?, ?)`,
+    ).run(email, now, now, now);
+    const stamp = now - 60_000;
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-overlap', ?)").run(
+      stamp,
+    );
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-overlap', ?)").run(
+      stamp,
+    );
+    db.prepare("INSERT INTO ai_budget_usage (subject, created_at) VALUES (?, ?)").run(
+      subject,
+      stamp,
+    );
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(false);
+    expect(result.refused).toBe(true);
+    expect(result.ambiguousAiOverlaps).toBe(2);
+    const rows = db
+      .prepare("SELECT COUNT(*) AS count FROM ai_budget_usage WHERE subject = ?")
+      .get(subject) as { count: number };
+    expect(rows.count).toBe(1);
+    const marker = db
+      .prepare("SELECT id FROM schema_migrations WHERE id = ?")
+      .get(QUOTA_LEDGER_BACKFILL_MIGRATION);
+    expect(marker).toBeFalsy();
+    db.close();
+  });
+
+  it("voegt oude events naast een onafhankelijke live-call na insert-reconciliatie", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const email = "overlap@school.test";
+    const subject = aiBudgetSubjectFromEmail(email);
+    db.prepare(
+      `INSERT INTO users (id, email, tier, email_verified_at, created_at, updated_at)
+       VALUES ('user-overlap', ?, 'tester', ?, ?, ?)`,
+    ).run(email, now, now, now);
+    const stamp = now - 60_000;
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-overlap', ?)").run(
+      stamp,
+    );
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-overlap', ?)").run(
+      stamp,
+    );
+    db.prepare("INSERT INTO ai_budget_usage (subject, created_at) VALUES (?, ?)").run(
+      subject,
+      stamp,
+    );
+    process.env.QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP = QUOTA_LEDGER_AI_NULL_SOURCE_INSERT;
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(true);
+    expect(result.aiRows).toBe(2);
+    const rows = db
+      .prepare(
+        "SELECT created_at AS createdAt, source_event_id AS sourceEventId FROM ai_budget_usage WHERE subject = ? ORDER BY id",
+      )
+      .all(subject) as Array<{ createdAt: number; sourceEventId: string | null }>;
+    expect(rows).toHaveLength(3);
+    expect(rows.filter((row) => row.sourceEventId === null)).toHaveLength(1);
+    expect(rows.filter((row) => row.sourceEventId?.startsWith("user_ai_usage:"))).toHaveLength(2);
+    db.close();
+  });
+
+  it("slaat oude events over die al een source_event_id op de live-rij hebben", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const email = "copied@school.test";
+    const subject = aiBudgetSubjectFromEmail(email);
+    db.prepare(
+      `INSERT INTO users (id, email, tier, email_verified_at, created_at, updated_at)
+       VALUES ('user-copied', ?, 'tester', ?, ?, ?)`,
+    ).run(email, now, now, now);
+    const stamp = now - 60_000;
+    const first = db
+      .prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-copied', ?)")
+      .run(stamp);
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-copied', ?)").run(
+      stamp,
+    );
+    db.prepare(
+      "INSERT INTO ai_budget_usage (subject, created_at, source_event_id) VALUES (?, ?, ?)",
+    ).run(subject, stamp, userAiUsageSourceEventId(Number(first.lastInsertRowid)));
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(true);
+    expect(result.refused).toBe(false);
+    expect(result.aiRows).toBe(1);
+    const rows = db
+      .prepare(
+        "SELECT source_event_id AS sourceEventId FROM ai_budget_usage WHERE subject = ? ORDER BY source_event_id",
+      )
+      .all(subject) as Array<{ sourceEventId: string }>;
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.sourceEventId).not.toBe(rows[1]?.sourceEventId);
+    db.close();
+  });
+
+  it("wijzigt een bestaande migratiemarker niet bij later ambigu overlap", () => {
+    const db = v519Database();
+    const now = Date.now();
+    const email = "marker@school.test";
+    const subject = aiBudgetSubjectFromEmail(email);
+    db.prepare(
+      `INSERT INTO users (id, email, tier, email_verified_at, created_at, updated_at)
+       VALUES ('user-marker', ?, 'tester', ?, ?, ?)`,
+    ).run(email, now, now, now);
+    const stamp = now - 60_000;
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-marker', ?)").run(
+      stamp,
+    );
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-marker', ?)").run(
+      stamp,
+    );
+
+    const first = applyQuotaLedgerBackfill(db, now);
+    expect(first.applied).toBe(true);
+    expect(first.aiRows).toBe(2);
+
+    db.prepare("INSERT INTO ai_budget_usage (subject, created_at) VALUES (?, ?)").run(
+      subject,
+      stamp,
+    );
+    const second = applyQuotaLedgerBackfill(db, now);
+    expect(second.applied).toBe(false);
+    expect(second.refused).toBe(false);
+    const marker = db
+      .prepare("SELECT id FROM schema_migrations WHERE id = ?")
+      .get(QUOTA_LEDGER_BACKFILL_MIGRATION);
+    expect(marker).toBeTruthy();
+    const rows = db
+      .prepare("SELECT COUNT(*) AS count FROM ai_budget_usage WHERE subject = ?")
+      .get(subject) as { count: number };
+    expect(rows.count).toBe(3);
+    db.close();
+  });
+
+  it("kent alleen claim of insert als AI-overlapkeuze", () => {
+    expect(parseQuotaLedgerAiNullSourceOverlap(undefined)).toBeNull();
+    expect(parseQuotaLedgerAiNullSourceOverlap(QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM)).toBe(
+      QUOTA_LEDGER_AI_NULL_SOURCE_CLAIM,
+    );
+    expect(() => parseQuotaLedgerAiNullSourceOverlap("guess")).toThrow(
+      /QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP/,
+    );
+  });
+
+  it("PR1-04 houdt twee AI-calls in dezelfde milliseconde als twee eenheden", async () => {
+    const db = v519Database();
+    const now = Date.now();
+    const email = "twin@school.test";
+    db.prepare(
+      `INSERT INTO users (id, email, tier, email_verified_at, created_at, updated_at)
+       VALUES ('user-twin', ?, 'tester', ?, ?, ?)`,
+    ).run(email, now, now, now);
+    const stamp = now - 60_000;
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-twin', ?)").run(
+      stamp,
+    );
+    db.prepare("INSERT INTO user_ai_usage (user_id, created_at) VALUES ('user-twin', ?)").run(
+      stamp,
+    );
+
+    const result = applyQuotaLedgerBackfill(db, now);
+    expect(result.applied).toBe(true);
+    expect(result.aiRows).toBe(2);
+    const subject = aiBudgetSubjectFromEmail(email);
+    const rows = db
+      .prepare(
+        "SELECT created_at AS createdAt, source_event_id AS sourceEventId FROM ai_budget_usage WHERE subject = ? ORDER BY source_event_id",
+      )
+      .all(subject) as Array<{ createdAt: number; sourceEventId: string }>;
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.createdAt).toBe(stamp);
+    expect(rows[1]?.createdAt).toBe(stamp);
+    expect(rows[0]?.sourceEventId).not.toBe(rows[1]?.sourceEventId);
+
+    const again = applyQuotaLedgerBackfill(db, now);
+    expect(again.applied).toBe(false);
+    const after = db
+      .prepare("SELECT COUNT(*) AS count FROM ai_budget_usage WHERE subject = ?")
+      .get(subject) as { count: number };
+    expect(after.count).toBe(2);
     db.close();
   });
 });

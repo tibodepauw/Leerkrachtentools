@@ -51,11 +51,17 @@ async function postJson(
 
 describe("B2B API v1", () => {
   afterEach(() => {
-    getDatabase()
-      .prepare(
-        "DELETE FROM api_usage_logs WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'ci')",
-      )
-      .run();
+    const db = getDatabase();
+    db.prepare(
+      "DELETE FROM api_request_leases WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'ci')",
+    ).run();
+    db.prepare(
+      `UPDATE api_org_quota SET in_flight = 0
+       WHERE org_id IN (SELECT org_id FROM api_keys WHERE name = 'ci')`,
+    ).run();
+    db.prepare(
+      "DELETE FROM api_usage_logs WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'ci')",
+    ).run();
   });
 
   it("autoriseert een geldige sleutel en weigert een foutieve (401)", async () => {

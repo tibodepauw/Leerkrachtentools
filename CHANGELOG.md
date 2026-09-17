@@ -6,6 +6,17 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Fixed
+- Requestbody-timeout geldt tijdens een wachtende read en weigert late EOF; leases starten op reserveringstijd (PR1-01)
+- Idempotency eerste antwoord en replay blijven gelijk als de orgcache vol is (PR1-02)
+- Organisatieconcurrency telt alle actieve leases, niet alleen de huidige UTC-maand (PR1-03)
+- AI-quota-backfill bewaart `user_ai_usage.id` als bron-event, zodat dezelfde milliseconde twee eenheden blijft (PR1-04)
+- Requestbody-reader registreert één abort-listener per aanvraag en verwijdert die na EOF, oversize, timeout of client-abort
+- AI-quota-backfill weigert live rijen zonder `source_event_id` die alleen op timestamp met oude events overlappen, tot `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP=claim` of `insert`
+- B2B-guard logt afgeronde arbeid opnieuw, los van vroege quota-afronding (D1-01)
+- Een gewone handlerrejection wordt als HTTP 500 gecachet, niet als timeout-429 (D1-02)
+- Eindcontrole D1-01/D1-02 bewaard; V20-08 splits de bevestigde streamlease van open restwerk (harde stop, cancellationketen, lease-expiry)
+
 ---
 
 ## [5.20.1] - 2026-09-08

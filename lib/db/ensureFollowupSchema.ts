@@ -44,6 +44,8 @@ export function ensureFollowupSchema(db: Database.Database) {
       ON api_request_leases(org_id, period, status);
     CREATE INDEX IF NOT EXISTS api_request_leases_active_heartbeat
       ON api_request_leases(status, heartbeat_at);
+    CREATE INDEX IF NOT EXISTS api_request_leases_org_status_heartbeat
+      ON api_request_leases(org_id, status, heartbeat_at);
 
     CREATE TABLE IF NOT EXISTS security_event_windows (
       org_id TEXT NOT NULL,
@@ -101,5 +103,17 @@ export function ensureFollowupSchema(db: Database.Database) {
         "ALTER TABLE api_org_quota ADD COLUMN opened_at INTEGER NOT NULL DEFAULT 0",
       );
     }
+  }
+
+  if (tableExists(db, "ai_budget_usage")) {
+    const aiColumns = columnNames(db, "ai_budget_usage");
+    if (!aiColumns.has("source_event_id")) {
+      db.exec("ALTER TABLE ai_budget_usage ADD COLUMN source_event_id TEXT");
+    }
+    db.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS ai_budget_usage_source_event
+        ON ai_budget_usage(source_event_id)
+        WHERE source_event_id IS NOT NULL;
+    `);
   }
 }

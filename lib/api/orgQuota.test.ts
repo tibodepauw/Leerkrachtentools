@@ -6,6 +6,8 @@ import { withApiAuth } from "@/lib/api-guard";
 import {
   API_DENIAL_LOG_CAP,
   completeOrgApiCall,
+  countGlobalActiveLeases,
+  countOrgActiveLeases,
   getOrgQuotaSnapshot,
   noteOrgDenial,
   reserveOrgApiCall,
@@ -30,6 +32,14 @@ function seedOrg(quota: number, scopes = ["curriculum:match"]) {
   });
   const key = generateApiKey(organization.id, "quota-test", scopes);
   return { organization, key };
+}
+
+function usageLogCount(keyId: string) {
+  return (
+    getDatabase()
+      .prepare("SELECT COUNT(*) AS count FROM api_usage_logs WHERE key_id = ?")
+      .get(keyId) as { count: number }
+  ).count;
 }
 
 const dummySchema = z.object({ query: z.string().trim().min(3) });
@@ -66,7 +76,17 @@ async function post(
 
 describe("B2B org quota ledger", () => {
   afterEach(() => {
-    getDatabase().prepare("DELETE FROM api_usage_logs WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'quota-test')").run();
+    const db = getDatabase();
+    db.prepare(
+      "DELETE FROM api_request_leases WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'quota-test')",
+    ).run();
+    db.prepare(
+      `UPDATE api_org_quota SET in_flight = 0
+       WHERE org_id IN (SELECT org_id FROM api_keys WHERE name = 'quota-test')`,
+    ).run();
+    db.prepare(
+      "DELETE FROM api_usage_logs WHERE key_id IN (SELECT id FROM api_keys WHERE name = 'quota-test')",
+    ).run();
   });
 
   it("laat bij één resterende eenheid hoogstens één zware handler starten", async () => {
@@ -112,7 +132,8 @@ describe("B2B org quota ledger", () => {
 
   it("zet het budget niet terug als de usage-log faalt", async () => {
     const { organization, key } = seedOrg(3);
-    const logSpy = vi.spyOn(await import("@/lib/api-keys"), "logApiUsage").mockImplementation(() => {
+    const apiKeys = await import("@/lib/api-keys");
+    const logSpy = vi.spyOn(apiKeys, "logApiUsage").mockImplementation(() => {
       throw new Error("log disk full");
     });
     const handler = handlerWithPause({ count: 0 }, 0);
@@ -120,6 +141,7 @@ describe("B2B org quota ledger", () => {
       const response = await post(handler, key.token);
       expect(response.status).toBe(200);
       expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+      expect(logSpy).toHaveBeenCalled();
     } finally {
       logSpy.mockRestore();
     }
@@ -155,6 +177,14 @@ describe("B2B org quota ledger", () => {
     expect(after - before).toBeLessThanOrEqual(API_DENIAL_LOG_CAP);
     expect(after - before).toBeGreaterThan(0);
     expect(events - eventsBefore).toBeLessThanOrEqual(API_DENIAL_LOG_CAP);
+    const denial = getDatabase()
+      .prepare(
+        `SELECT denial_count AS denialCount, denial_logs_written AS denialLogsWritten
+         FROM api_org_quota WHERE org_id = ? ORDER BY updated_at DESC LIMIT 1`,
+      )
+      .get(organization.id) as { denialCount: number; denialLogsWritten: number };
+    expect(denial.denialLogsWritten).toBeLessThanOrEqual(API_DENIAL_LOG_CAP);
+    expect(denial.denialCount).toBe(20);
   });
 
   it("boekhoudt validatiefouten niet als maandverbruik", async () => {
@@ -254,6 +284,47 @@ describe("B2B org quota ledger", () => {
     const headers = { "Idempotency-Key": "same-call-conflict" };
     const first = await post(handler, key.token, { query: "optellen tot 20" }, headers);
     const second = await post(handler, key.token, { query: "aftrekken tot 20" }, headers);
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(409);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+  });
+
+  it("geeft 409 op de echte auditroute bij dezelfde Idempotency-Key en een gewijzigde body", async () => {
+    const organization = createOrganization({
+      name: `Org ${randomUUID()}`,
+      email: `${randomUUID()}@publisher.test`,
+      tier: "enterprise",
+      quota: 20,
+    });
+    const key = generateApiKey(organization.id, "quota-test", ["curriculum:audit"]);
+    const { POST: postAudit } = await import("@/app/api/v1/curriculum/audit/route");
+    const headers = {
+      "content-type": "application/json",
+      authorization: `Bearer ${key.token}`,
+      "Idempotency-Key": "audit-body-conflict",
+    };
+    const firstBody = {
+      method_title: "Eerste methode",
+      grade: "4de leerjaar",
+      target_goals: ["De leerlingen tellen tot 20."],
+      lesson_units: [
+        { unit_id: "u1", title: "Tellen", content: "De leerlingen tellen tot 20." },
+      ],
+    };
+    const first = await postAudit(
+      new Request("http://benchmark.local/api/v1/curriculum/audit", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(firstBody),
+      }),
+    );
+    const second = await postAudit(
+      new Request("http://benchmark.local/api/v1/curriculum/audit", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...firstBody, method_title: "Andere methode" }),
+      }),
+    );
     expect(first.status).toBe(200);
     expect(second.status).toBe(409);
     expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
@@ -509,4 +580,227 @@ describe("B2B org quota ledger", () => {
     expect(JSON.parse(secondText).error).toBeUndefined();
     expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
   }, 60_000);
+
+  it("PR1-01 reserveert pas na de body met een actuele heartbeat", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const t0 = Date.now();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"query":"optellen tot 20"}'));
+        setTimeout(() => controller.close(), 180);
+      },
+    });
+    const response = await handler(
+      new Request("http://benchmark.local/api/v1/curriculum/match", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...authHeader(key.token),
+        },
+        body,
+        duplex: "half",
+      } as RequestInit & { duplex: "half" }),
+    );
+    expect(response.status).toBe(200);
+    expect(started.count).toBe(1);
+    const lease = getDatabase()
+      .prepare(
+        `SELECT heartbeat_at AS heartbeatAt, created_at AS createdAt
+         FROM api_request_leases WHERE org_id = ? ORDER BY created_at DESC LIMIT 1`,
+      )
+      .get(organization.id) as { heartbeatAt: number; createdAt: number };
+    expect(lease.createdAt).toBeGreaterThanOrEqual(t0 + 150);
+    expect(lease.heartbeatAt).toBeGreaterThanOrEqual(t0 + 150);
+  });
+
+  it("PR1-01 start geen handler na een verlopen body", async () => {
+    vi.stubEnv("ORG_API_BODY_TIMEOUT_MS", "50");
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('{"query":"optellen tot 20"}'));
+      },
+    });
+    try {
+      const response = await handler(
+        new Request("http://benchmark.local/api/v1/curriculum/match", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            ...authHeader(key.token),
+          },
+          body,
+          duplex: "half",
+        } as RequestInit & { duplex: "half" }),
+      );
+      expect(response.status).toBe(400);
+      expect(started.count).toBe(0);
+      expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(0);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("PR1-02 houdt eerste antwoord en replay gelijk rond de orgcachegrens", async () => {
+    const { organization, key } = seedOrg(40);
+    const pad = `${"é".repeat(50)}${"x".repeat(499_700)}`;
+    const handler = withApiAuth(
+      async () => NextResponse.json({ pad }),
+      { requiredScope: "curriculum:match", bodySchema: dummySchema },
+    );
+    let lastKey = "";
+    for (let index = 0; index < 16; index += 1) {
+      lastKey = `fill-${index}`;
+      const response = await post(handler, key.token, { query: "optellen tot 20" }, {
+        "Idempotency-Key": lastKey,
+      });
+      expect(response.status).toBe(200);
+    }
+    const overflowKey = "overflow-1";
+    const first = await post(handler, key.token, { query: "optellen tot 20" }, {
+      "Idempotency-Key": overflowKey,
+    });
+    const replay = await post(handler, key.token, { query: "optellen tot 20" }, {
+      "Idempotency-Key": overflowKey,
+    });
+    const firstText = await first.text();
+    const replayText = await replay.text();
+    expect(first.status).toBe(replay.status);
+    expect(firstText).toBe(replayText);
+    expect(first.status).toBe(413);
+    expect(JSON.parse(replayText).code).toBe("idempotency_payload_too_large");
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(17);
+  }, 60_000);
+
+  it("PR1-03 telt organisatieconcurrency over maandgrenzen heen", async () => {
+    const { organization, key } = seedOrg(20);
+    const september = Date.UTC(2026, 8, 30, 23, 59, 59);
+    const october = september + 2_000;
+    const leases = [];
+    for (let index = 0; index < 4; index += 1) {
+      const reserved = reserveOrgApiCall({
+        orgId: organization.id,
+        keyId: key.id,
+        monthlyLimit: 20,
+        method: "POST",
+        endpoint: "/api/v1/curriculum/match",
+        requestDigest: `sept-${index}`,
+        now: september,
+      });
+      expect(reserved.ok && !reserved.replay).toBe(true);
+      leases.push(reserved);
+    }
+    const blocked = reserveOrgApiCall({
+      orgId: organization.id,
+      keyId: key.id,
+      monthlyLimit: 20,
+      method: "POST",
+      endpoint: "/api/v1/curriculum/match",
+      requestDigest: "oct-1",
+      now: october,
+    });
+    expect(blocked.ok).toBe(false);
+    if (!blocked.ok) expect(blocked.reason).toBe("org-concurrency");
+    expect(countOrgActiveLeases(organization.id, october)).toBe(4);
+    expect(countGlobalActiveLeases(october)).toBeGreaterThanOrEqual(4);
+    expect(getOrgQuotaSnapshot(organization.id, october).inFlight).toBe(0);
+    expect(getOrgQuotaSnapshot(organization.id, september).inFlight).toBe(4);
+  });
+
+  it("D1-01 REQUIRED schrijft één usage-log voor een normale 200 zonder Idempotency-Key", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const before = usageLogCount(key.id);
+    const response = await post(handler, key.token);
+    expect(response.status).toBe(200);
+    expect(started.count).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    expect(usageLogCount(key.id) - before).toBe(1);
+  });
+
+  it("D1-01 REQUIRED schrijft één usage-log voor de eerste uitvoering, niet voor replay", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = handlerWithPause(started, 0);
+    const headers = { "Idempotency-Key": "d1-01-replay" };
+    const before = usageLogCount(key.id);
+    const first = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    const replay = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    expect(first.status).toBe(200);
+    expect(replay.status).toBe(200);
+    expect(replay.headers.get("X-Idempotent-Replay")).toBe("1");
+    expect(started.count).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    expect(usageLogCount(key.id) - before).toBe(1);
+  });
+
+  it("D1-02 REQUIRED cachet een handlerrejection als 500, niet als timeout-429", async () => {
+    const { organization, key } = seedOrg(5);
+    const started = { count: 0 };
+    const handler = withApiAuth(
+      async () => {
+        started.count += 1;
+        throw new Error("controlled handler failure");
+      },
+      { requiredScope: "curriculum:match", bodySchema: dummySchema },
+    );
+    const headers = { "Idempotency-Key": "d1-02-reject" };
+    const first = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    const replay = await post(handler, key.token, { query: "optellen tot 20" }, headers);
+    const firstBody = await first.text();
+    const replayBody = await replay.text();
+    expect(first.status).toBe(500);
+    expect(replay.status).toBe(500);
+    expect(replay.headers.get("X-Idempotent-Replay")).toBe("1");
+    expect(firstBody).toContain("niet verwerken");
+    expect(replayBody).toBe(firstBody);
+    expect(replayBody).not.toContain("te lang");
+    expect(started.count).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    expect(getOrgQuotaSnapshot(organization.id).inFlight).toBe(0);
+  });
+
+  it("V20-08 deellease: streamtimeout houdt de lease tot de body is uitgelezen", async () => {
+    vi.stubEnv("ORG_API_MAX_EXECUTION_MS", "40");
+    const { organization, key } = seedOrg(10);
+    const produced = { count: 0 };
+    const handler = withApiAuth(
+      async () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            setTimeout(() => {
+              produced.count += 1;
+              controller.enqueue(new TextEncoder().encode('{"late":true}'));
+              controller.close();
+            }, 120);
+          },
+        });
+        return new Response(stream, {
+          headers: { "content-type": "application/json" },
+        });
+      },
+      { requiredScope: "curriculum:match", bodySchema: dummySchema },
+    );
+    try {
+      const response = await post(handler, key.token);
+      expect(response.status).toBe(429);
+      expect(produced.count).toBe(0);
+      expect(countOrgActiveLeases(organization.id)).toBe(1);
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(produced.count).toBe(1);
+      expect(countOrgActiveLeases(organization.id)).toBe(0);
+      expect(getOrgQuotaSnapshot(organization.id).consumed).toBe(1);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  }, 10_000);
+
+  it.todo(
+    "OPEN V20-08: harde stop, volledige cancellationketen en lease-expiry die werk stopt",
+  );
 });
