@@ -235,12 +235,19 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-481 automated tests across 111 test files cover curriculum retrieval and ranking,
+The latest local run passed 508 tests across 115 test files (one skipped and two
+existing V20-08 TODOs). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
 The test total is the Vitest case count, not a code-coverage percentage.
 
 ## Production deployment
+
+For the first DigitalOcean VM installation, follow [the first-deployment guide](docs/digitalocean-first-deployment.md). It includes nginx/systemd templates, a consistent SQLite backup helper, and the remaining staging checks. No production deployment has been performed. Current follow-up status: [H-01–H-06](docs/hardening-h01-h06.md).
+
+The login screen offers shared-computer mode: lessons and previews stay in tab memory and are lost on reload/close; previous local data for that account is removed on activation. Export work before closing. Session changes are broadcast to other tabs and rechecked on focus.
+
+PDF/DOC imports use bounded child processes. Avatar uploads are decoded and normalized to metadata-free WebP. Newly issued B2B keys expire after 90 days by default; use `npm run manage-api-keys -- help` for issue/rotate/revoke commands. Rotation preserves the organization's consumed budget.
 
 Next.js standalone output:
 

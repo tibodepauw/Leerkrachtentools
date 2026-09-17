@@ -49,6 +49,7 @@ export async function runProCurriculumAnalysis({
   budget,
   kind = "leerplandoel",
   fallbackLimit = CURRICULUM_TOP_N,
+  signal,
 }: {
   query: string;
   retrieved: CurriculumSearchResult[];
@@ -56,7 +57,9 @@ export async function runProCurriculumAnalysis({
   budget: ProCurriculumBudget;
   kind?: ProCurriculumKind;
   fallbackLimit?: number;
+  signal?: AbortSignal;
 }): Promise<ProCurriculumAnalysisResult> {
+  signal?.throwIfAborted();
   if (retrieved.length === 0) {
     return {
       merged: [],
@@ -90,6 +93,7 @@ export async function runProCurriculumAnalysis({
         allowLocalMock: false,
         userAiConfig,
         maxOutputTokens: 1200,
+        abortSignal: signal,
       });
 
     let tracked:
@@ -100,6 +104,7 @@ export async function runProCurriculumAnalysis({
       try {
         tracked = { ok: true, result: await runAnalysis() };
       } catch (error) {
+        signal?.throwIfAborted();
         console.error("[rag-curriculum:pro]", error);
         return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.aiError, fallbackLimit);
       }
@@ -141,6 +146,7 @@ export async function runProCurriculumAnalysis({
       proFallback: false,
     };
   } catch (error) {
+    signal?.throwIfAborted();
     console.error("[rag-curriculum:pro]", error);
     return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.aiError, fallbackLimit);
   }

@@ -1,6 +1,17 @@
 # Hardening tickets H-01 tot H-06
 
-Deze tickets blijven open. Ze zijn aparte product- en operationskeuzes, geen bewezen exploits uit de v5.20.0-vervolgaudit, en zitten niet in de follow-upfixes.
+De onderstaande oorspronkelijke tickets zijn op 17 september 2026 verder uitgewerkt op `codex/production-preparation`. Dit is geen volledige securityaudit en geen deployment. De eigenaar bevestigt dat er nog geen productieomgeving live staat.
+
+| Ticket | Uitgewerkt in code | Nog te verifiëren of uit te voeren |
+| --- | --- | --- |
+| H-01 | Expliciete gedeelde-computerkeuze bij login; lessen en previews in tabgeheugen; eerdere scoped opslag wordt bij activatie gewist; logout wist geheugen | Browseracceptatie voor terugknop, crash/heropenen, opslagblokkering en twee accounts |
+| H-02 | BroadcastChannel + storage-events; sessiecheck bij focus/pageshow; inhoud verborgen tijdens revalidatie; logout faalt zichtbaar bij serverfout | Volledige interactietest met meerdere browservensters, offline/online en accountwissel |
+| H-03 | PDF/DOC in aparte processen; 8 seconden deadline met harde processtop; maximaal twee processen; JS-heapgrens; geen appsecrets in parseromgeving | Linux-staging, grotere corpus-/documentbelasting, per-job native geheugenlimiet en verdere OS-sandboxing |
+| H-04 | Volledig decoderen; 16 miljoen pixels, 8192 per zijde; geen animatie; WebP maximaal 512px; metadata strippen; tijdelijk bestand en rename; no-store | Routeacceptatie op Linux met een verzameling echte afbeeldingen |
+| H-05 | Nieuwe sleutels standaard 90 dagen (max. 365); expliciete scopes in CLI; uitgifte aan bestaande org; atomaire rotatie/intrekking; auditmetadata zonder token; ingetrokken cache-replay getest | Operationele rotatieplanning en beheer van reeds uitgegeven sleutels |
+| H-06 | Actions op SHA; CI-timeout/concurrency; Dependabot; standalone smoke-test; nginx/systemd-templates; consistente SQLite-backup met integriteitscheck | Branch/tagbescherming door eigenaar; templates activeren en toetsen op VM; providerbudgetten, externe alarmen, offsite-backups en volledige hersteltest |
+
+De oorspronkelijke beschrijvingen hieronder zijn historische context. De tabel is de actuele opvolgstatus. V20-08 is slechts gedeeltelijk aangepakt: cancellation gaat nu door de B2B-routes en Cloudflare; actieve verwerking vernieuwt haar lease. Een harde stop voor willekeurige B2B-handlercode is nog open. PDF/DOC-procesisolatie sluit dat afzonderlijke ticket niet.
 
 ## H-01 Gedeeld-apparaatmodus
 

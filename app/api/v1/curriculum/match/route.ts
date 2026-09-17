@@ -17,6 +17,7 @@ export const POST = withApiAuth(
       mode: input.mode,
       limit: input.limit,
       orgId: context.orgId,
+      signal: context.signal,
     });
 
     return NextResponse.json(

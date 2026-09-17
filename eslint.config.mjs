@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     },
   },
   globalIgnores([
+    ".tooling/**",
     ".next/**",
     "out/**",
     "build/**",

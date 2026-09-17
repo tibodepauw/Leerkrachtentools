@@ -1,6 +1,7 @@
 "use client";
 
 import { clearRagQueryCache } from "@/lib/rag/clientQueryCache";
+import { clearTemporaryStorage } from "@/lib/storage/sharedDevice";
 import {
   deleteUserBrowserStorage,
   setActiveUserId,
@@ -9,6 +10,7 @@ import { resetLessonStoreState } from "@/stores/useLessonStore";
 import { resetSettingsStoreState } from "@/stores/useSettingsStore";
 
 export function detachClientUserStorage() {
+  clearTemporaryStorage();
   clearRagQueryCache();
   setActiveUserId(null);
   resetLessonStoreState();
@@ -16,7 +18,6 @@ export function detachClientUserStorage() {
 }
 
 export async function deleteClientUserStorage(userId: string) {
-  clearRagQueryCache();
-  await deleteUserBrowserStorage(userId);
   detachClientUserStorage();
+  await deleteUserBrowserStorage(userId);
 }

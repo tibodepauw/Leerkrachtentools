@@ -90,6 +90,7 @@ export async function matchCurriculumGoals({
   mode,
   orgId,
   limit,
+  signal,
 }: {
   query: string;
   network: PublisherNetwork;
@@ -98,7 +99,9 @@ export async function matchCurriculumGoals({
   mode: "snel" | "pro";
   orgId: string;
   limit?: number;
+  signal?: AbortSignal;
 }): Promise<CurriculumMatchPayload> {
+  signal?.throwIfAborted();
   const outputLimit = clampMatchLimit(limit);
   const target = resolveMatchSearchTarget(network, level);
   const retrievalLimit =
@@ -143,6 +146,7 @@ export async function matchCurriculumGoals({
         phases: [],
       },
       budget: { kind: "org", orgId },
+      signal,
       kind: target.kind === "minimum-goals" ? "minimumdoel" : "leerplandoel",
     });
     retrieved = analysis.merged;
@@ -150,6 +154,7 @@ export async function matchCurriculumGoals({
     proFallback = analysis.proFallback;
   }
 
+  signal?.throwIfAborted();
   const results = retrieved
     .map((result) => toCurriculumMatchResult(result))
     .filter((result): result is CurriculumMatchResult => result !== null)

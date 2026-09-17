@@ -6,6 +6,12 @@ import { getDatabase } from "@/lib/db/sqlite";
 export { startOfNextUtcMonth, startOfUtcMonth };
 
 export const API_KEY_PREFIX = "lt_live_";
+export const API_KEY_DEFAULT_LIFETIME_DAYS = 90;
+
+export function apiKeyExpiry(days = API_KEY_DEFAULT_LIFETIME_DAYS, now = Date.now()) {
+  if (!Number.isInteger(days) || days < 1 || days > 365) throw new Error("Geldigheid moet een geheel aantal dagen tussen 1 en 365 zijn.");
+  return now + days * 86_400_000;
+}
 
 export const API_KEY_SCOPES = [
   "curriculum:match",
@@ -188,7 +194,9 @@ export function generateApiKey(
   orgId: string,
   name: string,
   scopes: string[],
+  lifetimeDays = API_KEY_DEFAULT_LIFETIME_DAYS,
 ) {
+  const expiresAt = apiKeyExpiry(lifetimeDays);
   const trimmedName = name.trim();
   if (!trimmedName) throw new Error("Sleutelnaam is verplicht.");
   const normalizedScopes = normalizeApiKeyScopes(scopes);
@@ -211,11 +219,13 @@ export function generateApiKey(
     keyPrefix: API_KEY_PREFIX,
     scopes: normalizedScopes,
     createdAt: Date.now(),
+    expiresAt,
   };
+  db.transaction(() => {
   db.prepare(
     `INSERT INTO api_keys
       (id, org_id, name, key_prefix, key_hash, scopes, is_active, expires_at, last_used_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 1, NULL, NULL, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, 1, ?, NULL, ?)`,
   ).run(
     key.id,
     key.orgId,
@@ -223,8 +233,11 @@ export function generateApiKey(
     key.keyPrefix,
     hashApiKey(plaintext),
     JSON.stringify(normalizedScopes),
+    expiresAt,
     key.createdAt,
   );
+  db.prepare("INSERT INTO api_key_events (key_id, org_id, action, created_at) VALUES (?, ?, 'issued', ?)").run(key.id, key.orgId, key.createdAt);
+  })();
 
   return {
     ...key,
@@ -359,12 +372,27 @@ export function logApiUsage({
 
 export function revokeApiKey(keyId: string) {
   const db = getDatabase();
+  db.transaction(() => {
+  const row = db.prepare("SELECT org_id FROM api_keys WHERE id = ?").get(keyId.trim()) as { org_id: string } | undefined;
   const result = db
     .prepare("UPDATE api_keys SET is_active = 0 WHERE id = ?")
     .run(keyId.trim());
   if (result.changes === 0) {
     throw new Error("API-sleutel niet gevonden.");
   }
+  db.prepare("INSERT INTO api_key_events (key_id, org_id, action, created_at) VALUES (?, ?, 'revoked', ?)").run(keyId.trim(), row!.org_id, Date.now());
+  })();
+}
+
+export function rotateApiKey(keyId: string, lifetimeDays = API_KEY_DEFAULT_LIFETIME_DAYS) {
+  const db = getDatabase();
+  return db.transaction(() => {
+    const previous = db.prepare("SELECT * FROM api_keys WHERE id = ? AND is_active = 1").get(keyId.trim()) as ApiKeyRow | undefined;
+    if (!previous) throw new Error("Actieve API-sleutel niet gevonden.");
+    const next = generateApiKey(previous.org_id, previous.name, parseApiKeyScopes(previous.scopes), lifetimeDays);
+    revokeApiKey(previous.id);
+    return next;
+  })();
 }
 
 export function inspectOrganization(orgId: string, now = Date.now()) {

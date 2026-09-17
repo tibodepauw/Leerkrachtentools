@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import packageJson from "./package.json";
 import { GENERATIVE_LABS_LEGAL } from "./lib/legal/generativeLabs";
 
@@ -21,19 +21,27 @@ function resolveGitHubRepo() {
   if (process.env.NEXT_PUBLIC_GITHUB_REPO) {
     return process.env.NEXT_PUBLIC_GITHUB_REPO;
   }
-  try {
-    const remote = execSync("git remote get-url github", {
-      encoding: "utf8",
-    }).trim();
-    const match = remote.match(/github\.com[:/](.+?)(?:\.git)?$/);
-    return match ? `https://github.com/${match[1]}` : "";
-  } catch {
-    return "";
+  for (const name of ["github", "origin"]) {
+    try {
+      const remote = execFileSync("git", ["remote", "get-url", name], {
+        encoding: "utf8", stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
+      const match = remote.match(/github\.com[:/](.+?)(?:\.git)?$/);
+      if (match) return `https://github.com/${match[1]}`;
+    } catch { /* try the next configured remote */ }
   }
+  return "";
 }
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Child processes resolve parsers with Node rather than Turbopack module IDs.
+  outputFileTracingIncludes: {
+    "/api/import-lesson-document": [
+      "./node_modules/{pdf-parse,pdfjs-dist,word-extractor,saxes,xmlchars,yauzl,fd-slicer,pend,buffer-crc32}/**/*",
+      "./node_modules/@napi-rs/canvas*/**/*",
+    ],
+  },
   poweredByHeader: false,
   env: {
     NEXT_PUBLIC_APP_VERSION: packageJson.version,

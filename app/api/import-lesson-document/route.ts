@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       scope: "document-parse",
       subject: session.id,
       limit: 1,
-      task: () => extractDocumentText(buffer, file.name),
+      task: () => extractDocumentText(buffer, file.name, request.signal),
     });
 
     if (!text.trim()) {

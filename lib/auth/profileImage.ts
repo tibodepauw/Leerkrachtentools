@@ -1,9 +1,22 @@
 import "server-only";
 
-import { mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
+import sharp from "sharp";
 
 export const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+export const PROFILE_IMAGE_MAX_PIXELS = 16_000_000;
+
+export async function canonicalProfileImage(buffer: Buffer) {
+  const image = sharp(buffer, { limitInputPixels: PROFILE_IMAGE_MAX_PIXELS, failOn: "warning", animated: false });
+  const metadata = await image.metadata();
+  if (!metadata.width || !metadata.height || metadata.width > 8192 || metadata.height > 8192 || (metadata.pages ?? 1) > 1) {
+    throw new Error("Kies een niet-geanimeerde afbeelding van maximaal 8192 pixels per zijde.");
+  }
+  // Sharp strips EXIF/XMP by default. Decode fully and never serve original bytes.
+  return image.rotate().resize(512, 512, { fit: "inside", withoutEnlargement: true }).webp({ quality: 85 }).timeout({ seconds: 5 }).toBuffer();
+}
 
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
 
@@ -91,7 +104,7 @@ function hasValidImageSignature(extension: string, buffer: Buffer) {
   }
 }
 
-export function saveProfileImageFile(
+export async function saveProfileImageFile(
   userId: string,
   fileName: string,
   buffer: Buffer,
@@ -110,10 +123,20 @@ export function saveProfileImageFile(
     );
   }
 
-  const nextFileName = profileImageFileName(userId, fileName);
+  const canonical = await canonicalProfileImage(buffer);
+  const nextFileName = profileImageFileName(userId, "avatar.webp");
   const directory = profileImageDirectory();
+  const target = profileImageAbsolutePath(nextFileName);
+  const temporary = path.join(directory, `${userId}-${randomUUID()}.tmp`);
+  try {
+    writeFileSync(temporary, canonical, { flag: "wx", mode: 0o600 });
+    renameSync(temporary, target);
+  } finally {
+    try { unlinkSync(temporary); } catch { /* already renamed */ }
+  }
 
   for (const extension of ALLOWED_EXTENSIONS) {
+    if (extension === "webp") continue;
     const candidate = path.join(directory, `${userId}.${extension}`);
     try {
       unlinkSync(candidate);
@@ -121,7 +144,6 @@ export function saveProfileImageFile(
     }
   }
 
-  writeFileSync(profileImageAbsolutePath(nextFileName), buffer);
   return nextFileName;
 }
 
