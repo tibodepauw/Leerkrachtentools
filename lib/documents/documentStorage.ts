@@ -1,4 +1,5 @@
 "use client";
+import { isSharedDevice, temporaryDocuments } from "@/lib/storage/sharedDevice";
 
 import {
   documentDatabaseName,
@@ -23,7 +24,10 @@ function openDatabase() {
     const request = indexedDB.open(documentDatabaseName(userId), DB_VERSION);
 
     request.onerror = () => reject(request.error ?? new Error("IndexedDB open failed."));
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      request.result.onversionchange = () => request.result.close();
+      resolve(request.result);
+    };
     request.onupgradeneeded = () => {
       const database = request.result;
       if (!database.objectStoreNames.contains(STORE_NAME)) {
@@ -34,6 +38,10 @@ function openDatabase() {
 }
 
 export async function saveLessonDocument(id: string, file: Blob) {
+  if (isSharedDevice()) {
+    temporaryDocuments.set(`${requireActiveUserId()}:${id}`, file);
+    return;
+  }
   const database = await openDatabase();
 
   await new Promise<void>((resolve, reject) => {
@@ -49,6 +57,7 @@ export async function saveLessonDocument(id: string, file: Blob) {
 }
 
 export async function getLessonDocument(id: string) {
+  if (isSharedDevice()) return temporaryDocuments.get(`${requireActiveUserId()}:${id}`) ?? null;
   const database = await openDatabase();
 
   const blob = await new Promise<Blob | null>((resolve, reject) => {
@@ -65,6 +74,10 @@ export async function getLessonDocument(id: string) {
 }
 
 export async function deleteLessonDocument(id: string) {
+  if (isSharedDevice()) {
+    temporaryDocuments.delete(`${requireActiveUserId()}:${id}`);
+    return;
+  }
   const database = await openDatabase();
 
   await new Promise<void>((resolve, reject) => {

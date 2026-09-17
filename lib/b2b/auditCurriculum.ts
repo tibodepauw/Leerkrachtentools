@@ -45,11 +45,13 @@ export async function auditCurriculumCoverage({
   lessonUnits,
   grade,
   orgId,
+  signal,
 }: {
   targetGoals: string[];
   lessonUnits: CurriculumAuditUnit[];
   grade: string;
   orgId: string;
+  signal?: AbortSignal;
 }): Promise<{
   coverage: CurriculumAuditCoverage[];
   missing: string[];
@@ -58,6 +60,10 @@ export async function auditCurriculumCoverage({
   const coverage: CurriculumAuditCoverage[] = [];
 
   for (const goal of targetGoals) {
+    signal?.throwIfAborted();
+    // Yield between goals so disconnects and deadlines can be observed.
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    signal?.throwIfAborted();
     const tokens = new Set(
       [...tokenize(goal)].filter((token) => token.length >= 4),
     );
@@ -84,6 +90,7 @@ export async function auditCurriculumCoverage({
         grade,
         mode: "snel",
         orgId,
+        signal,
       })
     ).results[0];
 

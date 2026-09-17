@@ -14,6 +14,7 @@ export const POST = withApiAuth(
       lessonUnits: input.lesson_units,
       grade: input.grade,
       orgId: context.orgId,
+      signal: context.signal,
     });
 
     return NextResponse.json(

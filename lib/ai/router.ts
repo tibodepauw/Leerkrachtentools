@@ -42,6 +42,7 @@ async function callCloudflare<T>({
   system,
   prompt,
   userAiConfig,
+  abortSignal,
 }: StructuredRequest<T>, timeoutMs: number): Promise<T> {
   const { accountId: account, token, model } = cloudflareCredentials(
     userAiConfig,
@@ -64,7 +65,7 @@ async function callCloudflare<T>({
           { role: "user", content: prompt },
         ],
       }),
-      signal: AbortSignal.timeout(timeoutMs),
+      signal: abortSignal ? AbortSignal.any([abortSignal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
     },
   );
   if (!response.ok) throw new Error(`Cloudflare HTTP ${response.status}`);
@@ -77,6 +78,7 @@ async function callCloudflare<T>({
 export async function runStructured<T>(
   request: StructuredRequest<T>,
 ): Promise<StructuredResult<T>> {
+  request.abortSignal?.throwIfAborted();
   const errors: string[] = [];
   const deadline = Date.now() + 45_000;
   let attempts = 0;
@@ -92,6 +94,7 @@ export async function runStructured<T>(
   }
 
   for (const candidate of candidates.slice(0, 2)) {
+    request.abortSignal?.throwIfAborted();
     try {
       const remaining = deadline - Date.now();
       if (remaining <= 0) break;
@@ -134,6 +137,7 @@ export async function runStructured<T>(
         fallbackErrors: [],
       };
     } catch (error) {
+      request.abortSignal?.throwIfAborted();
       errors.push(
         `${candidate.name}: ${error instanceof Error ? error.message : "onbekende fout"}`,
       );
@@ -156,6 +160,7 @@ export async function runStructured<T>(
         fallbackErrors: [],
       };
     } catch (error) {
+      request.abortSignal?.throwIfAborted();
       errors.push(
         `cloudflare: ${error instanceof Error ? error.message : "onbekende fout"}`,
       );

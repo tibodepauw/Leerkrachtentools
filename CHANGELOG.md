@@ -6,6 +6,18 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Added
+- Gedeelde-computermodus met tabgeheugen, sessiemeldingen tussen tabbladen en revalidatie bij terugkeer
+- PDF/DOC-parserprocessen met harde deadline, concurrencygrens en begrensde JavaScript-heap
+- API-sleutels met standaard 90 dagen geldigheid, expliciete scopes, rotatie en auditmetadata
+- DigitalOcean/nginx/systemd-voorbeelden, SQLite-backuphelper en standalone HTTP-smoke-test in CI
+
+### Security
+- Avatars volledig hercoderen naar begrensde WebP zonder metadata
+- Afbreeksignalen doorgeven tot Pro/Cloudflare; providerfallback stopt na annulering; actieve B2B-leases krijgen heartbeats
+- GitHub Actions op commit-SHA vastgezet; CI-looptijd begrensd en Dependabot toegevoegd
+- Uitgebreide securityaudit en Linux-productieacceptatie blijven afzonderlijke vervolgstappen
+
 ### Fixed
 - Requestbody-timeout geldt tijdens een wachtende read en weigert late EOF; leases starten op reserveringstijd (PR1-01)
 - Idempotency eerste antwoord en replay blijven gelijk als de orgcache vol is (PR1-02)

@@ -42,6 +42,7 @@ import { SettingsView } from "@/components/settings/SettingsView";
 import { LegalDocumentNav } from "@/components/legal/LegalDocuments";
 import { AboutAppDialog, LegalColophon } from "@/components/legal/LegalColophon";
 import { resetPostHogIdentity } from "@/components/providers/posthog-provider";
+import { announceSessionChange } from "@/lib/storage/sessionSync";
 
 interface AccountSettingsProps {
   userId: string;
@@ -114,11 +115,17 @@ export function AccountSettings({
   }
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) throw new Error("logout failed");
+    } catch {
+      toast.error("Uitloggen is niet gelukt. Probeer opnieuw zodra je verbinding hebt.");
+      return;
+    }
     resetPostHogIdentity();
     detachClientUserStorage();
-    router.push("/");
-    router.refresh();
+    announceSessionChange();
+    window.location.replace("/");
   }
 
   async function deleteAccount() {
@@ -128,6 +135,7 @@ export function AccountSettings({
       return;
     }
     resetPostHogIdentity();
+    announceSessionChange();
     try {
       await deleteClientUserStorage(userId);
     } catch {

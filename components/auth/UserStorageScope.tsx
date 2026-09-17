@@ -23,6 +23,9 @@ import {
   useSettingsStore,
 } from "@/stores/useSettingsStore";
 import type { ModuleId } from "@/types";
+import { SessionBoundary } from "@/components/auth/SessionBoundary";
+import { isSharedDevice } from "@/lib/storage/sharedDevice";
+import { deleteUserBrowserStorage } from "@/lib/storage/userStorageScope";
 
 interface UserStorageScopeProps {
   userId: string;
@@ -66,6 +69,7 @@ export function UserStorageScope({
     isStorageWarmForUser(userId) ? userId : null,
   );
   const pinsReadyRef = useRef(isStorageWarmForUser(userId));
+  const [storageError, setStorageError] = useState(false);
   const accountPinsKey = serializePinnedModules(accountPinnedModules);
 
   useLayoutEffect(() => {
@@ -93,8 +97,13 @@ export function UserStorageScope({
       }
 
       setActiveUserId(userId);
-      migrateLegacyLessonStorage(userId);
-      await migrateLegacyDocumentStorage(userId);
+      if (isSharedDevice()) {
+        await deleteUserBrowserStorage(userId);
+      } else {
+        migrateLegacyLessonStorage(userId);
+        await migrateLegacyDocumentStorage(userId);
+      }
+      if (cancelled) return;
 
       await useLessonStore.persist.rehydrate();
       await useSettingsStore.persist.rehydrate();
@@ -125,7 +134,12 @@ export function UserStorageScope({
       }
     }
 
-    void activateUserStorage();
+    void activateUserStorage().catch(() => {
+      if (!cancelled) {
+        setActiveUserId(null);
+        setStorageError(true);
+      }
+    });
 
     return () => {
       cancelled = true;
@@ -152,12 +166,15 @@ export function UserStorageScope({
   }, [userId]);
 
   return (
+    <SessionBoundary userId={userId}>
+    {storageError ? <p role="alert" className="p-6">Browseropslag kon niet veilig worden geopend of gewist. Sluit andere tabbladen van deze app, wis zo nodig de sitegegevens en laad opnieuw.</p> :
     <LoadingGate
       loading={readyUserId !== userId}
       intent="auto"
       label="Accountgegevens laden…"
     >
       {children}
-    </LoadingGate>
+    </LoadingGate>}
+    </SessionBoundary>
   );
 }

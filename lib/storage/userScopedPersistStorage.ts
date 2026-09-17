@@ -1,6 +1,7 @@
 "use client";
 
 import type { StateStorage } from "zustand/middleware";
+import { isSharedDevice, temporaryStorage } from "@/lib/storage/sharedDevice";
 import {
   getActiveUserId,
   lessonStoreStorageKey,
@@ -22,19 +23,24 @@ export function createUserScopedPersistStorage(
     getItem: () => {
       const userId = getActiveUserId();
       if (!userId) return null;
-      return window.localStorage.getItem(storageKeyForScope(scope, userId));
+      const key = storageKeyForScope(scope, userId);
+      return isSharedDevice() ? temporaryStorage.get(key) ?? null : window.localStorage.getItem(key);
     },
     setItem: (_name, value) => {
       void _name;
       const userId = getActiveUserId();
       if (!userId) return;
-      window.localStorage.setItem(storageKeyForScope(scope, userId), value);
+      const key = storageKeyForScope(scope, userId);
+      if (isSharedDevice()) temporaryStorage.set(key, value);
+      else window.localStorage.setItem(key, value);
     },
     removeItem: (_name) => {
       void _name;
       const userId = getActiveUserId();
       if (!userId) return;
-      window.localStorage.removeItem(storageKeyForScope(scope, userId));
+      const key = storageKeyForScope(scope, userId);
+      temporaryStorage.delete(key);
+      window.localStorage.removeItem(key);
     },
   };
 }

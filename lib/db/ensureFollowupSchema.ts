@@ -22,6 +22,13 @@ function tableExists(db: Database.Database, table: string) {
  * are unsafe to replay and are dropped rather than migrated.
  */
 export function ensureFollowupSchema(db: Database.Database) {
+  db.exec(`CREATE TABLE IF NOT EXISTS api_key_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key_id TEXT NOT NULL,
+    org_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    created_at INTEGER NOT NULL
+  )`);
   db.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       id TEXT PRIMARY KEY,

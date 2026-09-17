@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   return new NextResponse(buffer, {
     headers: {
       "Content-Type": mimeTypeForProfileImage(row.profile_image_path),
-      "Cache-Control": "private, max-age=3600",
+      "Cache-Control": "private, no-store",
     },
   });
 }
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const nextPath = saveProfileImageFile(
+    const nextPath = await saveProfileImageFile(
       session.id,
       file.name,
       buffer,

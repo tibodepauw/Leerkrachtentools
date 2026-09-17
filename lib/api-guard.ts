@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   completeOrgApiCall,
+  heartbeatOrgApiCall,
   noteOrgDenial,
   orgApiExecutionLimitMs,
   reserveOrgApiCall,
@@ -211,6 +212,10 @@ export function withApiAuth(
     let remainingAfter: number | undefined;
     let capturedBody: string | undefined;
     const abortController = new AbortController();
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
+    const disconnect = () => abortController.abort();
+    request.signal.addEventListener("abort", disconnect, { once: true });
+    if (request.signal.aborted) disconnect();
 
     try {
       if (!hasLiveApiKeyAuthorization(request)) {
@@ -382,20 +387,26 @@ export function withApiAuth(
       completeInFinally = true;
       logExecutedWork = true;
       reservation = quota;
+      heartbeat = setInterval(() => {
+        try { heartbeatOrgApiCall({ leaseId: quota.leaseId, ownerToken: quota.ownerToken }); }
+        catch { abortController.abort(); }
+      }, 15_000);
+      heartbeat.unref?.();
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       let timedOut = false;
       const publicServerErrorBody = JSON.stringify({
         error: "De server kon de aanvraag niet verwerken. Probeer het opnieuw.",
       });
 
-      const work = handler(request, {
-        ...auth,
+      const executionAuth = auth;
+      const work = Promise.resolve().then(() => handler(request, {
+        ...executionAuth,
         body,
         endpoint,
         requestId,
         signal: abortController.signal,
         leaseId: quota.leaseId,
-      })
+      }))
         .then(async (response) => {
           statusCode = response.status;
           const bounded = await readResponseTextBounded(
@@ -471,6 +482,11 @@ export function withApiAuth(
         });
 
       try {
+        // A timed-out task still owns its slot until actual completion.
+        void work.finally(() => {
+          if (heartbeat) clearInterval(heartbeat);
+          request.signal.removeEventListener("abort", disconnect);
+        }).catch(() => undefined);
         const response = await Promise.race([
           work,
           new Promise<never>((_, reject) => {
@@ -627,6 +643,10 @@ export function withApiAuth(
         requestId,
       );
     } finally {
+      if (!reserved) {
+        request.signal.removeEventListener("abort", disconnect);
+        if (heartbeat) clearInterval(heartbeat);
+      }
       if (reserved && completeInFinally && auth && reservation) {
         try {
           completeOrgApiCall({

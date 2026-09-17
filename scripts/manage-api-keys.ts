@@ -5,6 +5,9 @@ import {
   generateApiKey,
   inspectOrganization,
   revokeApiKey,
+  rotateApiKey,
+  normalizeApiKeyScopes,
+  apiKeyExpiry,
 } from "../lib/api-keys";
 
 function printHelp() {
@@ -15,6 +18,12 @@ Aanmaken:
 
 Intrekken:
   npx tsx scripts/manage-api-keys.ts revoke --key-id <id>
+
+Uitgeven aan bestaande organisatie (verplicht beperkte scopes; standaard 90 dagen):
+  npm run manage-api-keys -- issue --org-id <id> --name productie --scopes curriculum:match --days 90
+
+Roteren (oude sleutel direct ingetrokken, gedeeld budget blijft behouden):
+  npm run manage-api-keys -- rotate --key-id <id> --days 90
 
 Inspecteren:
   npx tsx scripts/manage-api-keys.ts inspect --org-id <id>
@@ -47,20 +56,20 @@ async function main() {
   }
 
   if (command === "create") {
+    const scopes = normalizeApiKeyScopes(requireFlag(args, "scopes").split(","));
+    const days = Number(readFlag(args, "days") ?? "90");
+    apiKeyExpiry(days);
     const organization = createOrganization({
       name: requireFlag(args, "org"),
       email: requireFlag(args, "email"),
       tier: requireFlag(args, "tier"),
       quota: Number.parseInt(readFlag(args, "quota") ?? "10000", 10),
     });
-    const scopes = (readFlag(args, "scopes") ?? API_KEY_SCOPES.join(","))
-      .split(",")
-      .map((scope) => scope.trim())
-      .filter(Boolean);
     const key = generateApiKey(
       organization.id,
       readFlag(args, "name") ?? "default",
       scopes,
+      days,
     );
     process.stdout.write(
       [
@@ -69,6 +78,7 @@ async function main() {
         `Quota: ${organization.monthly_quota}/maand`,
         `Sleutel-id: ${key.id}`,
         `Scopes: ${key.scopes.join(", ")}`,
+        `Vervalt: ${new Date(key.expiresAt).toISOString()}`,
         "",
         "Bewaar deze plaintext sleutel. Hij wordt niet opnieuw getoond:",
         key.token,
@@ -85,6 +95,15 @@ async function main() {
     return;
   }
 
+  if (command === "issue" || command === "rotate") {
+    const days = Number(readFlag(args, "days") ?? "90");
+    const key = command === "rotate"
+      ? rotateApiKey(requireFlag(args, "key-id"), days)
+      : generateApiKey(requireFlag(args, "org-id"), requireFlag(args, "name"), requireFlag(args, "scopes").split(","), days);
+    process.stdout.write(`Sleutel-id: ${key.id}\nVervalt: ${new Date(key.expiresAt).toISOString()}\nBewaar deze sleutel nu; hij wordt niet opnieuw getoond:\n${key.token}\n`);
+    return;
+  }
+
   if (command === "inspect") {
     const report = inspectOrganization(requireFlag(args, "org-id"));
     process.stdout.write(
@@ -98,6 +117,7 @@ async function main() {
         ...report.keys.flatMap((key) => [
           `- ${key.name} (${key.id})`,
           `  actief: ${key.isActive ? "ja" : "nee"}`,
+          `  vervalt: ${key.expiresAt ? new Date(key.expiresAt).toISOString() : "geen vervaldatum (oude sleutel; roteer)"}`,
           `  scopes: ${key.scopes.join(", ")}`,
           `  gebruikt deze maand: ${key.usedThisMonth}`,
           `  laatst gebruikt: ${key.lastUsedAt ? new Date(key.lastUsedAt).toISOString() : "-"}`,

@@ -3,8 +3,7 @@ import "server-only";
 import { createInflateRaw } from "node:zlib";
 import JSZip from "jszip";
 import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
-import WordExtractor from "word-extractor";
+import { parseInWorker } from "@/lib/documents/parserWorker";
 import {
   isSupportedLessonDocument,
   lessonDocumentExtension,
@@ -296,7 +295,8 @@ async function extractOdtText(buffer: Buffer) {
   );
 }
 
-export async function extractDocumentText(buffer: Buffer, fileName: string) {
+export async function extractDocumentText(buffer: Buffer, fileName: string, signal?: AbortSignal) {
+  signal?.throwIfAborted();
   if (!isSupportedLessonDocument(fileName)) {
     throw new Error(
       "Ondersteunde formaten: PDF, DOC, DOCX, ODT, RTF, TXT en MD.",
@@ -325,18 +325,11 @@ export async function extractDocumentText(buffer: Buffer, fileName: string) {
       );
       break;
     case "doc": {
-      const document = await new WordExtractor().extract(source);
-      extracted = normalizeText(document.getBody());
+      extracted = normalizeText(await parseInWorker(source, "doc", signal));
       break;
     }
     case "pdf": {
-      const parser = new PDFParse({ data: source });
-      try {
-        const parsed = await parser.getText();
-        extracted = normalizeText(parsed.text);
-      } finally {
-        await parser.destroy();
-      }
+      extracted = normalizeText(await parseInWorker(source, "pdf", signal));
       break;
     }
     case "odt":

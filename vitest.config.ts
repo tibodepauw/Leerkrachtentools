@@ -14,7 +14,7 @@ export default defineConfig({
     environment: "node",
     pool: "threads",
     testTimeout: 10_000,
-    exclude: ["**/node_modules/**", "**/.next/**"],
+    exclude: ["**/node_modules/**", "**/.next/**", "**/.tooling/**"],
     env: {
       DATABASE_PATH: "./test-leerkrachtentools.db",
       AUTH_SECRET: "test-auth-secret-with-at-least-32-characters",

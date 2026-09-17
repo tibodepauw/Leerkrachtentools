@@ -14,6 +14,8 @@ import { useClientMounted } from "@/hooks/useAppReady";
 import { LegalConsentLine, LegalExternalLink } from "@/components/legal/LegalDocuments";
 import { LegalColophon } from "@/components/legal/LegalColophon";
 import { GENERATIVE_LABS_LEGAL } from "@/lib/legal/generativeLabs";
+import { announceSessionChange } from "@/lib/storage/sessionSync";
+import { isSharedDevice, setSharedDevice } from "@/lib/storage/sharedDevice";
 
 export function AuthScreen() {
   const mounted = useClientMounted();
@@ -34,6 +36,7 @@ function AuthScreenContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [devCode, setDevCode] = useState("");
+  const [sharedDevice, setSharedDeviceChoice] = useState(isSharedDevice);
 
   async function requestCode(event: FormEvent) {
     event.preventDefault();
@@ -71,6 +74,8 @@ function AuthScreenContent() {
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error ?? "Verificatie mislukt.");
+      setSharedDevice(sharedDevice);
+      announceSessionChange();
       window.location.reload();
     } catch (caught) {
       setError(
@@ -104,6 +109,10 @@ function AuthScreenContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4 flex items-start gap-3">
+              <Checkbox id="shared-device" checked={sharedDevice} onCheckedChange={(value) => setSharedDeviceChoice(value === true)} />
+              <Label htmlFor="shared-device" className="font-normal leading-5">Gedeelde computer: lessen en documenten alleen in dit tabblad bewaren. Eerder lokaal bewaarde lessen van dit account worden gewist. Download je werk vóór vernieuwen of afsluiten.</Label>
+            </div>
             {step === "email" ? (
               <form onSubmit={requestCode} className="space-y-5">
                 <div className="space-y-2">
