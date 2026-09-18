@@ -69,6 +69,7 @@ export async function POST(request: Request) {
         preferredProvider: "google",
         allowLocalMock: false,
         userAiConfig,
+        abortSignal: request.signal,
       }),
     );
     if (!tracked.ok) {

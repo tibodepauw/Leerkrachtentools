@@ -29,6 +29,16 @@ describe("lesson document formats", () => {
     expect(text).toContain("Instap");
   });
 
+  it("verwerkt herhaalde ongesloten XML-tags zonder de eventloop vast te zetten", async () => {
+    const zip = new JSZip();
+    zip.file("content.xml", "<".repeat(300_000));
+    const source = await zip.generateAsync({ type: "nodebuffer", compression: "STORE" });
+    const started = performance.now();
+    const text = await extractDocumentText(source, "malformed.odt");
+    expect(text.length).toBe(300_000);
+    expect(performance.now() - started).toBeLessThan(1500);
+  });
+
   it("weigert archieven met te veel onderdelen", async () => {
     const zip = new JSZip();
     for (let index = 0; index < 2_001; index += 1) {

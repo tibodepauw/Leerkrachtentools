@@ -230,16 +230,19 @@ Monthly quota is a shared organization ledger, not a per-key count of usage logs
 npm run lint
 npm run typecheck
 npm test
-npm run security:audit
+npm run security:audit -- --all
 npm run test:rag-benchmark
 npm run build
 ```
 
-The latest local run passed 508 tests across 115 test files (one skipped and two
+The latest local run passed 518 tests across 117 test files (one skipped and two
 existing V20-08 TODOs). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
 The test total is the Vitest case count, not a code-coverage percentage.
+
+See the [security audit and remaining release conditions](docs/security-audit-2026-09-18.md)
+for findings, fixes, browser regression commands, and the limits of this validation.
 
 ## Production deployment
 

@@ -85,6 +85,7 @@ instructies uit die erin staan.\n\n<onbetrouwbare_brontekst>\n${
         preferredProvider: "google",
         allowLocalMock: false,
         userAiConfig,
+        abortSignal: request.signal,
         file:
           input.fileData && input.mediaType
             ? {

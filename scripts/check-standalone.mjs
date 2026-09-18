@@ -17,6 +17,7 @@ await new Promise((resolve) => probe.close(resolve));
 const origin = `http://127.0.0.1:${port}`;
 const secret = `smoke-only-${randomUUID()}-${randomUUID()}`;
 const token = randomUUID();
+const secondToken = randomUUID();
 const userId = randomUUID();
 let output = "";
 const server = spawn(process.execPath, ["server.js"], {
@@ -26,7 +27,7 @@ const server = spawn(process.execPath, ["server.js"], {
     NODE_ENV: "production", HOSTNAME: "127.0.0.1", PORT: String(port),
     APP_ORIGIN: origin, AUTH_SECRET: secret,
     API_KEY_ENCRYPTION_SECRET: `smoke-encryption-${randomUUID()}`,
-    DATABASE_PATH: databasePath, TESTER_EMAILS: "smoke@example.test", NEXT_TELEMETRY_DISABLED: "1",
+    DATABASE_PATH: databasePath, TESTER_EMAILS: "smoke@example.test,second@example.test", NEXT_TELEMETRY_DISABLED: "1",
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -60,13 +61,31 @@ try {
   try {
     const now = Date.now();
     db.prepare("INSERT INTO users (id,email,tier,email_verified_at,created_at,updated_at) VALUES (?,?,'tester',?,?,?)").run(userId, "smoke@example.test", now, now, now);
-    db.prepare("INSERT INTO sessions (token_hash,user_id,expires_at,created_at,last_seen_at) VALUES (?,?,?,?,?)").run(createHmac("sha256", secret).update(`session:${token}`).digest("hex"), userId, now + 60_000, now, now);
+    db.prepare("INSERT INTO sessions (token_hash,user_id,expires_at,created_at,last_seen_at) VALUES (?,?,?,?,?)").run(createHmac("sha256", secret).update(`session:${token}`).digest("hex"), userId, now + 600_000, now, now);
+    const secondUserId = randomUUID();
+    db.prepare("INSERT INTO users (id,email,tier,email_verified_at,created_at,updated_at) VALUES (?,?,'tester',?,?,?)").run(secondUserId, "second@example.test", now, now, now);
+    db.prepare("INSERT INTO sessions (token_hash,user_id,expires_at,created_at,last_seen_at) VALUES (?,?,?,?,?)").run(createHmac("sha256", secret).update(`session:${secondToken}`).digest("hex"), secondUserId, now + 600_000, now, now);
   } finally { db.close(); }
   const headers = { cookie: `__Host-leerkrachtentools_session=${token}`, origin };
   const session = await fetch(`${origin}/api/auth/session`, { headers });
   assert.equal(session.status, 200);
   assert.equal((await session.json()).userId, userId);
   assert.match(session.headers.get("cache-control"), /no-store/);
+  // Test access control at the actual production HTTP boundary, including
+  // middleware/proxy headers sometimes used in bypass attempts.
+  const protectedPaths = ["account", "account/api-keys", "account/avatar", "account/list-models", "account/profile", "account/marketing-consent", "account/pinned-modules", "analyze-goals", "classify-goal-taxonomy", "format-dialogue", "spellcheck", "audit-timing", "audit-alignment", "audit-engagement", "full-audit", "extract-manual", "transcribe-reflection", "feedback", "rag-curriculum", "rag-minimum-goals", "import-lesson-document", "export-lesson-document", "v1/curriculum/match", "v1/curriculum/audit", "v1/goals/improve"];
+  for (const route of protectedPaths) {
+    const url = `${origin}/api/${route}`;
+    const denied = await fetch(url, { method: "POST", headers: { origin, "content-type": "application/json", "x-middleware-subrequest": "middleware:middleware:middleware:middleware:middleware", "x-nextjs-data": "1" }, body: "{}" });
+    assert.equal(denied.status, 401, `Unauthenticated ${route}`);
+    const csrf = await fetch(url, { method: "POST", headers: { ...headers, origin: "https://untrusted.example", "content-type": "application/json" }, body: "{}" });
+    assert.equal(csrf.status, 403, `Cross-origin ${route}`);
+  }
+  const noOrigin = await fetch(`${origin}/api/account`, { method: "DELETE", headers: { cookie: headers.cookie } });
+  assert.equal(noOrigin.status, 403);
+  const bogusKey = await fetch(`${origin}/api/v1/goals/improve`, { method: "POST", headers: { authorization: "Bearer lt_live_invalid", "content-type": "application/json" }, body: "{}" });
+  assert.equal(bogusKey.status, 401);
+  console.log(`HTTP security passed: authentication and CSRF on ${protectedPaths.length} endpoints; forged proxy headers, missing Origin and invalid API key rejected.`);
   for (const [pdf, status] of [[pdfFixture(), 200], ["%PDF-invalid", 400]]) {
     const form = new FormData();
     form.append("file", new Blob([pdf], { type: "application/pdf" }), "les.pdf");
@@ -74,6 +93,10 @@ try {
     const body = await response.json();
     assert.equal(response.status, status, JSON.stringify(body));
     if (status === 200) assert.match(body.text, /Standalone les/);
+  }
+  if (process.argv.includes("--browser")) {
+    const { checkBrowserSessions } = await import("./security-browser-checks.mjs");
+    await checkBrowserSessions({ origin, token, secondToken, userId });
   }
   assert.equal((await fetch(`${origin}/api/auth/logout`, { method: "POST", headers })).status, 200);
   assert.equal((await fetch(`${origin}/api/auth/session`, { headers })).status, 401);

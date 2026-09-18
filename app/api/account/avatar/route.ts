@@ -15,6 +15,8 @@ import {
 } from "@/lib/auth/profileImage";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { readBoundedFormData } from "@/lib/http/requestBody";
+import { RequestRateLimitError } from "@/lib/http/rateLimit";
+import { withUploadCapacity } from "@/lib/http/uploadCapacity";
 
 export const runtime = "nodejs";
 const PROFILE_IMAGE_REQUEST_MAX_BYTES =
@@ -56,44 +58,46 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
-    const formData = await readBoundedFormData(
-      request,
-      PROFILE_IMAGE_REQUEST_MAX_BYTES,
-    );
-    const file = formData.get("file");
-
-    if (!(file instanceof File)) {
-      return NextResponse.json(
-        { error: "Kies een afbeelding om te uploaden." },
-        { status: 400 },
+    return await withUploadCapacity(session.id, async () => {
+      const formData = await readBoundedFormData(
+        request,
+        PROFILE_IMAGE_REQUEST_MAX_BYTES,
       );
-    }
+      const file = formData.get("file");
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const nextPath = await saveProfileImageFile(
-      session.id,
-      file.name,
-      buffer,
-      file.type,
-    );
-    const updatedAt = Date.now();
+      if (!(file instanceof File)) {
+        return NextResponse.json(
+          { error: "Kies een afbeelding om te uploaden." },
+          { status: 400 },
+        );
+      }
 
-    const previous = currentProfileImage(session.id);
-    if (
-      previous?.profile_image_path &&
-      previous.profile_image_path !== nextPath
-    ) {
-      deleteProfileImageFile(previous.profile_image_path);
-    }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const nextPath = await saveProfileImageFile(
+        session.id,
+        file.name,
+        buffer,
+        file.type,
+      );
+      const updatedAt = Date.now();
 
-    getDatabase()
-      .prepare(
-        "UPDATE users SET profile_image_path = ?, updated_at = ? WHERE id = ?",
-      )
-      .run(nextPath, updatedAt, session.id);
+      const previous = currentProfileImage(session.id);
+      if (
+        previous?.profile_image_path &&
+        previous.profile_image_path !== nextPath
+      ) {
+        deleteProfileImageFile(previous.profile_image_path);
+      }
 
-    return NextResponse.json({
-      profileImageUrl: profileImageUrl(updatedAt),
+      getDatabase()
+        .prepare(
+          "UPDATE users SET profile_image_path = ?, updated_at = ? WHERE id = ?",
+        )
+        .run(nextPath, updatedAt, session.id);
+
+      return NextResponse.json({
+        profileImageUrl: profileImageUrl(updatedAt),
+      });
     });
   } catch (error) {
     return NextResponse.json(
@@ -103,7 +107,7 @@ export async function POST(request: Request) {
           "Profielfoto kon niet veilig worden opgeslagen.",
         ),
       },
-      { status: 400 },
+      { status: error instanceof RequestRateLimitError ? 429 : 400 },
     );
   }
 }

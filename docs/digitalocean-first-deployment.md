@@ -1,6 +1,6 @@
 # Eerste installatie op DigitalOcean (nog niet live)
 
-Status 17 september 2026: er staat volgens de eigenaar nog niets live. Dit is een voorbereidingsdocument; de uitgebreide securityaudit en een Linux-stagingtest moeten nog plaatsvinden. Geen deployment is uitgevoerd.
+Status 18 september 2026: er staat volgens de eigenaar nog niets live. De repositoryaudit en aanvullende fixes staan in [het auditrapport](security-audit-2026-09-18.md). Review, Linux-CI op de auditbranch en een Linux-stagingtest moeten nog plaatsvinden. Geen deployment is uitgevoerd.
 
 ## Nieuwe installatie
 
@@ -35,4 +35,4 @@ Configureer een externe HTTPS-monitor en waarschuwingen voor service-restarts/OO
 
 Vóór livegang: login/logout in twee tabbladen, gedeelde-computermodus, lesimport/export, geldige/ongeldige PDF en DOC, avatar, alle aangeboden corpora, eigen API-sleutel, serverbudget en B2B-rotatie testen. Controleer HTTPS, CSP, proxyheaders, requestgrenzen en proceslimieten op de echte staginghost. Houd een vorige release en geteste backup beschikbaar.
 
-De uitgebreide securityaudit start pas na het afgesproken startsignaal. Groen CI alleen is geen verklaring dat de productieomgeving veilig of bugvrij is.
+Volg de open productievoorwaarden uit het auditrapport. Groen CI alleen is geen verklaring dat de productieomgeving veilig of bugvrij is.

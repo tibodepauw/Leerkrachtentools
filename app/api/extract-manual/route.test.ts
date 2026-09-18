@@ -54,6 +54,30 @@ describe("extract-manual URL-uploads", () => {
     vi.mocked(runStructured).mockReset();
   });
 
+  it("breekt de provider af wanneer de client de aanvraag afbreekt", async () => {
+    let started!: () => void;
+    const ready = new Promise<void>((resolve) => { started = resolve; });
+    let providerAborted = false;
+    vi.mocked(runStructured).mockImplementationOnce(({ abortSignal }) => new Promise((_, reject) => {
+      const timeout = setTimeout(() => reject(new Error("missing cancellation")), 1000);
+      abortSignal?.addEventListener("abort", () => {
+        providerAborted = true;
+        clearTimeout(timeout);
+        reject(new Error("cancelled"));
+      }, { once: true });
+      started();
+    }));
+    const controller = new AbortController();
+    const response = POST(new Request(absoluteAppUrl("/api/extract-manual"), {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ content: "Een les over tellen met blokken." }), signal: controller.signal,
+    }));
+    await ready;
+    controller.abort();
+    await response;
+    expect(providerAborted).toBe(true);
+  });
+
   it("stuurt geen URL-string naar de SDK", async () => {
     const response = await POST(
       new Request(absoluteAppUrl("/api/extract-manual"), {

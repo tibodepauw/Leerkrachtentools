@@ -1,5 +1,7 @@
 # Hardening tickets H-01 tot H-06
 
+Update 18 september 2026: de aangevraagde repositoryaudit is uitgevoerd op `codex/security-audit`. Zie [bevindingen, herstel en resterende productievoorwaarden](security-audit-2026-09-18.md). Browserproeven voor opslagwissen, offline/online, terugkeer, accountwissel en logout in twee tabbladen slagen. De aanvullende fixes en tests wachten op review/Linux-CI; VM-isolatie en operationele acceptatie blijven open. Onderstaande tabel beschrijft de eerdere voorbereidingsronde.
+
 De onderstaande oorspronkelijke tickets zijn op 17 september 2026 verder uitgewerkt op `codex/production-preparation`. Dit is geen volledige securityaudit en geen deployment. De eigenaar bevestigt dat er nog geen productieomgeving live staat.
 
 | Ticket | Uitgewerkt in code | Nog te verifiëren of uit te voeren |

@@ -285,10 +285,11 @@ async function extractOdtText(buffer: Buffer) {
 
   return normalizeText(
     content
-      .replace(/<text:p[^>]*>/g, "\n")
+      .replace(/<text:p[^<>]*>/g, "\n")
       .replace(/<text:line-break\/>/g, "\n")
-      .replace(/<text:s[^>]*\/>/g, " ")
-      .replace(/<[^>]+>/g, "")
+      .replace(/<text:s[^<>]*\/>/g, " ")
+      // Do not rescan the remainder for every unmatched '<' in malformed XML.
+      .replace(/<[^<>]+>/g, "")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">"),

@@ -13,10 +13,14 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - DigitalOcean/nginx/systemd-voorbeelden, SQLite-backuphelper en standalone HTTP-smoke-test in CI
 
 ### Security
+- Securityaudit: Word-preview geïsoleerd, ODT-regexuitputting hersteld en OTP-rate-limitboekingen atomair gemaakt
+- Uploadslots gelden vóór bodybuffering; clientafbreking bereikt ook de reguliere AI-routes
+- js-yaml naar 4.3.2; CI controleert productie- en builddependencies en weigert onvolledige OSV-resultaten
+- Aanvallende DOCX-browsertest en productie-HTTP-/sessieproeven aan CI toegevoegd
 - Avatars volledig hercoderen naar begrensde WebP zonder metadata
 - Afbreeksignalen doorgeven tot Pro/Cloudflare; providerfallback stopt na annulering; actieve B2B-leases krijgen heartbeats
 - GitHub Actions op commit-SHA vastgezet; CI-looptijd begrensd en Dependabot toegevoegd
-- Uitgebreide securityaudit en Linux-productieacceptatie blijven afzonderlijke vervolgstappen
+- Repositoryaudit vastgelegd in docs/security-audit-2026-09-18.md; review en Linux/VM-productieacceptatie blijven open
 
 ### Fixed
 - Requestbody-timeout geldt tijdens een wachtende read en weigert late EOF; leases starten op reserveringstijd (PR1-01)

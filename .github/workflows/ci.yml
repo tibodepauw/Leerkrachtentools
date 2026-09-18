@@ -38,8 +38,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Audit production dependencies
-        run: npm run security:audit
+      - name: Audit production and build dependencies
+        run: npm run security:audit -- --all
 
       - name: Generate Next.js route types
         run: npx next typegen
@@ -60,3 +60,11 @@ jobs:
 
       - name: Standalone smoke test
         run: node scripts/check-standalone.mjs
+
+      - name: Install browser for security regression tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser security regression tests
+        run: |
+          node scripts/check-preview-security.mjs
+          node scripts/check-standalone.mjs --browser
