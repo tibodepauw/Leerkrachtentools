@@ -1,4 +1,5 @@
 const SPLASH_DONE_KEY = "lt-splash-done";
+let completedInMemory = false;
 
 /** Call once on client boot so a hard refresh can replay the splash. */
 export function initSplashSession(): void {
@@ -9,15 +10,18 @@ export function initSplashSession(): void {
     | undefined;
 
   if (nav?.type === "reload") {
-    sessionStorage.removeItem(SPLASH_DONE_KEY);
+    completedInMemory = false;
+    try { sessionStorage.removeItem(SPLASH_DONE_KEY); } catch { /* optional animation state */ }
   }
 }
 
 export function shouldShowSplash(): boolean {
   if (typeof window === "undefined") return false;
-  return !sessionStorage.getItem(SPLASH_DONE_KEY);
+  try { return !sessionStorage.getItem(SPLASH_DONE_KEY); }
+  catch { return !completedInMemory; }
 }
 
 export function markSplashComplete(): void {
-  sessionStorage.setItem(SPLASH_DONE_KEY, "1");
+  completedInMemory = true;
+  try { sessionStorage.setItem(SPLASH_DONE_KEY, "1"); } catch { /* memory fallback */ }
 }

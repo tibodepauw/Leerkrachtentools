@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 import { buildSync } from "esbuild";
 import JSZip from "jszip";
 
@@ -15,7 +15,9 @@ zip.file("word/document.xml", `<w:document xmlns:w="${w}"><w:body><w:p><w:r><w:t
 zip.file("word/_rels/document.xml.rels", `<Relationships xmlns="${rel}"><Relationship Id="rStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
 zip.file("word/styles.xml", `<w:styles xmlns:w="${w}"><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:rFonts w:ascii="x;}body{--security-audit:injected}/*"/></w:rPr></w:style></w:styles>`);
 const bytes = [...await zip.generateAsync({ type: "uint8array" })];
-const browser = await chromium.launch({ headless: true, ...(process.env.SECURITY_BROWSER_CHANNEL ? { channel: process.env.SECURITY_BROWSER_CHANNEL } : {}) });
+const engine = process.env.PREVIEW_BROWSER ?? "chromium";
+assert(["chromium", "firefox", "webkit"].includes(engine));
+const browser = await ({ chromium, firefox, webkit })[engine].launch({ headless: true, ...(engine === "chromium" && process.env.SECURITY_BROWSER_CHANNEL ? { channel: process.env.SECURITY_BROWSER_CHANNEL } : {}) });
 try {
   const page = await browser.newPage();
   const requests = [];
@@ -53,5 +55,5 @@ try {
   assert.match(state.text, /Audit fixture/);
   assert.equal(state.scriptRan, false);
   assert.deepEqual(requests, []);
-  console.log("Preview security passed: malicious DOCX CSS isolated; scripts, resource loads and link navigation blocked.");
+  console.log(`Preview security passed (${engine}): malicious DOCX CSS isolated; scripts, resource loads and link navigation blocked.`);
 } finally { await browser.close(); }

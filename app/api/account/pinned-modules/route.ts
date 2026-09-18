@@ -8,7 +8,8 @@ import {
   parsePinnedModules,
   serializePinnedModules,
 } from "@/lib/auth/pinnedModules";
-import { readJsonBody } from "@/lib/http/requestBody";
+import { readValidatedJson } from "@/lib/http/validatedJson";
+import { z } from "zod";
 
 export async function GET(request: Request) {
   const session = sessionFromRequest(request);
@@ -20,9 +21,9 @@ export async function PUT(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await readJsonBody(request, 4_096)) as {
-    pinnedModules?: unknown;
-  };
+  const input = await readValidatedJson(request, 4_096, z.object({ pinnedModules: z.array(z.string()) }));
+  if (input.response) return input.response;
+  const body = input.data;
   if (!Array.isArray(body.pinnedModules)) {
     return NextResponse.json(
       { error: "Ongeldige lijst met vastgezette tools." },

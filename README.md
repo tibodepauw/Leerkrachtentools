@@ -235,7 +235,7 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-The latest local and Linux CI runs passed 534 tests across 121 test files (one corpus-dependent
+The extended audit suite contains 550 tests across 123 test files (one additional corpus-dependent
 test skipped; no remaining TODO cases). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.

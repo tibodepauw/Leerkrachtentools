@@ -10,17 +10,18 @@ import {
 import { listProviderModels } from "@/lib/ai/listModels";
 import type { ProviderName } from "@/lib/ai/providers";
 import { publicErrorMessage } from "@/lib/http/clientError";
-import { readJsonBody } from "@/lib/http/requestBody";
+import { readValidatedJson } from "@/lib/http/validatedJson";
+import { z } from "zod";
 
 export async function POST(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await readJsonBody(request, 16_384)) as {
-    provider?: string;
-    apiKey?: string;
-    cloudflareAccountId?: string;
-  };
+  const input = await readValidatedJson(request, 16_384, z.object({
+    provider: z.string(), apiKey: z.string().optional(), cloudflareAccountId: z.string().optional(),
+  }));
+  if (input.response) return input.response;
+  const body = input.data;
 
   if (!isProviderName(body.provider ?? "")) {
     return NextResponse.json(

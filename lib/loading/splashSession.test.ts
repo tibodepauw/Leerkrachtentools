@@ -48,4 +48,14 @@ describe("splashSession", () => {
     initSplashSession();
     expect(shouldShowSplash()).toBe(true);
   });
+
+  it("does not trap the UI in its loading screen when browser storage is blocked", () => {
+    const denied = () => { throw new Error("storage blocked"); };
+    vi.stubGlobal("sessionStorage", { getItem: denied, setItem: denied, removeItem: denied });
+    vi.stubGlobal("performance", { getEntriesByType: () => [{ type: "reload" }] });
+    expect(() => initSplashSession()).not.toThrow();
+    expect(shouldShowSplash()).toBe(true);
+    expect(() => markSplashComplete()).not.toThrow();
+    expect(shouldShowSplash()).toBe(false);
+  });
 });

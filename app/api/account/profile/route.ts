@@ -4,15 +4,16 @@ import {
   unauthorizedResponse,
 } from "@/lib/auth/guard";
 import { getDatabase } from "@/lib/auth/database";
-import { readJsonBody } from "@/lib/http/requestBody";
+import { readValidatedJson } from "@/lib/http/validatedJson";
+import { z } from "zod";
 
 export async function PATCH(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await readJsonBody(request, 16_384)) as {
-    displayName?: string;
-  };
+  const input = await readValidatedJson(request, 16_384, z.object({ displayName: z.string() }));
+  if (input.response) return input.response;
+  const body = input.data;
   const displayName = body.displayName?.trim() ?? "";
   if (
     displayName.length < 2 ||

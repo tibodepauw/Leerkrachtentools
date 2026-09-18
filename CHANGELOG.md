@@ -6,6 +6,8 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+- Verdiepte audit: runtime-validatie op account-routes, herstel van vastlopende splash bij geblokkeerde opslag en opslagkeuze vóór sessieaanmaak
+- Extra account-/CSRF-HTTP-matrix, documentmutatieproeven en Word-previewisolatie in drie browserengines
 - Afzonderlijke systemd-documentservice voor alle imports, Word-export en avatars, met minimale root, netwerkblokkade en kernelgeheugen-/tijdlimieten
 - B2B-berekeningen in afbreekbare processen; deadline, disconnect en leaseverlies stoppen werk vóór slotvrijgave
 - Echte organisatie-AI-dagbudgetten, publieke HTTPS-configuratiecontrole en bescherming tegen late avataropslag na intrekking

@@ -94,6 +94,8 @@ try {
   const bogusKey = await fetch(`${origin}/api/v1/goals/improve`, { method: "POST", headers: { authorization: "Bearer lt_live_invalid", "content-type": "application/json" }, body: "{}" });
   assert.equal(bogusKey.status, 401);
   console.log(`HTTP security passed: authentication and CSRF on ${protectedPaths.length} endpoints; forged proxy headers, missing Origin and invalid API key rejected.`);
+  const { checkHttpBoundaries } = await import("./check-http-boundaries.mjs");
+  await checkHttpBoundaries({ origin, token, secondToken, userId, databasePath });
   for (const [pdf, status] of [[pdfFixture(), 200], ["%PDF-invalid", 400]]) {
     const form = new FormData();
     form.append("file", new Blob([pdf], { type: "application/pdf" }), "les.pdf");

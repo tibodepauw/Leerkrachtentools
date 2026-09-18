@@ -66,9 +66,11 @@ jobs:
         run: sudo "$(command -v node)" scripts/check-linux-isolation.mjs
 
       - name: Install browser for security regression tests
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox webkit
 
       - name: Browser security regression tests
         run: |
           node scripts/check-preview-security.mjs
+          PREVIEW_BROWSER=firefox node scripts/check-preview-security.mjs
+          PREVIEW_BROWSER=webkit node scripts/check-preview-security.mjs
           node scripts/check-standalone.mjs --browser

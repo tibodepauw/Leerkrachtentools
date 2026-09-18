@@ -38,7 +38,9 @@ De koude hersteltest gebruikt de echte SQLite-backuphelper, kopieert de snapshot
 
 ## Onderzochte onderdelen
 
-| Onderdeel | Controle en resultaat | Grenzen |
+**Dit is een overzicht van reeds uitgevoerde controles, geen lijst met nog onbehandelde problemen.** De laatste kolom beschrijft de bewijslimiet: bijvoorbeeld een niet-bestaande VM, echte provideraccounts of de onmogelijkheid om alle toekomstige invoer te testen. Een bewijslimiet betekent niet automatisch dat er een kwetsbaarheid is. Nieuwe reproduceerbare codeproblemen worden hieronder afzonderlijk geregistreerd en hersteld.
+
+| Onderdeel | Reeds uitgevoerd: controle en resultaat | Wat hiermee niet volledig is bewezen |
 | --- | --- | --- |
 | Login en sessies | OTP-hashing, pogingslimiet, willekeurige sessietokens, server-side intrekking, cookieopties, productie/dev-scheiding en e-mailtoegangslijsten doorgenomen. De productie-HTTP-proef weigert ontbrekende sessies en ongeldige B2B-sleutels. | Echte Brevo-bezorging en publiek misbruikvolume niet getest. Het globale OTP-noodplafond kan bij een verdeelde aanval legitieme aanmeldingen blokkeren. |
 | Autorisatie en CSRF | Centrale guard, moduletoegang en accountgebonden queries doorgenomen. HTTP-proeven op 25 beschermde API-paden weigeren ongeauthenticeerde aanvragen, cross-origin mutaties en vervalste middlewareheaders; accountverwijdering zonder Origin wordt geweigerd. B2B met ongeldig Bearer-token krijgt 401. | Dit is een gerichte matrix, geen bewijs voor iedere mogelijke HTTP-normalisatie of elk toekomstig endpoint. |
@@ -91,3 +93,26 @@ Lokaal getest op Windows met Node 24 en een geïsoleerde headless Edge. De gesla
 - [OWASP Content Security Policy Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html): CSP als aanvullende beveiligingslaag.
 
 De concrete applicatiebevindingen komen uit de lokale code en bovengenoemde regressieproeven, niet uit de algemene bronnen.
+
+## Verdieping van de onderzoeksgrenzen
+
+Op verzoek van de eigenaar zijn de lokaal uitvoerbare grenzen verder onderzocht. De eerdere audit bleef geldig; deze ronde voegt gerichte negatieve tests toe en heeft twee aanvullende robuustheidsproblemen gevonden.
+
+| ID | Bevinding | Herstel en bewijs |
+| --- | --- | --- |
+| SEC-08 — laag, robuustheid | Vijf account-routes vertrouwden op TypeScript-casts voor JSON. Ongeldige JSON en oversize bodies veroorzaakten onbehandelde fouten; onjuiste veldtypes werden niet consistent geweigerd. Er is geen accountovername aangetoond. | Runtime-schema's voor profiel, consent, pins, eigen keys en modellenlijst. Ongeldige input geeft 400, oversize 413 en bodytimeout 408, met generieke no-store-antwoorden. De tien negatieve routetests faalden vóór herstel en slagen daarna. Bestaande key-instellingen blijven werken. |
+| SEC-09 — laag, beschikbaarheid | Volle/geblokkeerde sessionStorage veroorzaakte een onbehandelde fout in de splashstatus; de browser bleef vóór het inlogformulier steken. Dit is in een geïsoleerde Edge gereproduceerd. | De optionele animatiestatus gebruikt een geheugenfallback. Een regressietest simuleert falende get/set/remove. Privéopslag blijft afzonderlijk fail-closed: bij een ontoegankelijke opslag verschijnt een herstelmelding zonder accountinhoud. |
+
+Daarnaast wordt de gedeelde-computerkeuze nu vóór OTP-verificatie opgeslagen. Als die keuze niet kan worden vastgelegd, wordt geen verificatieverzoek verstuurd dat ondertussen wel een nieuwe sessie zou kunnen aanmaken. De browserproef gebruikt gesimuleerde OTP-antwoorden en verstuurt geen e-mail.
+
+Uitgebreide controles in deze ronde:
+
+- Echte HTTP-methodes op elf account-/sessieroutes: ongeldige cookies, vervalste proxyheaders, opaque `Origin: null`, cross-origin en `Sec-Fetch-Site: cross-site` worden geweigerd. Ongeldige JSON wordt via de gebouwde productieapp gecontroleerd.
+- Twee synthetische accounts: extra `userId`, `id` en e-mailvelden of queryparameters kunnen profiel/consent van het andere account niet wijzigen. SQL-metatekens worden als tekst opgeslagen; de andere gebruiker blijft bestaan. HTML in de profielnaam wordt geweigerd.
+- Dertig deterministische documentmutaties: lege, afgeknotte, bytegewijzigde en verlengde DOCX/ODT/PDF/DOC/RTF-invoer wordt in begrensde childprocessen afgehandeld. Na iedere reeks slaagt een normale vervolgjob. Dit is een gerichte mutatieproef, geen volledige fuzzcampagne of representatieve collectie echte Office-documenten.
+- Browserprivacy: volle opslag tijdens inloggen, expliciete weigering bij ontoegankelijke privéopslag en opnieuw openen na logout, naast de bestaande accountwissel-, offline- en twe tabbladenproeven. De uitgebreide Edge-proef slaagt lokaal.
+- De kwaadaardige Word-previewproef is toegevoegd voor Chromium, Firefox en WebKit in Linux-CI. WebKit is geen volledige acceptatie van Safari op een echt Apple-apparaat.
+
+De uitgebreide lokale suite bevat 550 geslaagde tests in 123 bestanden (één bestaande corpusafhankelijke skip). De laatste toegevoegde splashregressie is apart uitgevoerd bovenop de volledige 549-test-run. De volledige suite en de browserproeven worden opnieuw afgedwongen door [CI op de auditbranch](https://github.com/tibodepauw/Leerkrachtentools/actions?query=branch%3Acodex%2Fsecurity-audit).
+
+Nog afhankelijk van de toekomstige omgeving: echte e-mailbezorging/providerfacturatie, grote echte document-/corpuscollecties, VM-firewall/HTTPS/SSH en versleuteld offsite-herstel op een lege host. Onbekende kwetsbaarheden, alle browsercrash-/herstelvarianten en de inhoudelijke betrouwbaarheid van AI zijn hiermee niet uitgesloten.

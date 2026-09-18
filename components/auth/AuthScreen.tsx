@@ -67,6 +67,11 @@ function AuthScreenContent() {
     setLoading(true);
     setError("");
     try {
+      // Commit the privacy choice before the server can issue a session. If
+      // storage is full/blocked, a manual reload must not enter normal mode
+      // under a new cookie after the user explicitly selected shared mode.
+      try { setSharedDevice(sharedDevice); }
+      catch { throw new Error("Je opslagkeuze kon niet worden bewaard. Maak browseropslag vrij of sta siteopslag toe en probeer opnieuw."); }
       const response = await fetch("/api/auth/verify-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,7 +79,6 @@ function AuthScreenContent() {
       });
       const payload = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(payload.error ?? "Verificatie mislukt.");
-      setSharedDevice(sharedDevice);
       announceSessionChange();
       window.location.reload();
     } catch (caught) {
