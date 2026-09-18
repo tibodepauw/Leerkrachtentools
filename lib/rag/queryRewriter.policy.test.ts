@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { generateText } from "ai";
 import { getModelCandidates } from "@/lib/ai/providers";
 import { getUserAiConfig } from "@/lib/ai/userCredentials";
@@ -31,6 +31,7 @@ const mockedConfig = vi.mocked(getUserAiConfig);
 const mockedCandidates = vi.mocked(getModelCandidates);
 
 describe("RAG rewrite provider policy", () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     mockedGenerate.mockReset();
     mockedConfig.mockReset();
@@ -84,5 +85,24 @@ describe("RAG rewrite provider policy", () => {
     const result = await rewriteRagQuery("tellen", { userId: "user-1" });
     expect(result.dispatched).toBe(true);
     expect(result.usedLlm).toBe(true);
+  });
+  it("does not dispatch after shared budget exhaustion or pre-abort", async () => {
+    mockedConfig.mockReturnValue(null);
+    mockedCandidates.mockReturnValue([{ name: "groq", model: {} as never }]);
+    vi.stubEnv("SERVER_AI_DAILY_CALL_LIMIT", "0");
+    expect((await rewriteRagQuery("test")).dispatched).toBe(false);
+    await expect(rewriteRagQuery("test", { signal: AbortSignal.abort() })).rejects.toThrow();
+    expect(mockedGenerate).not.toHaveBeenCalled();
+  });
+  it("passes caller cancellation to the SDK and retains the dispatched charge", async () => {
+    mockedConfig.mockReturnValue(null);
+    mockedCandidates.mockReturnValue([{ name: "groq", model: {} as never }]);
+    const controller = new AbortController();
+    mockedGenerate.mockImplementation(async () => {
+      controller.abort();
+      throw new Error("cancelled");
+    });
+    expect((await rewriteRagQuery("test", { signal: controller.signal })).dispatched).toBe(true);
+    expect(mockedGenerate.mock.calls[0][0].abortSignal?.aborted).toBe(true);
   });
 });

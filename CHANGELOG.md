@@ -6,6 +6,11 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+- Privacy-/kostenronde: geen quota-teruggave na externe fallback, gedeelde plafonds voor server-AI en Discovery, uitvoerlimiet voor Cloudflare en redirectweigering bij SDK-providerverzoeken
+- Late documentresultaten en analyses gebonden aan de oorspronkelijke accountsessie; echte IndexedDB-regressie voor accountwissel/uitloggen
+- Optionele analytics beperkt tot opgeschoonde statische paginaweergaven; automatische capture expliciet uit
+- VirtualBox-testvolgorde en grenzen van aanroep- versus eurobudgetten gedocumenteerd
+
 - Productiecorpuscontrole zonder fixturefallback; meldt ontbrekende of beschadigde datasets vóór deployment
 - Begrensde directe providerantwoorden, strikte modellenlijsten, annulering van modeldetectie en redirectweigering voor directe credentialdragende API-verzoeken
 - Verdiepte audit: runtime-validatie op account-routes, herstel van vastlopende splash bij geblokkeerde opslag en opslagkeuze vóór sessieaanmaak

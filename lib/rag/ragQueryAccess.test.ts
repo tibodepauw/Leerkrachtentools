@@ -85,4 +85,10 @@ describe("tracked RAG rewrite quota", () => {
     });
     expect(mockedRelease).not.toHaveBeenCalled();
   });
+  it("refunds nothing when an unexpected error makes dispatch uncertain", async () => {
+    mockedReserve.mockReturnValue({ ok: true, id: 9, used: 0 });
+    mockedResolve.mockRejectedValue(new Error("unexpected failure"));
+    await expect(resolveTrackedRagSearchQuery({ query: "test", enableLlmQueryRewriting: true, userId: "user-1", tier: "student" })).rejects.toThrow();
+    expect(mockedRelease).not.toHaveBeenCalled();
+  });
 });

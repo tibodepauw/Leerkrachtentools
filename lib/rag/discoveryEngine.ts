@@ -1,4 +1,5 @@
 import { EXTERNAL_API_TIMEOUT_MS } from "@/lib/http/externalTimeout";
+import { reserveExternalCall } from "@/lib/ai/externalBudget";
 import { SearchServiceClient } from "@google-cloud/discoveryengine/build/src/v1/search_service_client";
 import type { CurriculumNetworkFilter } from "@/types";
 
@@ -169,7 +170,7 @@ export function networkFromUri(uri: string): CurriculumNetworkFilter | null {
 
 function decodeSnippet(value: string): string {
   return value
-    .replace(/<[^>]+>/g, " ")
+    .replace(/<[^<>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
@@ -375,16 +376,12 @@ async function performDiscoverySearch(
         snippetSpec: {
           returnSnippet: true,
         },
-        summarySpec: {
-          summaryResultCount: Math.min(pageSize, 5),
-          includeCitations: true,
-          ignoreAdversarialQuery: true,
-          ignoreNonSummarySeekingQuery: true,
-        },
       },
     },
     {
       autoPaginate: false,
+      retry: null,
+      timeout: DISCOVERY_SEARCH_TIMEOUT_MS,
       signal,
       otherArgs: { signal },
     } as { autoPaginate: boolean; signal?: AbortSignal; otherArgs: { signal?: AbortSignal } },
@@ -462,6 +459,10 @@ export async function searchDiscoveryEngine(
 
   const existing = searchesInFlight.get(key);
   if (existing) return existing;
+
+  // Charge only a new outbound search, never a cache hit or joined request.
+  // Failure/timeout does not refund a potentially billed provider call.
+  if (!reserveExternalCall("discovery")) return emptyDiscoveryResponse("error");
 
   const abortController = new AbortController();
   const hangSignal = AbortSignal.any

@@ -54,7 +54,7 @@ De groep `leerkrachtentools` moet al bestaan. Pas het Node-pad aan als Node niet
 
 Test eerst op een disposable Linux-host met systemd: `sudo "$(command -v node)" scripts/check-linux-isolation.mjs`. Deze proef maakt tijdelijke units, test filesystem-/netwerkweigering, kernel-timeout en native OOM, en voert vervolgens de echte standalone-smoke test uit. De tijdelijke units en bestanden worden opgeruimd. Dit is geen installatie van de productieservice.
 
-Bouw na workerwijzigingen opnieuw met `npm run build`; start geen oude workerbundels. Stel `ORG_AI_DAILY_LIMIT` en `ORG_AI_GLOBAL_DAILY_LIMIT` bewust in (standaard 100 per organisatie en 500 totaal, UTC-dag). Providerdashboard-limieten blijven nodig, ook omdat een provider reeds aangenomen werk kan factureren nadat een lokale job is gestopt.
+Bouw na workerwijzigingen opnieuw met `npm run build`; start geen oude workerbundels. Stel `ORG_AI_DAILY_LIMIT` en `ORG_AI_GLOBAL_DAILY_LIMIT` bewust in (standaard 100 per organisatie en 500 totaal, UTC-dag). Daarnaast begrenst `SERVER_AI_DAILY_CALL_LIMIT` werkelijke server-key-pogingen van web, queryherschrijving en B2B samen (standaard 500 per UTC-dag). `DISCOVERY_DAILY_CALL_LIMIT` begrenst nieuwe Google-zoekaanroepen (standaard 1000). Begin op staging met beide nieuwe limieten op `0`; verhoog ze bewust na configuratie van providerbudgetten. Nul of ongeldige configuratie schakelt de betreffende externe dienst uit. Providerdashboard-limieten blijven nodig, ook omdat een provider reeds aangenomen werk kan factureren nadat een lokale job is gestopt. Zie ook de [VirtualBox-testvolgorde en privacy-/kostencontrole](privacy-cost-review-2026-09-18.md).
 
 ## Backups, alarmen en releasecontrole
 

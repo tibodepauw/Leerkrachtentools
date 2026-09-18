@@ -4,6 +4,8 @@ Datum: 18 september 2026. Baseline: `main` op `3a23381158ec724b580fbf9d703f0da57
 
 ## Oordeel
 
+Vervolg na merge van deze audit: [aanvullende privacy- en kostencontrole](privacy-cost-review-2026-09-18.md), met nieuwe regressies voor quota na fallback en late documentresultaten. De historische resultaten hieronder blijven aan hun genoemde commits gekoppeld.
+
 De repository bevatte drie reproduceerbare applicatieproblemen: beïnvloeding van de appopmaak vanuit een Word-preview, een vastlopende ODT-tekstbewerking en databankgroei door reeds geweigerde OTP-pogingen. Deze zijn op de herstelbranch opgelost. Daarnaast is een kwetsbare builddependency bijgewerkt en zijn uploadcapaciteit, afbreking van AI-verzoeken en de dependencycontrole aangescherpt.
 
 Alle in deze audit bevestigde repositorybevindingen zijn op de herstelbranch aangepakt. De volledige Linux-CI van de laatste codewijzigingen op commit `fa768c4236d49223652782cc0c9526e08b8df36b` is [geslaagd](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35383458537): 568 tests, kernelisolatie, uitgebreide HTTP-/browserproeven en hersteltest. De branch is nog niet gemerged. Review en de hieronder beschreven controles van de echte VM, providers en offsite-backups blijven nodig. Een codeaudit bewijst niet de afwezigheid van alle onbekende fouten en is geen vrijgave van een nog niet bestaande productieomgeving.

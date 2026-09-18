@@ -9,9 +9,29 @@ const LEGACY_DOCUMENT_MIGRATION_OWNER_KEY =
 const SIDEBAR_STORAGE_BASE_KEY = "leerkrachtentools-sidebar-width";
 
 let activeUserId: string | null = null;
+let sessionController = new AbortController();
 
 export function setActiveUserId(userId: string | null) {
+  if (activeUserId !== userId) {
+    sessionController.abort(new Error("De actieve accountsessie is gewijzigd."));
+    sessionController = new AbortController();
+  }
   activeUserId = userId;
+}
+
+export function captureStorageSession() {
+  const userId = activeUserId;
+  if (!userId) throw new Error("Geen actief account gevonden.");
+  const signal = sessionController.signal;
+  return {
+    userId,
+    signal,
+    isCurrent: () => !signal.aborted && activeUserId === userId,
+    assertCurrent: () => {
+      signal.throwIfAborted();
+      if (activeUserId !== userId) throw new Error("De actieve accountsessie is gewijzigd.");
+    },
+  };
 }
 
 export function getActiveUserId() {

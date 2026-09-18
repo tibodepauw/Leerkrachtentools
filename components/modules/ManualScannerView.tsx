@@ -26,6 +26,7 @@ import {
 } from "@/lib/documents/supportedFormats";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { ManualExtraction } from "@/types";
+import { captureStorageSession } from "@/lib/storage/userStorageScope";
 
 const MAX_FILE_BYTES = LESSON_DOCUMENT_MAX_BYTES;
 
@@ -76,21 +77,24 @@ function ManualScannerContent() {
   }
 
   async function importDocumentText(file: File) {
+    const session = captureStorageSession();
     const formData = new FormData();
     formData.append("file", file);
 
     const response = await fetch("/api/import-lesson-document", {
       method: "POST",
       body: formData,
+      signal: session.signal,
     });
     const payload = (await response.json()) as {
       error?: string;
       text?: string;
     };
 
-    if (!response.ok || !payload.text?.trim()) return;
+    if (!session.isCurrent() || !response.ok || !payload.text?.trim()) return;
 
     await syncPreparationDocumentFromFile(file);
+    session.assertCurrent();
     await syncSourceTextToPreparation(payload.text);
   }
 
@@ -119,6 +123,7 @@ function ManualScannerContent() {
 
   async function selectFile(file?: File) {
     if (!file) return;
+    const session = captureStorageSession();
     setUploadError("");
 
     if (!isManualScannerFile(file)) {
@@ -144,6 +149,7 @@ function ManualScannerContent() {
             ? await file.text()
             : content;
 
+        session.assertCurrent();
         setFileName(file.name);
         setFileSize(file.size);
         setMediaType(nextMediaType);
@@ -167,6 +173,7 @@ function ManualScannerContent() {
       const response = await fetch("/api/import-lesson-document", {
         method: "POST",
         body: formData,
+        signal: session.signal,
       });
       const payload = (await response.json()) as {
         error?: string;
@@ -180,6 +187,7 @@ function ManualScannerContent() {
         return;
       }
 
+      session.assertCurrent();
       const extractedText = payload.text.trim();
       setFileName(file.name);
       setFileSize(file.size);

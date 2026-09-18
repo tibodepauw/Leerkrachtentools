@@ -428,6 +428,7 @@ async function handleCurriculumSearch(request: Request) {
         enableLlmQueryRewriting: body.enableLlmQueryRewriting === true,
         userId: session.id,
         tier: session.tier,
+        signal: request.signal,
       });
       searchQuery = resolved.searchQuery;
       rewrite = resolved.rewrite;
@@ -435,6 +436,7 @@ async function handleCurriculumSearch(request: Request) {
       console.error("[rag-curriculum:rewrite]", error);
     }
 
+    request.signal.throwIfAborted();
     let searchResult: CurriculumSearchPayload;
     try {
       searchResult = await withRequestConcurrency({
@@ -469,6 +471,7 @@ async function handleCurriculumSearch(request: Request) {
       });
     }
 
+    request.signal.throwIfAborted();
     let networkFallbackNotice: string | undefined;
 
     if (
@@ -510,6 +513,7 @@ async function handleCurriculumSearch(request: Request) {
           retrieved: searchResult.merged,
           lesson: lessonContext,
           budget: { kind: "user", userId: session.id, tier: session.tier },
+          signal: request.signal,
         });
         return curriculumSearchResponse({
           merged: pro.merged,

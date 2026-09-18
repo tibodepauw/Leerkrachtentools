@@ -18,12 +18,14 @@ export async function resolveTrackedRagSearchQuery({
   userId,
   tier,
   requestId,
+  signal,
 }: {
   query: string;
   enableLlmQueryRewriting: boolean;
   userId: string;
   tier: string;
   requestId?: string;
+  signal?: AbortSignal;
 }): Promise<{
   searchQuery: string;
   rewrite: QueryRewriteResult | null;
@@ -34,7 +36,7 @@ export async function resolveTrackedRagSearchQuery({
 
   const userAiConfig = getUserAiConfig(userId);
   if (usesOwnAiKeys(userAiConfig)) {
-    return resolveRagSearchQuery(query, true, { userId, requestId });
+    return resolveRagSearchQuery(query, true, { userId, requestId, signal });
   }
 
   if (userAiConfig?.enabled) {
@@ -55,13 +57,14 @@ export async function resolveTrackedRagSearchQuery({
     const resolved = await resolveRagSearchQuery(query, true, {
       userId,
       requestId,
+      signal,
     });
     if (!resolved.rewrite?.dispatched) {
       releaseServerAiUsage(reserved.id);
     }
     return resolved;
   } catch (error) {
-    releaseServerAiUsage(reserved.id);
+    // An unexpected failure may occur after dispatch; never refund on uncertainty.
     throw error;
   }
 }

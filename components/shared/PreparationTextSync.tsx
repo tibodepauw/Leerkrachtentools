@@ -12,7 +12,7 @@ export function PreparationTextSync() {
     const document = lesson.preparationDocument;
     if (!needsPreparationTextSync(lesson) || !document) return;
 
-    void syncPreparationTextFromDocument(document);
+    void syncPreparationTextFromDocument(document).catch(() => { /* The explicit import flow shows errors. */ });
   }, [lesson]);
 
   return null;

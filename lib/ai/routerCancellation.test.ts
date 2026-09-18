@@ -10,9 +10,26 @@ vi.mock("@/lib/ai/providers", () => ({
 import { runStructured } from "@/lib/ai/router";
 import { publicErrorMessage } from "@/lib/http/clientError";
 
-afterEach(() => { mocks.generate.mockReset(); mocks.cloudflare = false; mocks.single = false; vi.unstubAllGlobals(); });
+afterEach(() => { mocks.generate.mockReset(); mocks.cloudflare = false; mocks.single = false; vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 describe("AI cancellation", () => {
+  it("applies the output ceiling to Cloudflare too", async () => {
+    mocks.cloudflare = true;
+    const fetcher = vi.fn().mockImplementation(() => Promise.resolve(Response.json({ result: { response: '{"ok":true}' } })));
+    vi.stubGlobal("fetch", fetcher);
+    await runStructured({ schema: z.object({ ok: z.boolean() }), system: "test", prompt: "test", mock: { ok: false }, maxOutputTokens: 999999 });
+    expect(JSON.parse(fetcher.mock.calls[0][1].body).max_tokens).toBe(4096);
+  });
+  it("blocks server calls at the shared ceiling but never switches an own key to server credentials", async () => {
+    vi.stubEnv("SERVER_AI_DAILY_CALL_LIMIT", "0");
+    const request = { schema: z.object({ ok: z.boolean() }), system: "test", prompt: "test", mock: { ok: false } };
+    expect((await runStructured(request)).dispatched).toBe(false);
+    expect(mocks.generate).not.toHaveBeenCalled();
+    mocks.generate.mockResolvedValue({ output: { ok: true } });
+    await runStructured({ ...request, userAiConfig: { enabled: true, provider: "groq", apiKey: "synthetic", model: "test" } });
+    expect(mocks.generate).toHaveBeenCalledTimes(1);
+    expect(mocks.generate.mock.calls[0][0]).toMatchObject({ maxRetries: 0, maxOutputTokens: 2400 });
+  });
   it("never exposes provider-supplied error details to the caller", async () => {
     mocks.single = true;
     mocks.generate.mockRejectedValue(new Error("synthetic-private-provider-detail"));

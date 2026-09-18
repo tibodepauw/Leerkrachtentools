@@ -22,6 +22,12 @@ function tableExists(db: Database.Database, table: string) {
  * are unsafe to replay and are dropped rather than migrated.
  */
 export function ensureFollowupSchema(db: Database.Database) {
+  db.exec(`CREATE TABLE IF NOT EXISTS external_daily_usage (
+    service TEXT NOT NULL,
+    day TEXT NOT NULL,
+    consumed INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (service, day)
+  )`);
   db.exec(`CREATE TABLE IF NOT EXISTS org_ai_daily_usage (
     org_id TEXT NOT NULL REFERENCES api_organizations(id) ON DELETE CASCADE,
     day TEXT NOT NULL,

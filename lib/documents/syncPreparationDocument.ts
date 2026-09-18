@@ -5,8 +5,10 @@ import {
 } from "@/lib/documents/preview";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { LessonPreparationDocument } from "@/types";
+import { captureStorageSession } from "@/lib/storage/userStorageScope";
 
 export async function syncPreparationDocumentFromFile(file: File) {
+  const session = captureStorageSession();
   const currentDocument = useLessonStore.getState().lesson.preparationDocument;
   const id = createLessonDocumentId();
   const document: LessonPreparationDocument = {
@@ -17,6 +19,7 @@ export async function syncPreparationDocumentFromFile(file: File) {
   };
 
   await saveLessonDocument(id, file);
+  session.assertCurrent();
   useLessonStore.getState().setPreparationDocument(document, currentDocument?.id);
   return document;
 }
