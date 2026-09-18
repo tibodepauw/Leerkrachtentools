@@ -18,6 +18,7 @@ const port = probe.address().port;
 await new Promise((resolve) => probe.close(resolve));
 const origin = `http://127.0.0.1:${port}`;
 const secret = `smoke-only-${randomUUID()}-${randomUUID()}`;
+const encryptionSecret = `smoke-encryption-${randomUUID()}`;
 const token = randomUUID();
 const secondToken = randomUUID();
 const userId = randomUUID();
@@ -31,7 +32,7 @@ const server = spawn(process.execPath, ["server.js"], {
     NODE_ENV: "production", HOSTNAME: "127.0.0.1", PORT: String(port),
     APP_ORIGIN: origin, AUTH_SECRET: secret,
     ...(process.env.DOCUMENT_WORKER_SOCKET ? { DOCUMENT_WORKER_SOCKET: process.env.DOCUMENT_WORKER_SOCKET } : { ALLOW_LOCAL_DOCUMENT_WORKER: "true" }),
-    API_KEY_ENCRYPTION_SECRET: `smoke-encryption-${randomUUID()}`,
+    API_KEY_ENCRYPTION_SECRET: encryptionSecret,
     DATABASE_PATH: databasePath, TESTER_EMAILS: "smoke@example.test,second@example.test", NEXT_TELEMETRY_DISABLED: "1",
   },
   stdio: ["ignore", "pipe", "pipe"],
@@ -129,7 +130,11 @@ try {
   assert.equal(savedAvatar.headers.get("content-type"), "image/webp");
   assert.equal((await sharp(Buffer.from(await savedAvatar.arrayBuffer())).metadata()).format, "webp");
   const { checkBackupRestore } = await import("./check-backup-restore.mjs");
-  await checkBackupRestore({ folder, databasePath, userId, orgId, apiToken, token, secret });
+  // Synthetic credential, never sent to a provider. Prove secret continuity
+  // across a cold restore, in addition to SQLite integrity and session state.
+  const savedKey = await fetch(`${origin}/api/account/api-keys`, { method: "PATCH", headers: { ...headers, "content-type": "application/json" }, body: JSON.stringify({ enabled: true, provider: "google", model: "fixture-model", apiKey: "synthetic-restore-fixture-key" }) });
+  assert.equal(savedKey.status, 200);
+  await checkBackupRestore({ folder, databasePath, userId, orgId, apiToken, token, secret, encryptionSecret });
   assert.equal((await fetch(`${origin}/api/account/avatar`, { method: "DELETE", headers })).status, 200);
   console.log("Isolated B2B routes, DOCX export/reimport and avatar normalization passed.");
   assert.equal((await fetch(`${origin}/api/auth/logout`, { method: "POST", headers })).status, 200);

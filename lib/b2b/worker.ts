@@ -7,7 +7,7 @@ const state = globalThis as typeof globalThis & { b2bWorkers?: number };
 
 // These are trusted application calculations, not a document-parser sandbox.
 // Only configuration needed for retrieval/provider budgets reaches this child.
-const ENV_KEYS = ["DATABASE_PATH", "ORG_AI_DAILY_LIMIT", "ORG_AI_GLOBAL_DAILY_LIMIT", "GROQ_API_KEY", "GROQ_MODEL", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "SAMBANOVA_API_KEY", "SAMBANOVA_BASE_URL", "SAMBANOVA_MODEL", "GOOGLE_GENERATIVE_AI_API_KEY", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_MODEL"];
+const ENV_KEYS = ["DATABASE_PATH", "ORG_AI_DAILY_LIMIT", "ORG_AI_GLOBAL_DAILY_LIMIT", "GROQ_API_KEY", "GROQ_MODEL", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "SAMBANOVA_API_KEY", "SAMBANOVA_BASE_URL", "SAMBANOVA_MODEL", "GOOGLE_GENERATIVE_AI_API_KEY", "GOOGLE_MODEL", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_MODEL"];
 export async function runB2bJob(task: B2bTask, body: unknown, orgId: string, signal: AbortSignal) {
   signal.throwIfAborted();
   if ((state.b2bWorkers ?? 0) >= 4) throw new ApiAuthError("Te veel berekeningen tegelijk. Probeer zo opnieuw.", 429);

@@ -1,13 +1,12 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { copyFileSync, readFileSync, unlinkSync } from "node:fs";
-import { randomUUID } from "node:crypto";
 import path from "node:path";
 import net from "node:net";
 import Database from "better-sqlite3";
 
 // Called only by the isolated smoke fixture, never with a production database.
-export async function checkBackupRestore({ folder, databasePath, userId, orgId, apiToken, token, secret }) {
+export async function checkBackupRestore({ folder, databasePath, userId, orgId, apiToken, token, secret, encryptionSecret }) {
   const snapshot = path.join(folder, "snapshot.db");
   const restoredPath = path.join(folder, "restored.db");
   const avatarBackup = path.join(folder, "avatar.webp");
@@ -30,7 +29,7 @@ export async function checkBackupRestore({ folder, databasePath, userId, orgId, 
   const restored = new Database(restoredPath, { readonly: true });
   try {
     assert.equal(restored.pragma("integrity_check", { simple: true }), "ok");
-    assert.equal(restored.prepare("SELECT consumed FROM api_org_quota WHERE org_id = ?").get(orgId).consumed, 3);
+    assert.equal(restored.prepare("SELECT SUM(consumed) AS consumed FROM api_org_quota WHERE org_id = ?").get(orgId).consumed, 3);
     assert.equal(restored.prepare("SELECT consumed FROM org_ai_daily_usage WHERE org_id = ?").get(orgId).consumed, 7);
     assert.equal(restored.prepare("SELECT is_active FROM api_keys WHERE org_id = ?").get(orgId).is_active, 0);
   } finally { restored.close(); }
@@ -45,7 +44,7 @@ export async function checkBackupRestore({ folder, databasePath, userId, orgId, 
     env: {
       ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}),
       NODE_ENV: "production", HOSTNAME: "127.0.0.1", PORT: String(port),
-      APP_ORIGIN: origin, AUTH_SECRET: secret, API_KEY_ENCRYPTION_SECRET: `restore-fixture-only-${randomUUID()}`,
+      APP_ORIGIN: origin, AUTH_SECRET: secret, API_KEY_ENCRYPTION_SECRET: encryptionSecret,
       DATABASE_PATH: restoredPath, TESTER_EMAILS: "smoke@example.test,second@example.test", NEXT_TELEMETRY_DISABLED: "1",
     }, stdio: ["ignore", "pipe", "pipe"],
   });
@@ -62,12 +61,18 @@ export async function checkBackupRestore({ folder, databasePath, userId, orgId, 
     }
     assert.equal(session?.status, 200, output);
     assert.equal((await session.json()).userId, userId);
+    const keyResponse = await fetch(`${origin}/api/account/api-keys`, { headers });
+    assert.equal(keyResponse.status, 200);
+    const keySettings = await keyResponse.json();
+    assert.equal(keySettings.hasApiKey, true);
+    assert.equal(Boolean(keySettings.credentialError), false);
+    assert.equal(keySettings.model, "fixture-model");
     const revoked = await fetch(`${origin}/api/v1/goals/improve`, { method: "POST", headers: { authorization: `Bearer ${apiToken}`, "content-type": "application/json" }, body: JSON.stringify({ goal: "De leerlingen tellen tot twintig" }) });
     assert.equal(revoked.status, 401);
     const avatar = await fetch(`${origin}/api/account/avatar`, { headers });
     assert.equal(avatar.status, 200);
     assert(Buffer.from(await avatar.arrayBuffer()).equals(readFileSync(avatarBackup)));
-    console.log("Cold restore passed: new app instance accepts restored session, rejects revoked key and preserves quota, AI budget and avatar.");
+    console.log("Cold restore passed: new app instance accepts restored session, decrypts stored credential, rejects revoked key and preserves quota, AI budget and avatar.");
   } finally {
     server.kill("SIGTERM");
     const timeout = setTimeout(() => server.kill("SIGKILL"), 3000);

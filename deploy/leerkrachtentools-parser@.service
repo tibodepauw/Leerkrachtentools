@@ -13,6 +13,9 @@ BindReadOnlyPaths=/opt/leerkrachtentools/current/workers:/app/workers
 BindReadOnlyPaths=-/opt/leerkrachtentools/current/data/templates:/app/data/templates
 WorkingDirectory=/app
 Environment=NODE_ENV=production
+# Native PDF dependencies query os.homedir(); no host passwd/home is exposed.
+# This directory lives in the private, size-limited tmpfs below.
+Environment=HOME=/tmp
 ExecStart=/usr/bin/node --max-old-space-size=192 --max-semi-space-size=16 /app/workers/document.cjs
 StandardInput=socket
 StandardOutput=socket
