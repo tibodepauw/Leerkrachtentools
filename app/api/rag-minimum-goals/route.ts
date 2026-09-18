@@ -148,8 +148,10 @@ export async function POST(request: Request) {
       enableLlmQueryRewriting: body.enableLlmQueryRewriting === true,
       userId: session.id,
       tier: session.tier,
+      signal: request.signal,
     });
 
+    request.signal.throwIfAborted();
     const localCandidates = collectMinimumGoalCandidates({
       query: searchQuery,
       educationLevel,
@@ -223,6 +225,7 @@ export async function POST(request: Request) {
           retrieved: ranked,
           lesson: lessonContext,
           budget: { kind: "user", userId: session.id, tier: session.tier },
+          signal: request.signal,
           kind: "minimumdoel",
           fallbackLimit: MINIMUM_GOALS_TOP_N,
         });

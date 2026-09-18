@@ -4,6 +4,7 @@ import { isSharedDevice, temporaryDocuments } from "@/lib/storage/sharedDevice";
 import {
   documentDatabaseName,
   getActiveUserId,
+  captureStorageSession,
 } from "@/lib/storage/userStorageScope";
 
 const DB_VERSION = 1;
@@ -38,56 +39,67 @@ function openDatabase() {
 }
 
 export async function saveLessonDocument(id: string, file: Blob) {
+  const session = captureStorageSession();
   if (isSharedDevice()) {
     temporaryDocuments.set(`${requireActiveUserId()}:${id}`, file);
     return;
   }
   const database = await openDatabase();
+  try {
+    session.assertCurrent();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, "readwrite");
+      const abort = () => { try { transaction.abort(); } catch { /* already complete */ } };
+      session.signal.addEventListener("abort", abort, { once: true });
+      const cleanup = () => session.signal.removeEventListener("abort", abort);
+      transaction.oncomplete = () => { cleanup(); resolve(); };
+      transaction.onabort = () => { cleanup(); reject(new Error("Documentopslag afgebroken.")); };
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(file, id);
 
-  await new Promise<void>((resolve, reject) => {
-    const transaction = database.transaction(STORE_NAME, "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(file, id);
-
-    request.onerror = () => reject(request.error ?? new Error("Document opslaan mislukt."));
-    request.onsuccess = () => resolve();
-  });
-
-  database.close();
+      request.onerror = () => reject(request.error ?? new Error("Document opslaan mislukt."));
+    });
+    session.assertCurrent();
+  } finally { database.close(); }
 }
 
 export async function getLessonDocument(id: string) {
+  const session = captureStorageSession();
   if (isSharedDevice()) return temporaryDocuments.get(`${requireActiveUserId()}:${id}`) ?? null;
   const database = await openDatabase();
+  try {
+    session.assertCurrent();
+    const blob = await new Promise<Blob | null>((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, "readonly");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(id);
 
-  const blob = await new Promise<Blob | null>((resolve, reject) => {
-    const transaction = database.transaction(STORE_NAME, "readonly");
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(id);
+      request.onerror = () => reject(request.error ?? new Error("Document laden mislukt."));
+      request.onsuccess = () => resolve((request.result as Blob | undefined) ?? null);
+    });
 
-    request.onerror = () => reject(request.error ?? new Error("Document laden mislukt."));
-    request.onsuccess = () => resolve((request.result as Blob | undefined) ?? null);
-  });
-
-  database.close();
-  return blob;
+    session.assertCurrent();
+    return blob;
+  } finally { database.close(); }
 }
 
 export async function deleteLessonDocument(id: string) {
+  const session = captureStorageSession();
   if (isSharedDevice()) {
     temporaryDocuments.delete(`${requireActiveUserId()}:${id}`);
     return;
   }
   const database = await openDatabase();
+  try {
+    session.assertCurrent();
+    await new Promise<void>((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, "readwrite");
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(id);
 
-  await new Promise<void>((resolve, reject) => {
-    const transaction = database.transaction(STORE_NAME, "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(id);
+      request.onerror = () => reject(request.error ?? new Error("Document verwijderen mislukt."));
+      request.onsuccess = () => resolve();
+    });
 
-    request.onerror = () => reject(request.error ?? new Error("Document verwijderen mislukt."));
-    request.onsuccess = () => resolve();
-  });
-
-  database.close();
+  } finally { database.close(); }
 }

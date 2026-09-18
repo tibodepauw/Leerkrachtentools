@@ -114,17 +114,28 @@ function requestBody(searchMode: "snel" | "pro") {
   };
 }
 
-async function postSearch(searchMode: "snel" | "pro") {
+async function postSearch(searchMode: "snel" | "pro", signal?: AbortSignal) {
   return postMinimumGoals(
     new Request(absoluteAppUrl("/api/rag-minimum-goals"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody(searchMode)),
+      signal,
     }),
   );
 }
 
 describe("RAG minimumdoelen Pro-modus", () => {
+  it("forwards client cancellation to the Pro provider", async () => {
+    const controller = new AbortController();
+    vi.mocked(runStructured).mockImplementationOnce(async () => {
+      controller.abort();
+      throw new Error("synthetic cancellation");
+    });
+    await postSearch("pro", controller.signal);
+    expect(runStructured).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(runStructured).mock.calls[0][0].abortSignal?.aborted).toBe(true);
+  });
   beforeEach(() => {
     vi.mocked(hasAnyAiProvider).mockReturnValue(true);
     vi.mocked(runStructured).mockReset();

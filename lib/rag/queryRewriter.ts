@@ -8,6 +8,7 @@ import {
   userAiConfigHasCredentials,
 } from "@/lib/ai/userCredentials";
 import { recordSecurityEvent } from "@/lib/security/events";
+import { reserveExternalCall } from "@/lib/ai/externalBudget";
 
 const rewriteSchema = z.object({
   expandedQuery: z.string(),
@@ -33,8 +34,9 @@ function localRewrite(query: string): QueryRewriteResult {
 
 export async function rewriteRagQuery(
   query: string,
-  options: { userId?: string; requestId?: string } = {},
+  options: { userId?: string; requestId?: string; signal?: AbortSignal } = {},
 ): Promise<QueryRewriteResult> {
+  options.signal?.throwIfAborted();
   let userAiConfig = null;
   if (options.userId) {
     userAiConfig = getUserAiConfig(options.userId);
@@ -59,6 +61,7 @@ export async function rewriteRagQuery(
     return localRewrite(query);
   }
 
+  if (!userAiConfig?.enabled && !reserveExternalCall("server-ai")) return localRewrite(query);
   try {
     const result = await generateText({
       model: candidate.model,
@@ -68,7 +71,7 @@ export async function rewriteRagQuery(
       maxOutputTokens: 256,
       temperature: 0.1,
       maxRetries: 0,
-      abortSignal: AbortSignal.timeout(5_000),
+      abortSignal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(5_000)]) : AbortSignal.timeout(5_000),
     });
 
     const parsed = rewriteSchema.parse(result.output);
@@ -110,7 +113,7 @@ export function buildSearchQueryFromRewrite(
 export async function resolveRagSearchQuery(
   query: string,
   enableLlmQueryRewriting: boolean,
-  options: { userId?: string; requestId?: string } = {},
+  options: { userId?: string; requestId?: string; signal?: AbortSignal } = {},
 ): Promise<{
   searchQuery: string;
   rewrite: QueryRewriteResult | null;

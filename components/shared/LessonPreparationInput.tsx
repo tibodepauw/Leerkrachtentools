@@ -11,6 +11,7 @@ import { ActiveLessonPrepHint } from "@/components/shared/ActiveLessonPrepHint";
 import { useAutoSyncPreparationText } from "@/hooks/useAutoSyncPreparationText";
 import { useLessonStore } from "@/stores/useLessonStore";
 import { cn } from "@/lib/utils";
+import { captureStorageSession } from "@/lib/storage/userStorageScope";
 
 interface LessonPreparationInputProps {
   id: string;
@@ -59,32 +60,41 @@ export function LessonPreparationInput({
 
   async function handleFile(file?: File) {
     if (!file) return;
+    const session = captureStorageSession();
     setUploading(true);
     setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const formData = new FormData();
-    formData.append("file", file);
+      const response = await fetch("/api/import-lesson-document", {
+        method: "POST",
+        body: formData,
+        signal: session.signal,
+      });
+      const payload = (await response.json()) as {
+        error?: string;
+        text?: string;
+        fileName?: string;
+      };
 
-    const response = await fetch("/api/import-lesson-document", {
-      method: "POST",
-      body: formData,
-    });
-    const payload = (await response.json()) as {
-      error?: string;
-      text?: string;
-      fileName?: string;
-    };
+      session.assertCurrent();
+      setUploading(false);
 
-    setUploading(false);
+      if (!response.ok || !payload.text) {
+        setUploadError(payload.error ?? "Upload mislukt.");
+        return;
+      }
 
-    if (!response.ok || !payload.text) {
-      setUploadError(payload.error ?? "Upload mislukt.");
-      return;
+      setFileName(payload.fileName ?? file.name);
+      await syncPreparationDocumentFromFile(file).catch(() => undefined);
+      session.assertCurrent();
+      onChange(payload.text);
+    } catch {
+      if (session.isCurrent()) setUploadError("Document kon niet worden ingelezen. Probeer opnieuw.");
+    } finally {
+      if (session.isCurrent()) setUploading(false);
     }
-
-    setFileName(payload.fileName ?? file.name);
-    await syncPreparationDocumentFromFile(file).catch(() => undefined);
-    onChange(payload.text);
   }
 
   return (

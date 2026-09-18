@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { formatClientRequestError } from "@/lib/http/clientError";
+import { captureStorageSession } from "@/lib/storage/userStorageScope";
 
 export interface AnalysisResponse<T> {
   data: T;
@@ -19,6 +20,8 @@ export function useAnalysis<T>(scopeKey?: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const requestIdRef = useRef(0);
+  const activeRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => { activeRequest.current?.abort(); requestIdRef.current += 1; }, []);
 
   const setResult = useCallback(
     (payload: AnalysisResponse<T> | null) => {
@@ -31,6 +34,10 @@ export function useAnalysis<T>(scopeKey?: string) {
   );
 
   async function analyze(url: string, body: Record<string, unknown>) {
+    const session = captureStorageSession();
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
     const cacheKey = scopeKey;
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
@@ -42,6 +49,7 @@ export function useAnalysis<T>(scopeKey?: string) {
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
+        signal: AbortSignal.any([session.signal, controller.signal]),
       });
       let payload: AnalysisResponse<T> | { error?: string; corpusNotice?: string };
       try {
@@ -54,7 +62,7 @@ export function useAnalysis<T>(scopeKey?: string) {
         });
         throw new Error("De server gaf een ongeldig antwoord. Probeer het opnieuw.");
       }
-      if (requestId !== requestIdRef.current) {
+      if (!session.isCurrent() || controller.signal.aborted || requestId !== requestIdRef.current) {
         return null;
       }
       if (response.status === 401) {
@@ -76,8 +84,7 @@ export function useAnalysis<T>(scopeKey?: string) {
       }
       return payload;
     } catch (caught) {
-      console.error(`[${url}]`, caught);
-      if (requestId !== requestIdRef.current) {
+      if (!session.isCurrent() || controller.signal.aborted || requestId !== requestIdRef.current) {
         return null;
       }
       setError(formatClientRequestError(caught));

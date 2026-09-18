@@ -92,7 +92,7 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 - **Opt-in LLM query rewriting** for RAG searches (Settings; default off). Rewrite uses the same BYOK/provider policy as other AI calls
 - Per-account browser storage for active lesson data and document previews
 - Marketing email preference (opt-in, off by default). Marketing consent is not an analytics choice
-- Optional PostHog EU Cloud analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Session replay stays disabled; lesson, preview and feedback UI use `ph-no-capture`. Identity resets on logout and account switch
+- Optional PostHog EU Cloud analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture and session replay stay disabled. Identity resets on logout and account switch
 - In-app feedback form (idea, feedback, bug)
 - App version, legal colophon (AHOVOKS modellicentie, koepel citation art. XI.189 WER, non-affiliation, EU AI Act art. 50) and build info with link to GitHub releases
 - Install as a PWA from Settings (standalone app on phone, tablet, or computer)
@@ -235,7 +235,7 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-The extended audit suite contains 568 tests across 126 test files (one additional corpus-dependent
+The extended audit suite contains 601 tests across 132 test files (one additional corpus-dependent
 test skipped; no remaining TODO cases). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
@@ -297,7 +297,7 @@ Before exposing the service publicly:
 
 - Privacy policy consent is required at login
 - Marketing consent is off by default and is not an analytics choice
-- Optional PostHog EU Cloud product analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Session replay is disabled in code
+- Optional PostHog EU Cloud product analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture and session replay are disabled in code
 - AI modules only receive text you explicitly submit for that action
 - Settings and the login screen include a legal colophon: AHOVOKS modellicentie, koepel citation (art. XI.189 WER), non-affiliation, and EU AI Act art. 50 transparency
 - Read [Privacybeleid](https://www.generativelabs.be/privacy.html) on generativelabs.be for processor details

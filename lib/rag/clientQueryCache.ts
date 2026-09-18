@@ -1,4 +1,6 @@
 "use client";
+import { getActiveUserId } from "@/lib/storage/userStorageScope";
+import { isSharedDevice, temporaryStorage } from "@/lib/storage/sharedDevice";
 
 import type {
   CurriculumNetworkFilter,
@@ -26,6 +28,11 @@ export type RagQueryCacheScope = {
 
 const STORAGE_KEY = "leerkrachtentools-rag-query-cache";
 const CACHE_VERSION = 4;
+
+function accountStorageKey() {
+  const userId = getActiveUserId();
+  return userId ? `${STORAGE_KEY}:${userId}` : null;
+}
 
 type StoredRagQueryCache = {
   version: number;
@@ -75,12 +82,16 @@ export function buildRagQueryStorageKey(
 }
 
 function readStore(): StoredRagQueryCache {
-  if (typeof window === "undefined") {
+  const key = accountStorageKey();
+  if (typeof window === "undefined" || !key) {
     return { version: CACHE_VERSION, entries: {} };
   }
 
   try {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    // Never adopt the old, unscoped cache as the newly signed-in user's data.
+    window.sessionStorage.removeItem(STORAGE_KEY);
+    if (isSharedDevice()) window.sessionStorage.removeItem(key);
+    const raw = isSharedDevice() ? temporaryStorage.get(key) : window.sessionStorage.getItem(key);
     if (!raw) {
       return { version: CACHE_VERSION, entries: {} };
     }
@@ -95,12 +106,16 @@ function readStore(): StoredRagQueryCache {
 }
 
 function writeStore(store: StoredRagQueryCache): void {
-  if (typeof window === "undefined") {
+  const key = accountStorageKey();
+  if (typeof window === "undefined" || !key) {
     return;
   }
 
   try {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    if (isSharedDevice()) {
+      window.sessionStorage.removeItem(key);
+      temporaryStorage.set(key, JSON.stringify(store));
+    } else window.sessionStorage.setItem(key, JSON.stringify(store));
   } catch {
     // sessionStorage full or unavailable; ignore
   }
@@ -169,7 +184,10 @@ export function clearRagQueryCache(): void {
     return;
   }
 
+  const key = accountStorageKey();
+  if (key) temporaryStorage.delete(key);
   try {
+    if (key) window.sessionStorage.removeItem(key);
     window.sessionStorage.removeItem(STORAGE_KEY);
   } catch {
     // ignore

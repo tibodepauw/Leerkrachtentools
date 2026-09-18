@@ -2,6 +2,7 @@ import "server-only";
 
 import { parseSenderAddress } from "@/lib/email/sender";
 import { externalApiAbortSignal } from "@/lib/http/externalTimeout";
+import { reserveExternalCall } from "@/lib/ai/externalBudget";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
@@ -23,6 +24,9 @@ export async function sendBrevoEmail({
   }
 
   const sender = parseSenderAddress(from);
+  if (!reserveExternalCall("email")) {
+    throw new Error("Het gezamenlijke e-maildagbudget is bereikt. Probeer het morgen opnieuw.");
+  }
   const response = await fetch(BREVO_API_URL, {
     method: "POST",
     redirect: "error",

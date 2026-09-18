@@ -38,7 +38,7 @@ export function checkServerAiAccess({
   return evaluateServerAiAccess({ userId, tier, userAiConfig });
 }
 
-export async function runWithServerAiQuota<T extends { provider: string }>(
+export async function runWithServerAiQuota<T extends { provider: string; dispatched?: boolean }>(
   access: Extract<ServerAiAccessResult, { allowed: true }>,
   userId: string,
   run: () => Promise<T>,
@@ -66,7 +66,7 @@ export async function runWithServerAiQuota<T extends { provider: string }>(
       limit: 2,
       task: run,
     });
-    if (reservationId && result.provider === "local") {
+    if (reservationId && result.provider === "local" && result.dispatched === false) {
       releaseServerAiUsage(reservationId);
     }
     return { ok: true, result };

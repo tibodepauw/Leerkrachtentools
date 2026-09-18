@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { setActiveUserId } from "@/lib/storage/userStorageScope";
+import { clearTemporaryStorage } from "@/lib/storage/sharedDevice";
 import {
   buildRagQueryCacheKey,
   clearRagQueryCache,
@@ -31,14 +33,41 @@ function createSessionStorageMock(): Storage {
 
 describe("clientQueryCache", () => {
   beforeEach(() => {
+    setActiveUserId("cache-user-A");
+    clearTemporaryStorage();
     vi.stubGlobal("window", {
       sessionStorage: createSessionStorageMock(),
+      localStorage: createSessionStorageMock(),
     });
   });
 
   afterEach(() => {
     clearRagQueryCache();
+    setActiveUserId(null);
+    clearTemporaryStorage();
     vi.unstubAllGlobals();
+  });
+
+  it("never reads another account's cache for the same query", () => {
+    writeRagQueryCache("rag-curriculum", "LAGER", "ALL", "same", { data: { goal: "private A" }, provider: "test", fallbackErrors: [] });
+    setActiveUserId("cache-user-B");
+    expect(readRagQueryCache("rag-curriculum", "LAGER", "ALL", "same")).toBeNull();
+  });
+  it("keeps shared-device results in memory and removes a prior persisted cache", () => {
+    writeRagQueryCache("rag-curriculum", "LAGER", "ALL", "same", { data: { goal: "old A" }, provider: "test", fallbackErrors: [] });
+    window.localStorage.setItem("leerkrachtentools-shared-device", "true");
+    expect(readRagQueryCache("rag-curriculum", "LAGER", "ALL", "same")).toBeNull();
+    writeRagQueryCache("rag-curriculum", "LAGER", "ALL", "same", { data: { goal: "private A" }, provider: "test", fallbackErrors: [] });
+    expect(readRagQueryCache("rag-curriculum", "LAGER", "ALL", "same")).not.toBeNull();
+    expect(window.sessionStorage.length).toBe(0);
+    clearTemporaryStorage();
+    expect(readRagQueryCache("rag-curriculum", "LAGER", "ALL", "same")).toBeNull();
+  });
+  it("does not store or return query results without an active account", () => {
+    setActiveUserId(null);
+    writeRagQueryCache("rag-curriculum", "LAGER", "ALL", "same", { data: { goal: "private" }, provider: "test", fallbackErrors: [] });
+    expect(readRagQueryCache("rag-curriculum", "LAGER", "ALL", "same")).toBeNull();
+    expect(window.sessionStorage.length).toBe(0);
   });
 
   it("normaliseert queries voor exacte cache-sleutels", () => {

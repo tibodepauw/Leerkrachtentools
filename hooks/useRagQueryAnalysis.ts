@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { captureStorageSession } from "@/lib/storage/userStorageScope";
 import { useAnalysis, type AnalysisResponse } from "@/hooks/useAnalysis";
 import {
   readRagQueryCache,
@@ -23,6 +24,7 @@ export function useRagQueryAnalysis<T>(scopeKey: string) {
 
   const analyzeRag = useCallback(
     async (params: RagAnalyzeParams): Promise<AnalysisResponse<T> | null> => {
+      const session = captureStorageSession();
       const query = String(params.body.goal ?? "").trim();
       const network = params.network ?? "-";
       const scope: RagQueryCacheScope = {
@@ -55,6 +57,7 @@ export function useRagQueryAnalysis<T>(scopeKey: string) {
           ? "/api/rag-minimum-goals"
           : "/api/rag-curriculum";
       const payload = await analyze(url, params.body);
+      if (!session.isCurrent()) return null;
       if (payload) {
         writeRagQueryCache(
           params.endpoint,

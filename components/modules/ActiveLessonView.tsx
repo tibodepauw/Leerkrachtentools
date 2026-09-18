@@ -12,6 +12,7 @@ import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparation
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { LessonExportPayload } from "@/types";
+import { captureStorageSession } from "@/lib/storage/userStorageScope";
 
 function downloadName(topic: string, sourceFileName?: string | null) {
   if (sourceFileName?.toLowerCase().endsWith(".docx")) {
@@ -53,17 +54,20 @@ export function ActiveLessonView() {
 
   async function uploadLesson(file?: File) {
     if (!file) return;
+    const session = captureStorageSession();
     setUploading(true);
     setUploadError("");
 
     try {
       await syncPreparationDocumentFromFile(file);
+      session.assertCurrent();
 
       const formData = new FormData();
       formData.append("file", file);
       const response = await fetch("/api/import-lesson-document", {
         method: "POST",
         body: formData,
+        signal: session.signal,
       });
       const payload = (await response.json()) as {
         error?: string;
@@ -74,6 +78,7 @@ export function ActiveLessonView() {
         throw new Error(payload.error ?? "Upload mislukt.");
       }
 
+      session.assertCurrent();
       syncPreparation(payload.text);
     } catch (error) {
       setUploadError(
@@ -85,6 +90,7 @@ export function ActiveLessonView() {
   }
 
   async function downloadLesson() {
+    const session = captureStorageSession();
     setDownloading(true);
     setDownloadError("");
 
@@ -115,10 +121,12 @@ export function ActiveLessonView() {
         }
       }
 
+      session.assertCurrent();
       const response = await fetch("/api/export-lesson-document", {
         method: "POST",
         body: formData,
         credentials: "same-origin",
+        signal: session.signal,
       });
 
       if (!response.ok) {
@@ -128,7 +136,9 @@ export function ActiveLessonView() {
         throw new Error(body?.error ?? "Downloaden is mislukt.");
       }
 
-      const url = URL.createObjectURL(await response.blob());
+      const blob = await response.blob();
+      session.assertCurrent();
+      const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
       anchor.download =

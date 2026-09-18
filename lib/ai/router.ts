@@ -9,6 +9,7 @@ import type { ProviderName } from "@/lib/ai/providers";
 import type { UserAiConfig } from "@/lib/ai/userCredentials";
 import { EXTERNAL_API_TIMEOUT_MS } from "@/lib/http/externalTimeout";
 import { readExternalJson } from "@/lib/http/externalJson";
+import { reserveExternalCall } from "@/lib/ai/externalBudget";
 
 export interface StructuredRequest<T> {
   schema: z.ZodType<T>;
@@ -31,6 +32,7 @@ export interface StructuredResult<T> {
   data: T;
   provider: ProviderName | "local";
   fallbackErrors: string[];
+  dispatched?: boolean;
 }
 
 function jsonFromText(text: string): unknown {
@@ -44,6 +46,7 @@ async function callCloudflare<T>({
   prompt,
   userAiConfig,
   abortSignal,
+  maxOutputTokens,
 }: StructuredRequest<T>, timeoutMs: number): Promise<T> {
   const { accountId: account, token, model } = cloudflareCredentials(
     userAiConfig,
@@ -60,6 +63,7 @@ async function callCloudflare<T>({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        max_tokens: outputTokenLimit(maxOutputTokens),
         messages: [
           {
             role: "system",
@@ -81,12 +85,25 @@ async function callCloudflare<T>({
   return schema.parse(jsonFromText(body.result?.response ?? ""));
 }
 
+function outputTokenLimit(value?: number) {
+  return Number.isFinite(value) ? Math.max(1, Math.min(Math.floor(value!), 4096)) : 2400;
+}
+
 export async function runStructured<T>(
   request: StructuredRequest<T>,
 ): Promise<StructuredResult<T>> {
   request.abortSignal?.throwIfAborted();
   const deadline = Date.now() + 45_000;
   let attempts = 0;
+  let budgetExhausted = false;
+  const reserveAttempt = () => {
+    if (!request.userAiConfig?.enabled && !reserveExternalCall("server-ai")) {
+      budgetExhausted = true;
+      return false;
+    }
+    attempts += 1;
+    return true;
+  };
 
   const candidates = getModelCandidates(
     request.preferredProvider,
@@ -103,7 +120,7 @@ export async function runStructured<T>(
     try {
       const remaining = deadline - Date.now();
       if (remaining <= 0) break;
-      attempts += 1;
+      if (!reserveAttempt()) break;
       const result = await generateText({
         model: candidate.model,
         system: request.system,
@@ -126,7 +143,7 @@ export async function runStructured<T>(
             }
           : { prompt: request.prompt }),
         output: Output.object({ schema: request.schema }),
-        maxOutputTokens: Math.min(request.maxOutputTokens ?? 2400, 4096),
+        maxOutputTokens: outputTokenLimit(request.maxOutputTokens),
         temperature: 0.2,
         maxRetries: 0,
         abortSignal: request.abortSignal
@@ -140,6 +157,7 @@ export async function runStructured<T>(
         data: request.schema.parse(result.output),
         provider: candidate.name,
         fallbackErrors: [],
+        dispatched: true,
       };
     } catch {
       request.abortSignal?.throwIfAborted();
@@ -152,7 +170,7 @@ export async function runStructured<T>(
     hasCloudflare(request.userAiConfig)
   ) {
     try {
-      attempts += 1;
+      if (!reserveAttempt()) throw new Error("AI-dagbudget bereikt.");
       return {
         data: await callCloudflare(
           request,
@@ -160,6 +178,7 @@ export async function runStructured<T>(
         ),
         provider: "cloudflare",
         fallbackErrors: [],
+        dispatched: true,
       };
     } catch {
       request.abortSignal?.throwIfAborted();
@@ -168,11 +187,13 @@ export async function runStructured<T>(
 
   if (request.allowLocalMock === false) {
     throw new Error(
-      attempts > 0
+      budgetExhausted
+        ? "Het gezamenlijke AI-dagbudget is bereikt. Probeer het morgen opnieuw."
+        : attempts > 0
         ? "Geen AI-provider beschikbaar. Probeer het later opnieuw."
         : "Geen AI-provider geconfigureerd. Voeg GOOGLE_GENERATIVE_AI_API_KEY toe.",
     );
   }
 
-  return { data: request.mock, provider: "local", fallbackErrors: [] };
+  return { data: request.mock, provider: "local", fallbackErrors: [], dispatched: attempts > 0 };
 }

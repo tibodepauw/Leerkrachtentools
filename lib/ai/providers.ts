@@ -7,6 +7,7 @@ import type { UserAiConfig } from "@/lib/ai/userCredentials";
 import { userAiConfigHasCredentials } from "@/lib/ai/userCredentials";
 import { defaultModelForProvider } from "@/lib/ai/usableModels";
 import { getGoogleModelId } from "@/lib/ai/googleModel";
+import { credentialFetch } from "@/lib/http/credentialFetch";
 
 export type ProviderName =
   | "google"
@@ -24,7 +25,7 @@ function envModelCandidates(preferred?: ProviderName): ModelCandidate[] {
   const candidates: ModelCandidate[] = [];
 
   if (process.env.GROQ_API_KEY) {
-    const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
+    const groq = createGroq({ apiKey: process.env.GROQ_API_KEY, fetch: credentialFetch });
     candidates.push({
       name: "groq",
       model: groq(process.env.GROQ_MODEL ?? "llama-3.3-70b-versatile"),
@@ -33,6 +34,7 @@ function envModelCandidates(preferred?: ProviderName): ModelCandidate[] {
 
   if (process.env.CEREBRAS_API_KEY) {
     const cerebras = createCerebras({
+      fetch: credentialFetch,
       apiKey: process.env.CEREBRAS_API_KEY,
     });
     candidates.push({
@@ -43,6 +45,7 @@ function envModelCandidates(preferred?: ProviderName): ModelCandidate[] {
 
   if (process.env.SAMBANOVA_API_KEY) {
     const sambanova = createOpenAI({
+      fetch: credentialFetch,
       name: "sambanova",
       apiKey: process.env.SAMBANOVA_API_KEY,
       baseURL:
@@ -58,6 +61,7 @@ function envModelCandidates(preferred?: ProviderName): ModelCandidate[] {
 
   if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     const google = createGoogleGenerativeAI({
+      fetch: credentialFetch,
       apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     });
     candidates.push({
@@ -85,19 +89,20 @@ function userModelCandidates(
     case "groq":
       candidate = {
         name: "groq",
-        model: createGroq({ apiKey: config.apiKey })(modelId),
+        model: createGroq({ apiKey: config.apiKey, fetch: credentialFetch })(modelId),
       };
       break;
     case "cerebras":
       candidate = {
         name: "cerebras",
-        model: createCerebras({ apiKey: config.apiKey })(modelId),
+        model: createCerebras({ apiKey: config.apiKey, fetch: credentialFetch })(modelId),
       };
       break;
     case "sambanova":
       candidate = {
         name: "sambanova",
         model: createOpenAI({
+          fetch: credentialFetch,
           name: "sambanova",
           apiKey: config.apiKey,
           baseURL:
@@ -108,7 +113,7 @@ function userModelCandidates(
     case "google":
       candidate = {
         name: "google",
-        model: createGoogleGenerativeAI({ apiKey: config.apiKey })(modelId),
+        model: createGoogleGenerativeAI({ apiKey: config.apiKey, fetch: credentialFetch })(modelId),
       };
       break;
     case "cloudflare":
