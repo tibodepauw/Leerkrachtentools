@@ -44,7 +44,7 @@
     "next": "16.3.3",
     "next-themes": "^0.4.6",
     "pdf-parse": "^2.4.5",
-    "posthog-js": "^1.427.3",
+    "posthog-js": "^1.433.5",
     "radix-ui": "^1.6.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
