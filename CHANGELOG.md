@@ -10,6 +10,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - B2B-berekeningen in afbreekbare processen; deadline, disconnect en leaseverlies stoppen werk vóór slotvrijgave
 - Echte organisatie-AI-dagbudgetten, publieke HTTPS-configuratiecontrole en bescherming tegen late avataropslag na intrekking
 - Linux-isolatieproef, processtopregressies, geïsoleerde testdatabases en bredere standalone-HTTP-controles
+- Koude apphersteltest voor sessies, versleutelde credentials, sleutelintrekking, quota, AI-budget en avatars; volledige Linux-CI inclusief browsers geslaagd
 
 ### Added
 - Gedeelde-computermodus met tabgeheugen, sessiemeldingen tussen tabbladen en revalidatie bij terugkeer
@@ -25,7 +26,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Avatars volledig hercoderen naar begrensde WebP zonder metadata
 - Afbreeksignalen doorgeven tot Pro/Cloudflare; providerfallback stopt na annulering; actieve B2B-leases krijgen heartbeats
 - GitHub Actions op commit-SHA vastgezet; CI-looptijd begrensd en Dependabot toegevoegd
-- Repositoryaudit vastgelegd in docs/security-audit-2026-09-18.md; review en Linux/VM-productieacceptatie blijven open
+- Repositoryaudit vastgelegd in docs/security-audit-2026-09-18.md; review en acceptatie op de echte VM blijven open
 
 ### Fixed
 - Requestbody-timeout geldt tijdens een wachtende read en weigert late EOF; leases starten op reserveringstijd (PR1-01)

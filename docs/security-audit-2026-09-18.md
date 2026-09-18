@@ -1,12 +1,12 @@
 # Securityaudit vóór de eerste productie-installatie
 
-Datum: 18 september 2026. Baseline: `main` op `3a23381158ec724b580fbf9d703f0da571fec51f`, inclusief PR #3. Herstelbranch: `codex/security-audit`. Er is geen deployment uitgevoerd. Alle actieve proeven gebruikten lokale synthetische gegevens; er zijn geen echte e-mails verstuurd of AI-providerverzoeken gedaan.
+Datum: 18 september 2026. Baseline: `main` op `3a23381158ec724b580fbf9d703f0da571fec51f`, inclusief PR #3. Herstelbranch: `codex/security-audit`. Er is geen deployment uitgevoerd. Alle actieve proeven gebruikten synthetische gegevens op Windows en de Linux-CI-runner; er zijn geen echte e-mails verstuurd of AI-providerverzoeken gedaan.
 
 ## Oordeel
 
 De repository bevatte drie reproduceerbare applicatieproblemen: beïnvloeding van de appopmaak vanuit een Word-preview, een vastlopende ODT-tekstbewerking en databankgroei door reeds geweigerde OTP-pogingen. Deze zijn op de herstelbranch opgelost. Daarnaast is een kwetsbare builddependency bijgewerkt en zijn uploadcapaciteit, afbreking van AI-verzoeken en de dependencycontrole aangescherpt.
 
-Dit rapport is geen vrijgave voor publieke productie. De fixes moeten worden gereviewd en Linux-CI moet op deze branch slagen. Daarna zijn de hieronder beschreven VM- en herstelproeven nodig. Een codeaudit kan de daadwerkelijke serverconfiguratie of afwezigheid van alle onbekende fouten niet bewijzen.
+Alle in deze audit bevestigde repositorybevindingen zijn op de herstelbranch aangepakt. De volledige Linux-CI op commit `bf0a3521a81cdc16c643e258c1a1be37966e7a9b` is [geslaagd](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35373352643), inclusief kernelisolatie, browsers en hersteltest. De branch is nog niet gemerged. Review en de hieronder beschreven controles van de echte VM, providers en offsite-backups blijven nodig. Een codeaudit bewijst niet de afwezigheid van alle onbekende fouten en is geen vrijgave van een nog niet bestaande productieomgeving.
 
 ## Bevindingen en herstel
 
@@ -32,7 +32,9 @@ De eigenaar vroeg door te werken aan alle resterende repositoryproblemen en beve
 - Een avatarjob controleert de sessie opnieuw vóór opslag. Een nieuwe, unieke bestandsversie en de databaseverwijzing worden zonder tussentijdse await opgeslagen; bij een mislukte database-update wordt het nieuwe bestand verwijderd. Zo schrijft een late job na accountverwijdering geen nieuwe avatar weg.
 - Publieke productie vereist HTTPS, een zuivere APP_ORIGIN en de documentserviceconfiguratie. De ontwikkeloptie voor lokale parsers wordt geweigerd voor publieke origins. De standalone-build neemt ook dynamisch geladen workerdependencies en native bibliotheken mee.
 
-Nieuwe bewijzen: processJob.test.ts stopt echte eindeloze CPU-lussen en controleert dat hun PID verdwenen is; workerLease.test.ts test deadline, disconnect, leaseverlies en niet-herleven; parserWorker.test.ts controleert weigering zonder service; orgBudget.test.ts controleert organisatie- en globale daggrenzen. De HTTP-smoke test gebruikt de echte build voor B2B, DOCX-export/herimport en avatars. De Linux-acceptatie voert dezelfde systemd-configuratie uit met synthetische probes voor verboden bestanden/netwerk, CPU-timeout en native OOM. **Linux-uitvoering moet nog groen worden bevestigd; er is geen VM getest.**
+Nieuwe bewijzen: processJob.test.ts stopt echte eindeloze CPU-lussen en controleert dat hun PID verdwenen is; workerLease.test.ts test deadline, disconnect, leaseverlies en niet-herleven; parserWorker.test.ts controleert weigering zonder service; orgBudget.test.ts controleert organisatie- en globale daggrenzen. De HTTP-smoke test gebruikt de echte build voor B2B, DOCX-export/herimport en avatars. De Linux-acceptatie slaagt met dezelfde systemd-beveiligingsinstellingen: hostbestanden en schrijven geweigerd, netwerk door de kernel geweigerd, CPU-lus beëindigd met `timeout`, native geheugengroei met `oom-kill`, gevolgd door de echte PDF-/DOCX-/avatarflows. De CI-proef ontdekte ook dat de PDF-library `os.homedir()` nodig heeft: `HOME=/tmp` verwijst nu naar het private, begrensde tmpfs. Hiervoor zijn geen host-thuismap of ruimere netwerk-/systeemrechten toegekend. **Er is geen DigitalOcean-VM getest.**
+
+De koude hersteltest gebruikt de echte SQLite-backuphelper, kopieert de snapshot naar een andere database en start een tweede standalone-app. Die accepteert de herstelde sessie, ontsleutelt de synthetische providercredential met dezelfde encryptionsecret, weigert de ingetrokken B2B-sleutel en behoudt maandquota, AI-dagbudget en avatarbytes. Deze proef slaagt lokaal en op Linux; offsite-overdracht, versleutelde backupopslag en een lege tweede host vallen buiten deze repositoryproef.
 
 ## Onderzochte onderdelen
 
@@ -45,12 +47,12 @@ Nieuwe bewijzen: processJob.test.ts stopt echte eindeloze CPU-lussen en controle
 | Geheimen en database | Parameterbinding in onderzochte queries, sessiehashes, AES-GCM-contextbinding voor providerkeys, gerichte accountqueries en gegevensverwijdering bekeken. Patroonscan van 2.011 unieke tekstblobs uit lokaal opgehaalde Git-refs: één match, een bewust ongeldige testfixture met `abc` als private key; geen echte sleutel in die scan bevestigd. | De scan herkent geselecteerde sleutelpatronen, geen willekeurig geheim of verwijderde/onbereikbare remote objecten. VM-secrets en dashboards zijn niet ingezien. |
 | AI en externe verzoeken | Providerhosts zijn code/configuratiegebonden; gebruikers geven geen vrije fetch-URL aan de upload-SDK door. Base64 wordt naar begrensde bytes omgezet. Gestructureerde uitvoer wordt gevalideerd, er zijn geen modeltools voor systeemacties in de onderzochte router. | Promptinjectie kan de inhoud van een analyse beïnvloeden. Modeluitvoer blijft advies; er is geen garantie op inhoudelijke juistheid. |
 | Browserprivacy | Tests voor gedeelde opslag, sessiemeldingen en werkelijke browseracceptatie zijn toegevoegd. Serviceworker cachet geen API-antwoorden of accountpagina's; analytics replay staat uit. | Geen Safari/Firefox-acceptatie, echte browsercrash/heropenen of juridische privacybeoordeling. Normale apparaatmodus bewaart lessen lokaal volgens de bestaande productkeuze. |
-| Supply chain en GitHub | Next.js 16.3.3 is de gepatchte augustusversie. Actions zijn op SHA gepind, tokenrechten zijn beperkt en credentials worden niet in de checkout bewaard. GitHub bevestigt `main` beschermd met verplichte `quality` voor iedereen; baseline-main-CI is groen. | Nieuwe branch moet nog door Linux-CI. Dependabot-majorupdates zijn niet automatisch gemerged. Release-tagbeleid moet bij een release worden ingesteld. |
-| VM en backups | Nginx/systemd-templates, forwardingvertrouwen, bindadres, limieten en SQLite-backuphelper doorgenomen. | Templates zijn geen bewijs van een draaiende firewall, HTTPS of restore. Die infrastructuur is nog niet beschikbaar in deze audit. |
+| Supply chain en GitHub | Next.js 16.3.3 is de gepatchte augustusversie. Actions zijn op SHA gepind, tokenrechten zijn beperkt en credentials worden niet in de checkout bewaard. GitHub bevestigt `main` beschermd met verplichte `quality` voor iedereen; baseline-main-CI en auditbranch-CI zijn groen. | Dependabot-majorupdates zijn niet automatisch gemerged. Review/merge en release-tagbeleid blijven aparte stappen. |
+| VM en backups | Nginx/systemd-templates, forwardingvertrouwen, bindadres en limieten doorgenomen. Linux-parserisolatie en een koude SQLite-/app-/avatarhersteltest slagen in CI. | De echte firewall, HTTPS, offsite-backupopslag en herstel op een lege tweede host zijn nog niet getest. Die infrastructuur is nog niet beschikbaar. |
 
 ## Validatie van de eerste herstelronde
 
-De tweede herstelronde slaagt lokaal met **534 tests in 121 bestanden**, nul fouten, geen TODOs en één bestaande corpusafhankelijke skip. De oorspronkelijke resultaten hieronder blijven staan als historische auditbasis. De uitgebreide standalone-HTTP-proef slaagt; Linux-kernelisolatie wacht nog op de nieuwe CI-run.
+De tweede herstelronde slaagt lokaal en in Linux-CI met **534 tests in 121 bestanden**, nul fouten, geen TODOs en één bestaande corpusafhankelijke skip. De oorspronkelijke resultaten hieronder blijven staan als historische auditbasis. De uitgebreide standalone-HTTP-proef, koude hersteltest, Linux-kernelisolatie en Chromium-browserproeven slagen op bovengenoemde commit.
 
 Lokale eindcontrole: 518 tests geslaagd, nul gefaald, één bestaande skip en twee bestaande TODOs, over 117 testbestanden. ESLint: nul fouten/waarschuwingen. De Next.js-productiebuild inclusief TypeScript slaagt. De HTTP- en browsertests slagen, inclusief de kwaadaardige DOCX-controle en echte accountwissel/uitlogflows. OSV meldt voor 968 productie- en buildpackages geen bekende kwetsbaarheden op het controlemoment. De skip/TODOs tellen niet als geaccepteerde productiefunctionaliteit.
 
@@ -66,13 +68,15 @@ npm run build
 npx playwright install --with-deps chromium
 node scripts/check-preview-security.mjs
 node scripts/check-standalone.mjs --browser
+# Alleen op een disposable Linux-host met systemd:
+sudo "$(command -v node)" scripts/check-linux-isolation.mjs
 ```
 
-Lokaal getest op Windows met Node 24 en een geïsoleerde headless Edge. CI gebruikt Linux, Node 22 en Chromium. De browsertests gebruiken een tijdelijke database met twee synthetische accounts en blokkeren externe browserverzoeken. Ze gebruiken geen persoonlijk browserprofiel. De volledige Linux-installatie en de echte VM vereisen nog een eigen acceptatie.
+Lokaal getest op Windows met Node 24 en een geïsoleerde headless Edge. De geslaagde CI gebruikt Linux, Node 22 en Chromium. De browsertests gebruiken een tijdelijke database met twee synthetische accounts en blokkeren externe browserverzoeken. Ze gebruiken geen persoonlijk browserprofiel. De volledige installatie op de echte VM vereist nog een eigen acceptatie.
 
 ## Verplichte stappen vóór livegang
 
-1. Laat deze fixes reviewen en de volledige Linux-CI slagen voordat ze naar `main` gaan.
+1. Laat deze fixes reviewen en behoud de verplichte groene CI bij merge naar `main`. De hierboven vastgelegde branchcommit is reeds geslaagd.
 2. Maak een staging-VM en valideer de nginx- en systemd-configuratie daar. Test HTTPS, uitsluitend loopback voor poort 3000, de firewall, SSH, overschreven forwardingheaders, upload-/tijdlimieten en het schoolnetwerkscenario met gedeelde IP-adressen.
 3. Draai de nieuwe parserisolatie-acceptatie op de gekozen Linux-host en test echte bestanden/corpusbelasting binnen de ingestelde geheugen- en tijdgrenzen. De configuratie is nu aanwezig; de daadwerkelijke VM moet die instellingen nog afdwingen.
 4. Controleer op staging dat de B2B-processen stoppen bij disconnect/deadline en dat providerbudgetten passen bij het gebruik. De repository bevat nu de harde processtop en regressietests; dit vervangt geen providerlimieten of operationele belastingtest.

@@ -1,6 +1,6 @@
 # Eerste installatie op DigitalOcean (nog niet live)
 
-Status 18 september 2026: er staat volgens de eigenaar nog niets live. De repositoryaudit en aanvullende fixes staan in [het auditrapport](security-audit-2026-09-18.md). Review, Linux-CI op de auditbranch en een Linux-stagingtest moeten nog plaatsvinden. Geen deployment is uitgevoerd.
+Status 18 september 2026: er staat volgens de eigenaar nog niets live. De repositoryaudit en aanvullende fixes staan in [het auditrapport](security-audit-2026-09-18.md). De volledige Linux-CI, inclusief parserisolatie, browsers en koude apphersteltest, is [geslaagd](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35373352643). Review/merge en acceptatie op de echte staging-VM blijven nodig. Geen deployment is uitgevoerd.
 
 ## Nieuwe installatie
 
@@ -50,7 +50,9 @@ Maak een consistente SQLite-backup via de backup-API (ook met WAL actief):
 node scripts/backup-database.mjs /var/lib/leerkrachtentools/leerkrachtentools.db /veilige-backupmap/lt-2026-09-17.db
 ```
 
-Het script weigert overschrijven, opent de backup opnieuw en controleert integriteit. Plan dagelijkse backups en versleutelde opslag buiten de VM. Bewaar avatars en benodigde secrets afzonderlijk versleuteld. Kies een bewaartermijn, bijvoorbeeld 7 dagelijkse en 4 wekelijkse backups. Test herstel in een aparte stagingomgeving: accounts, quota, intrekking en avatarbestanden. Alleen een integriteitscheck is nog geen volledige hersteltest.
+Het script weigert overschrijven, opent de backup opnieuw en controleert integriteit. De standalone-smoke test herstelt daarnaast een synthetische backup naar een tweede database en start een nieuwe app: sessies, ontsleuteling van opgeslagen credentials, sleutelintrekking, quota, AI-budget en avatarbytes blijven correct. Dit is lokaal en op Linux-CI bevestigd.
+
+Plan dagelijkse backups en versleutelde opslag buiten de VM. Bewaar avatars en benodigde secrets afzonderlijk versleuteld; behoud bij herstel dezelfde AUTH_SECRET en API_KEY_ENCRYPTION_SECRET. Kies een bewaartermijn, bijvoorbeeld 7 dagelijkse en 4 wekelijkse backups. Test de werkelijke offsite-backup op een lege staginghost. De repositoryproef bewijst nog niet dat die opslag, overdracht en operationele herstelprocedure werken.
 
 Configureer een externe HTTPS-monitor en waarschuwingen voor service-restarts/OOM, 5xx, aanhoudende 429's, schijfgebruik boven 80%, geheugen en mislukte backups. Log geen lesinhoud, tokens of OTP-codes. Beperk toegang en retentie van nginx- en journald-logs.
 

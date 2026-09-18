@@ -1,8 +1,8 @@
 # Hardening tickets H-01 tot H-06
 
-Update 18 september, tweede herstelronde: procesisolatie voor document/beeldverwerking, harde stop voor de drie productie-B2B-routes en echte organisatie-AI-dagbudgetten zijn toegevoegd op `codex/security-audit`. Zie [actueel auditrapport](security-audit-2026-09-18.md). Eerdere openstaande-codebeschrijvingen hieronder zijn historisch; Linux/VM-acceptatie wordt afzonderlijk bijgehouden.
+Actuele status 18 september 2026: procesisolatie voor document/beeldverwerking, harde stop voor de drie productie-B2B-routes en organisatie-AI-dagbudgetten zijn geïmplementeerd op `codex/security-audit`. De volledige [Linux-CI](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35373352643) slaagt, inclusief kernelgrenzen, browserprivacy, Word-previewisolatie en koude apphersteltest. Zie het [actuele auditrapport](security-audit-2026-09-18.md) voor bewijs en resterende controles op de toekomstige VM. Review/merge en operationele acceptatie blijven open.
 
-Update 18 september 2026: de aangevraagde repositoryaudit is uitgevoerd op `codex/security-audit`. Zie [bevindingen, herstel en resterende productievoorwaarden](security-audit-2026-09-18.md). Browserproeven voor opslagwissen, offline/online, terugkeer, accountwissel en logout in twee tabbladen slagen. De aanvullende fixes en tests wachten op review/Linux-CI; VM-isolatie en operationele acceptatie blijven open. Onderstaande tabel beschrijft de eerdere voorbereidingsronde.
+## Historische voorbereiding van 17 september
 
 De onderstaande oorspronkelijke tickets zijn op 17 september 2026 verder uitgewerkt op `codex/production-preparation`. Dit is geen volledige securityaudit en geen deployment. De eigenaar bevestigt dat er nog geen productieomgeving live staat.
 
@@ -15,7 +15,7 @@ De onderstaande oorspronkelijke tickets zijn op 17 september 2026 verder uitgewe
 | H-05 | Nieuwe sleutels standaard 90 dagen (max. 365); expliciete scopes in CLI; uitgifte aan bestaande org; atomaire rotatie/intrekking; auditmetadata zonder token; ingetrokken cache-replay getest | Operationele rotatieplanning en beheer van reeds uitgegeven sleutels |
 | H-06 | Actions op SHA; CI-timeout/concurrency; Dependabot; standalone smoke-test; nginx/systemd-templates; consistente SQLite-backup met integriteitscheck | Branch/tagbescherming door eigenaar; templates activeren en toetsen op VM; providerbudgetten, externe alarmen, offsite-backups en volledige hersteltest |
 
-De oorspronkelijke beschrijvingen hieronder zijn historische context. De tabel is de actuele opvolgstatus. V20-08 is slechts gedeeltelijk aangepakt: cancellation gaat nu door de B2B-routes en Cloudflare; actieve verwerking vernieuwt haar lease. Een harde stop voor willekeurige B2B-handlercode is nog open. PDF/DOC-procesisolatie sluit dat afzonderlijke ticket niet.
+De tabel en beschrijvingen hieronder zijn historische context, geen actuele openstaande-codechecklist. De nieuwe B2B-procesgrens en overige herstelmaatregelen staan in het actuele auditrapport bovenaan.
 
 ## H-01 Gedeeld-apparaatmodus
 
