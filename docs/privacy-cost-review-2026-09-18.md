@@ -28,7 +28,9 @@ Optionele PostHog-analytics laat uitsluitend expliciete paginaweergaven van vast
 
 ## Validatie
 
-Gerichte tests gebruiken echte tijdelijke SQLite-databases, gesimuleerde providerantwoorden en vertraagde clienttaken. `node scripts/check-client-session.mjs` controleert daarnaast echte IndexedDB-transacties in een wegwerpbrowser: normale opslag, scheiding tussen accounts en weigering van late lees-/schrijfopdrachten na accountwissel of opnieuw inloggen. De volledige CI bouwt de app en herhaalt de bestaande HTTP-, Linux-isolatie-, browser- en backupherstelproeven. De concrete eindrun wordt na voltooiing hieronder vastgelegd.
+Gerichte tests gebruiken echte tijdelijke SQLite-databases, gesimuleerde providerantwoorden en vertraagde clienttaken. `node scripts/check-client-session.mjs` controleert daarnaast echte IndexedDB-transacties in een wegwerpbrowser: normale opslag, scheiding tussen accounts en weigering van late lees-/schrijfopdrachten na accountwissel of opnieuw inloggen. Dezelfde proef controleert de accountgebonden zoekcache en het ontbreken van sessionStorage-opslag in gedeelde-apparaatmodus.
+
+**Eindresultaat:** [CI-run 35390837729](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35390837729) op codecommit `0773b544b4970afe8ce8689205dcec930556b3d6` is volledig geslaagd: **601 tests in 132 bestanden**, nul fouten en één bestaande corpusafhankelijke skip. Dependencycontrole, lint, typecheck, productiebuild, HTTP-autorisatiematrix, Linux-kernelisolatie, koude apphersteltest, clientopslagproef, Chromium-sessieproeven en Word-previewisolatie in Chromium/Firefox/WebKit zijn groen. Lokaal slaagt de echte clientopslagproef ook in Edge. Latere wijzigingen aan uitsluitend dit verslag veranderen deze geteste code niet. De branch is niet automatisch gemerged of gedeployed.
 
 ## Volgende omgeving: VirtualBox, daarna DigitalOcean
 
