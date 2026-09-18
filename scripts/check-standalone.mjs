@@ -128,6 +128,8 @@ try {
   const savedAvatar = await fetch(`${origin}/api/account/avatar`, { headers });
   assert.equal(savedAvatar.headers.get("content-type"), "image/webp");
   assert.equal((await sharp(Buffer.from(await savedAvatar.arrayBuffer())).metadata()).format, "webp");
+  const { checkBackupRestore } = await import("./check-backup-restore.mjs");
+  await checkBackupRestore({ folder, databasePath, userId, orgId, apiToken, token, secret });
   assert.equal((await fetch(`${origin}/api/account/avatar`, { method: "DELETE", headers })).status, 200);
   console.log("Isolated B2B routes, DOCX export/reimport and avatar normalization passed.");
   assert.equal((await fetch(`${origin}/api/auth/logout`, { method: "POST", headers })).status, 200);

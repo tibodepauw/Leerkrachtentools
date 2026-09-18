@@ -20,6 +20,11 @@ const standalone = path.resolve(".next/standalone");
 const socketPath = path.join(folder, "parser.sock");
 const probePath = path.join(workerDir, "probe.cjs");
 const secretPath = path.join(folder, "host-secret.txt");
+const compiledParser = readFileSync(path.join(standalone, "workers/document.cjs"), "utf8");
+assert(compiledParser.includes(".catch((error) => {"));
+// Diagnostic copy used exclusively with synthetic fixtures in this disposable
+// test. Production parser errors remain generic and are never logged here.
+writeFileSync(path.join(workerDir, "document-debug.cjs"), compiledParser.replace(".catch((error) => {", '.catch((error) => { console.error("Synthetic parser probe:", error);'));
 writeFileSync(secretPath, "synthetic-host-secret");
 writeFileSync(probePath, `const fs=require('node:fs');const net=require('node:net');
 const chunks=[];process.stdin.on('data',c=>chunks.push(c));process.stdin.on('end',async()=>{
@@ -43,6 +48,7 @@ function service(entry) {
     .replaceAll("/opt/leerkrachtentools/current", standalone)
     .replace("ExecStart=/usr/bin/node", `BindReadOnlyPaths=${realpathSync(process.execPath)}:/runtime/node\nBindReadOnlyPaths=${workerDir}:/probe\nExecStart=/runtime/node`)
     .replace("/app/workers/document.cjs", entry)
+    .replace("StandardError=null", "StandardError=journal")
     .replace("leerkrachtentools-parsers.slice", `${prefix}.slice`);
 }
 async function exchange(payload, maxMs = 14000) {
@@ -78,7 +84,7 @@ try {
     assert(results.includes(expected), `Expected ${expected}, observed ${results.join(', ')}`);
   }
   // The same service restrictions must also run the real compiled parser.
-  writeFileSync(`/run/systemd/system/${prefix}@.service`, service("/app/workers/document.cjs"));
+  writeFileSync(`/run/systemd/system/${prefix}@.service`, service("/app/workers/document.cjs") + `\nBindReadOnlyPaths=${workerDir}/document-debug.cjs:/app/workers/document.cjs\n`);
   ctl("daemon-reload");
   assert.deepEqual(JSON.parse(await exchange({ operation: "extract", fileName: "test.txt", bytes: Buffer.from("Linux sandbox works").toString("base64") })), { text: "Linux sandbox works" });
   const smoke = spawn(process.execPath, ["scripts/check-standalone.mjs"], {
@@ -86,6 +92,9 @@ try {
   });
   assert.equal(await new Promise(resolve => smoke.once("exit", resolve)), 0);
   console.log("Linux isolation passed: denied host files/writes/network; CPU deadline; native OOM limit; real standalone parsing.");
+} catch (error) {
+  try { console.error(execFileSync("journalctl", ["--no-pager", "-u", `${prefix}@*`, "-n", "80"], { encoding: "utf8" }).slice(-12000)); } catch { /* diagnostic only */ }
+  throw error;
 } finally {
   try { ctl("stop", `${prefix}.socket`, `${prefix}@*.service`); } catch { /* already stopped */ }
   for (const file of units) { try { unlinkSync(file); } catch { /* no file */ } }
