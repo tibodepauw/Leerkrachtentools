@@ -5,6 +5,17 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    groups:
+      # Provider interfaces and the core SDK must be reviewed together.
+      ai-sdk:
+        patterns:
+          - ai
+          - "@ai-sdk/*"
+    ignore:
+      # Match our lowest supported runtime (Node 22). Revisit on runtime upgrades.
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: /
     schedule:
