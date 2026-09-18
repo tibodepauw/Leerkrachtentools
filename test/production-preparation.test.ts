@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import sharp from "sharp";
-import { canonicalProfileImage } from "@/lib/auth/profileImage";
+import { canonicalProfileImage, saveProfileImageFile, profileImageAbsolutePath } from "@/lib/auth/profileImage";
 import { apiKeyExpiry, createOrganization, generateApiKey, rotateApiKey, validateApiKey } from "@/lib/api-keys";
 import { getDatabase } from "@/lib/db/sqlite";
 import { withApiAuth } from "@/lib/api-guard";
@@ -31,6 +32,16 @@ function smallPdf() {
 }
 
 describe("production preparation", () => {
+  it("does not persist an avatar after revocation and removes it if the database update fails", async () => {
+    const source = await sharp({ create: { width: 8, height: 8, channels: 3, background: "red" } }).png().toBuffer();
+    const afterWrite = vi.fn();
+    await expect(saveProfileImageFile(randomUUID(), "a.png", source, "image/png", undefined, () => { throw new Error("revoked"); }, afterWrite)).rejects.toThrow("revoked");
+    expect(afterWrite).not.toHaveBeenCalled();
+    let written = "";
+    await expect(saveProfileImageFile(randomUUID(), "a.png", source, "image/png", undefined, undefined, (name) => { written = name; throw new Error("database failed"); })).rejects.toThrow("database failed");
+    expect(written).not.toBe("");
+    expect(existsSync(profileImageAbsolutePath(written))).toBe(false);
+  });
   it("decodes avatars, strips metadata and limits output dimensions", async () => {
     const original = await sharp({ create: { width: 1000, height: 600, channels: 3, background: "red" } }).withMetadata().png().toBuffer();
     const output = await canonicalProfileImage(original);

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHmac } from "node:crypto";
+import { getDatabase } from "@/lib/auth/database";
 import { hashRequestIp } from "@/lib/auth/service";
 import { getAuthSecret } from "@/lib/auth/secret";
 import { normalizeEmail } from "@/lib/auth/normalizeEmail";
@@ -21,27 +22,31 @@ function hashEmailForOtpLimit(email: string) {
 }
 
 export function assertOtpVerifyRateLimits(request: Request, email: string) {
-  assertRequestRateLimit({
-    scope: "otp-verify-email",
-    subject: hashEmailForOtpLimit(email),
-    limit: OTP_VERIFY_EMAIL_LIMIT,
-    windowMs: OTP_VERIFY_WINDOW_MS,
-  });
-
-  const ip = resolveClientIp(request);
-  if (ip.trusted) {
+  // A denial must not leave rows in earlier buckets. Otherwise rotating the
+  // email field lets an already blocked caller grow the database indefinitely.
+  getDatabase().transaction(() => {
     assertRequestRateLimit({
-      scope: "otp-verify-ip",
-      subject: hashRequestIp(ip.address),
-      limit: OTP_VERIFY_IP_LIMIT,
+      scope: "otp-verify-email",
+      subject: hashEmailForOtpLimit(email),
+      limit: OTP_VERIFY_EMAIL_LIMIT,
       windowMs: OTP_VERIFY_WINDOW_MS,
     });
-  }
 
-  assertRequestRateLimit({
-    scope: "otp-verify-global",
-    subject: "emergency",
-    limit: OTP_VERIFY_GLOBAL_LIMIT,
-    windowMs: OTP_VERIFY_WINDOW_MS,
-  });
+    const ip = resolveClientIp(request);
+    if (ip.trusted) {
+      assertRequestRateLimit({
+        scope: "otp-verify-ip",
+        subject: hashRequestIp(ip.address),
+        limit: OTP_VERIFY_IP_LIMIT,
+        windowMs: OTP_VERIFY_WINDOW_MS,
+      });
+    }
+
+    assertRequestRateLimit({
+      scope: "otp-verify-global",
+      subject: "emergency",
+      limit: OTP_VERIFY_GLOBAL_LIMIT,
+      windowMs: OTP_VERIFY_WINDOW_MS,
+    });
+  })();
 }

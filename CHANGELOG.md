@@ -6,6 +6,16 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+- Productiecorpuscontrole zonder fixturefallback; meldt ontbrekende of beschadigde datasets vóór deployment
+- Begrensde directe providerantwoorden, strikte modellenlijsten, annulering van modeldetectie en redirectweigering voor directe credentialdragende API-verzoeken
+- Verdiepte audit: runtime-validatie op account-routes, herstel van vastlopende splash bij geblokkeerde opslag en opslagkeuze vóór sessieaanmaak
+- Extra account-/CSRF-HTTP-matrix, documentmutatieproeven en Word-previewisolatie in drie browserengines
+- Afzonderlijke systemd-documentservice voor alle imports, Word-export en avatars, met minimale root, netwerkblokkade en kernelgeheugen-/tijdlimieten
+- B2B-berekeningen in afbreekbare processen; deadline, disconnect en leaseverlies stoppen werk vóór slotvrijgave
+- Echte organisatie-AI-dagbudgetten, publieke HTTPS-configuratiecontrole en bescherming tegen late avataropslag na intrekking
+- Linux-isolatieproef, processtopregressies, geïsoleerde testdatabases en bredere standalone-HTTP-controles
+- Koude apphersteltest voor sessies, versleutelde credentials, sleutelintrekking, quota, AI-budget en avatars; volledige Linux-CI inclusief browsers geslaagd
+
 ### Added
 - Gedeelde-computermodus met tabgeheugen, sessiemeldingen tussen tabbladen en revalidatie bij terugkeer
 - PDF/DOC-parserprocessen met harde deadline, concurrencygrens en begrensde JavaScript-heap
@@ -13,10 +23,14 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - DigitalOcean/nginx/systemd-voorbeelden, SQLite-backuphelper en standalone HTTP-smoke-test in CI
 
 ### Security
+- Securityaudit: Word-preview geïsoleerd, ODT-regexuitputting hersteld en OTP-rate-limitboekingen atomair gemaakt
+- Uploadslots gelden vóór bodybuffering; clientafbreking bereikt ook de reguliere AI-routes
+- js-yaml naar 4.3.2; CI controleert productie- en builddependencies en weigert onvolledige OSV-resultaten
+- Aanvallende DOCX-browsertest en productie-HTTP-/sessieproeven aan CI toegevoegd
 - Avatars volledig hercoderen naar begrensde WebP zonder metadata
 - Afbreeksignalen doorgeven tot Pro/Cloudflare; providerfallback stopt na annulering; actieve B2B-leases krijgen heartbeats
 - GitHub Actions op commit-SHA vastgezet; CI-looptijd begrensd en Dependabot toegevoegd
-- Uitgebreide securityaudit en Linux-productieacceptatie blijven afzonderlijke vervolgstappen
+- Repositoryaudit vastgelegd in docs/security-audit-2026-09-18.md; review en acceptatie op de echte VM blijven open
 
 ### Fixed
 - Requestbody-timeout geldt tijdens een wachtende read en weigert late EOF; leases starten op reserveringstijd (PR1-01)

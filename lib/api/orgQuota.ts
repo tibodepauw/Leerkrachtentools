@@ -12,7 +12,7 @@ import {
 
 export const ORG_API_BURST_PER_MINUTE = 60;
 export const ORG_API_MAX_IN_FLIGHT = 4;
-export const GLOBAL_API_MAX_IN_FLIGHT = 32;
+export const GLOBAL_API_MAX_IN_FLIGHT = 4;
 export const ORG_API_MAX_EXECUTION_MS = 45_000;
 export const API_DENIAL_LOG_CAP = 8;
 export const API_DENIAL_WINDOW_MS = 5 * 60 * 1000;
@@ -25,7 +25,7 @@ export const SECURITY_EVENT_SAMPLE_CAP = API_DENIAL_LOG_CAP;
 
 export function orgApiExecutionLimitMs() {
   const raw = Number(process.env.ORG_API_MAX_EXECUTION_MS);
-  return Number.isFinite(raw) && raw >= 10 ? raw : ORG_API_MAX_EXECUTION_MS;
+  return Number.isFinite(raw) && raw >= 10 ? Math.min(raw, ORG_API_MAX_EXECUTION_MS) : ORG_API_MAX_EXECUTION_MS;
 }
 
 /**
@@ -277,17 +277,6 @@ export function reserveOrgApiCall({
       }
     }
 
-    const globalCount = countActiveLeases(undefined, now);
-    if (globalCount >= GLOBAL_API_MAX_IN_FLIGHT) {
-      const snapshot = getOrgQuotaSnapshot(orgId, now);
-      return {
-        ok: false,
-        reason: "global-concurrency",
-        consumed: snapshot.consumed,
-        retryAfterSeconds: 15,
-      };
-    }
-
     ensureQuotaRow(orgId, period, now);
 
     const row = db
@@ -319,6 +308,17 @@ export function reserveOrgApiCall({
         reason: "org-concurrency",
         consumed: row.consumed,
         retryAfterSeconds: 10,
+      };
+    }
+
+    const globalCount = countActiveLeases(undefined, now);
+    if (globalCount >= GLOBAL_API_MAX_IN_FLIGHT) {
+      const snapshot = getOrgQuotaSnapshot(orgId, now);
+      return {
+        ok: false,
+        reason: "global-concurrency",
+        consumed: snapshot.consumed,
+        retryAfterSeconds: 15,
       };
     }
 
@@ -402,9 +402,9 @@ export function heartbeatOrgApiCall({
     .prepare(
       `UPDATE api_request_leases
        SET heartbeat_at = ?, expires_at = ?
-       WHERE id = ? AND owner_token = ? AND status = 'active'`,
+       WHERE id = ? AND owner_token = ? AND status = 'active' AND expires_at > ?`,
     )
-    .run(now, now + STALE_IN_FLIGHT_MS, leaseId, ownerToken);
+    .run(now, now + STALE_IN_FLIGHT_MS, leaseId, ownerToken, now);
   return Number(updated.changes ?? 0) > 0;
 }
 

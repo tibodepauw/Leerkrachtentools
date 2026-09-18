@@ -388,9 +388,11 @@ export function withApiAuth(
       logExecutedWork = true;
       reservation = quota;
       heartbeat = setInterval(() => {
-        try { heartbeatOrgApiCall({ leaseId: quota.leaseId, ownerToken: quota.ownerToken }); }
+        try {
+          if (!heartbeatOrgApiCall({ leaseId: quota.leaseId, ownerToken: quota.ownerToken })) abortController.abort();
+        }
         catch { abortController.abort(); }
-      }, 15_000);
+      }, 1_000);
       heartbeat.unref?.();
       let timeoutId: ReturnType<typeof setTimeout> | undefined;
       let timedOut = false;

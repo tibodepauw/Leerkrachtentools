@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getLessonDocument } from "@/lib/documents/documentStorage";
 import { previewModeFromFileName } from "@/lib/documents/preview";
+import { DOCUMENT_PREVIEW_HTML, DOCUMENT_PREVIEW_SANDBOX, preventPreviewNavigation } from "@/lib/documents/previewFrame";
 import type { LessonPreparationDocument } from "@/types";
 
 interface LessonDocumentPreviewProps {
@@ -31,7 +32,8 @@ function LoadedLessonDocumentPreview({
   fallbackText?: string;
   onUpload?: () => void;
 }) {
-  const docxContainerRef = useRef<HTMLDivElement>(null);
+  const docxFrameRef = useRef<HTMLIFrameElement>(null);
+  const [frameReady, setFrameReady] = useState(false);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,7 +42,7 @@ function LoadedLessonDocumentPreview({
     if (!blob || previewMode !== "pdf") {
       return null;
     }
-    return URL.createObjectURL(blob);
+    return URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
   }, [blob, previewMode]);
 
   useEffect(() => {
@@ -88,23 +90,32 @@ function LoadedLessonDocumentPreview({
   }, [pdfUrl]);
 
   useEffect(() => {
-    const container = docxContainerRef.current;
-    if (!container || !blob || previewMode !== "docx") return;
+    const frameDocument = docxFrameRef.current?.contentDocument;
+    const container = frameDocument?.getElementById("document");
+    if (!frameReady || !frameDocument || !container || !blob || previewMode !== "docx") return;
 
     let cancelled = false;
     container.replaceChildren();
+    const restoreNavigation = preventPreviewNavigation(frameDocument);
 
     void import("docx-preview")
-      .then(({ renderAsync }) =>
-        renderAsync(blob, container, undefined, {
+      .then(({ renderAsync }) => {
+        if (cancelled) return;
+        return renderAsync(blob, container, undefined, {
           className: "docx-preview",
           inWrapper: true,
           ignoreWidth: false,
           ignoreHeight: false,
           breakPages: true,
           renderAltChunks: false,
-        }),
-      )
+        });
+      })
+      .then(() => {
+        if (cancelled) container.replaceChildren();
+        // Also remove link destinations so context-menu navigation cannot open
+        // an untrusted target outside the preview.
+        container.querySelectorAll("a").forEach((link) => link.removeAttribute("href"));
+      })
       .catch(() => {
         if (!cancelled) {
           setError("Dit Word-bestand kon niet worden weergegeven.");
@@ -113,9 +124,10 @@ function LoadedLessonDocumentPreview({
 
     return () => {
       cancelled = true;
+      restoreNavigation();
       container.replaceChildren();
     };
-  }, [blob, previewMode]);
+  }, [blob, previewMode, frameReady]);
 
   return (
     <div className="ph-no-capture flex min-h-[32rem] flex-col overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
@@ -171,15 +183,19 @@ function LoadedLessonDocumentPreview({
         <iframe
           title={document.fileName}
           src={pdfUrl}
+          referrerPolicy="no-referrer"
           className="min-h-[32rem] flex-1 bg-neutral-200"
         />
       ) : previewMode === "docx" ? (
-        <div className="min-h-[32rem] flex-1 overflow-auto bg-neutral-200 p-4">
-          <div
-            ref={docxContainerRef}
-            className="mx-auto max-w-[820px] rounded-sm bg-white shadow-sm"
-          />
-        </div>
+        <iframe
+          ref={docxFrameRef}
+          title={`Word-preview: ${document.fileName}`}
+          sandbox={DOCUMENT_PREVIEW_SANDBOX}
+          srcDoc={DOCUMENT_PREVIEW_HTML}
+          referrerPolicy="no-referrer"
+          onLoad={() => setFrameReady(true)}
+          className="min-h-[32rem] w-full flex-1 border-0 bg-neutral-200"
+        />
       ) : previewMode === "text" && fallbackText.trim() ? (
         <div className="min-h-[32rem] flex-1 overflow-auto p-6">
           <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-neutral-200">

@@ -151,7 +151,7 @@ describe("B2B org quota ledger", () => {
     const { organization, key } = seedOrg(0);
     const handler = handlerWithPause({ count: 0 }, 0);
     const before = (
-      getDatabase().prepare("SELECT COUNT(*) AS count FROM api_usage_logs").get() as {
+      getDatabase().prepare("SELECT COUNT(*) AS count FROM api_usage_logs WHERE key_id = ?").get(key.id) as {
         count: number;
       }
     ).count;
@@ -165,7 +165,7 @@ describe("B2B org quota ledger", () => {
       expect(response.status).toBe(429);
     }
     const after = (
-      getDatabase().prepare("SELECT COUNT(*) AS count FROM api_usage_logs").get() as {
+      getDatabase().prepare("SELECT COUNT(*) AS count FROM api_usage_logs WHERE key_id = ?").get(key.id) as {
         count: number;
       }
     ).count;
@@ -800,7 +800,5 @@ describe("B2B org quota ledger", () => {
     }
   }, 10_000);
 
-  it.todo(
-    "OPEN V20-08: harde stop, volledige cancellationketen en lease-expiry die werk stopt",
-  );
+  // Hard-stop/deadline/lease-loss regressions now run in lib/api/workerLease.test.ts.
 });

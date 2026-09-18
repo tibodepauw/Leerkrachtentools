@@ -8,6 +8,7 @@ import {
 import type { ProviderName } from "@/lib/ai/providers";
 import type { UserAiConfig } from "@/lib/ai/userCredentials";
 import { EXTERNAL_API_TIMEOUT_MS } from "@/lib/http/externalTimeout";
+import { readExternalJson } from "@/lib/http/externalJson";
 
 export interface StructuredRequest<T> {
   schema: z.ZodType<T>;
@@ -48,10 +49,12 @@ async function callCloudflare<T>({
     userAiConfig,
   );
   if (!account || !token) throw new Error("Cloudflare is niet geconfigureerd");
+  const signal = abortSignal ? AbortSignal.any([abortSignal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs);
   const response = await fetch(
     `https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/${model}`,
     {
       method: "POST",
+      redirect: "error",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -65,11 +68,14 @@ async function callCloudflare<T>({
           { role: "user", content: prompt },
         ],
       }),
-      signal: abortSignal ? AbortSignal.any([abortSignal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
+      signal,
     },
   );
-  if (!response.ok) throw new Error(`Cloudflare HTTP ${response.status}`);
-  const body = (await response.json()) as {
+  if (!response.ok) {
+    if (response.body) void response.body.cancel().catch(() => {});
+    throw new Error(`Cloudflare HTTP ${response.status}`);
+  }
+  const body = (await readExternalJson(response, signal)) as {
     result?: { response?: string };
   };
   return schema.parse(jsonFromText(body.result?.response ?? ""));
@@ -79,7 +85,6 @@ export async function runStructured<T>(
   request: StructuredRequest<T>,
 ): Promise<StructuredResult<T>> {
   request.abortSignal?.throwIfAborted();
-  const errors: string[] = [];
   const deadline = Date.now() + 45_000;
   let attempts = 0;
 
@@ -136,11 +141,8 @@ export async function runStructured<T>(
         provider: candidate.name,
         fallbackErrors: [],
       };
-    } catch (error) {
+    } catch {
       request.abortSignal?.throwIfAborted();
-      errors.push(
-        `${candidate.name}: ${error instanceof Error ? error.message : "onbekende fout"}`,
-      );
     }
   }
 
@@ -159,18 +161,15 @@ export async function runStructured<T>(
         provider: "cloudflare",
         fallbackErrors: [],
       };
-    } catch (error) {
+    } catch {
       request.abortSignal?.throwIfAborted();
-      errors.push(
-        `cloudflare: ${error instanceof Error ? error.message : "onbekende fout"}`,
-      );
     }
   }
 
   if (request.allowLocalMock === false) {
     throw new Error(
-      errors.length
-        ? `Geen AI-provider beschikbaar: ${errors.join(" · ")}`
+      attempts > 0
+        ? "Geen AI-provider beschikbaar. Probeer het later opnieuw."
         : "Geen AI-provider geconfigureerd. Voeg GOOGLE_GENERATIVE_AI_API_KEY toe.",
     );
   }

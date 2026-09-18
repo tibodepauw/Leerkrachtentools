@@ -1,0 +1,55 @@
+[Unit]
+Description=Isolated document job %i
+
+[Service]
+Type=exec
+DynamicUser=yes
+RootDirectory=/var/lib/leerkrachtentools-parser/root
+# Only runtime libraries, dependencies and worker code are visible. Never bind
+# the whole app directory, its data, /etc, /home, environment files or credentials.
+BindReadOnlyPaths=/usr /lib -/lib64
+BindReadOnlyPaths=/opt/leerkrachtentools/current/node_modules:/app/node_modules
+BindReadOnlyPaths=/opt/leerkrachtentools/current/workers:/app/workers
+BindReadOnlyPaths=-/opt/leerkrachtentools/current/data/templates:/app/data/templates
+WorkingDirectory=/app
+Environment=NODE_ENV=production
+# Native PDF dependencies query os.homedir(); no host passwd/home is exposed.
+# This directory lives in the private, size-limited tmpfs below.
+Environment=HOME=/tmp
+ExecStart=/usr/bin/node --max-old-space-size=192 --max-semi-space-size=16 /app/workers/document.cjs
+StandardInput=socket
+StandardOutput=socket
+StandardError=null
+PrivateNetwork=yes
+PrivateDevices=yes
+PrivateUsers=yes
+ProtectProc=invisible
+ProtectSystem=strict
+ProtectHome=yes
+TemporaryFileSystem=/tmp:rw,size=32M,mode=1777
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+UMask=0077
+TasksMax=32
+MemoryMax=512M
+MemorySwapMax=0
+CPUQuota=100%
+RuntimeMaxSec=10
+TimeoutStopSec=1
+KillMode=control-group
+KillSignal=SIGKILL
+SendSIGKILL=yes
+Restart=no
+Slice=leerkrachtentools-parsers.slice

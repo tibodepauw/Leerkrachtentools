@@ -15,6 +15,8 @@ import {
 } from "@/lib/auth/profileImage";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import { readBoundedFormData } from "@/lib/http/requestBody";
+import { RequestRateLimitError } from "@/lib/http/rateLimit";
+import { withUploadCapacity } from "@/lib/http/uploadCapacity";
 
 export const runtime = "nodejs";
 const PROFILE_IMAGE_REQUEST_MAX_BYTES =
@@ -56,44 +58,42 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
-    const formData = await readBoundedFormData(
-      request,
-      PROFILE_IMAGE_REQUEST_MAX_BYTES,
-    );
-    const file = formData.get("file");
-
-    if (!(file instanceof File)) {
-      return NextResponse.json(
-        { error: "Kies een afbeelding om te uploaden." },
-        { status: 400 },
+    return await withUploadCapacity(session.id, async () => {
+      const formData = await readBoundedFormData(
+        request,
+        PROFILE_IMAGE_REQUEST_MAX_BYTES,
       );
-    }
+      const file = formData.get("file");
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const nextPath = await saveProfileImageFile(
-      session.id,
-      file.name,
-      buffer,
-      file.type,
-    );
-    const updatedAt = Date.now();
+      if (!(file instanceof File)) {
+        return NextResponse.json(
+          { error: "Kies een afbeelding om te uploaden." },
+          { status: 400 },
+        );
+      }
 
-    const previous = currentProfileImage(session.id);
-    if (
-      previous?.profile_image_path &&
-      previous.profile_image_path !== nextPath
-    ) {
-      deleteProfileImageFile(previous.profile_image_path);
-    }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const updatedAt = Date.now();
+      await saveProfileImageFile(
+        session.id,
+        file.name,
+        buffer,
+        file.type,
+        request.signal,
+        () => {
+          if (sessionFromRequest(request)?.id !== session.id) throw new Error("Je sessie is verlopen. Meld je opnieuw aan.");
+        },
+        (nextPath) => {
+          const previous = currentProfileImage(session.id);
+          const updated = getDatabase().prepare("UPDATE users SET profile_image_path = ?, updated_at = ? WHERE id = ?").run(nextPath, updatedAt, session.id);
+          if (updated.changes !== 1) throw new Error("Je account is niet meer beschikbaar.");
+          if (previous?.profile_image_path) deleteProfileImageFile(previous.profile_image_path);
+        },
+      );
 
-    getDatabase()
-      .prepare(
-        "UPDATE users SET profile_image_path = ?, updated_at = ? WHERE id = ?",
-      )
-      .run(nextPath, updatedAt, session.id);
-
-    return NextResponse.json({
-      profileImageUrl: profileImageUrl(updatedAt),
+      return NextResponse.json({
+        profileImageUrl: profileImageUrl(updatedAt),
+      });
     });
   } catch (error) {
     return NextResponse.json(
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
           "Profielfoto kon niet veilig worden opgeslagen.",
         ),
       },
-      { status: 400 },
+      { status: error instanceof RequestRateLimitError ? 429 : 400 },
     );
   }
 }

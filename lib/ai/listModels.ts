@@ -3,6 +3,11 @@ import "server-only";
 import type { ProviderName } from "@/lib/ai/providers";
 import { isUsableChatModelId } from "@/lib/ai/usableModels";
 import { externalApiAbortSignal } from "@/lib/http/externalTimeout";
+import { readExternalJson } from "@/lib/http/externalJson";
+import { z } from "zod";
+
+const compatibleSchema = z.object({ data: z.array(z.object({ id: z.string().max(300) })).max(5000) });
+const googleSchema = z.object({ models: z.array(z.object({ name: z.string().max(300), displayName: z.string().max(500).optional(), supportedGenerationMethods: z.array(z.string().max(100)).max(50).optional() })).max(5000) });
 
 export { defaultModelForProvider } from "@/lib/ai/usableModels";
 
@@ -45,8 +50,11 @@ export async function listProviderModels(
     apiKey: string;
     cloudflareAccountId?: string;
   },
+  abortSignal?: AbortSignal,
 ): Promise<ListedModel[]> {
   const { apiKey } = credentials;
+  const signal = externalApiAbortSignal(abortSignal);
+  signal.throwIfAborted();
 
   switch (provider) {
     case "google": {
@@ -54,19 +62,14 @@ export async function listProviderModels(
         "https://generativelanguage.googleapis.com/v1beta/models",
         {
           headers: { "x-goog-api-key": apiKey },
-          signal: externalApiAbortSignal(),
+          signal, redirect: "error",
         },
       );
       if (!response.ok) {
+        if (response.body) void response.body.cancel().catch(() => {});
         throw new Error(`Google-modellen konden niet worden opgehaald (${response.status}).`);
       }
-      const body = (await response.json()) as {
-        models?: Array<{
-          name?: string;
-          displayName?: string;
-          supportedGenerationMethods?: string[];
-        }>;
-      };
+      const body = googleSchema.parse(await readExternalJson(response, signal));
       return uniqueModels(
         (body.models ?? [])
           .filter((model) => {
@@ -90,38 +93,41 @@ export async function listProviderModels(
     case "groq": {
       const response = await fetch("https://api.groq.com/openai/v1/models", {
         headers: { Authorization: `Bearer ${apiKey}` },
-        signal: externalApiAbortSignal(),
+        signal, redirect: "error",
       });
       if (!response.ok) {
+        if (response.body) void response.body.cancel().catch(() => {});
         throw new Error(`Groq-modellen konden niet worden opgehaald (${response.status}).`);
       }
-      return openAiCompatibleModels("groq", await response.json());
+      return openAiCompatibleModels("groq", compatibleSchema.parse(await readExternalJson(response, signal)));
     }
     case "cerebras": {
       const response = await fetch("https://api.cerebras.ai/v1/models", {
         headers: { Authorization: `Bearer ${apiKey}` },
-        signal: externalApiAbortSignal(),
+        signal, redirect: "error",
       });
       if (!response.ok) {
+        if (response.body) void response.body.cancel().catch(() => {});
         throw new Error(
           `Cerebras-modellen konden niet worden opgehaald (${response.status}).`,
         );
       }
-      return openAiCompatibleModels("cerebras", await response.json());
+      return openAiCompatibleModels("cerebras", compatibleSchema.parse(await readExternalJson(response, signal)));
     }
     case "sambanova": {
       const baseUrl =
         process.env.SAMBANOVA_BASE_URL ?? "https://api.sambanova.ai/v1";
       const response = await fetch(`${baseUrl}/models`, {
         headers: { Authorization: `Bearer ${apiKey}` },
-        signal: externalApiAbortSignal(),
+        signal, redirect: "error",
       });
       if (!response.ok) {
+        if (response.body) void response.body.cancel().catch(() => {});
         throw new Error(
           `SambaNova-modellen konden niet worden opgehaald (${response.status}).`,
         );
       }
-      return openAiCompatibleModels("sambanova", await response.json());
+      return openAiCompatibleModels("sambanova", compatibleSchema.parse(await readExternalJson(response, signal)));
     }
     case "cloudflare":
       return cloudflareModels;

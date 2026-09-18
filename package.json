@@ -19,7 +19,12 @@
     "export:banner": "node scripts/export-banner-prod.mjs",
     "export:banner:dev": "node scripts/export-banner-assets.mjs",
     "export:pwa-icons": "node scripts/generate-pwa-icons.mjs",
-    "security:audit": "node scripts/audit-production-dependencies.mjs"
+    "security:audit": "node scripts/audit-production-dependencies.mjs",
+    "check:corpora": "tsx scripts/check-corpora.ts",
+    "build:workers": "node scripts/build-workers.mjs",
+    "prebuild": "npm run build:workers",
+    "pretest": "npm run build:workers",
+    "predev": "npm run build:workers"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.78",
@@ -65,7 +70,8 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "esbuild": "^0.28.2"
   },
   "overrides": {
     "qs": "6.16.0"

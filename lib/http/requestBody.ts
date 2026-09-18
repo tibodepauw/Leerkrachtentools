@@ -12,7 +12,7 @@ export class RequestBodyTimeoutError extends Error {
   }
 }
 
-export function assertContentLength(request: Request, maxBytes: number) {
+export function assertContentLength(request: Pick<Request, "headers">, maxBytes: number) {
   const value = request.headers.get("content-length");
   if (!value) return;
   const length = Number(value);
@@ -53,7 +53,7 @@ async function cancelReaderSoon(reader: ReadableStreamDefaultReader<Uint8Array>)
 }
 
 export async function readBodyBuffer(
-  request: Request,
+  request: Pick<Request, "headers" | "body"> & { signal?: AbortSignal },
   maxBytes: number,
   timeoutMs = 15_000,
   signal: AbortSignal | undefined = request.signal,

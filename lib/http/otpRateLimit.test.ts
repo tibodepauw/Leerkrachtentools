@@ -43,4 +43,21 @@ describe("OTP verify rate limits", () => {
       assertOtpVerifyRateLimits(request, "zelfde@school.test"),
     ).toThrow(RequestRateLimitError);
   });
+
+  it("laat geblokkeerde IPs geen nieuwe e-mailrijen opslaan", () => {
+    vi.stubEnv("TRUST_PROXY_IP_HEADERS", "true");
+    vi.stubEnv("VERCEL", "0");
+    const request = new Request(absoluteAppUrl("/api/auth/verify-code"), {
+      headers: { "x-forwarded-for": "192.0.2.10" },
+    });
+    for (let index = 0; index < 30; index++) {
+      assertOtpVerifyRateLimits(request, `initial-${index}@example.test`);
+    }
+    const count = () => (getDatabase().prepare("SELECT COUNT(*) AS n FROM request_rate_events WHERE scope LIKE 'otp-verify%'").get() as { n: number }).n;
+    const before = count();
+    for (let index = 0; index < 50; index++) {
+      expect(() => assertOtpVerifyRateLimits(request, `blocked-${index}@example.test`)).toThrow(RequestRateLimitError);
+    }
+    expect(count()).toBe(before);
+  });
 });

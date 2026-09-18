@@ -12,7 +12,8 @@ import { getDatabase } from "@/lib/auth/database";
 import { encryptSecret } from "@/lib/auth/crypto";
 import { defaultModelForProvider } from "@/lib/ai/usableModels";
 import type { ProviderName } from "@/lib/ai/providers";
-import { readJsonBody } from "@/lib/http/requestBody";
+import { readValidatedJson } from "@/lib/http/validatedJson";
+import { z } from "zod";
 
 export async function GET(request: Request) {
   const session = sessionFromRequest(request);
@@ -26,13 +27,13 @@ export async function PATCH(request: Request) {
   const session = sessionFromRequest(request);
   if (!session) return unauthorizedResponse();
 
-  const body = (await readJsonBody(request, 16_384)) as {
-    enabled?: boolean;
-    provider?: string;
-    model?: string;
-    apiKey?: string;
-    cloudflareAccountId?: string;
-  };
+  const input = await readValidatedJson(request, 16_384, z.object({
+    enabled: z.boolean().optional(), provider: z.string().optional(),
+    model: z.string().optional(), apiKey: z.string().optional(),
+    cloudflareAccountId: z.string().optional(),
+  }));
+  if (input.response) return input.response;
+  const body = input.data;
 
   const current = getUserAiSettingsPublic(session.id);
   if (

@@ -5,11 +5,6 @@ import { externalApiAbortSignal } from "@/lib/http/externalTimeout";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
-interface BrevoErrorResponse {
-  message?: string;
-  code?: string;
-}
-
 export async function sendBrevoEmail({
   to,
   subject,
@@ -30,6 +25,7 @@ export async function sendBrevoEmail({
   const sender = parseSenderAddress(from);
   const response = await fetch(BREVO_API_URL, {
     method: "POST",
+    redirect: "error",
     headers: {
       accept: "application/json",
       "content-type": "application/json",
@@ -45,15 +41,9 @@ export async function sendBrevoEmail({
     signal: externalApiAbortSignal(),
   });
 
-  if (!response.ok) {
-    let message = `Brevo HTTP ${response.status}`;
-    try {
-      const payload = (await response.json()) as BrevoErrorResponse;
-      if (payload.message) message = `Brevo: ${payload.message}`;
-    } catch {
-    }
-    throw new Error(message);
-  }
+  // Delivery status is sufficient. Never buffer or echo provider error bodies.
+  if (response.body) void response.body.cancel().catch(() => {});
+  if (!response.ok) throw new Error(`Brevo HTTP ${response.status}`);
 }
 
 export function isBrevoConfigured() {

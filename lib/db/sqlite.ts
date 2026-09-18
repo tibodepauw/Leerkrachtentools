@@ -266,6 +266,11 @@ export function getDatabase() {
   return database;
 }
 
+export function closeDatabase() {
+  database?.close();
+  database = null;
+}
+
 export function cleanExpiredAuthRecords(now = Date.now()) {
   const db = getDatabase();
   db.prepare(

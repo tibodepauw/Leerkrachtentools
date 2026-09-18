@@ -222,7 +222,7 @@ The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Rev
 | `POST /api/v1/curriculum/audit` | `curriculum:audit` | Coverage of `target_goals` against `lesson_units` |
 | `POST /api/v1/goals/improve` | `goals:improve` | Same lesson-goal rules as Doelverbeteraar |
 
-Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` (max 128 characters) so the same authorized key, endpoint and body retry without a second consume. A different endpoint or body with that header on the **same** key gets 409, not a replay. A different allowed key has its own namespace and can start new work with the same header value. Org concurrency counts every active lease of the organization, including work booked in the previous UTC month. A stream timeout keeps the lease until the body is read in the tested path. Lease expiry still does not stop in-flight handler or provider work. V20-08 remains open for hard stop, the full cancellation chain, and expiry. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
+Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` (max 128 characters) so the same authorized key, endpoint and body retry without a second consume. A different endpoint or body with that header on the **same** key gets 409, not a replay. A different allowed key has its own namespace and can start new work with the same header value. Org concurrency counts every active lease of the organization, including work booked in the previous UTC month. A stream timeout keeps the lease until the body is read in the tested path. Lease expiry still does not stop in-flight handler or provider work. The three production B2B routes now run in separate processes: deadlines, disconnects and lost leases kill the process before its execution slot is released. Provider work already accepted remotely may still be billed. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
 
 ## Quality checks
 
@@ -230,16 +230,19 @@ Monthly quota is a shared organization ledger, not a per-key count of usage logs
 npm run lint
 npm run typecheck
 npm test
-npm run security:audit
+npm run security:audit -- --all
 npm run test:rag-benchmark
 npm run build
 ```
 
-The latest local run passed 508 tests across 115 test files (one skipped and two
-existing V20-08 TODOs). Tests cover curriculum retrieval and ranking,
+The extended audit suite contains 568 tests across 126 test files (one additional corpus-dependent
+test skipped; no remaining TODO cases). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
 The test total is the Vitest case count, not a code-coverage percentage.
+
+See the [security audit and remaining release conditions](docs/security-audit-2026-09-18.md)
+for findings, fixes, browser regression commands, and the limits of this validation.
 
 ## Production deployment
 
@@ -247,7 +250,7 @@ For the first DigitalOcean VM installation, follow [the first-deployment guide](
 
 The login screen offers shared-computer mode: lessons and previews stay in tab memory and are lost on reload/close; previous local data for that account is removed on activation. Export work before closing. Session changes are broadcast to other tabs and rechecked on focus.
 
-PDF/DOC imports use bounded child processes. Avatar uploads are decoded and normalized to metadata-free WebP. Newly issued B2B keys expire after 90 days by default; use `npm run manage-api-keys -- help` for issue/rotate/revoke commands. Rotation preserves the organization's consumed budget.
+All document import, Word export and avatar decoding use a separate worker. Public production requires the private systemd document service described in the deployment guide; it has no app-data or network access and enforces per-job native memory and runtime limits. Avatar output is metadata-free WebP. Newly issued B2B keys expire after 90 days by default; use `npm run manage-api-keys -- help` for issue/rotate/revoke commands. Rotation preserves the organization's consumed budget.
 
 Next.js standalone output:
 

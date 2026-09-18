@@ -91,3 +91,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated bounded worker entrypoints
+/workers/

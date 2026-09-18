@@ -98,6 +98,7 @@ export function createAnalysisHandler<T>({
           allowLocalMock: !requireAi,
           userAiConfig,
           maxOutputTokens,
+          abortSignal: request.signal,
         }),
       );
       if (!tracked.ok) {

@@ -10,6 +10,7 @@ function configureValidProductionEnvironment() {
   vi.stubEnv("AUTH_SECRET", VALID_AUTH_SECRET);
   vi.stubEnv("API_KEY_ENCRYPTION_SECRET", VALID_ENCRYPTION_SECRET);
   vi.stubEnv("APP_ORIGIN", "https://tools.example.be");
+  vi.stubEnv("DOCUMENT_WORKER_SOCKET", "/run/leerkrachtentools-parser.sock");
 }
 
 describe("validateProductionEnvironment", () => {
@@ -68,5 +69,22 @@ describe("validateProductionEnvironment", () => {
     vi.stubEnv("APP_ORIGIN", "");
 
     expect(() => validateProductionEnvironment()).not.toThrow();
+  });
+
+  it.each(["http://tools.example.be", "https://user:pass@tools.example.be", "https://tools.example.be/path"])("weigert een onveilige oorsprong: %s", (origin) => {
+    configureValidProductionEnvironment();
+    vi.stubEnv("APP_ORIGIN", origin);
+    expect(() => validateProductionEnvironment()).toThrow("APP_ORIGIN");
+  });
+
+  it("weigert de lokale parseroptie op een publieke oorsprong", () => {
+    configureValidProductionEnvironment();
+    vi.stubEnv("ALLOW_LOCAL_DOCUMENT_WORKER", "true");
+    expect(() => validateProductionEnvironment()).toThrow("uitsluitend voor localhost");
+  });
+  it("weigert publieke productie zonder documentservice", () => {
+    configureValidProductionEnvironment();
+    vi.stubEnv("DOCUMENT_WORKER_SOCKET", "");
+    expect(() => validateProductionEnvironment()).toThrow("DOCUMENT_WORKER_SOCKET");
   });
 });

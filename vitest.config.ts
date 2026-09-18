@@ -12,6 +12,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    setupFiles: ["./test/databaseIsolation.ts"],
     pool: "threads",
     testTimeout: 10_000,
     exclude: ["**/node_modules/**", "**/.next/**", "**/.tooling/**"],

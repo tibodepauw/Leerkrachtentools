@@ -3,19 +3,15 @@ import "server-only";
 import { mkdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
-import sharp from "sharp";
+import { runDocumentJob } from "@/lib/documents/parserWorker";
 
 export const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 export const PROFILE_IMAGE_MAX_PIXELS = 16_000_000;
 
-export async function canonicalProfileImage(buffer: Buffer) {
-  const image = sharp(buffer, { limitInputPixels: PROFILE_IMAGE_MAX_PIXELS, failOn: "warning", animated: false });
-  const metadata = await image.metadata();
-  if (!metadata.width || !metadata.height || metadata.width > 8192 || metadata.height > 8192 || (metadata.pages ?? 1) > 1) {
-    throw new Error("Kies een niet-geanimeerde afbeelding van maximaal 8192 pixels per zijde.");
-  }
-  // Sharp strips EXIF/XMP by default. Decode fully and never serve original bytes.
-  return image.rotate().resize(512, 512, { fit: "inside", withoutEnlargement: true }).webp({ quality: 85 }).timeout({ seconds: 5 }).toBuffer();
+export async function canonicalProfileImage(buffer: Buffer, signal?: AbortSignal) {
+  const result = await runDocumentJob({ operation: "avatar", bytes: buffer.toString("base64") }, signal);
+  if (typeof result.bytes !== "string") throw new Error("Profielfoto kon niet veilig worden verwerkt.");
+  return Buffer.from(result.bytes, "base64");
 }
 
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
@@ -109,6 +105,9 @@ export async function saveProfileImageFile(
   fileName: string,
   buffer: Buffer,
   mimeType?: string,
+  signal?: AbortSignal,
+  authorizeBeforeWrite?: () => void,
+  onSaved?: (fileName: string) => void,
 ) {
   if (!isSupportedProfileImage(fileName, mimeType)) {
     throw new Error("Ondersteunde formaten: JPG, PNG, WEBP en GIF.");
@@ -123,14 +122,22 @@ export async function saveProfileImageFile(
     );
   }
 
-  const canonical = await canonicalProfileImage(buffer);
-  const nextFileName = profileImageFileName(userId, "avatar.webp");
+  const canonical = await canonicalProfileImage(buffer, signal);
+  signal?.throwIfAborted();
+  authorizeBeforeWrite?.();
+  const nextFileName = profileImageFileName(`${userId}-${randomUUID()}`, "avatar.webp");
   const directory = profileImageDirectory();
   const target = profileImageAbsolutePath(nextFileName);
   const temporary = path.join(directory, `${userId}-${randomUUID()}.tmp`);
   try {
     writeFileSync(temporary, canonical, { flag: "wx", mode: 0o600 });
     renameSync(temporary, target);
+    // Persist the new reference synchronously before returning control. Account
+    // deletion must see the new file; a failed database write keeps the old file.
+    onSaved?.(nextFileName);
+  } catch (error) {
+    try { unlinkSync(target); } catch { /* not written */ }
+    throw error;
   } finally {
     try { unlinkSync(temporary); } catch { /* already renamed */ }
   }
