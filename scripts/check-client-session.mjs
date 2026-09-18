@@ -7,7 +7,8 @@ import { chromium } from "playwright";
 const bundle = await build({
   stdin: { contents: `import * as scope from './lib/storage/userStorageScope';
     import * as documents from './lib/documents/documentStorage';
-    window.storageProbe = { ...scope, ...documents };`, resolveDir: process.cwd() },
+    import * as cache from './lib/rag/clientQueryCache';
+    window.storageProbe = { ...scope, ...documents, ...cache };`, resolveDir: process.cwd() },
   bundle: true, write: false, platform: "browser", format: "iife", tsconfig: "tsconfig.json",
 });
 const browser = await chromium.launch({ headless: true, ...(process.env.SECURITY_BROWSER_CHANNEL ? { channel: process.env.SECURITY_BROWSER_CHANNEL } : {}) });
@@ -33,8 +34,14 @@ try {
     const otherAccount = await s.getLessonDocument("committed");
     const old = s.captureStorageSession();
     s.setActiveUserId(null); s.setActiveUserId("B");
-    return { normal, rejectedRead, rejectedWrite, missing, otherAccount, oldAborted: old.signal.aborted };
+    localStorage.setItem("leerkrachtentools-shared-device", "true");
+    s.writeRagQueryCache("rag-curriculum", "LAGER", "ALL", "private query", { data: { goal: "private cache" }, provider: "synthetic", fallbackErrors: [] });
+    const ownCache = s.readRagQueryCache("rag-curriculum", "LAGER", "ALL", "private query").data.goal;
+    s.setActiveUserId("C");
+    const otherCache = s.readRagQueryCache("rag-curriculum", "LAGER", "ALL", "private query");
+    return { normal, rejectedRead, rejectedWrite, missing, otherAccount, oldAborted: old.signal.aborted, ownCache, otherCache, persistedCacheEntries: sessionStorage.length };
   });
-  assert.deepEqual(result, { normal: "private A", rejectedRead: true, rejectedWrite: true, missing: null, otherAccount: null, oldAborted: true });
+  assert.deepEqual(result, { normal: "private A", rejectedRead: true, rejectedWrite: true, missing: null, otherAccount: null, oldAborted: true, ownCache: "private cache", otherCache: null, persistedCacheEntries: 0 });
   console.log("Client session isolation passed: committed IndexedDB writes, account separation and rejection of late reads/writes across logout and re-login.");
+  console.log("Shared-device query cache passed: account-scoped results in memory, no sessionStorage persistence.");
 } finally { await browser.close(); }

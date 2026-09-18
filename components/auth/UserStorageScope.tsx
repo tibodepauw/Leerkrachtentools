@@ -99,6 +99,7 @@ export function UserStorageScope({
       setActiveUserId(userId);
       if (isSharedDevice()) {
         await deleteUserBrowserStorage(userId);
+        clearRagQueryCache();
       } else {
         migrateLegacyLessonStorage(userId);
         await migrateLegacyDocumentStorage(userId);

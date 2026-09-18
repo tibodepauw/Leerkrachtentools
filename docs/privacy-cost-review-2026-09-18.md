@@ -9,6 +9,8 @@ Baseline: gemergede audit, `main` op `9748d48cec37b8d88219ca7ec335941b387f552f`.
 
 ## Extra kosten- en privacygrenzen
 
+De RAG-zoekcache was nog ongescopeerd in sessionStorage opgeslagen, ook in gedeelde-apparaatmodus. Die cache is nu accountgebonden; gedeelde apparaten gebruiken uitsluitend tijdelijk geheugen. Oude ongescopeerde data wordt niet overgenomen, gedeelde login wist de opgeslagen cache en late analyses mogen na een sessiewissel geen cache meer vullen. Unit- en echte browsertests controleren de scheiding en dat er in die modus niets in sessionStorage terechtkomt.
+
 | Instelling | Standaard | Werking |
 | --- | --- | --- |
 | `SERVER_AI_DAILY_CALL_LIMIT` | 500 | Gezamenlijk maximum van werkelijke server-key AI-pogingen per UTC-dag: gewone analyses, queryherschrijving en B2B samen. Iedere fallbackpoging telt apart. |
