@@ -6,6 +6,8 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+- Productiecorpuscontrole zonder fixturefallback; meldt ontbrekende of beschadigde datasets vóór deployment
+- Begrensde directe providerantwoorden, strikte modellenlijsten, annulering van modeldetectie en redirectweigering voor directe credentialdragende API-verzoeken
 - Verdiepte audit: runtime-validatie op account-routes, herstel van vastlopende splash bij geblokkeerde opslag en opslagkeuze vóór sessieaanmaak
 - Extra account-/CSRF-HTTP-matrix, documentmutatieproeven en Word-previewisolatie in drie browserengines
 - Afzonderlijke systemd-documentservice voor alle imports, Word-export en avatars, met minimale root, netwerkblokkade en kernelgeheugen-/tijdlimieten

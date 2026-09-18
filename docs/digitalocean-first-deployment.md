@@ -11,6 +11,20 @@ Status 18 september 2026: er staat volgens de eigenaar nog niets live. De reposi
 - Een lege database krijgt bij de eerste start het schema. Voer geen historische quota-backfill of reconciliatie uit voor een nieuwe installatie. Wordt later toch een bestaande database geïmporteerd, volg dan `production-cutover-v20.md` op een kopie.
 - Laad de benodigde curriculumcorpora afzonderlijk. Ze staan bewust niet in Git; een geslaagde build bewijst niet dat alle zoeknetwerken gegevens bevatten. Test elk aangeboden onderwijsniveau met echte controlevragen.
 
+## Corpusbestanden controleren vóór deployment
+
+De eigenaar heeft bevestigd dat de volledige corpora nog niet beschikbaar zijn. Voer na levering vanuit de repository uit:
+
+```sh
+npm run check:corpora
+# Of wijs expliciet een aangeleverde datamap aan:
+npm run check:corpora -- --data-root /pad/naar/data
+# Alleen voor een bewust afgebakende deelcontrole:
+npm run check:corpora -- --required OPSTAP,ZILL
+```
+
+De controle gebruikt de productiepaddefinities van de app, zonder testfixtures als vervanging. Ze leest streaming, telt JSON-objecten en weigert ontbrekende, lege, onleesbare of beschadigde bestanden en regels groter dan 1 MiB. Bij een fout is de exitcode 1. Er worden geen gegevens gedownload, gewijzigd of inhoudelijk afgedrukt. Zonder selectie worden alle veertien verwachte datasets gecontroleerd. Een deelcontrole bewijst niets over de niet-geselecteerde onderwijsnetwerken; beperk het aanbod of lever ook die data aan. Geldige JSONL bewijst nog geen volledigheid, actualiteit of goede zoekresultaten: voer daarna echte controlevragen uit.
+
 ## Netwerk en proces
 
 `deploy/leerkrachtentools.service` en `deploy/nginx.conf.example` zijn templates. Pas domein, certificaten en Node-pad aan. Controleer vóór activering met `systemd-analyze verify` en `nginx -t` op de VM. Ze zijn niet op een echte DigitalOcean-VM getest.

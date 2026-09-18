@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     const models = await listProviderModels(provider, {
       apiKey,
       cloudflareAccountId,
-    });
+    }, request.signal);
     return NextResponse.json({ models });
   } catch (error) {
     return NextResponse.json(

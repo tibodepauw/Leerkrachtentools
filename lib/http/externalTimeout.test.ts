@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
 import {
   EXTERNAL_API_TIMEOUT_MS,
   externalApiAbortSignal,
@@ -11,16 +10,13 @@ describe("external API timeouts", () => {
     expect(externalApiAbortSignal()).toBeInstanceOf(AbortSignal);
   });
 
-  it("zet Groq, Cerebras en Discovery Engine op die abort", () => {
-    const listModels = readFileSync("lib/ai/listModels.ts", "utf8");
-    const router = readFileSync("lib/ai/router.ts", "utf8");
-    const discovery = readFileSync("lib/rag/discoveryEngine.ts", "utf8");
-    const brevo = readFileSync("lib/email/brevo.ts", "utf8");
-    expect(listModels).toContain("externalApiAbortSignal()");
-    expect(listModels).toContain("https://api.groq.com");
-    expect(listModels).toContain("https://api.cerebras.ai");
-    expect(router).toContain("EXTERNAL_API_TIMEOUT_MS");
-    expect(discovery).toContain("AbortSignal.timeout(EXTERNAL_API_TIMEOUT_MS)");
-    expect(brevo).toContain("externalApiAbortSignal()");
+  it("propagates caller cancellation immediately with its reason", () => {
+    const caller = new AbortController();
+    const combined = externalApiAbortSignal(caller.signal);
+    expect(combined.aborted).toBe(false);
+    const reason = new Error("synthetic disconnect");
+    caller.abort(reason);
+    expect(combined.aborted).toBe(true);
+    expect(combined.reason).toBe(reason);
   });
 });

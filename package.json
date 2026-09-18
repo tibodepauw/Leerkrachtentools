@@ -20,6 +20,7 @@
     "export:banner:dev": "node scripts/export-banner-assets.mjs",
     "export:pwa-icons": "node scripts/generate-pwa-icons.mjs",
     "security:audit": "node scripts/audit-production-dependencies.mjs",
+    "check:corpora": "tsx scripts/check-corpora.ts",
     "build:workers": "node scripts/build-workers.mjs",
     "prebuild": "npm run build:workers",
     "pretest": "npm run build:workers",
