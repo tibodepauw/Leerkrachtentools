@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^2.0.78",
-    "@ai-sdk/google": "^3.0.114",
+    "@ai-sdk/google": "^4.0.72",
     "@ai-sdk/groq": "^3.0.62",
     "@ai-sdk/openai": "^3.0.102",
     "@google-cloud/discoveryengine": "^2.9.0",
