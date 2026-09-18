@@ -235,7 +235,7 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-The extended audit suite contains 596 tests across 132 test files (one additional corpus-dependent
+The extended audit suite contains 598 tests across 132 test files (one additional corpus-dependent
 test skipped; no remaining TODO cases). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.

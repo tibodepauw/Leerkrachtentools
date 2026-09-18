@@ -4,6 +4,7 @@ import { getDatabase } from "@/lib/db/sqlite";
 const limits = {
   "server-ai": ["SERVER_AI_DAILY_CALL_LIMIT", 500],
   discovery: ["DISCOVERY_DAILY_CALL_LIMIT", 1000],
+  email: ["BREVO_DAILY_EMAIL_LIMIT", 500],
 } as const;
 
 /** One reservation per attempted remote call, including failed/fallback calls.
