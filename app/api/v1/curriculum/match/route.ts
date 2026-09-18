@@ -1,36 +1,10 @@
 import { NextResponse } from "next/server";
 import { withApiAuth } from "@/lib/api-guard";
-import { matchCurriculumGoals } from "@/lib/b2b/matchCurriculum";
+import { runB2bJob } from "@/lib/b2b/worker";
 import { curriculumMatchBodySchema } from "@/lib/b2b/schemas";
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-export const POST = withApiAuth(
-  async (_request, context) => {
-    const input = curriculumMatchBodySchema.parse(context.body);
-    const matched = await matchCurriculumGoals({
-      query: input.query,
-      network: input.network,
-      level: input.level,
-      grade: input.grade,
-      mode: input.mode,
-      limit: input.limit,
-      orgId: context.orgId,
-      signal: context.signal,
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        count: matched.results.length,
-        results: matched.results,
-        requestedMode: matched.requestedMode,
-        executedMode: matched.executedMode,
-        proFallback: matched.proFallback,
-      },
-      { headers: { "Cache-Control": "no-store" } },
-    );
-  },
-  { requiredScope: "curriculum:match", bodySchema: curriculumMatchBodySchema },
-);
+export const POST = withApiAuth(async (_request, context) => NextResponse.json(
+  await runB2bJob("match", context.body, context.orgId, context.signal),
+  { headers: { "Cache-Control": "no-store" } },
+), { requiredScope: "curriculum:match", bodySchema: curriculumMatchBodySchema });

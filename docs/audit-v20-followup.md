@@ -1,5 +1,7 @@
 # v5.20 follow-up tickets
 
+Update 18 september, tweede herstelronde: procesisolatie voor document/beeldverwerking, harde stop voor de drie productie-B2B-routes en echte organisatie-AI-dagbudgetten zijn toegevoegd op `codex/security-audit`. Zie [actueel auditrapport](security-audit-2026-09-18.md). Eerdere openstaande-codebeschrijvingen hieronder zijn historisch; Linux/VM-acceptatie wordt afzonderlijk bijgehouden.
+
 Opvolging 17 september 2026: zie `docs/hardening-h01-h06.md` voor de nieuw uitgewerkte voorbereiding. De historische V20-08-beschrijving hieronder is deels ingehaald: route-, Pro- en Cloudflare-cancellation en actieve lease-heartbeats zijn toegevoegd. Een geïsoleerde harde stop voor willekeurige B2B-handlercode blijft open. Er is nog niets live; de uitgebreide nieuwe securityaudit wacht op het startsignaal van de eigenaar.
 
 Auditbasis: v5.20.0, commit `5b071d35474207583e2999926f7e77e724ca131b`. Oude SEC-03 tot SEC-13 en BUG-01 zijn niet opnieuw als open behandeld. SEC-01 en SEC-02 bleven open en zijn hier hersteld.

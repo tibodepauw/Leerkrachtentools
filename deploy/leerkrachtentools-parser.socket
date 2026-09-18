@@ -1,0 +1,15 @@
+[Unit]
+Description=Private Leerkrachtentools document socket
+
+[Socket]
+ListenStream=/run/leerkrachtentools-parser.sock
+SocketUser=root
+SocketGroup=leerkrachtentools
+SocketMode=0660
+Accept=yes
+MaxConnections=2
+Backlog=4
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

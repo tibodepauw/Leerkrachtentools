@@ -19,7 +19,28 @@ Laat Node alleen op 127.0.0.1:3000 luisteren. Open in de DigitalOcean-firewall a
 
 Nginx overschrijft forwarded-IP-headers; pas daarna `TRUST_PROXY_IP_HEADERS=true` toe. De limieten gelden per publiek IP: test een schoolnetwerk met veel gebruikers voordat je de loginlimiet aanscherpt. Stel providerbudgetten en waarschuwingen in de dashboards van de gebruikte AI-aanbieders in.
 
-De servicegrens geldt voor app plus parserprocessen. Parserprocessen hebben daarnaast een deadline van 8 seconden, een JS-heapgrens van 128 MiB en maximaal twee gelijktijdige jobs. Native allocaties vallen niet onder de JS-heaplimiet. Een volledige sandbox en per-job native geheugenlimiet zijn nog vervolgwerk.
+De appgrens van 2 GiB omvat maximaal vier B2B-childprocessen. Document- en avatarjobs krijgen een aparte systemd-slice van maximaal 1 GiB, per job maximaal 512 MiB (inclusief native geheugen), twee gelijktijdige jobs en een harde looptijd van 10 seconden. Houd op een 4-GiB-VM dus ook ruimte voor OS/nginx en meet de werkelijke corpusbelasting.
+
+## Documentservice installeren
+
+Gebruik de Linux-build van dezelfde gereviewde commit als de app. Kopieer de vier parserbestanden naar systemd/tmpfiles en controleer de configuratie vóór activering:
+
+```sh
+sudo install -m 0644 deploy/leerkrachtentools-parser.socket /etc/systemd/system/
+sudo install -m 0644 deploy/leerkrachtentools-parser@.service /etc/systemd/system/
+sudo install -m 0644 deploy/leerkrachtentools-parsers.slice /etc/systemd/system/
+sudo install -m 0644 deploy/leerkrachtentools-parser.tmpfiles /etc/tmpfiles.d/leerkrachtentools-parser.conf
+sudo systemd-tmpfiles --create /etc/tmpfiles.d/leerkrachtentools-parser.conf
+sudo systemd-analyze verify /etc/systemd/system/leerkrachtentools-parser.socket /etc/systemd/system/leerkrachtentools-parser@.service /etc/systemd/system/leerkrachtentools-parsers.slice
+sudo systemctl daemon-reload
+sudo systemctl enable --now leerkrachtentools-parser.socket
+```
+
+De groep `leerkrachtentools` moet al bestaan. Pas het Node-pad aan als Node niet onder /usr/bin staat en bind uitsluitend dat runtimebestand als het buiten /usr staat. De socket is alleen toegankelijk voor root en de appgroep. Bind nooit de hele release of de hele datamap in de parser-root. Optionele formuliertemplates worden afzonderlijk read-only gemount; houd ze toegankelijk voor de dynamische gebruiker zonder de overige appdata te openen. De appservice zet `DOCUMENT_WORKER_SOCKET=/run/leerkrachtentools-parser.sock`. Stel de lokale ontwikkeloptie niet in op een publiek domein.
+
+Test eerst op een disposable Linux-host met systemd: `sudo "$(command -v node)" scripts/check-linux-isolation.mjs`. Deze proef maakt tijdelijke units, test filesystem-/netwerkweigering, kernel-timeout en native OOM, en voert vervolgens de echte standalone-smoke test uit. De tijdelijke units en bestanden worden opgeruimd. Dit is geen installatie van de productieservice.
+
+Bouw na workerwijzigingen opnieuw met `npm run build`; start geen oude workerbundels. Stel `ORG_AI_DAILY_LIMIT` en `ORG_AI_GLOBAL_DAILY_LIMIT` bewust in (standaard 100 per organisatie en 500 totaal, UTC-dag). Providerdashboard-limieten blijven nodig, ook omdat een provider reeds aangenomen werk kan factureren nadat een lokale job is gestopt.
 
 ## Backups, alarmen en releasecontrole
 

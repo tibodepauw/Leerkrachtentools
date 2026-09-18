@@ -73,27 +73,23 @@ export async function POST(request: Request) {
       }
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      const nextPath = await saveProfileImageFile(
+      const updatedAt = Date.now();
+      await saveProfileImageFile(
         session.id,
         file.name,
         buffer,
         file.type,
+        request.signal,
+        () => {
+          if (sessionFromRequest(request)?.id !== session.id) throw new Error("Je sessie is verlopen. Meld je opnieuw aan.");
+        },
+        (nextPath) => {
+          const previous = currentProfileImage(session.id);
+          const updated = getDatabase().prepare("UPDATE users SET profile_image_path = ?, updated_at = ? WHERE id = ?").run(nextPath, updatedAt, session.id);
+          if (updated.changes !== 1) throw new Error("Je account is niet meer beschikbaar.");
+          if (previous?.profile_image_path) deleteProfileImageFile(previous.profile_image_path);
+        },
       );
-      const updatedAt = Date.now();
-
-      const previous = currentProfileImage(session.id);
-      if (
-        previous?.profile_image_path &&
-        previous.profile_image_path !== nextPath
-      ) {
-        deleteProfileImageFile(previous.profile_image_path);
-      }
-
-      getDatabase()
-        .prepare(
-          "UPDATE users SET profile_image_path = ?, updated_at = ? WHERE id = ?",
-        )
-        .run(nextPath, updatedAt, session.id);
 
       return NextResponse.json({
         profileImageUrl: profileImageUrl(updatedAt),

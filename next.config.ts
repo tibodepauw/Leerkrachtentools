@@ -37,7 +37,8 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Child processes resolve parsers with Node rather than Turbopack module IDs.
   outputFileTracingIncludes: {
-    "/api/import-lesson-document": [
+    "/*": [
+      "./node_modules/{mammoth,jszip,sharp,zod,ai,@ai-sdk/*,better-sqlite3}/**/*",
       "./node_modules/{pdf-parse,pdfjs-dist,word-extractor,saxes,xmlchars,yauzl,fd-slicer,pend,buffer-crc32}/**/*",
       "./node_modules/@napi-rs/canvas*/**/*",
     ],

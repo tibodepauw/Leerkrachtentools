@@ -6,6 +6,11 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+- Afzonderlijke systemd-documentservice voor alle imports, Word-export en avatars, met minimale root, netwerkblokkade en kernelgeheugen-/tijdlimieten
+- B2B-berekeningen in afbreekbare processen; deadline, disconnect en leaseverlies stoppen werk vóór slotvrijgave
+- Echte organisatie-AI-dagbudgetten, publieke HTTPS-configuratiecontrole en bescherming tegen late avataropslag na intrekking
+- Linux-isolatieproef, processtopregressies, geïsoleerde testdatabases en bredere standalone-HTTP-controles
+
 ### Added
 - Gedeelde-computermodus met tabgeheugen, sessiemeldingen tussen tabbladen en revalidatie bij terugkeer
 - PDF/DOC-parserprocessen met harde deadline, concurrencygrens en begrensde JavaScript-heap

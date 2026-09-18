@@ -2,6 +2,8 @@
 Description=Leerkrachtentools
 After=network-online.target
 Wants=network-online.target
+Requires=leerkrachtentools-parser.socket
+After=leerkrachtentools-parser.socket
 StartLimitIntervalSec=300
 StartLimitBurst=5
 
@@ -14,6 +16,7 @@ EnvironmentFile=/etc/leerkrachtentools/app.env
 Environment=NODE_ENV=production
 Environment=HOSTNAME=127.0.0.1
 Environment=PORT=3000
+Environment=DOCUMENT_WORKER_SOCKET=/run/leerkrachtentools-parser.sock
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5

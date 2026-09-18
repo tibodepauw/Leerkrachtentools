@@ -1,4 +1,5 @@
 import { hasAnyAiProvider } from "@/lib/ai/providers";
+import { reserveOrgAiBudget } from "@/lib/ai/orgBudget";
 import { prompts } from "@/lib/ai/prompts";
 import { runStructured } from "@/lib/ai/router";
 import { proCurriculumPicksSchema } from "@/lib/ai/schemas";
@@ -101,6 +102,9 @@ export async function runProCurriculumAnalysis({
       | { ok: false };
 
     if (budget.kind === "org") {
+      if (!reserveOrgAiBudget(budget.orgId)) {
+        return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.quota, fallbackLimit);
+      }
       try {
         tracked = { ok: true, result: await runAnalysis() };
       } catch (error) {

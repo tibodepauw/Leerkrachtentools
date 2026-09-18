@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - codex/security-audit
   pull_request:
 
 permissions:
@@ -60,6 +61,9 @@ jobs:
 
       - name: Standalone smoke test
         run: node scripts/check-standalone.mjs
+
+      - name: Linux parser isolation and kernel limits
+        run: sudo "$(command -v node)" scripts/check-linux-isolation.mjs
 
       - name: Install browser for security regression tests
         run: npx playwright install --with-deps chromium

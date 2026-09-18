@@ -1,0 +1,8 @@
+[Unit]
+Description=Aggregate document parser limits
+
+[Slice]
+MemoryMax=1G
+MemorySwapMax=0
+TasksMax=64
+CPUQuota=150%

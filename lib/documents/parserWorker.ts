@@ -1,79 +1,79 @@
 import "server-only";
-import { spawn, type ChildProcess } from "node:child_process";
-import { createRequire } from "node:module";
-import path from "node:path";
+import net from "node:net";
+import { runProcessJob, workerEntry } from "@/lib/workers/processJob";
+import { RequestRateLimitError } from "@/lib/http/rateLimit";
+import type { LessonExportPayload } from "@/types";
 
-const MAX_WORKERS = 2;
-const MAX_TEXT = 500_000;
-const MAX_BYTES = 8 * 1024 * 1024;
+export type DocumentJob = {
+  operation: "extract" | "export" | "avatar";
+  bytes?: string; fileName?: string; lesson?: LessonExportPayload;
+};
+export type DocumentResult = { text?: string; bytes?: string; fileName?: string; exportMode?: string; error?: string };
 const state = globalThis as typeof globalThis & { documentParserWorkers?: number };
+const MAX_WIRE = 12_000_000;
 
-// No application credentials or database are passed to the parser. Termination
-// interrupts JavaScript even when a malformed document blocks its event loop.
-const workerSource = `
-process.once('message', async (workerData) => {
-try {
-  const bytes = Buffer.from(workerData.bytes);
-  let text;
-  if (workerData.kind === 'pdf') {
-    const { PDFParse } = require(workerData.parserPath);
-    const parser = new PDFParse({ data: bytes });
-    try { text = (await parser.getText()).text; }
-    finally { await parser.destroy(); }
-  } else {
-    const WordExtractor = require(workerData.parserPath);
-    text = (await new WordExtractor().extract(bytes)).getBody();
-  }
-  if (typeof text !== 'string' || text.length > workerData.maxText) throw new Error('text limit');
-  process.send({ text });
-} catch { process.send({ error: true }); }
-});
-`;
-
-export async function parseInWorker(bytes: Buffer, kind: "pdf" | "doc", signal?: AbortSignal): Promise<string> {
+async function runSocketJob(socketPath: string, input: DocumentJob, signal?: AbortSignal): Promise<DocumentResult> {
   signal?.throwIfAborted();
-  if (bytes.length > MAX_BYTES) throw new Error("Het bestand mag maximaal 8 MB zijn.");
-  if ((state.documentParserWorkers ?? 0) >= MAX_WORKERS) throw new Error("Te veel documenten tegelijk. Probeer zo opnieuw.");
-  state.documentParserWorkers = (state.documentParserWorkers ?? 0) + 1;
-  let worker: ChildProcess | undefined;
-  let exited: Promise<void> | undefined;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  let onAbort: (() => void) | undefined;
-  try {
-    worker = spawn(process.execPath, ["--max-old-space-size=128", "--max-semi-space-size=16", "-e", workerSource], {
-      windowsHide: true,
-      env: { NODE_ENV: "production", ...(process.env.SystemRoot ? { SystemRoot: process.env.SystemRoot } : {}) },
-      stdio: ["ignore", "ignore", "ignore", "ipc"],
-      serialization: "advanced",
-    });
-    exited = new Promise<void>((resolve) => {
-      worker!.once("close", () => resolve());
-      worker!.once("error", () => resolve());
-    });
-    const input = {
-        bytes, kind, maxText: MAX_TEXT,
-        parserPath: createRequire(path.join(process.cwd(), "package.json")).resolve(kind === "pdf" ? "pdf-parse" : "word-extractor"),
+  const serialized = JSON.stringify(input);
+  if (Buffer.byteLength(serialized) > MAX_WIRE) throw new Error("De aanvraag is te groot.");
+  return await new Promise((resolve, reject) => {
+    const socket = net.createConnection({ path: socketPath, allowHalfOpen: true });
+    const chunks: Buffer[] = [];
+    let total = 0;
+    let finished = false;
+    const finish = (error?: Error) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", abort);
+      socket.destroy();
+      if (error) { reject(error); return; }
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")) as DocumentResult); }
+      catch { reject(new Error("Ongeldig antwoord van de documentservice.")); }
     };
-    return await new Promise<string>((resolve, reject) => {
-      onAbort = () => reject(new Error("Documentverwerking is afgebroken."));
-      signal?.addEventListener("abort", onAbort, { once: true });
-      if (signal?.aborted) onAbort();
-      timer = setTimeout(() => reject(new Error("Het inlezen van het document duurde te lang.")), 8_000);
-      worker!.once("message", (result: { text?: string }) => {
-        if (typeof result.text !== "string" || result.text.length > MAX_TEXT) reject(new Error("Het document kon niet veilig worden ingelezen."));
-        else resolve(result.text);
-      });
-      worker!.once("error", () => reject(new Error("Het document kon niet veilig worden ingelezen.")));
-      worker!.once("exit", () => reject(new Error("Documentverwerking is gestopt.")));
-      worker!.send(input, (error) => { if (error) reject(new Error("Documentverwerking kon niet starten.")); });
+    const abort = () => finish(new Error("Documentverwerking is afgebroken."));
+    // The service's independent RuntimeMaxSec is shorter than this deadline.
+    const timer = setTimeout(() => finish(new Error("Documentverwerking duurde te lang.")), 12_000);
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
+    socket.once("connect", () => socket.end(serialized));
+    socket.on("data", (chunk: Buffer) => {
+      total += chunk.length;
+      if (total > MAX_WIRE) finish(new Error("Het documentantwoord is te groot."));
+      else chunks.push(chunk);
     });
-  } finally {
-    if (timer) clearTimeout(timer);
-    if (onAbort) signal?.removeEventListener("abort", onAbort);
-    try {
-      if (worker && worker.exitCode === null && worker.signalCode === null) worker.kill("SIGKILL");
-      await exited;
+    socket.once("end", () => finish());
+    socket.once("error", () => finish(new Error("De documentservice is niet beschikbaar.")));
+  });
+}
+
+export async function runDocumentJob(input: DocumentJob, signal?: AbortSignal): Promise<DocumentResult> {
+  signal?.throwIfAborted();
+  if ((state.documentParserWorkers ?? 0) >= 2) throw new RequestRateLimitError("Te veel documenten tegelijk. Probeer zo opnieuw.");
+  state.documentParserWorkers = (state.documentParserWorkers ?? 0) + 1;
+  try {
+    const socketPath = process.env.DOCUMENT_WORKER_SOCKET;
+    if (!socketPath && process.env.NODE_ENV === "production" && !localSmokeAllowed()) {
+      throw new Error("De geïsoleerde documentservice is niet geconfigureerd.");
     }
-    finally { state.documentParserWorkers = Math.max(0, (state.documentParserWorkers ?? 1) - 1); }
-  }
+    const result = socketPath
+      ? await runSocketJob(socketPath, input, signal)
+      : await runProcessJob<DocumentResult>(workerEntry("document"), input, { signal, timeoutMs: 8_000 });
+    if (result.error) throw new Error(result.error);
+    return result;
+  } finally { state.documentParserWorkers = Math.max(0, (state.documentParserWorkers ?? 1) - 1); }
+}
+
+function localSmokeAllowed() {
+  if (process.env.ALLOW_LOCAL_DOCUMENT_WORKER !== "true") return false;
+  try { return ["127.0.0.1", "localhost", "[::1]"].includes(new URL(process.env.APP_ORIGIN ?? "").hostname); }
+  catch { return false; }
+}
+
+export async function parseInWorker(bytes: Buffer, name: string, signal?: AbortSignal): Promise<string> {
+  if (bytes.length > 8 * 1024 * 1024) throw new Error("Het bestand mag maximaal 8 MB zijn.");
+  const fileName = name.includes(".") ? name : `document.${name}`;
+  const result = await runDocumentJob({ operation: "extract", bytes: bytes.toString("base64"), fileName }, signal);
+  if (typeof result.text !== "string" || result.text.length > 500_000) throw new Error("Het document kon niet veilig worden ingelezen.");
+  return result.text;
 }

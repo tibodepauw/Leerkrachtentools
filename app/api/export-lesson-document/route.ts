@@ -4,19 +4,19 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
-import { exportLessonDocument } from "@/lib/documents/exportLessonDocument";
+import { runDocumentJob } from "@/lib/documents/parserWorker";
 import {
   hasValidLessonDocumentSignature,
   lessonDocumentExtension,
   LESSON_DOCUMENT_MAX_BYTES,
 } from "@/lib/documents/supportedFormats";
-import { sanitizeZipArchive } from "@/lib/documents/extractText";
+import { withUploadCapacity } from "@/lib/http/uploadCapacity";
 import { publicErrorMessage } from "@/lib/http/clientError";
 import {
   readBoundedFormData,
   readJsonBody,
 } from "@/lib/http/requestBody";
-import { withRequestConcurrency } from "@/lib/http/rateLimit";
+import { RequestRateLimitError } from "@/lib/http/rateLimit";
 import type { LessonExportPayload } from "@/types";
 
 export const runtime = "nodejs";
@@ -87,7 +87,6 @@ async function readExportInput(request: Request) {
           "De bestandsinhoud komt niet overeen met een DOCX-bestand.",
         );
       }
-      sourceBuffer = Buffer.from(await sanitizeZipArchive(sourceBuffer));
       sourceFileName = sourceDocument.name;
     }
 
@@ -104,23 +103,22 @@ export async function POST(request: Request) {
   if (!session) return unauthorizedResponse();
 
   try {
-    const { lesson, sourceBuffer, sourceFileName } = await readExportInput(request);
-    const exported = await withRequestConcurrency({
-      scope: "document-export",
-      subject: session.id,
-      limit: 1,
-      task: () =>
-        exportLessonDocument(lesson, sourceBuffer, sourceFileName),
-    });
+    return await withUploadCapacity(session.id, async () => {
+      const { lesson, sourceBuffer, sourceFileName } = await readExportInput(request);
+      const exported = await runDocumentJob({ operation: "export", lesson,
+        bytes: sourceBuffer?.toString("base64"), fileName: sourceFileName,
+      }, request.signal);
+      if (!exported.bytes || !exported.fileName || !exported.exportMode) throw new Error("Het Word-document kon niet worden gemaakt.");
 
-    return new Response(new Uint8Array(exported.buffer), {
-      headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "Content-Disposition": `attachment; filename="${exported.fileName}"`,
-        "Cache-Control": "no-store",
-        "X-Export-Mode": exported.exportMode,
-      },
+      return new Response(new Uint8Array(Buffer.from(exported.bytes, "base64")), {
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "Content-Disposition": `attachment; filename="${exported.fileName}"`,
+          "Cache-Control": "no-store",
+          "X-Export-Mode": exported.exportMode,
+        },
+      });
     });
   } catch (error) {
     return NextResponse.json(
@@ -133,7 +131,7 @@ export async function POST(request: Request) {
                 "Het Word-document kon niet worden gemaakt.",
               ),
       },
-      { status: 400 },
+      { status: error instanceof RequestRateLimitError ? 429 : 400 },
     );
   }
 }

@@ -2,6 +2,7 @@
 limit_req_zone $binary_remote_addr zone=lt_requests:10m rate=10r/s;
 limit_req_zone $binary_remote_addr zone=lt_login:10m rate=6r/m;
 limit_conn_zone $binary_remote_addr zone=lt_connections:10m;
+limit_conn_zone $server_name zone=lt_global_connections:1m;
 
 server {
     listen 80;
@@ -22,6 +23,7 @@ server {
     send_timeout 30s;
     keepalive_timeout 30s;
     limit_conn lt_connections 20;
+    limit_conn lt_global_connections 100;
     limit_req_status 429;
     limit_conn_status 429;
 

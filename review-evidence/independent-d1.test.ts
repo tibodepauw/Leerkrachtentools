@@ -247,7 +247,5 @@ describe("independent D1 assertions", () => {
     }
   }, 10_000);
 
-  it.todo(
-    "OPEN V20-08: harde stop, volledige cancellationketen en lease-expiry die werk stopt",
-  );
+  // Hard-stop/deadline/lease-loss regressions now run in lib/api/workerLease.test.ts.
 });
