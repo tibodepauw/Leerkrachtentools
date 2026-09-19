@@ -41,7 +41,9 @@ Er worden twee echte, opgeschoonde pageviews waargenomen; geen privéwaarden
 in het onderschepte transport of de resterende browseropslag.
 
 De browserproef simuleert een normale user-agent en `webdriver: false`, omdat
-de SDK anders alle geautomatiseerde bezoeken als bot overslaat. De
+de SDK anders alle geautomatiseerde bezoeken als bot overslaat. Ook de
+Headless Shell-brand in Chromium client hints wordt als gewone Chromium
+gesimuleerd. De
 productieconfiguratie en privacyfilter worden niet vervangen. Deze test
 controleert niet de opslag of verwerking binnen een echte PostHog-account.
 Met analytics ingeschakeld ontvangt de analyticsdienst nog steeds normale
@@ -101,7 +103,15 @@ Dependabot automatisch sluit en welke als vervangen kunnen worden gesloten.
   browseropslag getest met synthetische gegevens en volledig onderschept netwerk.
 - De nieuwe analytics-browsertest is toegevoegd aan de bestaande Linux-CI,
   samen met de bestaande parserisolatie, herstel-, HTTP- en browsercontroles.
-  De definitieve Linux-run moet nog slagen vóór merge.
+  De **volledige Linux-run is geslaagd** voor codecommit
+  `06ce3dde3ff2c1893c4aa77e67bc72a2d4656cc5`:
+  [CI 35428246834](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35428246834).
+  Deze run bevestigt 611 tests, daadwerkelijke Linux-bestands-/netwerkisolatie,
+  CPU-deadline en native geheugenlimiet, koude apprestore, analytics-verzending
+  en Word-previewisolatie in Chromium, Firefox en WebKit.
+
+Deze bewijsupdate wijzigt alleen documentatie. De PR-controle moet ook op
+de actuele branch groen zijn voordat de eigenaar mergt.
 
 Open voor de latere acceptatieomgeving: echte curriculumcorpora en documenten,
 echte provideraccounts en budgetten, langdurige belasting, DigitalOcean-configuratie,

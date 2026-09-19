@@ -4,7 +4,7 @@ Status 18 september 2026: er staat volgens de eigenaar nog niets live. De reposi
 
 ## Nieuwe installatie
 
-- Gebruik een ondersteunde Ubuntu LTS, Node 22 of 24, een aparte `leerkrachtentools`-servicegebruiker zonder login en één app-instance. Reserveer voldoende geheugen boven de 2 GiB servicegrens voor OS en nginx (bijvoorbeeld een VM met 4 GiB); meet corpus- en uploadbelasting voordat je de grens aanpast.
+- Gebruik een ondersteunde Ubuntu LTS, een actuele Node 22 (minimaal 22.12) of 24, een aparte `leerkrachtentools`-servicegebruiker zonder login en één app-instance. Reserveer voldoende geheugen boven de 2 GiB servicegrens voor OS en nginx (bijvoorbeeld een VM met 4 GiB); meet corpus- en uploadbelasting voordat je de grens aanpast.
 - Bouw een gereviewde commit met `npm ci`, de CI-checks en `npm run build`. Zet de inhoud van `.next/standalone` in een root-owned releasefolder onder `/opt/leerkrachtentools/releases/`, met `current` als verwijzing. Het proces mag de code niet wijzigen. Voorzie een schrijfbare `.next/cache` alleen als image-optimisatie die nodig heeft.
 - Maak `/var/lib/leerkrachtentools` eigenaar van de servicegebruiker, mode 0700. Verbind `current/data` met die map: de database, avatars en lokaal aangeleverde corpora moeten buiten de release blijven bestaan. Zet `DATABASE_PATH=/var/lib/leerkrachtentools/leerkrachtentools.db`.
 - Plaats echte secrets uitsluitend in `/etc/leerkrachtentools/app.env` (root-owned, mode 0600). Gebruik verschillende willekeurige waarden van minstens 32 tekens voor `AUTH_SECRET` en `API_KEY_ENCRYPTION_SECRET`. Stel `APP_ORIGIN=https://<eigen domein>` in, echte Brevo-afzenderinstellingen en alleen de gekozen AI-providers. `ALLOW_DEV_LOGIN_CODE=false`. Geen voorbeeldsecrets gebruiken.
