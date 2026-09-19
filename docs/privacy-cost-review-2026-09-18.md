@@ -1,5 +1,7 @@
 # Aanvullende controle van privacy en API-kosten
 
+> Statusupdate 19 september 2026: de opeenvolgende herstelrondes zijn gemerged en opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Onderstaande resultaten, branchstatus en vervolgpunten zijn een historische momentopname, geen actuele openstaande-takenlijst. Zie de [documentatie-index](README.md) en [installatiehandleiding](digitalocean-first-deployment.md) voor de huidige baseline en resterende productieacceptatie.
+
 Baseline: gemergede audit, `main` op `9748d48cec37b8d88219ca7ec335941b387f552f`. Werkbranch: `codex/privacy-cost-controls`. Geen productieomgeving, echte persoonsgegevens of betaalde providerverzoeken gebruikt. SDK-transporttests onderscheppen alle fetch-aanroepen; browsers gebruiken een tijdelijk profiel en synthetische data.
 
 ## Gereproduceerde fouten

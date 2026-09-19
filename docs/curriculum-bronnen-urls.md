@@ -1,5 +1,7 @@
 # Officiële bron-URL's - Vlaams basis- en secundair onderwijs
 
+> Brononderzoek op de hieronder genoemde momenten. De volledige corpora zijn nog niet aangeleverd voor de komende installatie; aantallen en domeinlijsten zijn geen bewijs van actuele dekking. Controleer bestanden en zoekresultaten volgens de [installatiehandleiding](digitalocean-first-deployment.md). Externe bronnen zijn bij deze documentatiecorrectie niet opnieuw opgehaald.
+
 Overzicht van de **huidige officiële overzichts- en downloadpagina's** voor de vier
 koepels. Dit document beschrijft bewust **niet** het GO!-concept *nieuw leerplan
 basisonderwijs* (kennisrijk, in goedkeuring).

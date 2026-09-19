@@ -26,7 +26,7 @@ cp .env.example .env.local
 npm run dev -- --hostname 127.0.0.1 --port 43127
 ```
 
-Configure `.env.local` locally for AI and email features you need to test. Never commit that file.
+Before starting, apply the [README's local configuration](README.md#minimum-configuration): localhost `APP_ORIGIN`, an empty `DOCUMENT_WORKER_SOCKET`, independent secrets and an admitted test address. Configure AI and email only for features you need to test. Never commit `.env.local`.
 
 ## Quality checks
 
@@ -36,12 +36,21 @@ Run these from the project root:
 npm run lint
 npm run typecheck
 npm test
+npm run security:audit -- --all
 npm run build
 ```
 
 `npm test` runs the automated Vitest suite, including privacy, quotas, provider boundaries, document processing and curriculum ranking. All applicable tests must pass before merge; corpus-dependent tests require the real datasets.
 
 `npm run lint` uses ESLint with the Next.js config. Fix new warnings in files you touch.
+
+CI also runs standalone HTTP/restore tests, Linux parser isolation and browser
+privacy/preview checks. The exact commands and environment are in
+[ci.yml](.github/workflows/ci.yml). Run the relevant script when changing those
+boundaries. `scripts/check-linux-isolation.mjs` requires a disposable Linux host
+with systemd and elevated privileges; it is not a Windows development command.
+For real curriculum data, run `npm run check:corpora` separately; test fixtures
+and green CI do not establish production corpus readiness.
 
 ## Didactic context
 
@@ -83,7 +92,7 @@ Official curriculum sources are documented in [docs/curriculum-bronnen-urls.md](
 ## Pull request checklist
 
 - [ ] Branch is up to date with `main`
-- [ ] `npm run lint`, `npm test`, and `npm run build` succeed
+- [ ] Lint, typecheck, tests, dependency audit and build succeed; applicable CI integration checks pass
 - [ ] No secrets or personal emails in the diff
 - [ ] README or docs updated if behaviour changed
 - [ ] New tests added when fixing bugs or adding ranking/parser logic

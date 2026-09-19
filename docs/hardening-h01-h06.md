@@ -1,5 +1,7 @@
 # Hardening tickets H-01 tot H-06
 
+> Statusupdate 19 september 2026: de opeenvolgende herstelrondes zijn gemerged en opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Onderstaande resultaten, branchstatus en vervolgpunten zijn een historische momentopname, geen actuele openstaande-takenlijst. Zie de [documentatie-index](README.md) en [installatiehandleiding](digitalocean-first-deployment.md) voor de huidige baseline en resterende productieacceptatie.
+
 Actuele status 18 september 2026: procesisolatie voor document/beeldverwerking, harde stop voor de drie productie-B2B-routes en organisatie-AI-dagbudgetten zijn geïmplementeerd op `codex/security-audit`. De volledige [Linux-CI](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35373352643) slaagt, inclusief kernelgrenzen, browserprivacy, Word-previewisolatie en koude apphersteltest. Zie het [actuele auditrapport](security-audit-2026-09-18.md) voor bewijs en resterende controles op de toekomstige VM. Review/merge en operationele acceptatie blijven open.
 
 ## Historische voorbereiding van 17 september

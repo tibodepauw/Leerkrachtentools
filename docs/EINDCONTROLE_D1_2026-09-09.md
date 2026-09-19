@@ -1,5 +1,7 @@
 # Eindcontrole D1-01 en D1-02, 9 september 2026
 
+> Statusupdate 19 september 2026: de opeenvolgende herstelrondes zijn gemerged en opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Onderstaande resultaten, branchstatus en vervolgpunten zijn een historische momentopname, geen actuele openstaande-takenlijst. Zie de [documentatie-index](README.md) en [installatiehandleiding](digitalocean-first-deployment.md) voor de huidige baseline en resterende productieacceptatie.
+
 Dit is de onafhankelijke sluitingscontrole van D1-01 en D1-02. Het is geen toestemming om te pushen, mergen, migreren of deployen. Het oordeel betreft de ontvangen bestanden, niet een cryptografisch bewezen volledige Git-commit.
 
 ## Besluit

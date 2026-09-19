@@ -1,5 +1,7 @@
 # v5.20 follow-up cutover
 
+> Historische migratienotitie voor bestaande databases van vóór de quota-ledgers. Voor een nieuwe installatie: volg de [actuele installatiehandleiding](digitalocean-first-deployment.md) en voer deze backfill niet uit. De oude remote-, merge- en ticketstatus hieronder beschrijft de toenmalige situatie; de fixes zijn inmiddels opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Gebruik de huidige systemd-/parserconfiguratie, niet de oude losse startinstructie hieronder.
+
 Deze notitie is de uitrolvolgorde. Ze is geen toestemming om te migreren of te deployen.
 
 ## Welke remote voedt productie

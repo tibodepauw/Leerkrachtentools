@@ -1,5 +1,7 @@
 # Onderwijsdoelen.be: volledig overzicht Vlaamse onderwijsdomeinen
 
+> Brononderzoek op de hieronder genoemde momenten. De volledige corpora zijn nog niet aangeleverd voor de komende installatie; aantallen en domeinlijsten zijn geen bewijs van actuele dekking. Controleer bestanden en zoekresultaten volgens de [installatiehandleiding](digitalocean-first-deployment.md). Externe bronnen zijn bij deze documentatiecorrectie niet opnieuw opgehaald.
+
 Documentatie gegenereerd op basis van portaal- en API-onderzoek (augustus 2026).
 
 ## Bronnen
