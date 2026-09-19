@@ -235,13 +235,14 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-The extended audit suite contains 601 tests across 132 test files (one additional corpus-dependent
+The extended audit suite contains 611 tests across 133 test files (one additional corpus-dependent
 test skipped; no remaining TODO cases). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
 The test total is the Vitest case count, not a code-coverage percentage.
 
 See the [security audit and remaining release conditions](docs/security-audit-2026-09-18.md)
+and the [dependency and analytics validation](docs/dependency-security-validation-2026-09-19.md)
 for findings, fixes, browser regression commands, and the limits of this validation.
 
 ## Production deployment
