@@ -6,6 +6,22 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+## [5.21.0-rc.1] - 2026-09-19
+
+Pre-release voor gecontroleerde staging- en VM-acceptatie. Deze release bundelt
+de beveiligings-, privacy- en kostencontroles sinds v5.20.1; ze is geen
+verklaring dat de nog niet ingerichte productieomgeving is goedgekeurd.
+Zie [release-notities](docs/releases/v5.21.0-rc.1.md).
+
+### Changed
+
+- AI SDK en providers gezamenlijk bijgewerkt; React en React DOM beide 19.3.0; PostHog, Playwright en Vitest bijgewerkt en getest
+- Node-types volgen Node 22; ontwikkel-/testomgeving vereist Node 22.12+ of 24
+- Dependabot groepeert samenhangende AI- en React-updates
+- Alle gebruikte SDK-providerantwoorden begrensd tot 1 MiB met deadline en annulering, ook bij foutantwoorden
+- Permanente analytics-opslag uitgeschakeld, oude SDK-opslag opgeschoond en eerste pageview na initialisatie vastgelegd
+- Volledige Linux-CI met 611 geslaagde tests, parserisolatie, koude restore en browsercontroles; één corpusafhankelijke test blijft overgeslagen
+
 - Privacy-/kostenronde: geen quota-teruggave na externe fallback, gedeelde plafonds voor server-AI en Discovery, uitvoerlimiet voor Cloudflare en redirectweigering bij SDK-providerverzoeken
 - Late documentresultaten en analyses gebonden aan de oorspronkelijke accountsessie; echte IndexedDB-regressie voor accountwissel/uitloggen
 - Optionele analytics beperkt tot opgeschoonde statische paginaweergaven; automatische capture expliciet uit
