@@ -31,7 +31,7 @@
     "@ai-sdk/google": "^4.0.72",
     "@ai-sdk/groq": "^4.0.42",
     "@ai-sdk/openai": "^4.0.67",
-    "@google-cloud/discoveryengine": "^2.9.0",
+    "@google-cloud/discoveryengine": "^3.2.0",
     "ai": "^7.0.102",
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
