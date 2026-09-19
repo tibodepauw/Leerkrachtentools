@@ -26,6 +26,16 @@ try {
   await context.addInitScript(() => {
     // Simulate a normal user so bot filtering cannot make this test pass silently.
     Object.defineProperty(navigator, "webdriver", { get: () => false });
+    // Chromium Headless Shell also advertises a bot brand in client hints.
+    // Keep native methods bound to the original UAData object.
+    const hints = navigator.userAgentData;
+    if (hints) Object.defineProperty(navigator, "userAgentData", { value: new Proxy(hints, {
+      get(target, property) {
+        if (property === "brands") return [{ brand: "Chromium", version: "140" }];
+        const value = Reflect.get(target, property, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    }) });
   });
   const requests = [];
   await context.route("**/*", async route => {

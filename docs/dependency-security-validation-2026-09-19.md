@@ -46,6 +46,8 @@ productieconfiguratie en privacyfilter worden niet vervangen. Deze test
 controleert niet de opslag of verwerking binnen een echte PostHog-account.
 Met analytics ingeschakeld ontvangt de analyticsdienst nog steeds normale
 netwerkmetadata zoals het bron-IP. Zonder projectkey blijft analytics uit.
+Doordat analytics-identiteit niet meer permanent wordt bewaard, kunnen
+herlaadbezoeken als nieuwe anonieme bezoekers worden geteld.
 
 ### Eerste pageview kon vóór initialisatie worden aangeroepen
 
@@ -90,6 +92,11 @@ Dependabot automatisch sluit en welke als vervangen kunnen worden gesloten.
 - TypeScript en ESLint geslaagd; nieuwe SDK- en privacytests inbegrepen.
 - OSV: **960 productie- en buildpakketten**, geen bekende kwetsbaarheden gevonden.
 - Productiebuild met de nieuwe dependencies geslaagd.
+- Lokale standalone HTTP-/browserproef en koude hersteltest geslaagd, inclusief
+  PDF, DOCX-export/herimport, avatars, B2B-routes en gedeelde-apparaatprivacy.
+  De eerste lokale proef bereikte de parserdeadline bij een kleine PDF;
+  een afzonderlijke herhaling slaagde met ongewijzigde veiligheidslimieten.
+  Parserlatentie onder koude start en belasting blijft onderdeel van VM-acceptatie.
 - Echte Edge/Chromium-browser: SDK-verzending, eerste pageview en opgeschoonde
   browseropslag getest met synthetische gegevens en volledig onderschept netwerk.
 - De nieuwe analytics-browsertest is toegevoegd aan de bestaande Linux-CI,
