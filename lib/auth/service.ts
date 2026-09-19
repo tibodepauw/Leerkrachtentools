@@ -1,3 +1,5 @@
+import { CURRENT_TERMS_VERSION } from "@/lib/legal/terms";
+import { registerTermsDocument } from "@/lib/legal/acceptance";
 import "server-only";
 
 import {
@@ -82,6 +84,7 @@ export async function requestLoginCode({
   email: rawEmail,
   marketingOptIn,
   privacyAccepted,
+  termsVersion,
   ipHash,
   ipTrusted,
   exposeDevCode = false,
@@ -89,12 +92,14 @@ export async function requestLoginCode({
   email: string;
   marketingOptIn: boolean;
   privacyAccepted: boolean;
+  termsVersion?: string;
   ipHash: string;
   ipTrusted: boolean;
   exposeDevCode?: boolean;
 }) {
   const email = normalizeEmail(rawEmail);
   if (!isValidEmail(email)) throw new Error("Vul een geldig e-mailadres in.");
+  if (termsVersion !== CURRENT_TERMS_VERSION) throw new Error("De voorwaarden zijn bijgewerkt. Vernieuw de pagina en accepteer de getoonde versie.");
   if (!privacyAccepted) {
     throw new Error("Ga akkoord met de algemene voorwaarden om verder te gaan.");
   }
@@ -137,6 +142,7 @@ export async function requestLoginCode({
     throw new Error("Wacht één minuut voordat je een nieuwe code aanvraagt.");
   }
 
+  const termsHash = registerTermsDocument(db);
   const allowed = hasAppAccess(email);
   const code = String(randomInt(100_000, 1_000_000));
   db.prepare(
@@ -144,8 +150,8 @@ export async function requestLoginCode({
   ).run(now, email);
   db.prepare(
     `INSERT INTO login_codes
-      (id, email, code_hash, ip_hash, marketing_opt_in, privacy_accepted, expires_at, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, email, code_hash, ip_hash, marketing_opt_in, privacy_accepted, expires_at, created_at, terms_hash, terms_accepted_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     randomUUID(),
     email,
@@ -154,6 +160,8 @@ export async function requestLoginCode({
     marketingOptIn ? 1 : 0,
     1,
     now + CODE_TTL,
+    now,
+    termsHash,
     now,
   );
 
@@ -195,6 +203,8 @@ interface CodeRow {
   attempts: number;
   marketing_opt_in: number;
   privacy_accepted: number;
+  terms_hash: string | null;
+  terms_accepted_at: number | null;
 }
 
 interface UserRow {
@@ -217,7 +227,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
   cleanExpiredAuthRecords(now);
   const row = db
     .prepare(
-      `SELECT id, code_hash, attempts, marketing_opt_in, privacy_accepted
+      `SELECT id, code_hash, attempts, marketing_opt_in, privacy_accepted, terms_hash, terms_accepted_at
        FROM login_codes
        WHERE email = ? AND used_at IS NULL AND expires_at >= ?
        ORDER BY created_at DESC LIMIT 1`,
@@ -241,8 +251,8 @@ export function verifyLoginCode(emailValue: string, code: string) {
     throw new Error("De verificatiecode is niet correct.");
   }
 
-  if (!row.privacy_accepted) {
-    throw new Error("Privacytoestemming ontbreekt. Vraag een nieuwe code aan.");
+  if (!row.privacy_accepted || !row.terms_hash || row.terms_accepted_at === null || !db.prepare("SELECT 1 FROM legal_documents WHERE hash = ?").get(row.terms_hash)) {
+    throw new Error("Versiegebonden voorwaardenakkoord ontbreekt. Vraag een nieuwe code aan.");
   }
 
   const userId = randomUUID();
@@ -276,7 +286,7 @@ export function verifyLoginCode(emailValue: string, code: string) {
            WHEN excluded.marketing_opt_in = 1 THEN excluded.marketing_consent_at
            ELSE users.marketing_consent_at
          END,
-         privacy_accepted_at = excluded.privacy_accepted_at,
+         privacy_accepted_at = COALESCE(users.privacy_accepted_at, excluded.privacy_accepted_at),
          updated_at = excluded.updated_at`,
     ).run(
       userId,
@@ -289,6 +299,8 @@ export function verifyLoginCode(emailValue: string, code: string) {
       now,
       now,
     );
+    const acceptedUser = db.prepare("SELECT id FROM users WHERE email = ?").get(email) as {id:string};
+    db.prepare("INSERT OR IGNORE INTO terms_acceptances (user_id,document_hash,accepted_at,verified_at) VALUES (?,?,?,?)").run(acceptedUser.id, row.terms_hash, row.terms_accepted_at, now);
   });
   transaction();
 

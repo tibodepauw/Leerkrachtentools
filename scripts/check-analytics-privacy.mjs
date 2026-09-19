@@ -1,94 +1,60 @@
 import assert from "node:assert/strict";
-import { gunzipSync } from "node:zlib";
 import { build } from "esbuild";
-import { chromium } from "playwright";
-
-// Mount the real provider and SDK. All network traffic is intercepted locally;
-// the project key, lesson, URL and browser profile are synthetic.
-const bundle = await build({
-  stdin: { contents: `import React from 'react';
-    import { createRoot } from 'react-dom/client';
-    import posthog from 'posthog-js';
-    import { PostHogProvider } from './components/providers/posthog-provider';
-    createRoot(document.getElementById('root')).render(React.createElement(PostHogProvider, null, React.createElement('button', { id: 'lesson' }, 'PRIVATE_LESSON')));
-    window.analyticsProbe = posthog;`, resolveDir: process.cwd() },
-  bundle: true, write: false, platform: "browser", format: "iife", tsconfig: "tsconfig.json",
-  define: { "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_POSTHOG_KEY": '"phc_synthetic_public_test_key"', "process.env.NEXT_PUBLIC_POSTHOG_HOST": '"https://analytics.example"' },
-  plugins: [{ name: "synthetic-route", setup(builder) {
-    builder.onResolve({ filter: /^next\/navigation$/ }, () => ({ path: "route", namespace: "probe" }));
-    builder.onLoad({ filter: /.*/, namespace: "probe" }, () => ({ contents: 'export function usePathname() { return "/settings"; }' }));
-  } }],
-});
-const browser = await chromium.launch({ headless: true, ...(process.env.SECURITY_BROWSER_CHANNEL ? { channel: process.env.SECURITY_BROWSER_CHANNEL } : {}) });
+import { chromium, firefox, webkit } from "playwright";
+const engine = { chromium, firefox, webkit }[process.env.PREVIEW_BROWSER ?? "chromium"];
+if (!engine) throw new Error("Unknown browser");
+const browser = await engine.launch({ headless: true, ...(process.env.SECURITY_BROWSER_CHANNEL ? { channel: process.env.SECURITY_BROWSER_CHANNEL } : {}) });
 try {
-  // Exercise the normal user path; PostHog intentionally drops headless-bot UAs.
-  const context = await browser.newContext({ serviceWorkers: "block", userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36" });
-  await context.addInitScript(() => {
-    // Simulate a normal user so bot filtering cannot make this test pass silently.
-    Object.defineProperty(navigator, "webdriver", { get: () => false });
-    // Chromium Headless Shell also advertises a bot brand in client hints.
-    // Keep native methods bound to the original UAData object.
-    const hints = navigator.userAgentData;
-    if (hints) Object.defineProperty(navigator, "userAgentData", { value: new Proxy(hints, {
-      get(target, property) {
-        if (property === "brands") return [{ brand: "Chromium", version: "140" }];
-        const value = Reflect.get(target, property, target);
-        return typeof value === "function" ? value.bind(target) : value;
-      },
-    }) });
+ for (const configured of [false, true]) {
+  const bundle = await build({
+   stdin: { contents: `import React from 'react'; import { createRoot } from 'react-dom/client';
+    import { PostHogProvider } from './components/providers/posthog-provider';
+    import * as analytics from './lib/analytics/consent';
+    window.analyticsProbe=analytics;
+    createRoot(document.getElementById('root')).render(React.createElement(PostHogProvider, null, React.createElement('button', {id:'lesson',onClick:()=>{document.getElementById('lesson').textContent='Lesson works';analytics.captureAnalytics('feature_completed','spellcheck');}}, 'Synthetic lesson')));`, resolveDir: process.cwd() },
+   bundle: true,write:false,platform:"browser",format:"iife",tsconfig:"tsconfig.json",
+   define: { "process.env.NODE_ENV":'"production"', "process.env.NEXT_PUBLIC_POSTHOG_KEY":'"phc_synthetic"', "process.env.NEXT_PUBLIC_POSTHOG_HOST":'"https://eu.i.posthog.com"', "process.env.NEXT_PUBLIC_ANALYTICS_ENABLED":'"true"', "process.env.NEXT_PUBLIC_POSTHOG_CONFIGURATION_CONFIRMED":JSON.stringify(String(configured)), "process.env.NEXT_PUBLIC_POSTHOG_REGION":'"EU"', "process.env.NEXT_PUBLIC_POSTHOG_RETENTION_DAYS":'"30"' },
+   plugins:[{name:"synthetic-route",setup(b){b.onResolve({filter:/^next\/navigation$/},()=>({path:"route",namespace:"probe"}));b.onLoad({filter:/.*/,namespace:"probe"},()=>({contents:'export function usePathname(){return "/settings";}'}));}}],
   });
-  const requests = [];
-  await context.route("**/*", async route => {
-    const request = route.request();
-    if (new URL(request.url()).host === "127.0.0.1:18998") {
-      return route.fulfill({ contentType: "text/html", body: '<!doctype html><title>PRIVATE_TITLE</title><div id="root"></div><input value="PRIVATE_PUPIL">' });
-    }
-    let bytes = request.postDataBuffer();
-    if (bytes?.[0] === 0x1f && bytes?.[1] === 0x8b) bytes = gunzipSync(bytes);
-    requests.push({ url: request.url(), body: bytes?.toString() ?? "", headers: request.headers() });
-    await route.fulfill({ contentType: "application/json", body: '{"status":1}' });
+  const context=await browser.newContext({serviceWorkers:"block"}); const requests=[],errors=[];
+  await context.route("**/*",async route=>{
+   const r=route.request();
+   if(new URL(r.url()).hostname==="127.0.0.1") return route.fulfill({contentType:"text/html",body:'<!doctype html><title>PRIVATE_TITLE</title><div id="root"></div><input value="PRIVATE_PUPIL">'});
+   requests.push({url:r.url(),body:r.postData()??"",headers:r.headers()});
+   // A failing service must never create a retry/buffer that survives withdrawal.
+   await route.fulfill({status:503,contentType:"application/json",headers:{"access-control-allow-origin":"*"},body:'{}'});
   });
-  const page = await context.newPage();
-  page.on("pageerror", error => console.error("Synthetic analytics browser error:", error.message));
-  await page.goto("http://127.0.0.1:18998/settings?email=PRIVATE_EMAIL#PRIVATE_KEY", { referer: "https://school.example/PRIVATE_REFERRER" });
-  await page.evaluate(() => {
-    const key = "ph_phc_synthetic_public_test_key_posthog";
-    localStorage.setItem(key, JSON.stringify({ distinct_id: "synthetic-old-anonymous-id", $initial_referrer: "PRIVATE_OLD_REFERRER" }));
-    sessionStorage.setItem(key, JSON.stringify({ $referrer: "PRIVATE_OLD_REFERRER" }));
-  });
-  await page.addScriptTag({ content: bundle.outputFiles[0].text });
-  await page.waitForFunction(() => window.analyticsProbe?.config?.token === "phc_synthetic_public_test_key");
-  const pageviews = () => requests.reduce((count, r) => count + (r.body.match(/"\$pageview"/g)?.length ?? 0), 0);
-  const waitForPageviews = async count => {
-    const deadline = Date.now() + 12_000;
-    while (pageviews() < count && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 100));
-    assert.ok(pageviews() >= count, `Expected ${count} real SDK pageviews, received ${pageviews()}`);
-  };
-  // The first real route pageview must work without manually calling capture.
-  await waitForPageviews(1);
-  await page.locator("#lesson").click();
-  const captured = await page.evaluate(() => {
-    const p = window.analyticsProbe;
-    p.capture("$autocapture", { text: "PRIVATE_AUTOCAPTURE" });
-    p.capture("$exception", { message: "PRIVATE_EXCEPTION" });
-    return { event: p.capture("$pageview", { $current_url: location.href, $referrer: "https://school.example/PRIVATE_REFERRER", $set: { email: "PRIVATE_EMAIL" }, lesson: "PRIVATE_LESSON" }, { send_instantly: true }), loaded: p.__loaded, consent: p.has_opted_out_capturing(), storage: { ...localStorage }, session: { ...sessionStorage } };
-  });
-  await waitForPageviews(2);
-  assert.ok(requests.some(r => r.body.includes('"$pageview"')), `A real SDK pageview must reach the intercepted transport: ${JSON.stringify({ requests, captured })}`);
-  assert.ok(requests.every(r => new URL(r.url).hostname === "analytics.example"), "Unexpected SDK service or script request");
-  assert.ok(!JSON.stringify(requests).includes("PRIVATE_"), "Private DOM, URL or event data reached the transport");
-  const events = requests.flatMap(r => {
-    if (!r.body) return [];
-    const data = JSON.parse(r.body);
-    return data.batch ?? data;
-  }).flat();
-  assert.ok(events.length > 0);
-  for (const event of events) {
-    assert.equal(event.event, "$pageview", JSON.stringify(event));
-    assert.equal(event.properties.$current_url, "http://127.0.0.1:18998/settings");
-    assert.equal(event.properties.$pathname, "/settings");
+  const page=await context.newPage();page.on("pageerror",e=>errors.push(e.message));
+  const mount=async()=>{await page.goto("http://127.0.0.1:18998/settings?email=PRIVATE_EMAIL#PRIVATE_KEY");await page.addScriptTag({content:bundle.outputFiles[0].text});await page.getByRole("button",{name:"Privacy & cookies",exact:true}).waitFor();};
+  await mount();await page.locator("#lesson").click(); await page.waitForTimeout(200);assert.equal(requests.length,0,"No events before explicit consent");
+  if(!configured){
+   await page.getByRole("button",{name:"Privacy & cookies",exact:true}).click();
+   assert.equal(await page.getByRole("button",{name:"Toestaan",exact:true}).isDisabled(),true);
+   await page.evaluate(()=>{analyticsProbe.setAnalyticsChoice("accepted");analyticsProbe.captureAnalytics("$pageview","/");});
+   assert.equal(requests.length,0,"Even stale stored consent cannot enable an unverified project");
+  } else {
+   await page.getByRole("button",{name:"Weigeren",exact:true}).click();await page.locator("#lesson").click();assert.equal(requests.length,0);
+   await page.getByRole("button",{name:"Privacy & cookies",exact:true}).click();await page.getByRole("button",{name:"Toestaan",exact:true}).click();
+   await page.waitForFunction(()=>analyticsProbe.readAnalyticsChoice()==="accepted");await page.locator("#lesson").click();await page.waitForTimeout(300);
+   assert.ok(requests.some(r=>r.body.includes('"feature_completed"')),"Explicit consent enables useful function events");
+   await page.evaluate(()=>{analyticsProbe.captureAnalytics("$identify","PRIVATE_EMAIL");analyticsProbe.captureAnalytics("$pageview","/settings?PRIVATE_QUERY");analyticsProbe.captureAnalytics("feature_failed","PRIVATE_PROMPT");});
+   await page.getByRole("button",{name:"Privacy & cookies",exact:true}).click();await page.getByRole("button",{name:"Intrekken",exact:true}).click();
+   const count=requests.length;await page.locator("#lesson").click();await mount();await page.locator("#lesson").click();await page.waitForTimeout(5500);assert.equal(requests.length,count,"No queued retries after withdrawal or reload");
+   // Expiry and another tab's withdrawal must stop capture as well.
+   await page.evaluate(()=>{analyticsProbe.setAnalyticsChoice("accepted");const key=analyticsProbe.ANALYTICS_CHOICE_KEY;const c=JSON.parse(localStorage.getItem(key));c.expiresAt=0;localStorage.setItem(key,JSON.stringify(c));window.dispatchEvent(new StorageEvent("storage",{key}));analyticsProbe.captureAnalytics("$pageview","/");});
+   await page.waitForTimeout(100);assert.equal(requests.length,count);
+   assert.ok(!JSON.stringify(requests).includes("PRIVATE_"),"Private URL/DOM/identity data crossed transport");
+   for(const request of requests){assert.equal(new URL(request.url).hostname,"eu.i.posthog.com");assert.ok(!request.headers.cookie);assert.ok(!request.headers.referer);if(request.body){const e=JSON.parse(request.body);assert.ok(["$pageview","feature_completed"].includes(e.event));assert.equal(e.properties.$process_person_profile,false);assert.equal(e.properties.$geoip_disable,true);}}
+   const storage=await page.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}));assert.ok(!storage.includes("distinct_id"));
   }
-  const storage = await page.evaluate(() => ({ local: { ...localStorage }, session: { ...sessionStorage }, cookies: document.cookie }));
-  assert.ok(!JSON.stringify(storage).includes("PRIVATE_"), "Private event data persisted in SDK browser storage");
-  console.log(`Analytics wire privacy passed: ${events.length} sanitized pageview(s), no private URL/DOM/event fields or external SDK scripts.`);
-} finally { await browser.close(); }
+  assert.deepEqual(errors,[]);
+  const blockedPage=await context.newPage();
+  await blockedPage.addInitScript(()=>{for(const name of ["localStorage","sessionStorage"])Object.defineProperty(window,name,{get(){throw new Error("blocked");}});});
+  blockedPage.on("pageerror",e=>errors.push(e.message));
+  const beforeBlocked=requests.length;
+  await blockedPage.goto("http://127.0.0.1:18998/settings");await blockedPage.addScriptTag({content:bundle.outputFiles[0].text});await blockedPage.locator("#lesson").click();await blockedPage.waitForTimeout(100);
+  assert.equal(await blockedPage.locator("#lesson").textContent(),"Lesson works");assert.equal(requests.length,beforeBlocked);assert.deepEqual(errors,[]);
+  await context.close();
+ }
+ console.log("Analytics consent wire checks passed: disabled configuration, before consent, reject, allow, withdrawal, reload, expiry; no content, identity, retries or external scripts.");
+} finally {await browser.close();}

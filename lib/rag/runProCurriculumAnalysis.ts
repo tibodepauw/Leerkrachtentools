@@ -1,3 +1,4 @@
+import { logSafeError } from "@/lib/security/safeLog";
 import { hasAnyAiProvider } from "@/lib/ai/providers";
 import { reserveOrgAiBudget } from "@/lib/ai/orgBudget";
 import { prompts } from "@/lib/ai/prompts";
@@ -32,7 +33,7 @@ function fallbackResult(
   fallbackLimit: number,
 ): ProCurriculumAnalysisResult {
   return {
-    merged: retrieved.slice(0, fallbackLimit),
+    merged: retrieved.slice(0, Math.max(1, Math.min(fallbackLimit, 5))),
     provider: "jsonl-corpus+discovery-engine",
     corpusNotice: notice,
     proFallback: true,
@@ -109,7 +110,7 @@ export async function runProCurriculumAnalysis({
         tracked = { ok: true, result: await runAnalysis() };
       } catch (error) {
         signal?.throwIfAborted();
-        console.error("[rag-curriculum:pro]", error);
+        logSafeError("[rag-curriculum:pro]", error);
         return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.aiError, fallbackLimit);
       }
     } else {
@@ -144,14 +145,14 @@ export async function runProCurriculumAnalysis({
         ? `minimumdoel${count === 1 ? "" : "en"}`
         : `leerplandoel${count === 1 ? "" : "en"}`;
     return {
-      merged: grounded,
+      merged: grounded.slice(0, 5),
       provider: `jsonl-corpus+discovery-engine+${tracked.result.provider}`,
       corpusNotice: `${count} beargumenteerde ${noun} uit de officiële corpus, gekozen bij je lesactiviteit.`,
       proFallback: false,
     };
   } catch (error) {
     signal?.throwIfAborted();
-    console.error("[rag-curriculum:pro]", error);
+    logSafeError("[rag-curriculum:pro]", error);
     return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.aiError, fallbackLimit);
   }
 }

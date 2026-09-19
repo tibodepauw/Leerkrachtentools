@@ -6,10 +6,13 @@ gemerged naar `main` en opgenomen in **v5.21.0-rc.1**. De releasecommit is
 [volledige CI](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35430856048)
 is geslaagd. Er is nog geen productieomgeving gedeployed.
 
+De nieuwe toestemmings-, akkoordbewijs- en gegevensbeheerwijzigingen staan in [Privacybeheer](privacy-operations.md); zij zitten nog niet in de gepubliceerde rc.1.
+
 ## Actuele handleidingen
 
 | Document | Gebruik |
 | --- | --- |
+| [Privacybeheer](privacy-operations.md) | Toestemming, export, opruiming en onbekende productiefeiten |
 | [README](../README.md) | Functies, lokale start, B2B-overzicht en configuratie |
 | [AI en RAG](AI-en-RAG-overzicht.md) | Huidige architectuur, opslag en externe datastromen |
 | [Eerste DigitalOcean-installatie](digitalocean-first-deployment.md) | Nieuwe VM, parserisolatie, corpora, kostenlimieten en herstel |

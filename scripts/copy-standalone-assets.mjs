@@ -13,7 +13,7 @@ cpSync("workers", ".next/standalone/workers", { recursive: true });
 // packages too, including native image/PDF dependencies loaded at runtime.
 const require = createRequire(import.meta.url);
 const { fileList } = await nft.nodeFileTrace([
-  "workers/document.cjs", "workers/b2b.cjs",
+  "workers/document.cjs", "workers/b2b.cjs", "workers/privacy-maintenance.cjs",
   require.resolve("pdf-parse"), require.resolve("word-extractor"),
 ], { base: process.cwd(), processCwd: process.cwd() });
 for (const file of fileList) {

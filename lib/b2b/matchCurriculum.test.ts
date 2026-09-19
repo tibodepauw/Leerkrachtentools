@@ -36,16 +36,16 @@ function sampleResult(
 }
 
 describe("B2B curriculum match citations", () => {
-  it("default limit is 5 and rejects more than 10", () => {
+  it("default limit is 5 and rejects more than 5", () => {
     expect(curriculumMatchBodySchema.parse({ query: "tellen tot twintig" }).limit).toBe(
       5,
     );
     expect(
-      curriculumMatchBodySchema.parse({ query: "tellen tot twintig", limit: 10 })
+      curriculumMatchBodySchema.parse({ query: "tellen tot twintig", limit: 5 })
         .limit,
-    ).toBe(10);
+    ).toBe(5);
     expect(() =>
-      curriculumMatchBodySchema.parse({ query: "tellen tot twintig", limit: 11 }),
+      curriculumMatchBodySchema.parse({ query: "tellen tot twintig", limit: 6 }),
     ).toThrow();
     expect(() =>
       curriculumMatchBodySchema.parse({ query: "tellen tot twintig", limit: 0 }),

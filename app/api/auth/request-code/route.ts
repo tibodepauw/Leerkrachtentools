@@ -13,12 +13,14 @@ export async function POST(request: Request) {
       email?: string;
       marketingOptIn?: boolean;
       privacyAccepted?: boolean;
+      termsVersion?: string;
     };
     const clientIp = resolveClientIp(request);
     const result = await requestLoginCode({
       email: body.email ?? "",
       marketingOptIn: body.marketingOptIn === true,
       privacyAccepted: body.privacyAccepted === true,
+      termsVersion: body.termsVersion,
       ipHash: hashRequestIp(clientIp.trusted ? clientIp.address : "unavailable"),
       ipTrusted: clientIp.trusted,
       exposeDevCode: isDevLoginCodeAllowed(request.url),

@@ -75,6 +75,8 @@ jobs:
         run: |
           node scripts/check-client-session.mjs
           node scripts/check-analytics-privacy.mjs
+          PREVIEW_BROWSER=firefox node scripts/check-analytics-privacy.mjs
+          PREVIEW_BROWSER=webkit node scripts/check-analytics-privacy.mjs
           node scripts/check-preview-security.mjs
           PREVIEW_BROWSER=firefox node scripts/check-preview-security.mjs
           PREVIEW_BROWSER=webkit node scripts/check-preview-security.mjs

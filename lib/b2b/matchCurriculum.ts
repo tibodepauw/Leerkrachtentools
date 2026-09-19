@@ -80,6 +80,7 @@ export type CurriculumMatchPayload = {
   requestedMode: "snel" | "pro";
   executedMode: "snel" | "pro";
   proFallback: boolean;
+  sourceMetadata: { version: null; status: "ONBEKEND"; notice: string };
 };
 
 export async function matchCurriculumGoals({
@@ -162,6 +163,7 @@ export async function matchCurriculumGoals({
 
   return {
     results,
+    sourceMetadata: { version: null, status: "ONBEKEND", notice: "De geladen bronversie en gebruiksrechten zijn niet geverifieerd. Er worden geen bronlinks of versies afgeleid. Maximaal vijf resultaten vormt geen auteursrechtelijke vrijstelling." },
     requestedMode: mode,
     executedMode,
     proFallback: mode === "pro" ? proFallback : false,

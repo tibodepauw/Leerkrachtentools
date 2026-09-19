@@ -6,6 +6,14 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Privacy en gegevensbeheer
+
+- Versiegebonden akkoordbewijs met vaste tekst en hash, gescheiden van privacyinformatie en analyticskeuze.
+- PostHog uitsluitend na bevestigde configuratie en optionele toestemming; intrekbare verzending zonder buffering, retries, identify of automatische opname.
+- Invoer-/upload-/Word-exportuitleg, veilige foutdiagnose, eigen account-export en afgeschermde organisatie-afsluiting met behoud van quota.
+- Opruim-CLI met alleen-lezen dry-run en nog niet geactiveerde dagelijkse timer; bescherming van OTP-misbruikvensters en lopende B2B-verzoeken.
+- Maximaal vijf doelkoppelingen in browser, B2B, Pro-fallback en oude antwoordcache; hogere API-limieten geven een validatiefout. Onbekende bronrechten en productiefeiten expliciet vermeld.
+
 ### Documentation
 
 - README, lokale startconfiguratie, beveiligingsbaseline en AI/RAG-architectuur afgestemd op v5.21.0-rc.1. Serververwerking, B2B-replayopslag en ontbrekende volledige corpora expliciet beschreven. Documentatie-index toegevoegd; historische audits onderscheiden van actuele installatie-instructies.

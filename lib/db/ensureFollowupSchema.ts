@@ -77,6 +77,8 @@ export function ensureFollowupSchema(db: Database.Database) {
     );
   `);
 
+  if (!columnNames(db, "api_organizations").has("closed_at")) db.exec("ALTER TABLE api_organizations ADD COLUMN closed_at INTEGER");
+
   const idempotencyExists = tableExists(db, "api_idempotency_keys");
   const columns = idempotencyExists
     ? columnNames(db, "api_idempotency_keys")

@@ -39,7 +39,7 @@ describe("Legal document links", () => {
     expect(legal).toContain('target="_blank"');
     expect(legal).toContain('rel="noopener noreferrer"');
     expect(legal).toContain(
-      "Door in te loggen ga je akkoord met onze",
+      "Lees onze",
     );
     expect(legal).toContain("Algemene Voorwaarden");
     expect(legal).toContain("Privacybeleid");
@@ -65,17 +65,17 @@ describe("Legal document links", () => {
     expect(auth).toContain("LegalColophon");
   });
 
-  it("stuurt oude in-app paden door naar Generative Labs", () => {
-    expect(nextConfig).toContain('source: "/privacy"');
-    expect(nextConfig).toContain("GENERATIVE_LABS_LEGAL.privacy");
-    expect(nextConfig).toContain('source: "/voorwaarden"');
-    expect(nextConfig).toContain("GENERATIVE_LABS_LEGAL.terms");
+  it("toont versiegebonden voorwaarden en één privacyuitleg zonder redirectlus", () => {
+    expect(nextConfig).not.toContain('source: "/privacy"');
+    expect(privacyPage).toContain("Privacy en cookies");
+    expect(nextConfig).not.toContain('source: "/voorwaarden"');
+    expect(termsPage).toContain("CURRENT_TERMS.blocks");
     expect(nextConfig).toContain('source: "/juridisch"');
     expect(nextConfig).toContain("GENERATIVE_LABS_LEGAL.imprint");
     expect(proxy).toContain('pathname === "/voorwaarden"');
     expect(proxy).toContain('pathname === "/juridisch"');
-    expect(privacyPage).toContain("redirect(GENERATIVE_LABS_LEGAL.privacy)");
-    expect(termsPage).toContain("redirect(GENERATIVE_LABS_LEGAL.terms)");
+    expect(privacyPage).not.toContain("redirect(");
+    expect(termsPage).not.toContain("redirect(");
     expect(imprintPage).toContain("redirect(GENERATIVE_LABS_LEGAL.imprint)");
     expect(privacyPage).not.toContain("Privacy- en Gegevensbeleid");
     expect(privacyPage).not.toContain("Verwerkingsverantwoordelijke");

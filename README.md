@@ -91,7 +91,7 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 - **Opt-in LLM query rewriting** for RAG searches (Settings; default off). Rewrite uses the same BYOK/provider policy as other AI calls
 - Per-account browser storage for active lesson data and document previews, or temporary tab memory in shared-computer mode
 - Marketing email preference (opt-in, off by default). Marketing consent is not an analytics choice
-- Optional PostHog EU Cloud analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture, session replay and persistent SDK storage stay disabled. Identity resets on logout and account switch
+- Optional PostHog analytics stays off until project region, DPA and actual retention are confirmed. Explicit, revocable consent is required. Only fixed page/function events are sent via the Capture API, without SDK auto-events, replay, identity storage, retries or buffering
 - In-app feedback form (idea, feedback, bug)
 - App version, legal colophon (AHOVOKS modellicentie, koepel citation art. XI.189 WER, non-affiliation, EU AI Act art. 50) and build info with link to GitHub releases
 - Install as a PWA from Settings (standalone app on phone, tablet, or computer)
@@ -185,7 +185,11 @@ TESTER_EMAILS=you@example.be
 DATABASE_PATH=./data/leerkrachtentools.db
 FEEDBACK_TO_EMAIL=feedback@yourdomain.be
 NEXT_PUBLIC_POSTHOG_KEY=
-NEXT_PUBLIC_POSTHOG_HOST=https://eu.posthog.com
+NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
+NEXT_PUBLIC_ANALYTICS_ENABLED=false
+NEXT_PUBLIC_POSTHOG_CONFIGURATION_CONFIRMED=false
+NEXT_PUBLIC_POSTHOG_REGION=
+NEXT_PUBLIC_POSTHOG_RETENTION_DAYS=
 ```
 
 Local development without Brevo is deliberately opt-in. Set
@@ -226,7 +230,7 @@ The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Rev
 
 | Endpoint | Scope | What it does |
 |----------|--------|----------------|
-| `POST /api/v1/curriculum/match` | `curriculum:match` | Local corpus match. `network`: `AHOVOKS` (minimumdoelen), `KOV`, `GO`, `OVSG`. `level`: `basis` or `secundair`. `mode`: `snel` or `pro`. `limit`: 1-10, default 5. Results are citation fields only: `code`, `text`, `network`, `score`, optional `didactic_note`. The JSON also includes `requestedMode`, `executedMode`, and `proFallback`. |
+| `POST /api/v1/curriculum/match` | `curriculum:match` | Local corpus match. `network`: `AHOVOKS` (minimumdoelen), `KOV`, `GO`, `OVSG`. `level`: `basis` or `secundair`. `mode`: `snel` or `pro`. `limit`: 1-5, default 5. Results are citation fields only: `code`, `text`, `network`, `score`, optional `didactic_note`. The JSON also includes `requestedMode`, `executedMode`, and `proFallback`. |
 | `POST /api/v1/curriculum/audit` | `curriculum:audit` | Coverage of `target_goals` against `lesson_units` |
 | `POST /api/v1/goals/improve` | `goals:improve` | Same lesson-goal rules as Doelverbeteraar |
 
@@ -304,13 +308,16 @@ Before exposing the service publicly:
 
 ## Privacy
 
-- Privacy policy consent is required at login
+- The login checkbox accepts the displayed terms version; the server preserves its text/hash and first acceptance time. Privacy information and optional analytics are separate. Existing accounts receive no fabricated historical evidence
 - Marketing consent is off by default and is not an analytics choice
-- Optional PostHog EU Cloud product analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture, session replay and persistent SDK storage are disabled in code
+- Optional PostHog analytics stays off until project region, DPA and actual retention are confirmed. Explicit, revocable consent is required. Only fixed page/function events are sent via the Capture API, without SDK auto-events, replay, identity storage, retries or buffering
 - AI modules receive the submitted text and relevant lesson context; manual scanning and voice reflection can also send the selected PDF, image or audio to the provider. Document import/export is processed on the app server without an AI call
-- Browser lesson storage is not a claim that nothing is stored server-side: accounts, encrypted credentials, quotas and API telemetry live in SQLite; avatars are files. B2B idempotency can store response content (including generated lesson-goal text) for replay. Its 24-hour expiry is cleaned up during API activity, not by a guaranteed wall-clock deletion job; backups need their own retention policy
+- Browser lesson storage is not a claim that nothing is stored server-side: accounts, encrypted credentials, quotas and API telemetry live in SQLite; avatars are files. B2B idempotency can store response content (including generated lesson-goal text) for replay. Its 24-hour expiry is cleaned during API activity; an explicit dry-run/operator CLI and daily timer template are also available. Active/pending work is protected. The timer is not enabled automatically; backups need their own retention policy
 - Settings and the login screen include a legal colophon: AHOVOKS modellicentie, koepel citation (art. XI.189 WER), non-affiliation, and EU AI Act art. 50 transparency
-- Read [Privacybeleid](https://www.generativelabs.be/privacy.html) on generativelabs.be for processor details
+- The app serves one current privacy/cookie explanation at `/privacy` and the accepted text snapshot at `/voorwaarden`. The separate public company website may still contain older text
+- Generative Labs does not train its own generative models on customer content. Google uses Gemini API, not Vertex AI. Actual production providers, their regions and retention remain unverified; no all-EU guarantee
+- Free invited testers acquire no automatic payment obligation or compulsory end date
+- [Privacy operations](docs/privacy-operations.md): account export, organization closure, expiry dry-run, configuration facts and activation conditions. A five-result limit is not permission to reuse copyrighted corpus material
 
 ## Documentation
 

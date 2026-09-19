@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { GENERATIVE_LABS_LEGAL, LEGAL_NAV_ITEMS } from "./generativeLabs";
 
 describe("Generative Labs legal URLs", () => {
-  it("wijst naar de centrale documenten op generativelabs.be", () => {
+  it("wijst naar actuele appteksten en centrale bedrijfsgegevens", () => {
     expect(GENERATIVE_LABS_LEGAL.terms).toBe(
-      "https://www.generativelabs.be/voorwaarden.html",
+      "/voorwaarden?versie=2026-09-13",
     );
     expect(GENERATIVE_LABS_LEGAL.privacy).toBe(
-      "https://www.generativelabs.be/privacy.html",
+      "/privacy?versie=2026-09-19",
     );
     expect(GENERATIVE_LABS_LEGAL.imprint).toBe(
       "https://www.generativelabs.be/juridisch.html",

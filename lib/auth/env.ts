@@ -1,3 +1,7 @@
+export class ProductionConfigurationError extends Error {
+  constructor(readonly issues: readonly string[]) { super(`Ongeldige productieconfiguratie:\n${issues.map(issue => `- ${issue}`).join("\n")}`); }
+}
+
 const MINIMUM_SECRET_LENGTH = 32;
 
 function invalidSecret(value: string | undefined) {
@@ -47,10 +51,6 @@ export function validateProductionEnvironment() {
   }
 
   if (errors.length > 0) {
-    throw new Error(
-      `Ongeldige productieconfiguratie:\n${errors
-        .map((error) => `- ${error}`)
-        .join("\n")}`,
-    );
+    throw new ProductionConfigurationError(errors);
   }
 }

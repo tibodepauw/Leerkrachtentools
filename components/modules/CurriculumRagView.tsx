@@ -204,6 +204,7 @@ function GoalCard({
         </p>
 
         <ToelichtingAccordion text={toelichting} />
+        <p className="text-xs text-neutral-500">Bronversie en gebruiksrechten: niet geverifieerd. Er wordt geen ontbrekende bronlink afgeleid.</p>
 
         {result.proWhy ? (
           <div className="rounded-lg border border-neutral-800 bg-neutral-950/60 p-4">

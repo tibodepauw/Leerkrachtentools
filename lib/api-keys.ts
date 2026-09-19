@@ -1,3 +1,4 @@
+import { logSafeError } from "@/lib/security/safeLog";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { getOrgQuotaSnapshot } from "@/lib/api/orgQuota";
 import { startOfNextUtcMonth, startOfUtcMonth } from "@/lib/api/utcMonth";
@@ -65,6 +66,7 @@ export class ApiAuthError extends Error {
 }
 
 type OrganizationRow = {
+  closed_at: number | null;
   id: string;
   name: string;
   contact_email: string;
@@ -168,6 +170,7 @@ export function createOrganization({
 
   const db = getDatabase();
   const organization: OrganizationRow = {
+    closed_at: null,
     id: randomUUID(),
     name: trimmedName,
     contact_email: contactEmail,
@@ -203,11 +206,11 @@ export function generateApiKey(
   const db = getDatabase();
   const organization = db
     .prepare(
-      `SELECT id, name, contact_email, tier, monthly_quota, created_at
+      `SELECT id, name, contact_email, tier, monthly_quota, created_at, closed_at
        FROM api_organizations WHERE id = ?`,
     )
     .get(orgId) as OrganizationRow | undefined;
-  if (!organization) {
+  if (!organization || organization.closed_at != null) {
     throw new Error("Organisatie niet gevonden.");
   }
 
@@ -222,6 +225,7 @@ export function generateApiKey(
     expiresAt,
   };
   db.transaction(() => {
+  if (db.prepare("SELECT 1 FROM api_organizations WHERE id=? AND closed_at IS NOT NULL").get(orgId)) throw new Error("Organisatie is afgesloten.");
   db.prepare(
     `INSERT INTO api_keys
       (id, org_id, name, key_prefix, key_hash, scopes, is_active, expires_at, last_used_at, created_at)
@@ -252,7 +256,7 @@ function touchLastUsedAt(keyId: string) {
         .prepare("UPDATE api_keys SET last_used_at = ? WHERE id = ?")
         .run(Date.now(), keyId);
     } catch (error) {
-      console.error("[api-keys] last_used_at", error);
+      logSafeError("[api-keys] last_used_at", error);
     }
   });
 }
@@ -295,11 +299,11 @@ export function validateApiKey(
 
   const organization = db
     .prepare(
-      `SELECT id, name, contact_email, tier, monthly_quota, created_at
+      `SELECT id, name, contact_email, tier, monthly_quota, created_at, closed_at
        FROM api_organizations WHERE id = ?`,
     )
     .get(row.org_id) as OrganizationRow | undefined;
-  if (!organization) {
+  if (!organization || organization.closed_at != null) {
     throw new ApiAuthError("Ongeldige API-sleutel.", 401);
   }
 
@@ -399,11 +403,11 @@ export function inspectOrganization(orgId: string, now = Date.now()) {
   const db = getDatabase();
   const organization = db
     .prepare(
-      `SELECT id, name, contact_email, tier, monthly_quota, created_at
+      `SELECT id, name, contact_email, tier, monthly_quota, created_at, closed_at
        FROM api_organizations WHERE id = ?`,
     )
     .get(orgId.trim()) as OrganizationRow | undefined;
-  if (!organization) {
+  if (!organization || organization.closed_at != null) {
     throw new Error("Organisatie niet gevonden.");
   }
 

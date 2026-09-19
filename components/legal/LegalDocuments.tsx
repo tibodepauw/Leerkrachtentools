@@ -32,15 +32,15 @@ export function LegalExternalLink({
 export function LegalConsentLine({ className }: { className?: string }) {
   return (
     <p className={cn("text-xs leading-5 text-neutral-500", className)}>
-      Door in te loggen ga je akkoord met onze{" "}
+      Lees onze{" "}
       <LegalExternalLink href={GENERATIVE_LABS_LEGAL.terms}>
         Algemene Voorwaarden
       </LegalExternalLink>{" "}
-      en ons{" "}
+      en de informatie in ons{" "}
       <LegalExternalLink href={GENERATIVE_LABS_LEGAL.privacy}>
         Privacybeleid
       </LegalExternalLink>
-      .
+      . Akkoord met de voorwaarden geef je via het aparte vinkje; analytics is een afzonderlijke optionele keuze.
     </p>
   );
 }

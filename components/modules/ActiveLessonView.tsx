@@ -210,6 +210,7 @@ export function ActiveLessonView() {
         </div>
       </div>
 
+      <p className="mb-4 text-xs leading-5 text-neutral-400">Upload en Word-export verwerken het bestand, de bestandsnaam en geselecteerde lesgegevens op onze server. Gebruik geen identificeerbare leerlinggegevens. <a href="/privacy?versie=2026-09-19" className="underline">Privacy-uitleg</a></p>
       {downloadError || uploadError ? (
         <p className="mb-4 text-sm text-red-400">
           {downloadError || uploadError}

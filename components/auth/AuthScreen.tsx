@@ -1,4 +1,5 @@
 "use client";
+import { CURRENT_TERMS_VERSION } from "@/lib/legal/terms";
 
 import { FormEvent, useState, type ReactNode } from "react";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -46,7 +47,7 @@ function AuthScreenContent() {
       const response = await fetch("/api/auth/request-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, marketingOptIn, privacyAccepted }),
+        body: JSON.stringify({ email, marketingOptIn, privacyAccepted, termsVersion: CURRENT_TERMS_VERSION }),
       });
       const payload = (await response.json()) as {
         error?: string;

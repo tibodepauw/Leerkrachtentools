@@ -165,6 +165,7 @@ export function AccountSettings({
           </p>
         </div>
 
+        <p className="mb-5 text-sm"><a className="underline" href="/api/account/export" download>Mijn accountgegevens exporteren</a> · Export verwijdert niets. Lesbestanden exporteer je afzonderlijk via de lesfuncties.</p>
         <div className="grid gap-5 xl:grid-cols-2">
           <Card>
             <CardHeader>

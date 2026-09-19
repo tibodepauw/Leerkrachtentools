@@ -1,3 +1,4 @@
+import { logSafeError } from "@/lib/security/safeLog";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession, SESSION_COOKIE } from "@/lib/auth/service";
 import {
@@ -145,7 +146,7 @@ export function proxy(request: NextRequest) {
             ),
           );
         }
-        console.error("[proxy]", error);
+        logSafeError("[proxy]", error);
         return secure(
           NextResponse.json(
             {

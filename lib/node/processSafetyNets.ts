@@ -1,3 +1,4 @@
+import { logSafeError } from "@/lib/security/safeLog";
 const PROCESS_SAFETY_KEY = Symbol.for(
   "leerkrachtentools.processSafetyNets",
 );
@@ -12,9 +13,6 @@ export function installProcessSafetyNets() {
   globals[PROCESS_SAFETY_KEY] = true;
 
   process.on("unhandledRejection", (reason) => {
-    console.error(
-      "[unhandledRejection] Achtergrondfout onderdrukt zodat de server blijft draaien.",
-      reason,
-    );
+    logSafeError("unhandled-rejection", reason);
   });
 }

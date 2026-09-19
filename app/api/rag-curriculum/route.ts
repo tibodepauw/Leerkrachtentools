@@ -1,3 +1,4 @@
+import { logSafeError } from "@/lib/security/safeLog";
 import { NextResponse } from "next/server";
 import {
   sessionFromRequest,
@@ -119,6 +120,7 @@ function curriculumSearchResponse({
   proFallback?: boolean;
   provider?: string;
 }) {
+  merged = merged.slice(0, 5);
   const alternatives = merged.slice(1);
   return NextResponse.json(
     {
@@ -197,7 +199,7 @@ function searchLocalSafely(
       limit,
     });
   } catch (error) {
-    console.error("[rag-curriculum:local]", error);
+    logSafeError("[rag-curriculum:local]", error);
     return [];
   }
 }
@@ -243,7 +245,7 @@ async function runCurriculumSearch(
       semanticFallback,
     }).filter((item) => semanticFallback || isStructuredResult(item));
   } catch (error) {
-    console.error("[rag-curriculum:discovery]", error);
+    logSafeError("[rag-curriculum:discovery]", error);
     failed = true;
     discoveryCandidates = [];
   }
@@ -312,7 +314,7 @@ export async function POST(request: Request) {
   try {
     return await handleCurriculumSearch(request);
   } catch (error) {
-    console.error("[rag-curriculum]", error);
+    logSafeError("[rag-curriculum]", error);
     return interruptedSearchResponse(error);
   }
 }
@@ -433,7 +435,7 @@ async function handleCurriculumSearch(request: Request) {
       searchQuery = resolved.searchQuery;
       rewrite = resolved.rewrite;
     } catch (error) {
-      console.error("[rag-curriculum:rewrite]", error);
+      logSafeError("[rag-curriculum:rewrite]", error);
     }
 
     request.signal.throwIfAborted();
@@ -450,7 +452,7 @@ async function handleCurriculumSearch(request: Request) {
           }),
       });
     } catch (error) {
-      console.error("[rag-curriculum:search]", error);
+      logSafeError("[rag-curriculum:search]", error);
       const local = searchLocalSafely(
         searchQuery,
         network,
@@ -502,7 +504,7 @@ async function handleCurriculumSearch(request: Request) {
           searchResult.corpusNotice = `${fallback.merged.length} leerplandoel${fallback.merged.length === 1 ? "" : "en"} uit andere netwerken.`;
         }
       } catch (error) {
-        console.error("[rag-curriculum:network-fallback]", error);
+        logSafeError("[rag-curriculum:network-fallback]", error);
       }
     }
 
@@ -526,7 +528,7 @@ async function handleCurriculumSearch(request: Request) {
           provider: pro.provider,
         });
       } catch (error) {
-        console.error("[rag-curriculum:pro]", error);
+        logSafeError("[rag-curriculum:pro]", error);
         return curriculumSearchResponse({
           merged: searchResult.merged.slice(0, CURRICULUM_TOP_N),
           corpusNotice:
@@ -547,7 +549,7 @@ async function handleCurriculumSearch(request: Request) {
       searchMode,
     });
   } catch (error) {
-    console.error("[rag-curriculum]", error);
+    logSafeError("[rag-curriculum]", error);
     return interruptedSearchResponse(error);
   }
 }

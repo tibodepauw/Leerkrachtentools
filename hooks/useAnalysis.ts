@@ -1,4 +1,6 @@
 "use client";
+import { captureAnalytics, ANALYTICS_MODULES } from "@/lib/analytics/consent";
+import { logSafeError } from "@/lib/security/safeLog";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatClientRequestError } from "@/lib/http/clientError";
@@ -34,6 +36,10 @@ export function useAnalysis<T>(scopeKey?: string) {
   );
 
   async function analyze(url: string, body: Record<string, unknown>) {
+    const names: Record<string,string> = { "extract-manual": "manual-scanner", "analyze-goals": "goal-optimizer", "classify-goal-taxonomy": "goal-taxonomy", "rag-curriculum": "curriculum-rag", "rag-minimum-goals": "minimum-goals", "format-dialogue": "dialogue-formatter", "spellcheck": "spellcheck", "audit-timing": "timing-check", "audit-alignment": "alignment", "audit-engagement": "engagement", "full-audit": "full-audit", "transcribe-reflection": "voice-reflection" };
+    const feature = names[url.slice(5)] ?? "";
+    const measure = (event: string) => { if (ANALYTICS_MODULES.has(feature)) captureAnalytics(event, feature); };
+    measure("feature_started");
     const session = captureStorageSession();
     activeRequest.current?.abort();
     const controller = new AbortController();
@@ -57,9 +63,7 @@ export function useAnalysis<T>(scopeKey?: string) {
           | AnalysisResponse<T>
           | { error?: string; corpusNotice?: string };
       } catch (parseError) {
-        console.error(`[${url}] ongeldig antwoord`, parseError, {
-          status: response.status,
-        });
+        logSafeError("analysis-invalid-json", parseError);
         throw new Error("De server gaf een ongeldig antwoord. Probeer het opnieuw.");
       }
       if (!session.isCurrent() || controller.signal.aborted || requestId !== requestIdRef.current) {
@@ -78,6 +82,7 @@ export function useAnalysis<T>(scopeKey?: string) {
               : "De analyse is mislukt.",
         );
       }
+      measure("feature_completed");
       setLatestResult(payload);
       if (cacheKey) {
         setResultCache((cache) => ({ ...cache, [cacheKey]: payload }));
@@ -87,6 +92,7 @@ export function useAnalysis<T>(scopeKey?: string) {
       if (!session.isCurrent() || controller.signal.aborted || requestId !== requestIdRef.current) {
         return null;
       }
+      measure("feature_failed");
       setError(formatClientRequestError(caught));
       return null;
     } finally {
