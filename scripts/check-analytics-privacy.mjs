@@ -13,7 +13,7 @@ try {
     window.analyticsProbe=analytics;
     createRoot(document.getElementById('root')).render(React.createElement(PostHogProvider, null, React.createElement('button', {id:'lesson',onClick:()=>{document.getElementById('lesson').textContent='Lesson works';analytics.captureAnalytics('feature_completed','spellcheck');}}, 'Synthetic lesson')));`, resolveDir: process.cwd() },
    bundle: true,write:false,platform:"browser",format:"iife",tsconfig:"tsconfig.json",
-   define: { "process.env.NODE_ENV":'"production"', "process.env.NEXT_PUBLIC_POSTHOG_KEY":'"phc_synthetic"', "process.env.NEXT_PUBLIC_POSTHOG_HOST":'"https://eu.i.posthog.com"', "process.env.NEXT_PUBLIC_ANALYTICS_ENABLED":'"true"', "process.env.NEXT_PUBLIC_POSTHOG_CONFIGURATION_CONFIRMED":JSON.stringify(String(configured)), "process.env.NEXT_PUBLIC_POSTHOG_REGION":'"EU"', "process.env.NEXT_PUBLIC_POSTHOG_RETENTION_DAYS":'"30"' },
+   define: { "process.env.NODE_ENV":'"production"', "process.env.NEXT_PUBLIC_POSTHOG_KEY":'"phc_synthetic"', "process.env.NEXT_PUBLIC_POSTHOG_HOST":'"https://eu.i.posthog.com"', "process.env.NEXT_PUBLIC_ANALYTICS_ENABLED":'"true"', "process.env.NEXT_PUBLIC_POSTHOG_CONFIGURATION_CONFIRMED":JSON.stringify(String(configured)), "process.env.NEXT_PUBLIC_POSTHOG_REGION":'"EU"', "process.env.NEXT_PUBLIC_POSTHOG_RETENTION_MONTHS":'"12"', "process.env.NEXT_PUBLIC_POSTHOG_RETENTION_ENFORCED":'"true"' },
    plugins:[{name:"synthetic-route",setup(b){b.onResolve({filter:/^next\/navigation$/},()=>({path:"route",namespace:"probe"}));b.onLoad({filter:/.*/,namespace:"probe"},()=>({contents:'export function usePathname(){return "/settings";}'}));}}],
   });
   const context=await browser.newContext({serviceWorkers:"block"}); const requests=[],errors=[];

@@ -5,7 +5,7 @@ function setup(confirmed = true) {
   vi.stubGlobal("window", { localStorage: { getItem: (k:string)=>values.get(k) ?? null, setItem: (k:string,v:string)=>values.set(k,v), removeItem:(k:string)=>values.delete(k) }, dispatchEvent: vi.fn() });
   vi.stubEnv("NEXT_PUBLIC_ANALYTICS_ENABLED", "true"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_CONFIGURATION_CONFIRMED", String(confirmed));
   vi.stubEnv("NEXT_PUBLIC_POSTHOG_KEY", "synthetic-public-token"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_HOST", "https://eu.i.posthog.com");
-  vi.stubEnv("NEXT_PUBLIC_POSTHOG_REGION", "EU"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_RETENTION_DAYS", "30");
+  vi.stubEnv("NEXT_PUBLIC_POSTHOG_REGION", "EU"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_RETENTION_MONTHS", "12"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_RETENTION_ENFORCED", "true");
   setAnalyticsChoice("unknown");
   return values;
 }
@@ -15,7 +15,8 @@ describe("explicit analytics consent boundary",()=>{
     setup(false); const fetch=vi.fn(); vi.stubGlobal("fetch",fetch);
     captureAnalytics("$pageview","/"); setAnalyticsChoice("accepted"); captureAnalytics("$pageview","/");
     expect(fetch).not.toHaveBeenCalled(); expect(analyticsConfiguration().ready).toBe(false);
-    vi.stubEnv("NEXT_PUBLIC_POSTHOG_CONFIGURATION_CONFIRMED","true"); setAnalyticsChoice("rejected"); captureAnalytics("$pageview","/"); expect(fetch).not.toHaveBeenCalled();
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_CONFIGURATION_CONFIRMED","true"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_RETENTION_ENFORCED","false"); captureAnalytics("$pageview","/"); expect(analyticsConfiguration().ready).toBe(false); expect(fetch).not.toHaveBeenCalled();
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_RETENTION_ENFORCED","true"); setAnalyticsChoice("rejected"); captureAnalytics("$pageview","/"); expect(fetch).not.toHaveBeenCalled();
   });
   it("aborts outstanding transport on withdrawal without retrying or persisting identity",async()=>{
     const storage=setup(); const fetch=vi.fn(()=>new Promise<Response>(()=>{})); vi.stubGlobal("fetch",fetch);
@@ -33,7 +34,7 @@ describe("explicit analytics consent boundary",()=>{
       storage.set(ANALYTICS_CHOICE_KEY,JSON.stringify({...original,...extra})); expect(readAnalyticsChoice()).toBe("unknown");
     }
     storage.set(ANALYTICS_CHOICE_KEY,"bad json"); expect(readAnalyticsChoice()).toBe("unknown");
-    setAnalyticsChoice("accepted"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_RETENTION_DAYS","60"); expect(readAnalyticsChoice()).toBe("unknown");
+    setAnalyticsChoice("accepted"); vi.stubEnv("NEXT_PUBLIC_POSTHOG_RETENTION_MONTHS","60"); expect(readAnalyticsChoice()).toBe("unknown");
     vi.stubEnv("NEXT_PUBLIC_POSTHOG_HOST","https://unapproved.example"); expect(analyticsConfiguration().ready).toBe(false);
   });
   it("only allows fixed events and route/module values, never free text or URLs",()=>{
