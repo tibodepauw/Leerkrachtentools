@@ -1,6 +1,6 @@
 # Eerste installatie op DigitalOcean (nog niet live)
 
-Status 18 september 2026: er staat volgens de eigenaar nog niets live. De repositoryaudit en aanvullende fixes staan in [het auditrapport](security-audit-2026-09-18.md). De volledige Linux-CI, inclusief parserisolatie, browsers en koude apphersteltest, is [geslaagd](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35373352643). Review/merge en acceptatie op de echte staging-VM blijven nodig. Geen deployment is uitgevoerd.
+Status 19 september 2026: de codefixes zijn gemerged en gepubliceerd als [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). De volledige [Linux-CI van de releasecommit](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35430856048), inclusief parserisolatie, browsers en koude apphersteltest, is geslaagd. Er is nog geen productieomgeving gedeployed. Acceptatie op de echte VM, met echte corpora en providerconfiguratie, blijft nodig. Zie de [documentatie-index](README.md) voor actuele uitleg en auditgeschiedenis.
 
 ## Nieuwe installatie
 

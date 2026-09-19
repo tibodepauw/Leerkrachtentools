@@ -1,5 +1,7 @@
 # Voorbereidingsreview — 17 september 2026
 
+> Statusupdate 19 september 2026: de opeenvolgende herstelrondes zijn gemerged en opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Onderstaande resultaten, branchstatus en vervolgpunten zijn een historische momentopname, geen actuele openstaande-takenlijst. Zie de [documentatie-index](README.md) en [installatiehandleiding](digitalocean-first-deployment.md) voor de huidige baseline en resterende productieacceptatie.
+
 Branch: `codex/production-preparation`, gebaseerd op GitHub-main na merge van PR #2 (`1f9b0df`). De gebruiker heeft die merge zelf uitgevoerd. Er staat nog niets live; er is geen deployment, productiebackfill of uitgebreide nieuwe securityaudit uitgevoerd.
 
 ## PR #2

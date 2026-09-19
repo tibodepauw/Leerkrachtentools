@@ -1,5 +1,7 @@
 # v5.20 follow-up tickets
 
+> Statusupdate 19 september 2026: de opeenvolgende herstelrondes zijn gemerged en opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Onderstaande resultaten, branchstatus en vervolgpunten zijn een historische momentopname, geen actuele openstaande-takenlijst. Zie de [documentatie-index](README.md) en [installatiehandleiding](digitalocean-first-deployment.md) voor de huidige baseline en resterende productieacceptatie.
+
 Update 18 september, tweede herstelronde: procesisolatie voor document/beeldverwerking, harde stop voor de drie productie-B2B-routes en echte organisatie-AI-dagbudgetten zijn toegevoegd op `codex/security-audit`. De volledige Linux-CI inclusief kernelisolatie, browsers en koude hersteltest slaagt. Zie [actueel auditrapport](security-audit-2026-09-18.md). Eerdere openstaande-codebeschrijvingen hieronder zijn historisch; review/merge en acceptatie op de toekomstige VM blijven apart.
 
 Opvolging 17 september 2026: zie `docs/hardening-h01-h06.md` voor de nieuw uitgewerkte voorbereiding. De historische V20-08-beschrijving hieronder is deels ingehaald: route-, Pro- en Cloudflare-cancellation en actieve lease-heartbeats zijn toegevoegd. Een geïsoleerde harde stop voor willekeurige B2B-handlercode blijft open. Er is nog niets live; de uitgebreide nieuwe securityaudit wacht op het startsignaal van de eigenaar.

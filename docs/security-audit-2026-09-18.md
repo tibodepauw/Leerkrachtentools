@@ -1,5 +1,7 @@
 # Securityaudit vóór de eerste productie-installatie
 
+> Statusupdate 19 september 2026: de opeenvolgende herstelrondes zijn gemerged en opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Onderstaande resultaten, branchstatus en vervolgpunten zijn een historische momentopname, geen actuele openstaande-takenlijst. Zie de [documentatie-index](README.md) en [installatiehandleiding](digitalocean-first-deployment.md) voor de huidige baseline en resterende productieacceptatie.
+
 Datum: 18 september 2026. Baseline: `main` op `3a23381158ec724b580fbf9d703f0da571fec51f`, inclusief PR #3. Herstelbranch: `codex/security-audit`. Er is geen deployment uitgevoerd. Alle actieve proeven gebruikten synthetische gegevens op Windows en de Linux-CI-runner; er zijn geen echte e-mails verstuurd of AI-providerverzoeken gedaan.
 
 ## Oordeel

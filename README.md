@@ -9,7 +9,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-v5.21.0--rc.1-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
-[![Coverage](https://img.shields.io/badge/flemish__goals-37.5k%2B-orange)](https://github.com/tibodepauw/Leerkrachtentools)
 
 # Leerkrachtentools
 
@@ -29,7 +28,7 @@ Each module is isolated enough to evaluate on its own, yet connected through sha
 
 ### Active lesson (shared context)
 
-Every module reads from the same persisted lesson state:
+Every module reads from the same account-scoped lesson state. Personal-device mode persists it in the browser; shared-computer mode keeps it in tab memory only:
 
 - Topic, learning area, component, materials
 - Structured **target group** (kindergarten through 6th grade, or custom grade class) with optional age range
@@ -55,7 +54,7 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 |--------|----------------|
 | **Doelverbeteraar** | Rewrites a selected lesson goal using institute rules for well-formulated goals. Shows rationale and term changes. Requires AI. |
 | **MC-DAS-SPM herkenner** | Classifies a goal as mental-cognitive (MC), dynamic-affective (DAS), or sensomotor/psychomotor (SPM) without rewriting it. Requires AI. |
-| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora and Discovery Engine (Op.stap, ZILL, OVSG, GO! / Oud leerplan, GO! / Nieuw leerplan, secundair, POV). **Snel** returns the ranked catalog; **Pro** grounds 2-3 goals with a didactic note. Filters by education network and level: basisonderwijs, secundair, and full **AHOVOKS** coverage (OKAN, buitengewoon basisonderwijs/BuBaO, buitengewoon secundair/BuSO, deeltijds kunstonderwijs/DKO, volwassenenonderwijs, hoger onderwijs). Typo-tolerant matching, lazy corpus loading per level, optional semantic fallback, and target-group ranking. |
+| **Leerplandoelen** | Searches official Flemish curriculum goals from local corpora and Discovery Engine (Op.stap, ZILL, OVSG, GO! / Oud leerplan, GO! / Nieuw leerplan, secundair, POV). **Snel** returns the ranked catalog; **Pro** grounds 2-3 goals with a didactic note. Filters by education network and level: basisonderwijs, secundair, and support for **AHOVOKS** domains (OKAN, buitengewoon basisonderwijs/BuBaO, buitengewoon secundair/BuSO, deeltijds kunstonderwijs/DKO, volwassenenonderwijs, hoger onderwijs). Typo-tolerant matching, lazy corpus loading per level, optional semantic fallback, and target-group ranking. |
 | **Minimumdoelen** | Matches official minimum goals across basisonderwijs, secundair, and the same **AHOVOKS** domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger). Same **Snel** / **Pro** toggle as Leerplandoelen. Education-level filter with domain-specific options (NT2, BuBaO-types, BuSO OV1-3, DKO-graad), numeric range awareness, and ranking that keeps rare terms such as spelling and tools. Repeated exact hits are served from a client-side session cache; empty results are not cached. |
 
 **Snel** is catalog retrieval from indexed JSONL (optional Discovery Engine). **Pro** uses that retrieval, then a grounded LLM pick with lesson-phase notes. Opt-in LLM query rewriting in Settings is separate and off by default.
@@ -85,21 +84,21 @@ Changes in one module (e.g. manual scanner, goal optimizer) propagate everywhere
 ### Account and settings
 
 - Passwordless email login (one-time code). Deleting an account invalidates pending login codes for that e-mail
-- Invite-only account tiers (student, tester, partner, admin) with per-tier module access
+- Account tiers (student, tester, partner, admin) with per-tier module access. Thomas More addresses are admitted as students; other accounts require an environment allowlist
 - Daily server-side AI usage limits per tier (bypassed when you use your own API key). The budget is bound to an HMAC of the normalized e-mail for the rest of the 24h window, so delete and recreate does not reset it
 - Profile name and photo; account ID and **Niveau** shown in Settings
 - **Bring your own API key**: choose provider and model in Settings; the model list loads automatically and hides embedding or audio models. When enabled, only your key is used. Decrypt failure does not fall back to server Google keys
 - **Opt-in LLM query rewriting** for RAG searches (Settings; default off). Rewrite uses the same BYOK/provider policy as other AI calls
-- Per-account browser storage for active lesson data and document previews
+- Per-account browser storage for active lesson data and document previews, or temporary tab memory in shared-computer mode
 - Marketing email preference (opt-in, off by default). Marketing consent is not an analytics choice
-- Optional PostHog EU Cloud analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture and session replay stay disabled. Identity resets on logout and account switch
+- Optional PostHog EU Cloud analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture, session replay and persistent SDK storage stay disabled. Identity resets on logout and account switch
 - In-app feedback form (idea, feedback, bug)
 - App version, legal colophon (AHOVOKS modellicentie, koepel citation art. XI.189 WER, non-affiliation, EU AI Act art. 50) and build info with link to GitHub releases
 - Install as a PWA from Settings (standalone app on phone, tablet, or computer)
 
 ## Curriculum data
 
-Local search indexes official goal corpora:
+Local search supports the following official goal sources. Full corpora are supplied separately and are not included in a checkout; listed domains do not prove completeness or availability in a deployment:
 
 | Network | Source |
 | ------- | ------ |
@@ -109,7 +108,7 @@ Local search indexes official goal corpora:
 | GO! / Oud leerplan | GO! basisonderwijs vakleerplannen (9 vakboeken, via Discovery Engine) |
 | GO! / Nieuw leerplan | GO! basisonderwijs 12 doelensets (lokaal corpus) |
 | Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen (lokaal) |
-| AHOVOKS-domeinen | Volledige doelencorpus via onderwijsdoelen.be (~24.000 doelen, lokaal): OKAN (onthaal), buitengewoon basisonderwijs (BuBaO), buitengewoon secundair (BuSO), deeltijds kunstonderwijs (DKO), volwassenenonderwijs, hoger onderwijs (lerarenopleiding) |
+| AHOVOKS-domeinen | Corpusbestanden via onderwijsdoelen.be voor OKAN, BuBaO, BuSO, DKO, volwassenenonderwijs en hoger onderwijs; volledigheid en actualiteit na aanlevering controleren |
 | Vlaamse overheid | Officiële secundaire minimumdoelen (lokaal, via scripts) |
 
 Leerplandoelen doorzoekt koepelnetwerken (Op.stap, ZILL, KOV, …); minimumdoelen en AHOVOKS-domeinen (buitengewoon, kunst, OKAN, …) lopen via dezelfde onderwijsniveau-filter in de UI.
@@ -149,11 +148,13 @@ Corpus files live under `data/` and are gitignored by default. Never commit scra
 
 ## Quick start
 
+Use Node.js 22.12+ or 24. The commands below use a POSIX shell; in PowerShell use `Copy-Item .env.example .env.local` for the copy step.
+
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
-# Edit .env.local: add at least one AI provider key and auth/email settings
-npm run dev -- --hostname 0.0.0.0 --port 43127
+# Apply the local configuration below before starting
+npm run dev -- --hostname 127.0.0.1 --port 43127
 ```
 
 Open `http://127.0.0.1:43127`.
@@ -162,6 +163,7 @@ Open `http://127.0.0.1:43127`.
 
 ```bash
 # At least one AI provider (examples)
+GOOGLE_GENERATIVE_AI_API_KEY=
 GROQ_API_KEY=
 CEREBRAS_API_KEY=
 SAMBANOVA_API_KEY=
@@ -174,6 +176,10 @@ BREVO_FROM_EMAIL=Leerkrachtentools <login@yourdomain.be>
 AUTH_SECRET=use-a-long-random-string-at-least-32-characters
 API_KEY_ENCRYPTION_SECRET=use-a-different-long-random-string
 APP_ORIGIN=http://127.0.0.1:43127
+# Leave empty for local development without the Linux document service
+DOCUMENT_WORKER_SOCKET=
+# Add your own address if it is not admitted via a Thomas More domain
+TESTER_EMAILS=you@example.be
 
 # Optional
 DATABASE_PATH=./data/leerkrachtentools.db
@@ -186,6 +192,8 @@ Local development without Brevo is deliberately opt-in. Set
 `ALLOW_DEV_LOGIN_CODE=true` and open the app via localhost or `127.0.0.1`.
 Never enable this option in previews or production. Production builds ignore
 the flag even if it is set.
+
+Generate independent random secrets, for example by running `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` twice. Override the production `APP_ORIGIN` and parser socket from `.env.example` with the local values above. Leave analytics disabled unless you deliberately configure it. AI modules need a configured provider or a user-supplied key; opening the UI does not require paid AI calls.
 
 ### Module visibility (server `.env.local`)
 
@@ -211,7 +219,7 @@ Module ids: `active-lesson`, `manual-scanner`, `goal-optimizer`, `goal-taxonomy`
 Publishers can call a key-authenticated API for minimumdoelen matching, leerplandoelen matching, and the Doelverbeteraar. Session cookies are not used. Send `Authorization: Bearer lt_live_...`.
 
 ```bash
-npx tsx scripts/manage-api-keys.ts create --org "Uitgeverij die Keure" --email "redactie@diekeure.be" --tier enterprise --quota 50000 --scopes "curriculum:match,curriculum:audit,goals:improve"
+npm run manage-api-keys -- create --org "Voorbeelduitgever" --email "beheer@example.be" --tier enterprise --quota 50000 --scopes "curriculum:match,curriculum:audit,goals:improve"
 ```
 
 The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Revoke with `--key-id` and inspect monthly quota with `--org-id`.
@@ -222,7 +230,7 @@ The plaintext key is shown once and stored only as a SHA-256 hash in SQLite. Rev
 | `POST /api/v1/curriculum/audit` | `curriculum:audit` | Coverage of `target_goals` against `lesson_units` |
 | `POST /api/v1/goals/improve` | `goals:improve` | Same lesson-goal rules as Doelverbeteraar |
 
-Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` (max 128 characters) so the same authorized key, endpoint and body retry without a second consume. A different endpoint or body with that header on the **same** key gets 409, not a replay. A different allowed key has its own namespace and can start new work with the same header value. Org concurrency counts every active lease of the organization, including work booked in the previous UTC month. A stream timeout keeps the lease until the body is read in the tested path. Lease expiry still does not stop in-flight handler or provider work. The three production B2B routes now run in separate processes: deadlines, disconnects and lost leases kill the process before its execution slot is released. Provider work already accepted remotely may still be billed. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
+Monthly quota is a shared organization ledger, not a per-key count of usage logs. Two keys of the same organization share the budget. Burst, org concurrency and a global in-flight cap sit on that ledger. Validation errors (400) do not consume; work that started stays consumed if logging fails. Send `Idempotency-Key` (max 128 characters) so the same authorized key, endpoint and body retry without a second consume. A different endpoint or body with that header on the **same** key gets 409, not a replay. A different allowed key has its own namespace and can start new work with the same header value. Org concurrency counts every active lease of the organization, including work booked in the previous UTC month. The three production B2B routes now run in separate processes: deadlines, disconnects and lost leases kill the process before its execution slot is released. Provider work already accepted remotely may still be billed. Pro matching uses an organization AI budget, not a synthetic user id. Responses include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`. Cookie CSRF for `/api/account` and other browser routes stays unchanged.
 
 ## Quality checks
 
@@ -235,7 +243,7 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-The extended audit suite contains 611 tests across 133 test files (one additional corpus-dependent
+At the v5.21.0-rc.1 release commit, the extended audit suite passed 611 tests across 133 test files (one additional corpus-dependent
 test skipped; no remaining TODO cases). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
@@ -247,7 +255,7 @@ for findings, fixes, browser regression commands, and the limits of this validat
 
 ## Production deployment
 
-For the first DigitalOcean VM installation, follow [the first-deployment guide](docs/digitalocean-first-deployment.md). It includes nginx/systemd templates, a consistent SQLite backup helper, and the remaining staging checks. No production deployment has been performed. Current follow-up status: [H-01–H-06](docs/hardening-h01-h06.md).
+For the first DigitalOcean VM installation, follow [the first-deployment guide](docs/digitalocean-first-deployment.md). It includes nginx/systemd templates, a consistent SQLite backup helper, and the remaining staging checks. No production deployment has been performed. See the [documentation index](docs/README.md) for the current baseline and historical audit evidence.
 
 The login screen offers shared-computer mode: lessons and previews stay in tab memory and are lost on reload/close; previous local data for that account is removed on activation. Export work before closing. Session changes are broadcast to other tabs and rechecked on focus.
 
@@ -257,14 +265,14 @@ Next.js standalone output:
 
 ```bash
 npm run build
-PORT=3000 HOSTNAME=0.0.0.0 node .next/standalone/server.js
+PORT=3000 HOSTNAME=127.0.0.1 node .next/standalone/server.js
 ```
 
-`npm run build` copies `public` and `.next/static` into `.next/standalone`. You do not need to copy those trees by hand.
+`npm run build` copies `public` and `.next/static` into `.next/standalone`. You do not need to copy those trees by hand. The start command assumes the required production environment is already loaded and the document service is running; it does not replace the systemd installation in the deployment guide.
 
-Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs. External Groq, Cerebras, Discovery Engine and fetch calls abort after 12 seconds.
+Production builds include standard security headers (`X-Frame-Options`, `X-Content-Type-Options`, CSP, and related policies). RAG corpora load on demand per education level to keep memory use low on small VMs. AI provider attempts have a 12-second deadline; Discovery search uses a shorter 6-second search deadline. Remote work already accepted may still be billed after cancellation.
 
-Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, hashed B2B organisation keys, a shared organization quota ledger, idempotency keys, HMAC-bound daily AI budget rows, usage logs, security events, and consent flags. **Lesson preparation content stays in the browser** (persisted lesson store and IndexedDB document preview), not in the database. ZIP import and export count actual inflated bytes and stop before the entry limit. Quota-ledger backfill after v5.20 is manual: see `docs/production-cutover-v20.md` (backup, then `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, then a controlled start). Mixed months without a known v5.20 start are refused until `QUOTA_LEDGER_EPOCH_MS` or an explicit `QUOTA_LEDGER_RECONCILE` is set. Live AI-budgetrijen zonder `source_event_id` die alleen op timestamp met oude events overlappen, worden geweigerd tot `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP`. The app does not apply that backfill on boot.
+Keep `data/` persistent and back up `data/leerkrachtentools.db`. The SQLite database stores verified emails, hashed login codes, hashed sessions, encrypted user API key metadata, hashed B2B organisation keys, a shared organization quota ledger, idempotency keys, HMAC-bound daily AI budget rows, usage logs, security events, and consent flags. **Interactive lesson state is stored in the browser**, using persistent account storage or temporary shared-device memory. Import/export still processes documents on the server; AI actions send selected input to providers. B2B replay responses can contain goal text and are stored separately in SQLite (see Privacy below). ZIP import and export count actual inflated bytes and stop before the entry limit. Quota-ledger backfill after v5.20 is manual: see `docs/production-cutover-v20.md` (backup, then `QUOTA_LEDGER_BACKUP_CONFIRMED=1 npm run migrate:quota-ledgers`, then a controlled start). Mixed months without a known v5.20 start are refused until `QUOTA_LEDGER_EPOCH_MS` or an explicit `QUOTA_LEDGER_RECONCILE` is set. Live AI-budgetrijen zonder `source_event_id` die alleen op timestamp met oude events overlappen, worden geweigerd tot `QUOTA_LEDGER_AI_NULL_SOURCE_OVERLAP`. The app does not apply that backfill on boot.
 
 Before exposing the service publicly:
 
@@ -298,8 +306,9 @@ Before exposing the service publicly:
 
 - Privacy policy consent is required at login
 - Marketing consent is off by default and is not an analytics choice
-- Optional PostHog EU Cloud product analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture and session replay are disabled in code
-- AI modules only receive text you explicitly submit for that action
+- Optional PostHog EU Cloud product analytics when `NEXT_PUBLIC_POSTHOG_KEY` is set. Only sanitized static page views are sent; automatic capture, session replay and persistent SDK storage are disabled in code
+- AI modules receive the submitted text and relevant lesson context; manual scanning and voice reflection can also send the selected PDF, image or audio to the provider. Document import/export is processed on the app server without an AI call
+- Browser lesson storage is not a claim that nothing is stored server-side: accounts, encrypted credentials, quotas and API telemetry live in SQLite; avatars are files. B2B idempotency can store response content (including generated lesson-goal text) for replay. Its 24-hour expiry is cleaned up during API activity, not by a guaranteed wall-clock deletion job; backups need their own retention policy
 - Settings and the login screen include a legal colophon: AHOVOKS modellicentie, koepel citation (art. XI.189 WER), non-affiliation, and EU AI Act art. 50 transparency
 - Read [Privacybeleid](https://www.generativelabs.be/privacy.html) on generativelabs.be for processor details
 
@@ -308,6 +317,9 @@ Before exposing the service publicly:
 | File | Description |
 |------|-------------|
 | [CHANGELOG.md](./CHANGELOG.md) | Version history |
+| [docs/README.md](./docs/README.md) | Current documentation, audit history and remaining acceptance work |
+| [docs/releases/v5.21.0-rc.1.md](./docs/releases/v5.21.0-rc.1.md) | Current pre-release and validation evidence |
+| [docs/digitalocean-first-deployment.md](./docs/digitalocean-first-deployment.md) | First VM installation and production acceptance |
 | [docs/AI-en-RAG-overzicht.md](./docs/AI-en-RAG-overzicht.md) | Architecture notes (Dutch) |
 | [docs/curriculum-bronnen-urls.md](./docs/curriculum-bronnen-urls.md) | Official curriculum URLs |
 | [docs/onderwijsdoelen-volledig-overzicht.md](./docs/onderwijsdoelen-volledig-overzicht.md) | AHOVOKS domain coverage (OKAN-HO) |

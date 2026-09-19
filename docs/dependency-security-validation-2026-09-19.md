@@ -1,5 +1,7 @@
 # Dependency- en privacyvalidatie — 19 september 2026
 
+> Statusupdate 19 september 2026: de opeenvolgende herstelrondes zijn gemerged en opgenomen in [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). Onderstaande resultaten, branchstatus en vervolgpunten zijn een historische momentopname, geen actuele openstaande-takenlijst. Zie de [documentatie-index](README.md) en [installatiehandleiding](digitalocean-first-deployment.md) voor de huidige baseline en resterende productieacceptatie.
+
 ## Scope en basis
 
 Deze ronde bouwt voort op `main` commit `be23d58` (na PR #5).

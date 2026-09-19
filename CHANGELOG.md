@@ -6,6 +6,10 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Documentation
+
+- README, lokale startconfiguratie, beveiligingsbaseline en AI/RAG-architectuur afgestemd op v5.21.0-rc.1. Serververwerking, B2B-replayopslag en ontbrekende volledige corpora expliciet beschreven. Documentatie-index toegevoegd; historische audits onderscheiden van actuele installatie-instructies.
+
 ## [5.21.0-rc.1] - 2026-09-19
 
 Pre-release voor gecontroleerde staging- en VM-acceptatie. Deze release bundelt
