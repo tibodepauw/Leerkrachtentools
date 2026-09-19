@@ -11,8 +11,8 @@ describe("legacy B2B replay after cap upgrade",()=>{
   const work=vi.fn(async()=>NextResponse.json({results:[{code:"one"}]}));const handler=withApiAuth(work,{requiredScope:"curriculum:match",bodySchema:curriculumMatchBodySchema});
   const request=(limit:number)=>new Request("http://localhost/api/v1/curriculum/match",{method:"POST",headers:{authorization:`Bearer ${key.token}`,"content-type":"application/json","idempotency-key":"legacy-one","x-request-id":"PRIVATE_PROMPT_OR_KEY"},body:JSON.stringify({query:"synthetisch doel",limit})});
   expect((await handler(request(5))).status).toBe(200);
-  getDatabase().prepare("UPDATE api_idempotency_keys SET response_body=? WHERE org_id=?").run(JSON.stringify({results:Array.from({length:10},(_,i)=>({code:String(i)}))}),org.id);
-  const replay=await handler(request(5));expect(replay.status).toBe(200);const replayed=await replay.json();expect(replayed.results).toHaveLength(5);expect(replayed.sourceMetadata.status).toBe("ONBEKEND");expect(work).toHaveBeenCalledOnce();
+  getDatabase().prepare("UPDATE api_idempotency_keys SET response_body=? WHERE org_id=?").run(JSON.stringify({count:10,results:Array.from({length:10},(_,i)=>({code:String(i)}))}),org.id);
+  const replay=await handler(request(5));expect(replay.status).toBe(200);const replayed=await replay.json();expect(replayed.results).toHaveLength(5);expect(replayed.count).toBe(5);expect(replayed.sourceMetadata.status).toBe("ONBEKEND");expect(work).toHaveBeenCalledOnce();
   expect((await handler(request(10))).status).toBe(400);expect(work).toHaveBeenCalledOnce();expect(getOrgQuotaSnapshot(org.id).consumed).toBe(1);
   expect(JSON.stringify(getDatabase().prepare("SELECT request_id FROM api_usage_logs").all())).not.toContain("PRIVATE_PROMPT_OR_KEY");
  });

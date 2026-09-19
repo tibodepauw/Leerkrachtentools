@@ -6,15 +6,20 @@ export function limitGoalMatches<T>(payload: T, limit = MAX_PUBLIC_GOAL_MATCHES)
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return payload;
   const count = Number.isInteger(limit) ? Math.max(1, Math.min(limit, MAX_PUBLIC_GOAL_MATCHES)) : MAX_PUBLIC_GOAL_MATCHES;
   const value = { ...payload } as Record<string, unknown>;
-  if (Array.isArray(value.results)) value.results = value.results.slice(0, count);
+  if (Array.isArray(value.results)) {
+    value.results = value.results.slice(0, count);
+    if (typeof value.count === "number") value.count = (value.results as unknown[]).length;
+  }
   if (Array.isArray(value.alternatives)) value.alternatives = value.alternatives.slice(0, count - 1);
   if (value.data && typeof value.data === "object") value.data = limitGoalMatches(value.data, count);
   return value as T;
 }
 
 export function limitCachedMatchResponse(body: string, limit = MAX_PUBLIC_GOAL_MATCHES) {
-  try { const bounded = limitGoalMatches(JSON.parse(body), limit);
+  try { const original = JSON.parse(body);
+    const bounded = limitGoalMatches(original, limit);
     if (bounded && typeof bounded === "object" && !Array.isArray(bounded) && Array.isArray(bounded.results)) bounded.sourceMetadata ??= UNKNOWN_SOURCE_METADATA;
-    return JSON.stringify(bounded); }
+    const serialized = JSON.stringify(bounded);
+    return serialized === JSON.stringify(original) ? body : serialized; }
   catch { return JSON.stringify({ error: "Het opgeslagen antwoord is niet beschikbaar." }); }
 }
