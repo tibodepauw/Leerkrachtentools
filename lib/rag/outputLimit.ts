@@ -1,5 +1,6 @@
 /** Public result cap, independent of the larger internal retrieval candidate pool. */
 export const MAX_PUBLIC_GOAL_MATCHES = 5;
+export const UNKNOWN_SOURCE_METADATA = { version: null, status: "ONBEKEND" as const, notice: "De geladen bronversie en gebruiksrechten zijn niet geverifieerd. Er worden geen bronlinks of versies afgeleid. Maximaal vijf resultaten vormt geen auteursrechtelijke vrijstelling." };
 
 export function limitGoalMatches<T>(payload: T, limit = MAX_PUBLIC_GOAL_MATCHES): T {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return payload;
@@ -12,6 +13,8 @@ export function limitGoalMatches<T>(payload: T, limit = MAX_PUBLIC_GOAL_MATCHES)
 }
 
 export function limitCachedMatchResponse(body: string, limit = MAX_PUBLIC_GOAL_MATCHES) {
-  try { return JSON.stringify(limitGoalMatches(JSON.parse(body), limit)); }
+  try { const bounded = limitGoalMatches(JSON.parse(body), limit);
+    if (bounded && typeof bounded === "object" && !Array.isArray(bounded)) bounded.sourceMetadata ??= UNKNOWN_SOURCE_METADATA;
+    return JSON.stringify(bounded); }
   catch { return JSON.stringify({ error: "Het opgeslagen antwoord is niet beschikbaar." }); }
 }

@@ -1,3 +1,4 @@
+import { UNKNOWN_SOURCE_METADATA } from "@/lib/rag/outputLimit";
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
 import { collectMinimumGoalCandidates } from "@/lib/rag/minimumGoalCandidates";
 import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
@@ -163,7 +164,7 @@ export async function matchCurriculumGoals({
 
   return {
     results,
-    sourceMetadata: { version: null, status: "ONBEKEND", notice: "De geladen bronversie en gebruiksrechten zijn niet geverifieerd. Er worden geen bronlinks of versies afgeleid. Maximaal vijf resultaten vormt geen auteursrechtelijke vrijstelling." },
+    sourceMetadata: UNKNOWN_SOURCE_METADATA,
     requestedMode: mode,
     executedMode,
     proFallback: mode === "pro" ? proFallback : false,
