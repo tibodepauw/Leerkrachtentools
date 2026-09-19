@@ -241,7 +241,7 @@ export async function POST(request: Request) {
       }
     }
 
-    ranked = ranked.map(sanitizeMinimumGoalForResponse);
+    ranked = ranked.slice(0, 5).map(sanitizeMinimumGoalForResponse);
     const goal = ranked[0] ?? null;
     const alternatives = ranked.slice(1);
 

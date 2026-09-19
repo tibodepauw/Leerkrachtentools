@@ -1,0 +1,8 @@
+[Unit]
+Description=Daily expired-data cleanup for Leerkrachtentools
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30m
+[Install]
+WantedBy=timers.target

@@ -1,3 +1,4 @@
+import { UNKNOWN_SOURCE_METADATA } from "@/lib/rag/outputLimit";
 import { searchLocalCorpus } from "@/lib/rag/curriculumCorpus";
 import { collectMinimumGoalCandidates } from "@/lib/rag/minimumGoalCandidates";
 import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
@@ -80,6 +81,7 @@ export type CurriculumMatchPayload = {
   requestedMode: "snel" | "pro";
   executedMode: "snel" | "pro";
   proFallback: boolean;
+  sourceMetadata: { version: null; status: "ONBEKEND"; notice: string };
 };
 
 export async function matchCurriculumGoals({
@@ -162,6 +164,7 @@ export async function matchCurriculumGoals({
 
   return {
     results,
+    sourceMetadata: UNKNOWN_SOURCE_METADATA,
     requestedMode: mode,
     executedMode,
     proFallback: mode === "pro" ? proFallback : false,

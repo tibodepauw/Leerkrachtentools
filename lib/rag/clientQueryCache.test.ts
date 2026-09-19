@@ -70,6 +70,15 @@ describe("clientQueryCache", () => {
     expect(window.sessionStorage.length).toBe(0);
   });
 
+  it("bounds cached ten-result payloads and refuses pre-upgrade cache entries", () => {
+    const payload = { data: { goal: {code:"0"}, results: Array.from({length:10},(_,i)=>({code:String(i)})) }, provider:"test", fallbackErrors:[] };
+    writeRagQueryCache("rag-curriculum", "LAGER", "ALL", "old", payload);
+    expect(readRagQueryCache<{results:unknown[]}>("rag-curriculum", "LAGER", "ALL", "old")?.data.results).toHaveLength(5);
+    const key="leerkrachtentools-rag-query-cache:cache-user-A";
+    const raw=JSON.parse(window.sessionStorage.getItem(key)!);raw.version=4;
+    window.sessionStorage.setItem(key,JSON.stringify(raw));
+    expect(readRagQueryCache("rag-curriculum", "LAGER", "ALL", "old")).toBeNull();
+  });
   it("normaliseert queries voor exacte cache-sleutels", () => {
     expect(normalizeCachedQuery("  Optellen   Tot  Twintig  ")).toBe(
       "optellen tot twintig",

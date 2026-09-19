@@ -124,9 +124,9 @@ omgezet. Avatars worden hercodeerd naar begrensde WebP zonder metadata.
 | B2B-toegang en verbruik | Gehashte sleutels, organisatiequota, gebruiks- en beveiligingsmetadata in SQLite |
 | B2B-idempotency | Requestdigest en begrensd antwoord voor herhaling; dit kan ingezonden of gegenereerde doeltekst bevatten |
 | Curriculumcorpora | Afzonderlijke serverbestanden; zoektermen kunnen naar Discovery Engine |
-| Optionele analytics | Opgeschoonde vaste pageviews naar PostHog; geen permanente SDK-opslag, autocapture of replay |
+| Optionele analytics | Afzonderlijke toestemming; vaste pagina-/functie-events via PostHog Capture API, geen buffering, retries, SDK-identiteit, autocapture of replay |
 
-Idempotency-antwoorden verlopen na 24 uur; opruiming gebeurt tijdens API- en
+Idempotency-antwoorden verlopen na 24 uur; voltooide antwoorden worden opgeruimd tijdens API- en
 beveiligingsactiviteit. Dat garandeert geen verwijdering uit een ongebruikte
 database op het exacte vervalmoment. Backups hebben een eigen bewaarbeleid nodig.
 Zie [orgQuota.ts](../lib/api/orgQuota.ts).
@@ -137,10 +137,7 @@ een sessiemelding en controleren opnieuw bij terugkeer. Accountverwijdering wist
 de accountgebonden browseropslag in de huidige browser. Persoonlijke-apparaatmodus
 is bedoeld voor een vertrouwd browserprofiel; kies gedeelde modus op gedeelde apparaten.
 
-Zonder `NEXT_PUBLIC_POSTHOG_KEY` blijft analytics uit. De eventfilter verwijdert
-onder meer queryparameters, fragmenten, referrers, titels en onbekende velden.
-De ontvangende dienst kan nog netwerkmetadata ontvangen. Marketingtoestemming
-is geen analyticsinstelling. Zie [de analyticsvalidatie](dependency-security-validation-2026-09-19.md).
+Analytics blijft standaard uit. Activering vraagt de bevestigde projectregio, DPA en echte bewaartermijn plus expliciete toestemming via Privacy & cookies. Alleen toegestane vaste pagina- en functienamen gaan naar de Capture API; intrekken breekt lopende verzending af. Er zijn geen wachtrijen, retries, identify, autocapture of replay. De ontvangende dienst kan netwerkmetadata ontvangen. Marketingtoestemming is afzonderlijk. Zie [privacybeheer](privacy-operations.md); eerdere SDK-validatie beschrijft de vorige release.
 
 ## B2B en kostenbeperking
 
@@ -170,3 +167,5 @@ De pre-release heeft code-, Linux- en browsertests doorlopen. De echte VM,
 volledige corpora, provideraccounts, belasting, monitoring en offsite-herstel
 zijn nog niet geaccepteerd. Concrete vervolgstappen staan in de
 [release-notities](releases/v5.21.0-rc.1.md).
+
+Een dagelijkse opruimtimer en afgeschermde exports zijn voorbereid, niet geactiveerd. De actuele `/privacy`-pagina onderscheidt codebewaring van nog ONBEKENDE hosting-, backup- en providerfeiten. De Gemini API-koppeling is niet naar Vertex AI gemigreerd; optionele Discovery Engine blijft een aparte zoekdienst.

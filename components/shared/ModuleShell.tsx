@@ -1,5 +1,6 @@
 "use client";
 
+import { DataUseNotice } from "@/components/shared/DataUseNotice";
 import type { ReactNode } from "react";
 import { Lock } from "lucide-react";
 import { useModuleAccess } from "@/components/auth/ModuleAccessProvider";
@@ -80,6 +81,8 @@ export function ModuleShell({
               pageScroll ? "gap-4" : "min-h-0 flex-1 overflow-hidden",
             )}
           >
+            <DataUseNotice />
+            {(moduleId === "curriculum-rag" || moduleId === "minimum-goals") && <p className="text-xs text-neutral-400">Maximaal vijf koppelingen per lesdoel. Bronversie en gebruiksrechten van de geladen bronnen zijn niet geverifieerd; deze limiet geeft geen toestemming voor hergebruik.</p>}
             {input}
           </div>
         </section>

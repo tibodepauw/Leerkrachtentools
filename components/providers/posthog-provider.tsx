@@ -1,77 +1,39 @@
 "use client";
-
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import posthog from "posthog-js";
-import { PostHogProvider as PHProvider } from "posthog-js/react";
-import { sanitizeAnalyticsEvent } from "@/lib/analytics/privacy";
+import { ANALYTICS_CHANGE_EVENT, ANALYTICS_CHOICE_KEY, analyticsConfiguration, captureAnalytics, clearLegacyAnalyticsStorage, readAnalyticsChoice, setAnalyticsChoice, stopAnalytics, type AnalyticsChoice } from "@/lib/analytics/consent";
 
-const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-
-/**
- * Product analytics is optional and separate from marketing consent.
- * Session replay stays off: this app shows leerling- and lesinhoud in the DOM.
- */
 export function PostHogProvider({ children }: { children: ReactNode }) {
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
-
-    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.posthog.com",
-      person_profiles: "identified_only",
-      // The SDK can persist properties before before_send removes them.
-      // Keep analytics state in memory, including on shared devices.
-      disable_persistence: true,
-      save_referrer: false,
-      save_campaign_params: false,
-      capture_pageview: false,
-      capture_pageleave: false,
-      autocapture: false,
-      capture_dead_clicks: false,
-      capture_heatmaps: false,
-      capture_performance: false,
-      capture_exceptions: false,
-      disable_surveys: true,
-      advanced_disable_flags: true,
-      disable_external_dependency_loading: true,
-      before_send: sanitizeAnalyticsEvent,
-      disable_session_recording: true,
-      mask_all_text: true,
-      session_recording: {
-        maskAllInputs: true,
-        maskTextSelector: "*",
-      },
-    });
-    setReady(true);
-  }, []);
-
-  if (!POSTHOG_KEY) {
-    return children;
-  }
-
-  return (
-    <PHProvider client={posthog}>
-      {ready && <PostHogPageView />}
-      {children}
-    </PHProvider>
-  );
-}
-
-export function resetPostHogIdentity() {
-  if (!POSTHOG_KEY) return;
-  posthog.reset();
-}
-
-function PostHogPageView() {
   const pathname = usePathname();
-
+  const [choice, setChoice] = useState<AnalyticsChoice>("unknown");
+  const [open, setOpen] = useState(false);
+  const config = analyticsConfiguration();
   useEffect(() => {
-    if (!POSTHOG_KEY || !pathname) return;
-    posthog.capture("$pageview", {
-      $current_url: window.origin + pathname,
-    });
-  }, [pathname]);
-
-  return null;
+    clearLegacyAnalyticsStorage();
+    const sync = () => { stopAnalytics(); setChoice(readAnalyticsChoice()); };
+    const storage = (e: StorageEvent) => { if (e.key === ANALYTICS_CHOICE_KEY || e.key === null) sync(); };
+    sync();
+    window.addEventListener(ANALYTICS_CHANGE_EVENT, sync);
+    window.addEventListener("storage", storage);
+    const timer = setInterval(() => { if (readAnalyticsChoice() !== "accepted") sync(); }, 30_000);
+    return () => { clearInterval(timer); stopAnalytics(); window.removeEventListener(ANALYTICS_CHANGE_EVENT, sync); window.removeEventListener("storage", storage); };
+  }, []);
+  useEffect(() => { if (choice === "accepted") captureAnalytics("$pageview", pathname); }, [pathname, choice]);
+  const choose = (next: AnalyticsChoice) => { setAnalyticsChoice(next); setChoice(next); setOpen(false); };
+  return <>{children}
+    <aside className="fixed bottom-2 right-2 z-50 max-w-sm rounded-xl border border-neutral-700 bg-neutral-950 p-3 text-sm shadow-lg" aria-label="Privacy en cookies">
+      <button type="button" className="underline" onClick={() => setOpen(!open)}>Privacy &amp; cookies</button>
+      {(open || (config.ready && choice === "unknown")) && <div className="mt-3 space-y-3">
+        <p>Optionele gebruiksstatistieken via PostHog: bezochte apppagina’s en gebruikte functies, zonder lesinhoud of accountgegevens. Je kunt weigeren of later intrekken; alle lesfuncties blijven werken.</p>
+        <p>Keuze op dit browserprofiel: {choice === "accepted" ? "toegestaan" : choice === "rejected" ? "geweigerd" : "nog niet gemaakt"}.</p>
+        {!config.ready && <p>Analytics staat uit totdat de projectregio, verwerkersovereenkomst en bewaartermijn zijn bevestigd.</p>}
+        <a className="underline" href="/privacy?versie=2026-09-19">Privacy- en cookie-uitleg</a>
+        <div className="flex gap-2">
+          <button type="button" className="rounded border px-3 py-2" disabled={!config.ready} onClick={() => choose("accepted")}>Toestaan</button>
+          <button type="button" className="rounded border px-3 py-2" onClick={() => choose("rejected")}>{choice === "accepted" ? "Intrekken" : "Weigeren"}</button>
+        </div>
+      </div>}
+    </aside>
+  </>;
 }
+export function resetPostHogIdentity() { setAnalyticsChoice("unknown"); }

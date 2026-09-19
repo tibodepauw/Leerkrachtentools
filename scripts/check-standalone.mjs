@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac, createHash, randomUUID } from "node:crypto";
-import { spawn } from "node:child_process";
+import { spawn, execFileSync } from "node:child_process";
 import { mkdtempSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -79,6 +79,15 @@ try {
   assert.equal(session.status, 200);
   assert.equal((await session.json()).userId, userId);
   assert.match(session.headers.get("cache-control"), /no-store/);
+  for (const legalPath of ["/privacy?versie=2026-09-19", "/voorwaarden?versie=2026-09-13"]) {
+    const legal=await fetch(origin+legalPath,{redirect:"manual"});assert.equal(legal.status,200,"Local current legal text, no old website redirect");
+  }
+  assert.equal((await fetch(origin+"/api/account/export")).status,401);
+  const accountExport=await fetch(origin+"/api/account/export?userId=other",{headers});
+  assert.equal(accountExport.status,200);assert.match(accountExport.headers.get("cache-control"),/no-store/);
+  const accountData=await accountExport.text();assert.equal(JSON.parse(accountData).account.id,userId);assert.ok(!/second@example|token_hash|ai_api_key_enc/.test(accountData));
+  const cleanup=JSON.parse(execFileSync(process.execPath,["workers/privacy-maintenance.cjs","cleanup","--database",databasePath],{cwd:path.resolve(".next/standalone"),encoding:"utf8",windowsHide:true}));assert.equal(cleanup.dryRun,true);
+
   // Test access control at the actual production HTTP boundary, including
   // middleware/proxy headers sometimes used in bypass attempts.
   const protectedPaths = ["account", "account/api-keys", "account/avatar", "account/list-models", "account/profile", "account/marketing-consent", "account/pinned-modules", "analyze-goals", "classify-goal-taxonomy", "format-dialogue", "spellcheck", "audit-timing", "audit-alignment", "audit-engagement", "full-audit", "extract-manual", "transcribe-reflection", "feedback", "rag-curriculum", "rag-minimum-goals", "import-lesson-document", "export-lesson-document", "v1/curriculum/match", "v1/curriculum/audit", "v1/goals/improve"];

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const CURRICULUM_MATCH_LIMIT_MIN = 1;
-export const CURRICULUM_MATCH_LIMIT_MAX = 10;
+export const CURRICULUM_MATCH_LIMIT_MAX = 5;
 export const CURRICULUM_MATCH_LIMIT_DEFAULT = 5;
 
 export const curriculumMatchBodySchema = z.object({
@@ -14,7 +14,7 @@ export const curriculumMatchBodySchema = z.object({
     .number()
     .int()
     .min(CURRICULUM_MATCH_LIMIT_MIN)
-    .max(CURRICULUM_MATCH_LIMIT_MAX)
+    .max(CURRICULUM_MATCH_LIMIT_MAX, "limit moet een geheel getal van 1 tot en met 5 zijn.")
     .default(CURRICULUM_MATCH_LIMIT_DEFAULT),
 });
 

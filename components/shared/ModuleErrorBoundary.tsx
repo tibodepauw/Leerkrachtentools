@@ -1,7 +1,8 @@
 "use client";
+import { logSafeError } from "@/lib/security/safeLog";
 
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -48,8 +49,8 @@ export class ModuleErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error(`[ModuleErrorBoundary:${this.props.moduleName}]`, error, info);
+  componentDidCatch(error: Error) {
+    logSafeError("module-render", error);
   }
 
   componentDidUpdate(prevProps: ModuleErrorBoundaryProps) {

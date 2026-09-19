@@ -1,3 +1,4 @@
+import { ensureAcceptanceSchema } from "@/lib/legal/acceptance";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
@@ -192,6 +193,7 @@ export function getDatabase() {
       ON security_events(kind, created_at);
   `);
   ensureFollowupSchema(database);
+  ensureAcceptanceSchema(database);
   ensureDatabaseIndexes(database);
   warnIfQuotaBackfillPending(database);
   const userColumns = new Set(
@@ -274,7 +276,7 @@ export function closeDatabase() {
 export function cleanExpiredAuthRecords(now = Date.now()) {
   const db = getDatabase();
   db.prepare(
-    "DELETE FROM login_codes WHERE expires_at < ? OR created_at < ?",
+    "DELETE FROM login_codes WHERE expires_at < ? AND created_at < ?",
   ).run(now, now - 24 * 60 * 60 * 1000);
   db.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now);
 }

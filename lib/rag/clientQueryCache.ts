@@ -1,4 +1,5 @@
 "use client";
+import { limitGoalMatches } from "@/lib/rag/outputLimit";
 import { getActiveUserId } from "@/lib/storage/userStorageScope";
 import { isSharedDevice, temporaryStorage } from "@/lib/storage/sharedDevice";
 
@@ -27,7 +28,7 @@ export type RagQueryCacheScope = {
 };
 
 const STORAGE_KEY = "leerkrachtentools-rag-query-cache";
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 
 function accountStorageKey() {
   const userId = getActiveUserId();
@@ -145,7 +146,7 @@ export function readRagQueryCache<T>(
     return null;
   }
 
-  return entry as CachedRagQueryResult<T>;
+  return limitGoalMatches(entry) as CachedRagQueryResult<T>;
 }
 
 export function isEmptyRagQueryPayload(data: unknown): boolean {
@@ -175,7 +176,7 @@ export function writeRagQueryCache<T>(
   const store = readStore();
   store.entries[
     buildRagQueryStorageKey(endpoint, educationLevel, network, normalized, scope)
-  ] = payload;
+  ] = limitGoalMatches(payload);
   writeStore(store);
 }
 

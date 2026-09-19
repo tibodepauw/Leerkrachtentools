@@ -23,8 +23,8 @@ describe("production startup validation", () => {
     await expect(register()).rejects.toThrow("process.exit(1)");
     expect(exit).toHaveBeenCalledWith(1);
     expect(consoleError).toHaveBeenCalledWith(
-      "Fatale fout in de productieconfiguratie.",
-      expect.any(Error),
+      "invalid-production-config",
+      expect.objectContaining({ type: "Error", issues: expect.arrayContaining(["AUTH_SECRET moet minstens 32 tekens bevatten.", "API_KEY_ENCRYPTION_SECRET moet minstens 32 tekens bevatten."]) }),
     );
   });
 

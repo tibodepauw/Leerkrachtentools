@@ -1,0 +1,15 @@
+[Unit]
+Description=Leerkrachtentools expired-data cleanup (install only after dry-run)
+[Service]
+Type=oneshot
+User=leerkrachtentools
+Group=leerkrachtentools
+WorkingDirectory=/opt/leerkrachtentools/current
+ExecStart=/usr/bin/node workers/privacy-maintenance.cjs cleanup --database /var/lib/leerkrachtentools/leerkrachtentools.db --apply
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/leerkrachtentools
+RestrictAddressFamilies=AF_UNIX

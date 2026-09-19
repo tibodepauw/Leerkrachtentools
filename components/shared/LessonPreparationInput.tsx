@@ -101,6 +101,7 @@ export function LessonPreparationInput({
     <div className={cn("space-y-3", className)}>
       <Label htmlFor={id}>{label}</Label>
       <ActiveLessonPrepHint />
+      <p className="text-xs leading-5 text-neutral-400">Upload: bestand en bestandsnaam gaan naar onze server om tekst te lezen. Bij AI-analyse gaat de noodzakelijke inhoud naar de AI-dienst. Gebruik geen identificeerbare leerlinggegevens.</p>
       <label
         className={cn(
           "flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-neutral-700 bg-neutral-900/40 p-5 text-center transition-colors hover:border-neutral-500",

@@ -142,11 +142,11 @@ export function pruneApiTelemetry(now = Date.now()) {
   db.prepare("DELETE FROM security_event_windows WHERE window_start < ?").run(
     now - API_USAGE_LOG_RETENTION_MS,
   );
-  db.prepare("DELETE FROM api_idempotency_keys WHERE created_at < ?").run(
+  db.prepare("DELETE FROM api_idempotency_keys WHERE created_at < ? AND status != 'pending' AND NOT EXISTS (SELECT 1 FROM api_request_leases l WHERE l.id = api_idempotency_keys.lease_id AND l.status = 'active')").run(
     now - API_IDEMPOTENCY_TTL_MS,
   );
   db.prepare(
-    "DELETE FROM api_request_leases WHERE created_at < ? AND status != 'active'",
+    "DELETE FROM api_request_leases WHERE created_at < ? AND status != 'active' AND NOT EXISTS (SELECT 1 FROM api_idempotency_keys i WHERE i.lease_id = api_request_leases.id)",
   ).run(now - API_IDEMPOTENCY_TTL_MS);
 }
 
@@ -208,6 +208,7 @@ export function reserveOrgApiCall({
   );
 
   return db.transaction((): OrgQuotaResult => {
+    if (db.prepare("SELECT 1 FROM api_organizations WHERE id=? AND closed_at IS NOT NULL").get(orgId)) throw new Error("Organisatie is afgesloten.");
     pruneApiTelemetry(now);
     expireStaleLeases(now);
 

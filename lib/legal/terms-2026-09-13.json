@@ -1,0 +1,187 @@
+{
+  "version": "2026-09-13",
+  "source": "https://www.generativelabs.be/voorwaarden.html",
+  "retrievedAt": "2026-09-19",
+  "blocks": [
+    {
+      "kind": "h1",
+      "text": "Algemene voorwaarden"
+    },
+    {
+      "kind": "p",
+      "text": "Deze voorwaarden gelden voor betalende professionele diensten van Generative Labs en voor kosteloze testtoegang tot het platform Leerkrachtentools, voor zover die toegang uitdrukkelijk is verleend."
+    },
+    {
+      "kind": "p",
+      "text": "Versie 13 september 2026. Deze tekst geldt vanaf die datum voor nieuwe aanbiedingen en overeenkomsten. Reeds gesloten overeenkomsten blijven onderworpen aan de toen toepasselijke voorwaarden, tenzij schriftelijk anders overeengekomen."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 1: Doelgroep en toepasselijkheid"
+    },
+    {
+      "kind": "p",
+      "text": "Deze algemene voorwaarden gelden voor offertes, overeenkomsten, doelenanalyses, API-koppelingen, het platform Leerkrachtentools en andere diensten geleverd door Generative Labs, eenmanszaak van Tibo De Pauw, KBO BE 1040.168.117. Afwijkingen gelden alleen als ze schriftelijk zijn overeengekomen. Dwingende wettelijke rechten blijven onverlet."
+    },
+    {
+      "kind": "h3",
+      "text": "1.1 Betalende professionele diensten"
+    },
+    {
+      "kind": "p",
+      "text": "Betaalde diensten richten zich tot professionele en organisatorische afnemers, zoals uitgeverijen, onderwijsorganisaties en onderwijsprofessionals die handelen in die hoedanigheid."
+    },
+    {
+      "kind": "p",
+      "text": "Het aanbod van betalende diensten is niet bedoeld als consumentenovereenkomst. Wie desondanks als consument een overeenkomst sluit, behoudt de dwingende wettelijke rechten die hem toekomen."
+    },
+    {
+      "kind": "h3",
+      "text": "1.2 Kosteloze testtoegang (Leerkrachtentools)"
+    },
+    {
+      "kind": "p",
+      "text": "Individuele testers kunnen kosteloos en op uitnodiging toegang krijgen tot Leerkrachtentools. Dwingende wettelijke rechten van testers blijven onverlet."
+    },
+    {
+      "kind": "p",
+      "text": "Deze toegang wordt geleverd op een ‘as is’-basis en via een inspanningsverbintenis, uitsluitend voor test- of evaluatiedoeleinden. Generative Labs biedt geen garanties op ononderbroken werking of foutloosheid. Aansprakelijkheid voor deze kosteloze testomgeving is beperkt tot opzet of zware fout, onverminderd dwingende wettelijke rechten."
+    },
+    {
+      "kind": "h3",
+      "text": "1.3 Toepasselijkheid van deze voorwaarden"
+    },
+    {
+      "kind": "p",
+      "text": "Deze algemene voorwaarden maken deel uit van het contract wanneer u er effectief kennis van hebt of ten minste de reële mogelijkheid hebt gehad er kennis van te nemen, en u ze hebt aanvaard, zoals bedoeld in artikel 5.23 van het Burgerlijk Wetboek. Individueel onderhandelde afspraken gaan voor op deze voorwaarden. Verwijzen aanbod en aanvaarding naar verschillende algemene voorwaarden, dan komt het contract tot stand en maken beide sets voorwaarden deel uit van het contract, met uitzondering van de onverenigbare bedingen, tenzij een partij vooraf of zonder onnodige vertraging na de ontvangst van de aanvaarding uitdrukkelijk, en niet door middel van algemene voorwaarden, aangeeft dat zij niet gebonden wil zijn door een dergelijk contract. Een loutere voorrangs- of uitsluitingsclausule in deze voorwaarden volstaat niet voor die uitdrukkelijke afwijzing. Dwingende wettelijke rechten blijven onverlet."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 2: Dienstverlening en AI"
+    },
+    {
+      "kind": "p",
+      "text": "Generative Labs levert software, doelenanalyses en API-toegang op basis van een inspanningsverbintenis."
+    },
+    {
+      "kind": "h3",
+      "text": "2.1 Zoeken, analyse en AI"
+    },
+    {
+      "kind": "p",
+      "text": "De diensten gebruiken geautomatiseerde zoek- en analysetechnieken en, afhankelijk van de functie, generatieve AI. Suggesties kunnen onvolledig of onjuist zijn en ondersteunen de inhoudelijke beoordeling door de gebruiker. Een doelenkoppeling is geen formele goedkeuring van een les, methode of publicatie. We maken onderscheid tussen doelteksten uit de bron en door AI gegenereerde toelichtingen."
+    },
+    {
+      "kind": "h3",
+      "text": "2.2 Vertrouwelijkheid van invoer en modeltraining"
+    },
+    {
+      "kind": "p",
+      "text": "Generative Labs verwerkt door de gebruiker of afnemer ingevoerde teksten, lesdoelen, prompts en documenten om de gevraagde functionaliteit uit te voeren."
+    },
+    {
+      "kind": "p",
+      "text": "Generative Labs gebruikt, verkoopt of hergebruikt klantinhoud niet voor eigen training, fine-tuning of verbetering van generatieve AI-modellen, en niet voor andere doeleinden dan de overeengekomen dienst."
+    },
+    {
+      "kind": "p",
+      "text": "Noodzakelijke doorgifte aan gedocumenteerde dienstverleners om de dienst te laten werken, is iets anders dan verkoop of beschikbaarstelling voor modeltraining. “Niet voor training” betekent niet automatisch: geen tijdelijke opslag, geen beveiligingslogging en geen menselijke inzage bij een leverancier wanneer die dat voor beveiliging of misbruikpreventie toepast."
+    },
+    {
+      "kind": "p",
+      "text": "Wie een eigen API-sleutel gebruikt, blijft onderworpen aan de voorwaarden van die aanbieder. Die keuze heft de verantwoordelijkheden van Generative Labs voor de eigen dienst niet volledig op."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 3: Facturatie en betaling"
+    },
+    {
+      "kind": "li",
+      "text": "Tenzij schriftelijk anders overeengekomen geldt een betalingstermijn van 30 kalenderdagen na factuurdatum."
+    },
+    {
+      "kind": "li",
+      "text": "Kleine onderneming onderworpen aan de vrijstellingsregeling van belasting. Btw niet van toepassing, conform art. 56bis W.BTW, zolang deze status geldt."
+    },
+    {
+      "kind": "li",
+      "text": "Voor handelstransacties waarop de Wet van 2 augustus 2002 betreffende de bestrijding van de betalingsachterstand bij handelstransacties van toepassing is, zijn bij laattijdige betaling de verwijlintresten en invorderingskosten verschuldigd overeenkomstig die wet en onder de daarin bepaalde voorwaarden. Dwingende regels voor andere afnemers blijven onverlet."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 4: Aansprakelijkheidsbeperking"
+    },
+    {
+      "kind": "p",
+      "text": "Behoudens bedrog, opzet of zware fout (grove schuld) van Generative Labs of haar aangestelden, en behoudens aansprakelijkheid die wettelijk niet kan worden uitgesloten (zoals bij lichamelijke schade, overlijden of aantasting van de fysieke of psychische integriteit), is de totale aansprakelijkheid van Generative Labs voor directe schade beperkt tot het bedrag dat de klant daadwerkelijk heeft betaald voor de specifieke dienst die aanleiding gaf tot de schade (of maximaal de gefactureerde abonnementssom van de laatste 3 maanden bij doorlopende diensten). Onder dezelfde uitzonderingen is Generative Labs niet aansprakelijk voor indirecte schade, gevolgschade, gederfde winst, gemiste besparingen, reputatieschade of verlies van gegevens. Deze uitzonderingen gelden voor alle beperkingen en uitsluitingen van dit artikel 4, inclusief de bepalingen ten gunste van hulppersonen."
+    },
+    {
+      "kind": "p",
+      "text": "Voor buitencontractuele vorderingen tegen hulppersonen van Generative Labs geldt artikel 6.3 van het Burgerlijk Wetboek: die hulppersonen kunnen dezelfde verweermiddelen inroepen als Generative Labs, behalve bij aantasting van de fysieke of psychische integriteit of bij schade die opzettelijk is veroorzaakt. Voor zover dwingend recht dat toelaat, geldt ten gunste van die hulppersonen, onderaannemers, softwareleveranciers en clouddienstverleners waarop Generative Labs voor de uitvoering van de overeenkomst een beroep doet, ook een derdenbeding in de zin van artikel 5.107 van het Burgerlijk Wetboek, zodat zij zich op dezelfde contractuele beperkingen en uitsluitingen kunnen beroepen als Generative Labs. Voor zover dwingend recht dat toelaat, spreekt de klant die hulppersonen niet rechtstreeks buitencontractueel aan. De uitzonderingen in de eerste alinea van dit artikel 4 voor bedrog, opzet, zware fout en niet-uitsluitbare aansprakelijkheid gelden ook voor deze alinea."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 5: Intellectuele eigendom en brongebruik"
+    },
+    {
+      "kind": "h3",
+      "text": "5.1 Software van Generative Labs"
+    },
+    {
+      "kind": "p",
+      "text": "Software, datastructuren en API-architecturen van Generative Labs blijven eigendom van Generative Labs, behoudens afzonderlijk verleende opensourcelicenties. De applicatie Leerkrachtentools is onder meer onder de MIT-licentie gepubliceerd; die licentie blijft van kracht. De gebruiksvoorwaarden voor de gehoste dienst trekken die opensourcerechten niet in en geven geen licentie op leerplannen of andere inhoud van derden. Voor de gehoste dienst verkrijgt de afnemer een niet-exclusief, niet-overdraagbaar gebruiksrecht voor de duur van de overeenkomst."
+    },
+    {
+      "kind": "h3",
+      "text": "5.2 Brongebruik"
+    },
+    {
+      "kind": "p",
+      "text": "Generative Labs gebruikt curriculumbronnen voor geautomatiseerde analyse en doelenmatching. De officiële bronnen staan toegelicht op de pagina “Curriculumbronnen”. Rechten op beschermde leerplanteksten en curriculumstructuren blijven bij de betrokken rechthebbenden. Bronvermelding houdt geen partnerschap, accreditatie of overdracht van rechten in. Het gebruik van resultaten blijft onderworpen aan de toepasselijke rechten en gebruiksvoorwaarden."
+    },
+    {
+      "kind": "p",
+      "text": "Het is niet toegelaten beschermde broncorpora geautomatiseerd te reconstrueren of zonder passende rechtsgrond te herpubliceren. Deze bepaling is niet bedoeld om normale lesvoorbereiding, overeengekomen analyses of rechtmatige export van eigen gegevens te verhinderen."
+    },
+    {
+      "kind": "h3",
+      "text": "5.3 Onafhankelijkheid en non-affiliatie"
+    },
+    {
+      "kind": "p",
+      "text": "Generative Labs en Leerkrachtentools zijn onafhankelijke technologische voorzieningen. Generative Labs is niet verbonden aan, gesponsord door, partner van of geaccrediteerd door het Departement Onderwijs en Vorming van de Vlaamse overheid, AHOVOKS of onderwijskoepels, tenzij dat afzonderlijk schriftelijk is overeengekomen."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 6: Toepasselijk recht en bevoegde rechtbank"
+    },
+    {
+      "kind": "p",
+      "text": "Op alle overeenkomsten is uitsluitend het Belgische recht van toepassing. Alle geschillen die voortvloeien uit of verband houden met overeenkomsten met Generative Labs behoren tot de uitsluitende bevoegdheid van de rechtbanken van het gerechtelijk arrondissement Oost-Vlaanderen, afdeling Dendermonde (in het bijzonder de Ondernemingsrechtbank Gent, afdeling Dendermonde). Deze rechts- en forumkeuze laat dwingende wettelijke beschermings- en bevoegdheidsregels onverlet."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 7: Export en overstappen"
+    },
+    {
+      "kind": "p",
+      "text": "Voor Leerkrachtentools kunt u lesvoorbereidingen exporteren naar DOCX. Die export betreft de lesgegevens van de gebruiker, niet het volledige curriculumcorpus."
+    },
+    {
+      "kind": "p",
+      "text": "Voor de Curriculum Match API en voor doelenanalyses geldt de exportvorm die voor die dienst is overeengekomen."
+    },
+    {
+      "kind": "p",
+      "text": "Een aanspraak op gebruikersdata is geen aanspraak op het volledige broncorpus. Overstappen wordt niet nodeloos technisch belemmerd; termijnen, ondersteuning en verwijdering na afloop worden per overeenkomst vastgelegd."
+    },
+    {
+      "kind": "h2",
+      "text": "Artikel 8: Gegevensverwerking in opdracht"
+    },
+    {
+      "kind": "p",
+      "text": "Wanneer Generative Labs persoonsgegevens verwerkt in opdracht van een afnemer en daarbij als verwerker optreedt, moeten vóór die verwerking passende afspraken overeenkomstig artikel 28 AVG zijn vastgelegd. Dit geldt niet uitsluitend voor scholen of bijzondere persoonsgegevens."
+    }
+  ]
+}

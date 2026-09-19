@@ -1,8 +1,8 @@
 export const CURRICULUM_ATTRIBUTION = {
   ahovoksLicense:
-    "Minimumdoelen bevatten overheidsinformatie van AHOVOKS, verkregen onder de Modellicentie voor Gratis Hergebruik Vlaanderen v1.0.",
+    "Minimumdoelen kunnen overheidsinformatie van AHOVOKS bevatten. Controleer bij de daadwerkelijk geladen bron welke versie en hergebruikvoorwaarden gelden; toepassing van de Modellicentie voor Gratis Hergebruik Vlaanderen v1.0 is niet voor elke bron bevestigd.",
   umbrellaRights:
-    "Specifieke leerplandoelen en ontwikkelvelden zijn auteursrechtelijk beschermd door de respectievelijke onderwijskoepels (Katholiek Onderwijs Vlaanderen, GO!, OVSG, POV) en worden uitsluitend geciteerd ter didactische verantwoording conform art. XI.189 WER.",
+    "Leerplandoelen en ontwikkelvelden kunnen auteursrechtelijk beschermd zijn door hun bronhouders (zoals Katholiek Onderwijs Vlaanderen, GO!, OVSG of POV). Herkomst, versie en gebruiksrechten van de geladen bron moeten worden gecontroleerd. Een limiet van vijf resultaten geeft op zichzelf geen toestemming voor hergebruik of beroep op art. XI.189 WER.",
   nonAffiliation:
     "Leerkrachtentools is een onafhankelijk platform van Generative Labs en is niet verbonden aan of geaccrediteerd door de Vlaamse overheid of enige onderwijskoepel.",
   aiActTransparency:

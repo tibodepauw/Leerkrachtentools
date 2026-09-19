@@ -1,3 +1,5 @@
+import { logSafeError } from "@/lib/security/safeLog";
+import { limitCachedMatchResponse } from "@/lib/rag/outputLimit";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -151,7 +153,7 @@ async function recordCappedDenial({
   try {
     shouldLog = noteOrgDenial(auth.orgId).shouldLog;
   } catch (error) {
-    console.error("[api-guard] denial ledger", error);
+    logSafeError("[api-guard] denial ledger", error);
   }
   try {
     recordSecurityEvent({
@@ -162,7 +164,7 @@ async function recordCappedDenial({
       detail: reason,
     });
   } catch (error) {
-    console.error("[api-guard] security event", error);
+    logSafeError("[api-guard] security event", error);
   }
   if (!shouldLog) return;
   try {
@@ -174,7 +176,7 @@ async function recordCappedDenial({
       requestId,
     });
   } catch (error) {
-    console.error("[api-guard] usage log", error);
+    logSafeError("[api-guard] usage log", error);
   }
 }
 
@@ -182,7 +184,7 @@ function lateComplete(params: Parameters<typeof completeOrgApiCall>[0]) {
   try {
     completeOrgApiCall(params);
   } catch (error) {
-    console.error("[api-guard] late quota complete", error);
+    logSafeError("[api-guard] late quota complete", error);
   }
 }
 
@@ -198,8 +200,8 @@ export function withApiAuth(
 ) {
   return async function POST(request: Request) {
     const started = Date.now();
-    const requestId =
-      request.headers.get("x-request-id")?.trim() || randomUUID();
+    // Caller-controlled correlation text must never become persistent log content.
+    const requestId = randomUUID();
     const endpoint = new URL(request.url).pathname;
     const method = request.method.toUpperCase();
     let auth: ValidatedApiKey | null = null;
@@ -367,7 +369,8 @@ export function withApiAuth(
 
       if (quota.replay) {
         statusCode = quota.statusCode;
-        const replayResponse = new NextResponse(quota.body, {
+        const replayBody = endpoint === "/api/v1/curriculum/match" ? limitCachedMatchResponse(quota.body, (body as {limit?:number}).limit) : quota.body;
+        const replayResponse = new NextResponse(replayBody, {
           status: quota.statusCode,
           headers: {
             "Content-Type": "application/json",
@@ -456,7 +459,7 @@ export function withApiAuth(
         })
         .catch((error) => {
           if (timedOut) throw error;
-          console.error("[api-guard]", error);
+          logSafeError("[api-guard]", error);
           statusCode = 500;
           capturedBody = publicServerErrorBody;
           if (auth && reservation) {
@@ -633,7 +636,7 @@ export function withApiAuth(
           requestId,
         );
       }
-      console.error("[api-guard]", error);
+      logSafeError("[api-guard]", error);
       statusCode = 500;
       return withRateLimitHeaders(
         jsonError(
@@ -662,7 +665,7 @@ export function withApiAuth(
             responseBody: capturedBody,
           });
         } catch (error) {
-          console.error("[api-guard] quota complete", error);
+          logSafeError("[api-guard] quota complete", error);
         }
       }
       if (logExecutedWork && auth) {
@@ -675,7 +678,7 @@ export function withApiAuth(
             requestId,
           });
         } catch (error) {
-          console.error("[api-guard] usage log", error);
+          logSafeError("[api-guard] usage log", error);
         }
       }
     }

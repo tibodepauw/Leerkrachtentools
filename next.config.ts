@@ -73,16 +73,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/privacy",
-        destination: GENERATIVE_LABS_LEGAL.privacy,
-        permanent: true,
-      },
-      {
-        source: "/voorwaarden",
-        destination: GENERATIVE_LABS_LEGAL.terms,
-        permanent: true,
-      },
-      {
         source: "/juridisch",
         destination: GENERATIVE_LABS_LEGAL.imprint,
         permanent: true,

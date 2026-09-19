@@ -1,6 +1,7 @@
+// Versioned query URLs avoid previously cached permanent redirects to the old company pages.
 export const GENERATIVE_LABS_LEGAL = {
-  terms: "https://www.generativelabs.be/voorwaarden.html",
-  privacy: "https://www.generativelabs.be/privacy.html",
+  terms: "/voorwaarden?versie=2026-09-13",
+  privacy: "/privacy?versie=2026-09-19",
   imprint: "https://www.generativelabs.be/juridisch.html",
 } as const;
 
