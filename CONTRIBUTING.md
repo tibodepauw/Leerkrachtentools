@@ -17,10 +17,13 @@ Contributions from fellow Thomas More BALO students, teachers, and external coll
 
 ## Development setup
 
+Use Node.js 22.12+ or 24. CI uses Node 22; keep Node type definitions aligned
+with that lowest supported runtime.
+
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
-npm run dev -- --hostname 0.0.0.0 --port 43127
+npm run dev -- --hostname 127.0.0.1 --port 43127
 ```
 
 Configure `.env.local` locally for AI and email features you need to test. Never commit that file.
@@ -36,7 +39,7 @@ npm test
 npm run build
 ```
 
-`npm test` runs **108 automated tests** (Vitest), including curriculum tokenization, minimum-goal ranking, fuzzy matching, and core utilities. All tests must pass before merge.
+`npm test` runs the automated Vitest suite, including privacy, quotas, provider boundaries, document processing and curriculum ranking. All applicable tests must pass before merge; corpus-dependent tests require the real datasets.
 
 `npm run lint` uses ESLint with the Next.js config. Fix new warnings in files you touch.
 
