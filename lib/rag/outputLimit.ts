@@ -14,7 +14,7 @@ export function limitGoalMatches<T>(payload: T, limit = MAX_PUBLIC_GOAL_MATCHES)
 
 export function limitCachedMatchResponse(body: string, limit = MAX_PUBLIC_GOAL_MATCHES) {
   try { const bounded = limitGoalMatches(JSON.parse(body), limit);
-    if (bounded && typeof bounded === "object" && !Array.isArray(bounded)) bounded.sourceMetadata ??= UNKNOWN_SOURCE_METADATA;
+    if (bounded && typeof bounded === "object" && !Array.isArray(bounded) && Array.isArray(bounded.results)) bounded.sourceMetadata ??= UNKNOWN_SOURCE_METADATA;
     return JSON.stringify(bounded); }
   catch { return JSON.stringify({ error: "Het opgeslagen antwoord is niet beschikbaar." }); }
 }

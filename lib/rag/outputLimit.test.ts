@@ -8,6 +8,9 @@ describe("public goal boundary including legacy cache",()=>{
   expect(result.data.results).toHaveLength(5); expect(result.data.alternatives).toHaveLength(4); expect(original.data.results).toHaveLength(10);
   expect(JSON.parse(limitCachedMatchResponse(JSON.stringify(original),2)).data.results).toHaveLength(2);
  });
+ it("preserves error and non-match replay contracts byte for byte",()=>{
+  for(const value of [{error:"Synthetic error"},{error:"Too large",code:"idempotency_payload_too_large"},{ok:true,blob:"synthetic"}]) {const body=JSON.stringify(value);expect(limitCachedMatchResponse(body)).toBe(body);}
+ });
  it("rejects excessive/fractional/zero limits instead of silently accepting them",()=>{
   for(const limit of [0,6,10,1.5]) expect(curriculumMatchBodySchema.safeParse({query:"Synthetisch lesdoel",limit}).success).toBe(false);
   for(const limit of [1,5]) expect(curriculumMatchBodySchema.parse({query:"Synthetisch lesdoel",limit}).limit).toBe(limit);
