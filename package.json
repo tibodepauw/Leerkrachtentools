@@ -63,7 +63,7 @@
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
+    "eslint": "^10",
     "eslint-config-next": "16.3.3",
     "playwright": "^1.63.0",
     "shadcn": "^4.21.0",
