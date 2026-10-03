@@ -1,0 +1,606 @@
+{
+  "beginCommit": "9359f8031b8e45445875a17936de776f432bf543",
+  "branch": "codex/scraper-corpus-validation-2026-10-03",
+  "observedAt": "2026-10-03T20:59:00.736909+00:00",
+  "network": {
+    "checkedAt": "2026-10-03T20:41:36.311069+00:00",
+    "hosts": [
+      {
+        "host": "assets.vlaanderen.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/sources/minimumdoelen.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://assets.vlaanderen.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.250770+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.012
+        }
+      },
+      {
+        "host": "cached-api.katholiekonderwijs.vlaanderen",
+        "referencedBy": [
+          "scripts/scrape_opstap_full.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://cached-api.katholiekonderwijs.vlaanderen/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.263064+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "classid.io",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/fetch_pov_secondary_curricula.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://classid.io/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.266541+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "data-onderwijs.vlaanderen.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/minimumdoelen.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://data-onderwijs.vlaanderen.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.269531+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "leerlokaal.ovsg.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/ovsg.py",
+          "scripts/scrape_ovsg_full.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "login: not authorized"
+      },
+      {
+        "host": "leerlokaalupdate.ovsg.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/sources/ovsg.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "login: not authorized"
+      },
+      {
+        "host": "onderwijs-api-portaal.vlaanderen.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/minimumdoelen.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://onderwijs-api-portaal.vlaanderen.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.272321+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "onderwijs-vlaanderen-portaalov.apigee.io",
+        "referencedBy": [
+          "scripts/curriculum_fetch/sources/minimumdoelen.py",
+          "scripts/fetch_secondary_minimum_goals.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://onderwijs-vlaanderen-portaalov.apigee.io/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.275711+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "onderwijs.api.vlaanderen.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/onderwijsdoelen_api_client.py",
+          "scripts/scrape_onderwijsdoelen_portal.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://onderwijs.api.vlaanderen.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.278542+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "opstap.katholiekonderwijs.vlaanderen",
+        "referencedBy": [
+          "scripts/scrape_opstap_full.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://opstap.katholiekonderwijs.vlaanderen/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.281649+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "pov.classid.io",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/fetch_pov_secondary_curricula.py",
+          "scripts/fetch_secundair_full.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://pov.classid.io/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.284515+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "pro.g-o.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/go.py",
+          "scripts/fetch_go_nieuw.py",
+          "scripts/scrape_secondary_curricula.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://pro.g-o.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.287349+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "pro.katholiekonderwijs.vlaanderen",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/zill.py",
+          "scripts/scrape_secondary_curricula.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://pro.katholiekonderwijs.vlaanderen/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.290247+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "www.onderwijsdoelen.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/minimumdoelen.py",
+          "scripts/education_record_schema.py",
+          "scripts/onderwijsdoelen_api_client.py",
+          "scripts/onderwijsdoelen_datasets.py",
+          "scripts/scrape_onderwijsdoelen_portal.py",
+          "scripts/secondary_minimum_goals_common.py",
+          "scripts/secondary_record_schema.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://www.onderwijsdoelen.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.295837+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "www.ovsg.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/ovsg.py",
+          "scripts/scrape_secondary_curricula.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://www.ovsg.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.298787+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "www.vlaanderen.be",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py",
+          "scripts/curriculum_fetch/sources/minimumdoelen.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://www.vlaanderen.be/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.301871+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "zill-selector.katholiekonderwijs.vlaanderen",
+        "referencedBy": [
+          "scripts/scrape_zill_full.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://zill-selector.katholiekonderwijs.vlaanderen/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.304903+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      },
+      {
+        "host": "zill.katholiekonderwijs.vlaanderen",
+        "referencedBy": [
+          "docs/curriculum-bronnen-urls.md",
+          "scripts/curriculum_fetch/config.py"
+        ],
+        "allowlisted": false,
+        "accessScope": "public probe only; API may require a key",
+        "probe": {
+          "url": "https://zill.katholiekonderwijs.vlaanderen/robots.txt",
+          "checkedAt": "2026-10-03T20:41:36.307929+00:00",
+          "reachable": false,
+          "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>",
+          "seconds": 0.003
+        }
+      }
+    ],
+    "missingAllowlistHosts": [
+      "assets.vlaanderen.be",
+      "cached-api.katholiekonderwijs.vlaanderen",
+      "classid.io",
+      "data-onderwijs.vlaanderen.be",
+      "leerlokaal.ovsg.be",
+      "leerlokaalupdate.ovsg.be",
+      "onderwijs-api-portaal.vlaanderen.be",
+      "onderwijs-vlaanderen-portaalov.apigee.io",
+      "onderwijs.api.vlaanderen.be",
+      "opstap.katholiekonderwijs.vlaanderen",
+      "pov.classid.io",
+      "pro.g-o.be",
+      "pro.katholiekonderwijs.vlaanderen",
+      "www.onderwijsdoelen.be",
+      "www.ovsg.be",
+      "www.vlaanderen.be",
+      "zill-selector.katholiekonderwijs.vlaanderen",
+      "zill.katholiekonderwijs.vlaanderen"
+    ],
+    "sourceFilesFetched": 0,
+    "sourceRestrictionsAndReuseRights": "not established by a robots access probe",
+    "inventoryCorrection": "Removed www regex fragment; no additional HTTP requests."
+  },
+  "datasets": [
+    {
+      "id": "OPSTAP",
+      "plannedSourceUrls": [
+        "https://opstap.katholiekonderwijs.vlaanderen/"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "OVSG",
+      "plannedSourceUrls": [
+        "https://leerlokaal.ovsg.be/"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked. Login/key paths not authorized or configured.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "GO_NIEUW",
+      "plannedSourceUrls": [
+        "https://pro.g-o.be/themas/leerplannen/basisonderwijs/nieuw-leerplan-basisonderwijs/"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "GO_OUD",
+      "plannedSourceUrls": [
+        "https://pro.g-o.be/themas/leerplannen/"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "ZILL",
+      "plannedSourceUrls": [
+        "https://zill-selector.katholiekonderwijs.vlaanderen/"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "SECUNDAIR_LEERPLANNEN",
+      "plannedSourceUrls": [
+        "https://pro.g-o.be/themas/leerplannen/",
+        "https://pro.katholiekonderwijs.vlaanderen/"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "SECUNDAIR_MINIMUMDOELEN",
+      "plannedSourceUrls": [
+        "https://www.onderwijsdoelen.be/doelen/SO_1STE_GRAAD_V2_1"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "POV",
+      "plannedSourceUrls": [
+        "https://pov.classid.io/"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked. Login/key paths not authorized or configured.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "OKAN",
+      "plannedSourceUrls": [
+        "https://www.onderwijsdoelen.be/doelen/OKAN_V1_0"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "BUBAO",
+      "plannedSourceUrls": [
+        "https://onderwijs.api.vlaanderen.be/onderwijsdoelen"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked. Login/key paths not authorized or configured.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "BUSO",
+      "plannedSourceUrls": [
+        "https://www.onderwijsdoelen.be/doelen/BSO_OV1"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "DKO",
+      "plannedSourceUrls": [
+        "https://www.onderwijsdoelen.be/doelen/DKO_1STE_GRAAD"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "VOLWASSENEN",
+      "plannedSourceUrls": [
+        "https://www.onderwijsdoelen.be/doelen/BASIS_EDU"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    },
+    {
+      "id": "HOGER",
+      "plannedSourceUrls": [
+        "https://www.onderwijsdoelen.be/doelen/LERAREN_OPL"
+      ],
+      "status": "GEBLOKKEERD",
+      "fetched": false,
+      "structuralValidation": false,
+      "contentValidation": false,
+      "fetchedAt": null,
+      "sourceSha256": null,
+      "version": null,
+      "recordCount": null,
+      "incompleteness": "No source retrieved; allowlist blocked.",
+      "commercialReuse": "NIET VASTGESTELD"
+    }
+  ],
+  "localChecks": {
+    "pythonSyntaxFiles": 42,
+    "pythonTestsPassed": 48,
+    "nodeTestFilesPassed": 155,
+    "nodeTestsPassed": 765,
+    "nodeTestsSkipped": 1,
+    "realCorporaCheckExit": 1,
+    "realCorporaMissing": 14,
+    "fixtureFreeLoaderExit": 1,
+    "fixtureFreeLoaderRecords": 0,
+    "pythonBrowser": "Chromium 153.0.8010.12 actually launched; external requests aborted",
+    "auditRawFindings": 1,
+    "auditTemporarilyMitigated": 1,
+    "auditOtherBlockingFindings": 0,
+    "bracesMitigationExpires": "2026-10-17T00:00:00.000Z"
+  },
+  "evidenceSha256": {
+    "audit-all.log": "011febbc4ee720fdc06dfcf97aee06e605648dc6af2c93822415181a6d55e4d6",
+    "build.log": "ee260bd9c0df3ea0481c57a6c75bde4303d9faf059c3646f6ff2bf8ef1b66c6f",
+    "check-corpora-real.log": "a8e692fe431d676813a8e26b04b1fb377de3ce0a8441f0fc5e2dcaab85b82531",
+    "client-browser.log": "8a3e9dbfcec74e2a6e57d712cc0dd6c04cc6c11eb847c03a07f8d4b07723c090",
+    "domains-only-before.json": "c36601c2be74a707e18f86b162c26d0620a99d7d8520597a62ac81fe433412b0",
+    "first-source-access.json": "243d0368ebbaa4fe9010c3029a64337937fafc5e10135f30d0b69877a06af0d2",
+    "lint.log": "c7d22b6bd8c7c4eb5f6f2b7fc35cc6c5c1d3fea0985fbad8ab6fba2e477dab3d",
+    "loader-no-fixtures.json": "fdc0f58f5c5e2b56237c8c9f2c7909df64ba84996b9b3c8d34a7bd28ca1b411a",
+    "loader-no-fixtures.log": "27e1eb83b8978f5c5c26f76eb7e7d93c73dee4a55df7095d02e15e3fc45d80b8",
+    "node-tests.log": "35e073513670adf42bd8b87e1261a53554df776ffb3f2f38113cc370be84eb77",
+    "npm-ci.log": "abbde2fac88b264174753a6275bf83b0732536d4bfbdf7839ebf432442a3ad56",
+    "pagination-before.log": "1598d5bccb08024c71a1f03dbb0fa3e8fb2f40f53c7a1d02b18acdacac012c22",
+    "portal-before.log": "5afcbfb29d55a2d0c5d8a0244ceec5c1c55a8b4f886ba9cc3648bee795d65264",
+    "python-browser-smoke-final.log": "9da78a1719a92065636460259c760e11309128fef52ba213b2418528c597dffb",
+    "python-browser-smoke.log": "bea7599ae989d654f3dbf65180b19790a74eb62293ba497f6e2d252f8700f396",
+    "python-tests-after.log": "96f361935a74e2c58451db595032c48b87e3caa6036befaceee6ccd9a540d594",
+    "python-tests-before.log": "6c8e5143c60423744ed1d63cb0b61caaca14380eb04585c7074faa20f271d43d",
+    "python-tests-final.log": "baf10361b60aa73fdd4cc00a8fe2fe14d87dbc9f49bf410e95046b6b71d7d3bd",
+    "python-tests-pagination-after.log": "38355e6a403fc75b72ad5ec81e0bb70306f18611c30e6d14c99c01d17e878894",
+    "regressions-before.log": "d2c8c9bab8577cf52a0e90642750f46c7d72076dead0884988789a5be2330b57",
+    "secondary-pagination-before.log": "175cc76c8cd5051e868be336fe7159ca55a9bfb136df14994898dbfce177db83",
+    "secondary-redirect-before.log": "b76d7b94f3441f214f4941392eb470fea65981ce3d44cd86b23ce2ffffa22217",
+    "source-access-final.json": "66259115a58e3e6b3b9133f73dade6ba7c6b46944e067d3adb9ff0e75b6773ad",
+    "source-access.json": "3fa6c1f59b183dac73d837fcd12aa2c1716371ead1bfc72c38da5291395be065",
+    "source-access.log": "3fa6c1f59b183dac73d837fcd12aa2c1716371ead1bfc72c38da5291395be065",
+    "source-hosts-static.json": "8b668d08f08218a79aa8ebf76929f56c88256784d79fab95a0c230403a116a42",
+    "standalone.log": "3b28604be65a776561f12daf7dacc3ba60d7012c7d6df5c0cece5aa302fbfb76",
+    "syntax-after.json": "71139e41e7e8fc6f5d091acea039e86b961f9fe1f9ad12840bf3b0a8c676f586",
+    "syntax-before.json": "235e458f8c5213a72b76ca1101d7a7056b4fc64a148a0a86214c0786f28d3db8",
+    "typecheck.log": "bb2064ec44ccc2dad9c7f498f613b42620921b0c71f27852834516d9b5bcadfb",
+    "typegen.log": "262667f31b1b4a42b4353a127fc0c0ec3a37fad6e2f98673c479a5324043a623",
+    "venv-freeze.txt": "dd8892ba384d5a13c5ab91b4844cf9b0f9229ae76dc2d8e5d8f06f090835aeb7",
+    "venv-install.log": "0f4719731cea490d0dc005dc4cdfdf168ed0a8979ba5fbcd97021029526b789a"
+  },
+  "evidenceLocation": "/workspace/.onboarding/corpus-validation-2026-10-03/evidence",
+  "rawSourcesLocation": "/workspace/.onboarding/corpus-validation-2026-10-03/raw (empty)",
+  "derivedCorporaLocation": "/workspace/.onboarding/corpus-validation-2026-10-03/corpora (empty)"
+}

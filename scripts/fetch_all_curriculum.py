@@ -91,10 +91,11 @@ def main() -> int:
             [python, str(SCRIPTS / "fetch_secundair_full.py"), "--skip-pov"],
         )
 
-    failures += run_step(
-        "Op.stap leerplandoelen + AHOVOKS-minimumdoelen basisonderwijs",
-        [python, str(SCRIPTS / "scrape_opstap_full.py"), "--skip-playwright"],
-    )
+    if not args.domains_only:
+        failures += run_step(
+            "Op.stap leerplandoelen + AHOVOKS-minimumdoelen basisonderwijs",
+            [python, str(SCRIPTS / "scrape_opstap_full.py"), "--skip-playwright"],
+        )
 
     failures += run_step(
         "Alle onderwijsdoelen-domeinen (OKAN t/m HO)",
@@ -104,7 +105,7 @@ def main() -> int:
     print("\n=== Volledige fetch samenvatting ===")
     print(f"  Fouten: {failures}")
     print("  Basisonderwijs Op.stap: data/opstap/")
-  print("  Domeinen: data/{okan,bubao,buso,dko,volwassenen,hoger}/")
+    print("  Domeinen: data/{okan,bubao,buso,dko,volwassenen,hoger}/")
     print("  Secundair: data/secundair/")
     return 1 if failures else 0
 

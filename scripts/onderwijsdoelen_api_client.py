@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -43,18 +44,38 @@ def fetch_all_goals(
     pause_seconds: float = 0.15,
 ) -> list[dict[str, Any]]:
     resolved_key = resolve_api_key(api_key)
+    if rows_per_page < 1 or max_pages < 1:
+        raise ValueError("Paginagrootte en paginalimiet moeten positief zijn.")
     collected: list[dict[str, Any]] = []
+    expected_total: int | None = None
+    seen_pages: set[str] = set()
     for page in range(1, max_pages + 1):
         url = (
             f"{DEFAULT_API_BASE}/onderwijsdoel?"
             f"paginanr={page}&rijen_per_pagina={rows_per_page}"
         )
         payload = _get_json(url, resolved_key)
-        members = payload.get("gegevens", {}).get("member", [])
+        data = payload.get("gegevens") if isinstance(payload, dict) else None
+        if not isinstance(data, dict) or not isinstance(data.get("member"), list) or not all(isinstance(item, dict) for item in data["member"]):
+            raise RuntimeError("Onderwijsdoelen API: ongeldig paginapayload.")
+        members = data["member"]
+        total = data.get("totalItems")
+        if total is not None:
+            if isinstance(total, bool) or not str(total).isdigit():
+                raise RuntimeError("Onderwijsdoelen API: ongeldig totaal.")
+            total = int(total)
+            if expected_total is not None and total != expected_total:
+                raise RuntimeError("Onderwijsdoelen API: totaal tijdens ophalen gewijzigd.")
+            expected_total = total
         if not members:
-            break
+            if expected_total is not None and len(collected) != expected_total:
+                raise RuntimeError("Onderwijsdoelen API: onvolledig, lege pagina vóór gerapporteerd totaal.")
+            return collected
+        fingerprint = hashlib.sha256(json.dumps(members, sort_keys=True).encode()).hexdigest()
+        if fingerprint in seen_pages:
+            raise RuntimeError("Onderwijsdoelen API: herhaalde pagina; volledigheid niet bewezen.")
+        seen_pages.add(fingerprint)
         collected.extend(members)
-        total = payload.get("gegevens", {}).get("totalItems")
         logger.info(
             "API pagina %s: +%s doelen (totaal %s / %s)",
             page,
@@ -62,10 +83,12 @@ def fetch_all_goals(
             len(collected),
             total,
         )
-        if total and len(collected) >= int(total):
-            break
+        if expected_total is not None and len(collected) >= expected_total:
+            if len(collected) != expected_total:
+                raise RuntimeError("Onderwijsdoelen API: ongeldig aantal boven gerapporteerd totaal.")
+            return collected
         time.sleep(pause_seconds)
-    return collected
+    raise RuntimeError("Onderwijsdoelen API: onvolledig, paginalimiet bereikt vóór bewezen einde.")
 
 
 def _get_json(url: str, api_key: str, retries: int = 4) -> dict[str, Any]:
@@ -84,8 +107,6 @@ def _get_json(url: str, api_key: str, retries: int = 4) -> dict[str, Any]:
                 return json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
             last_error = exc
-            if exc.code == 404:
-                return {"gegevens": {"member": []}}
             if exc.code in {429, 500, 502, 503, 504}:
                 time.sleep(2 ** attempt)
                 continue
@@ -105,7 +126,7 @@ async def fetch_portal_dataset(
 ) -> list[dict[str, Any]]:
     from playwright.async_api import async_playwright
 
-    collected: list[dict[str, Any]] = []
+    payloads: list[Any] = []
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=True)
         page = await browser.new_page()
@@ -114,26 +135,42 @@ async def fetch_portal_dataset(
             if "onderwijsdoel?" not in response.url or response.status != 200:
                 return
             try:
-                payload = await response.json()
+                payloads.append(await response.json())
             except Exception:
-                return
-            members = payload.get("gegevens", {}).get("member", [])
-            if isinstance(members, list):
-                for member in members:
-                    if isinstance(member, dict):
-                        tagged = dict(member)
-                        tagged["_dataset"] = dataset
-                        collected.append(tagged)
+                payloads.append(None)
 
         page.on("response", on_response)
-        await page.goto(
-            f"https://www.onderwijsdoelen.be/doelen/{dataset}",
-            wait_until="networkidle",
-            timeout=timeout_ms,
-        )
-        await page.wait_for_timeout(1500)
-        page.remove_listener("response", on_response)
-        await browser.close()
+        try:
+            await page.goto(
+                f"https://www.onderwijsdoelen.be/doelen/{dataset}",
+                wait_until="networkidle",
+                timeout=timeout_ms,
+            )
+            await page.wait_for_timeout(1500)
+        finally:
+            page.remove_listener("response", on_response)
+            await browser.close()
+
+    # Capturing a first browser page is not evidence that all goals were fetched.
+    # Retry responses must not inflate the count to the server-reported total.
+    collected: list[dict[str, Any]] = []
+    totals: set[int] = set()
+    seen: set[str] = set()
+    for payload in payloads:
+        data = payload.get("gegevens") if isinstance(payload, dict) else None
+        if not isinstance(data, dict) or not isinstance(data.get("member"), list) or not all(isinstance(item, dict) for item in data["member"]):
+            raise RuntimeError("Onderwijsdoelen portaal: ongeldige pagina; volledigheid niet bewezen.")
+        total = data.get("totalItems")
+        if total is None or isinstance(total, bool) or not str(total).isdigit():
+            raise RuntimeError("Onderwijsdoelen portaal: volledigheid niet bewezen zonder geldig totaal.")
+        totals.add(int(total))
+        for member in data["member"]:
+            fingerprint = json.dumps(member, sort_keys=True)
+            if fingerprint not in seen:
+                seen.add(fingerprint)
+                collected.append({**member, "_dataset": dataset})
+    if len(totals) != 1 or len(collected) != next(iter(totals)):
+        raise RuntimeError("Onderwijsdoelen portaal: onvolledig of gewijzigd totaal; geen corpus gepubliceerd.")
     return collected
 
 

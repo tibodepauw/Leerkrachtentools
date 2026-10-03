@@ -42,6 +42,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Python scraper syntax and regressions
+        run: |
+          python3 -m venv "$RUNNER_TEMP/curriculum-venv"
+          "$RUNNER_TEMP/curriculum-venv/bin/python" -m pip install --disable-pip-version-check --timeout 30 --retries 1 -r scripts/requirements-curriculum.txt
+          "$RUNNER_TEMP/curriculum-venv/bin/python" -m unittest discover -s scripts/tests -v
+
       - name: Generate Next.js route types
         run: npx next typegen
 

@@ -22,7 +22,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 import requests
 
@@ -93,6 +93,8 @@ class SecondaryMinimumGoalsFetcher:
         )
 
     def run(self) -> list[dict[str, Any]]:
+        if self.max_pages < 1:
+            raise ValueError("Paginalimiet moet positief zijn.")
         payloads: list[Any] = []
         url: str | None = self.api_url
         params: dict[str, str] | None = self.filters
@@ -105,7 +107,10 @@ class SecondaryMinimumGoalsFetcher:
                 url,
                 params=params,
                 timeout=self.timeout,
+                allow_redirects=False,
             )
+            if 300 <= response.status_code < 400:
+                raise RuntimeError("Onderwijsdoelen API: redirect geweigerd; API-key niet doorgestuurd. Gebruik het gecontroleerde eindpunt.")
             if response.status_code in (401, 403):
                 raise RuntimeError(
                     "Onderwijsdoelen-API weigert de API-key. Vraag toegang aan "
@@ -116,6 +121,14 @@ class SecondaryMinimumGoalsFetcher:
             payloads.append(payload)
             url = next_url(payload, response.url)
             params = None
+            if url:
+                origin = urlsplit(self.api_url)
+                next_origin = urlsplit(url)
+                if (next_origin.scheme.lower(), next_origin.netloc.lower()) != (origin.scheme.lower(), origin.netloc.lower()):
+                    raise RuntimeError("Onderwijsdoelen API: volgende pagina heeft een andere origin; API-key niet doorgestuurd.")
+
+        if url:
+            raise RuntimeError("Onderwijsdoelen API: onvolledig, paginalimiet of paginacyclus vóór bewezen einde.")
 
         goals = extract_api_goals(payloads)
         if not goals:

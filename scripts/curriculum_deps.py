@@ -15,6 +15,9 @@ CURRICULUM_PACKAGES = (
     ("bs4", "beautifulsoup4"),
     ("docx", "python-docx"),
     ("pypdf", "pypdf"),
+    ("playwright", "playwright"),
+    ("openpyxl", "openpyxl"),
+    ("pandas", "pandas"),
 )
 
 
