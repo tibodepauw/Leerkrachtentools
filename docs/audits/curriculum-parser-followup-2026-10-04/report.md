@@ -1,3 +1,50 @@
+# Reviewcorrectie PR #37 — expliciete lijstherstart
+
+Review van head `268cabc59318efe4b421fe57b6dd33a6f1f8c2b6` bevestigde een regressie:
+twee reguliere Doel-paragrafen met dezelfde directe numId en startOverride=1
+veroorzaakten op de tweede paragraaf een ValueError in plaats van LPD 1 en LPD 2.
+Dit is eerst als falende **end-to-endtest van parse_kov_docx** gereproduceerd.
+
+De parser bewaart nu lokaal per document de volgende verwachte waarde per expliciete
+nummeringsinstantie. De startOverride wordt bij eerste gebruik gecontroleerd;
+volgende paragrafen moeten de geldige voortzetting volgen. Afzonderlijke instanties
+worden zelfstandig gecontroleerd. Conflicterende herstarts, terugkeer naar een
+onderbroken lijst, niet-decimale labels, afwijkende LPD-labels, niet-nulniveaus en
+onbevestigde niveauvervangingen worden geweigerd. De bronbewezen behandeling van
+stijlgebonden reguliere doelen en het aparte extra-doel blijft behouden.
+
+**Validatie na correctie:**
+
+- 80 Python-tests geslaagd, waaronder twee en drie opeenvolgende paragrafen met
+  dezelfde instantie, afzonderlijke instanties met start 1/3, conflicterende herstart,
+  documentisolatie, onbekende nummeringsstructuren en bestaande extra/exportregressies.
+- Echt bewaard KOV-document opnieuw geparseerd: 13 doelen, LPD 1–5, LPD 6 +,
+  LPD 7–13. Minimumdoelkoppelingen 7/8→02.13, 9→02.12, 10→02.10, 11→02.11,
+  12→02.09, 13→02.08; onderwijscontext, domein, A-stroom en bronmetadata behouden.
+- Gecorrigeerde steekproef opnieuw afgeleid: 369 GO! + 13 KOV = 382 records,
+  SHA-256 `bba39c3494a486c2b36852cf044362089be52dece9da5373c8cc55262f775d7d`,
+  exact gelijk aan eerdere gecorrigeerde steekproef; geen schemafouten.
+- Originele bronnen en corpora behouden; corpuscontroles slagen voor originele
+  3.490/381 records en afzonderlijk gecorrigeerde 3.490/382 records.
+- Echte loader, 15 handlergevallen en 16 HTTPgevallen plus 401/403 geslaagd,
+  zonder fixturemap: limieten 1–5, filters, bronlinks, extra-doel en LPD 13,
+  context, ongeldige limieten en corrupte JSONL op een geïsoleerde kopie.
+- Volledige npm ci met scripts, Node 22.23.3, typegen, lint, typecheck,
+  765 Node-tests (één bestaande skip), build, standalone en lokale Chromium-controles
+  geslaagd. Afzonderlijke testdatabase; analytics en telemetrie uit.
+- Audit geslaagd: 960 packages, bestaande braces-finding tijdelijk gemitigeerd,
+  nul overige blokkerende findings; uitzondering/vervaldatum ongewijzigd.
+
+Reproduceerbaar aanvullend bewijs en scripts staan buiten Git onder
+`/workspace/corpus-validation-2026-10-04/followup/review-restart/`.
+[observations.json](observations.json) bevat de bewijs-hashes. De definitieve geteste
+head en volledige GitHub-CI (inclusief Linux-isolatie en Chromium/Firefox/WebKit)
+worden op de PR en in de oplevering vastgelegd; daarna geen repositorywijzigingen.
+Ontbrekende datasets, GO_OUD-bronambiguïteit en vereiste hergebruikrechten blijven
+zoals hieronder beschreven. Geen merge, release of deployment uitgevoerd.
+
+---
+
 # Vervolg na merge van PR #36 — 4 oktober 2026
 
 Actuele main/begincommit: **`3b823bfef8f68e7d2de8899e459c7c2f37bef384`**, de daadwerkelijke

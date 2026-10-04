@@ -605,22 +605,42 @@ def _kov_extra_label(document: Any, paragraph: Any, number: int) -> str:
     return f"LPD {number} +"
 
 
-def _check_kov_explicit_restart(document: Any, paragraph: Any, number: int) -> None:
+def _check_kov_explicit_restart(
+    document: Any, paragraph: Any, number: int, next_by_instance: dict[str, int]
+) -> None:
     props = paragraph._p.pPr
     num_pr = props.find(qn("w:numPr")) if props is not None else None
     reference = num_pr.find(qn("w:numId")) if num_pr is not None else None
     if reference is None:
         return
+    num_id = reference.get(qn("w:val"))
     numbering = document.part.numbering_part.element
     instance = next((n for n in numbering.findall(qn("w:num"))
-                     if n.get(qn("w:numId")) == reference.get(qn("w:val"))), None)
+                     if n.get(qn("w:numId")) == num_id), None)
     if instance is None:
         raise ValueError("Onbevestigde KOV doelnummering")
     for override in instance.findall(qn("w:lvlOverride")):
         if override.get(qn("w:ilvl")) == "0":
             start = override.find(qn("w:startOverride"))
-            if start is not None and start.get(qn("w:val")) != str(number):
+            if num_id not in next_by_instance and start is not None and start.get(qn("w:val")) != str(number):
                 raise ValueError("KOV doelnummering wijkt af van expliciete herstart")
+    # A startOverride belongs to the list instance, not to every paragraph.
+    # Keep continuation state in parse_kov_docx so documents cannot affect each other.
+    level_ref = num_pr.find(qn("w:ilvl"))
+    abstract_ref = instance.find(qn("w:abstractNumId"))
+    abstract = next((a for a in numbering.findall(qn("w:abstractNum"))
+                     if abstract_ref is not None and a.get(qn("w:abstractNumId")) == abstract_ref.get(qn("w:val"))), None)
+    level = next((l for l in abstract.findall(qn("w:lvl"))
+                  if l.get(qn("w:ilvl")) == "0"), None) if abstract is not None else None
+    values = {child.tag: child.get(qn("w:val")) for child in level} if level is not None else {}
+    if (level_ref is not None and level_ref.get(qn("w:val")) != "0"
+            or values.get(qn("w:numFmt")) != "decimal"
+            or clean_text(values.get(qn("w:lvlText"))) != "LPD %1"
+            or any(o.find(qn("w:lvl")) is not None for o in instance.findall(qn("w:lvlOverride")))):
+        raise ValueError("Onbevestigde KOV doelnummering")
+    if num_id in next_by_instance and next_by_instance[num_id] != number:
+        raise ValueError("KOV doelnummering wijkt af van lijstvoortzetting")
+    next_by_instance[num_id] = number + 1
 
 
 def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
@@ -640,6 +660,7 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
     records: list[GoalRecord] = []
     section = ""
     lpd_number = 0
+    next_by_instance: dict[str, int] = {}
     for paragraph in document.paragraphs:
         text = clean_text(paragraph.text)
         if paragraph.style.name == "Heading 2" and text:
@@ -650,7 +671,7 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
         lpd_number += 1
         extra = paragraph.style.name == "Doel: Extra"
         if not extra:
-            _check_kov_explicit_restart(document, paragraph, lpd_number)
+            _check_kov_explicit_restart(document, paragraph, lpd_number, next_by_instance)
         label = _kov_extra_label(document, paragraph, lpd_number) if extra else f"LPD {lpd_number}"
         records.append(
             GoalRecord(
