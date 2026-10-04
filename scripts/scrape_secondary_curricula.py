@@ -36,6 +36,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 from docx import Document
+from docx.oxml.ns import qn
 from pypdf import PdfReader
 
 from secondary_record_schema import normalize_curriculum_record
@@ -177,6 +178,7 @@ class GoalRecord:
     minimumdoel_codes: list[str] = field(default_factory=list)
     sleutelcompetentie_nr: str = ""
     sleutelcompetentie: str = ""
+    doel_type: str = ""
 
     def key(self) -> tuple[str, ...]:
         return (
@@ -564,6 +566,63 @@ def _lpds_from_reference(text: str) -> list[int]:
     return values
 
 
+def _kov_extra_label(document: Any, paragraph: Any, number: int) -> str:
+    """Accept the evidenced level-zero decimal LPD-plus layout, never guess it."""
+    num_id = None
+    style = paragraph.style
+    properties = [paragraph._p.pPr]
+    while style is not None:
+        properties.append(style.element.pPr)
+        style = style.base_style
+    for props in properties:
+        if props is None:
+            continue
+        num_pr = props.find(qn("w:numPr"))
+        if num_pr is None:
+            continue
+        level = num_pr.find(qn("w:ilvl"))
+        if level is not None and level.get(qn("w:val")) != "0":
+            raise ValueError("Onbevestigde KOV extra-doelnummering: niet niveau nul")
+        reference = num_pr.find(qn("w:numId"))
+        if reference is not None:
+            num_id = reference.get(qn("w:val"))
+            break
+    numbering = document.part.numbering_part.element
+    instance = next((n for n in numbering.findall(qn("w:num"))
+                     if n.get(qn("w:numId")) == num_id), None)
+    if instance is None or instance.findall(qn("w:lvlOverride")):
+        raise ValueError("Onbevestigde KOV extra-doelnummering")
+    abstract_id = instance.find(qn("w:abstractNumId"))
+    abstract = next((a for a in numbering.findall(qn("w:abstractNum"))
+                     if abstract_id is not None and a.get(qn("w:abstractNumId")) == abstract_id.get(qn("w:val"))), None)
+    level = next((l for l in abstract.findall(qn("w:lvl"))
+                  if l.get(qn("w:ilvl")) == "0"), None) if abstract is not None else None
+    values = {child.tag: child.get(qn("w:val")) for child in level} if level is not None else {}
+    if (values.get(qn("w:numFmt")) != "decimal"
+            or clean_text(values.get(qn("w:lvlText"))) != "LPD %1 +"
+            or values.get(qn("w:start")) != str(number)):
+        raise ValueError("Onbevestigde KOV extra-doelnummering: start of label wijkt af")
+    return f"LPD {number} +"
+
+
+def _check_kov_explicit_restart(document: Any, paragraph: Any, number: int) -> None:
+    props = paragraph._p.pPr
+    num_pr = props.find(qn("w:numPr")) if props is not None else None
+    reference = num_pr.find(qn("w:numId")) if num_pr is not None else None
+    if reference is None:
+        return
+    numbering = document.part.numbering_part.element
+    instance = next((n for n in numbering.findall(qn("w:num"))
+                     if n.get(qn("w:numId")) == reference.get(qn("w:val"))), None)
+    if instance is None:
+        raise ValueError("Onbevestigde KOV doelnummering")
+    for override in instance.findall(qn("w:lvlOverride")):
+        if override.get(qn("w:ilvl")) == "0":
+            start = override.find(qn("w:startOverride"))
+            if start is not None and start.get(qn("w:val")) != str(number):
+                raise ValueError("KOV doelnummering wijkt af van expliciete herstart")
+
+
 def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
     document = Document(BytesIO(payload))
     subject_code = urlparse(source.page_url).path.strip("/").split("/")[0]
@@ -572,11 +631,11 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
         if paragraph.style.name != "MD + SMD + BK":
             continue
         text = clean_text(paragraph.text)
-        code_match = re.match(r"(?:MD|SMD)\s+([A-Z0-9.]+)", text, re.I)
+        code_match = re.match(r"(?:MD|SMD)\s+([A-Z0-9]+(?:\.\s*[A-Z0-9]+)+)\b", text, re.I)
         if not code_match:
             continue
         for number in _lpds_from_reference(text):
-            minimum_by_lpd.setdefault(number, []).append(code_match.group(1))
+            minimum_by_lpd.setdefault(number, []).append(re.sub(r"\s+", "", code_match.group(1)))
 
     records: list[GoalRecord] = []
     section = ""
@@ -586,12 +645,16 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
         if paragraph.style.name == "Heading 2" and text:
             section = text
             continue
-        if paragraph.style.name != "Doel" or not text:
+        if paragraph.style.name not in {"Doel", "Doel: Extra"} or not text:
             continue
         lpd_number += 1
+        extra = paragraph.style.name == "Doel: Extra"
+        if not extra:
+            _check_kov_explicit_restart(document, paragraph, lpd_number)
+        label = _kov_extra_label(document, paragraph, lpd_number) if extra else f"LPD {lpd_number}"
         records.append(
             GoalRecord(
-                code=f"{subject_code} LPD {lpd_number}",
+                code=f"{subject_code} {label}",
                 titel=text,
                 discipline=source.discipline,
                 subdomein=section,
@@ -606,7 +669,8 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
                 netwerk=source.provider,
                 bron_url=source.url,
                 bron_titel=source.title,
-                minimumdoel_codes=minimum_by_lpd.get(lpd_number, []),
+                minimumdoel_codes=[] if extra else minimum_by_lpd.get(lpd_number, []),
+                doel_type="extra" if extra else "",
             )
         )
     return records
