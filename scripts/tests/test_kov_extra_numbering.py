@@ -57,21 +57,24 @@ class KovExtraNumberingTests(unittest.TestCase):
         ref=OxmlElement('w:numId');ref.set(qn('w:val'),'701');n.append(ref);props.append(n)
         with self.assertRaisesRegex(ValueError,'herstart'):self.parse(d)
 
-    def regular_document(self, instances):
+    def regular_document(self, instances, base_start="1"):
         d = Document()
         d.styles.add_style('Doel', 1)
         abstract = OxmlElement('w:abstractNum')
         abstract.set(qn('w:abstractNumId'), '800')
         level = OxmlElement('w:lvl'); level.set(qn('w:ilvl'), '0')
-        for tag, value in [('start', '1'), ('numFmt', 'decimal'), ('lvlText', 'LPD %1')]:
-            element = OxmlElement('w:' + tag); element.set(qn('w:val'), value); level.append(element)
+        for tag, value in [('start', base_start), ('numFmt', 'decimal'), ('lvlText', 'LPD %1')]:
+            if value is not None:
+                element = OxmlElement('w:' + tag); element.set(qn('w:val'), value); level.append(element)
         abstract.append(level); d.part.numbering_part.element.append(abstract)
         for num_id, start in dict(instances).items():
             num = OxmlElement('w:num'); num.set(qn('w:numId'), str(num_id))
             ref = OxmlElement('w:abstractNumId'); ref.set(qn('w:val'), '800'); num.append(ref)
-            override = OxmlElement('w:lvlOverride'); override.set(qn('w:ilvl'), '0')
-            value = OxmlElement('w:startOverride'); value.set(qn('w:val'), str(start)); override.append(value)
-            num.append(override); d.part.numbering_part.element.append(num)
+            if start is not None:
+                override = OxmlElement('w:lvlOverride'); override.set(qn('w:ilvl'), '0')
+                value = OxmlElement('w:startOverride'); value.set(qn('w:val'), str(start)); override.append(value)
+                num.append(override)
+            d.part.numbering_part.element.append(num)
         for num_id, _ in instances:
             paragraph = d.add_paragraph('De leerlingen lezen.', style='Doel')
             props = paragraph._p.get_or_add_pPr(); numbering = OxmlElement('w:numPr')
@@ -118,3 +121,69 @@ class KovExtraNumberingTests(unittest.TestCase):
         document.paragraphs[0]._p.pPr.find(qn('w:numPr')).find(qn('w:ilvl')).set(qn('w:val'), '1')
         with self.assertRaisesRegex(ValueError, 'Onbevestigde'):
             self.parse(document)
+
+    def test_abstract_start_five_without_override_is_rejected(self):
+        with self.assertRaisesRegex(ValueError, 'startwaarde'):
+            self.parse(self.regular_document([(801, None)], base_start='5'))
+
+    def test_abstract_start_one_without_override_continues(self):
+        records = self.parse(self.regular_document([(801, None)] * 3))
+        self.assertEqual([r.code for r in records], [f'I-Test-a LPD {n}' for n in range(1, 4)])
+
+    def test_override_one_takes_precedence_over_abstract_five(self):
+        records = self.parse(self.regular_document([(801, 1)] * 2, base_start='5'))
+        self.assertEqual([r.code for r in records], ['I-Test-a LPD 1', 'I-Test-a LPD 2'])
+
+    def test_omitted_abstract_start_defaults_to_unsupported_zero(self):
+        with self.assertRaisesRegex(ValueError, 'effectieve startwaarde'):
+            self.parse(self.regular_document([(801, None)], base_start=None))
+        self.assertEqual(len(self.parse(self.regular_document([(801, 1)], base_start=None))), 1)
+
+    def test_invalid_abstract_start_metadata_is_rejected(self):
+        for value in ['', 'abc', '1.5']:
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'startmetadata'):
+                self.parse(self.regular_document([(801, None)], base_start=value))
+        document = self.regular_document([(801, None)])
+        abstract = next(a for a in document.part.numbering_part.element.findall(qn('w:abstractNum')) if a.get(qn('w:abstractNumId')) == '800')
+        del abstract.find(qn('w:lvl')).find(qn('w:start')).attrib[qn('w:val')]
+        with self.assertRaisesRegex(ValueError, 'startmetadata'):
+            self.parse(document)
+
+    def test_invalid_override_cannot_fall_back_to_abstract_start(self):
+        for value in ['', 'abc', '1.5']:
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'startmetadata'):
+                self.parse(self.regular_document([(801, value)]))
+        document = self.regular_document([(801, 1)])
+        num = next(n for n in document.part.numbering_part.element.findall(qn('w:num')) if n.get(qn('w:numId')) == '801')
+        del num.find(qn('w:lvlOverride')).find(qn('w:startOverride')).attrib[qn('w:val')]
+        with self.assertRaisesRegex(ValueError, 'startmetadata'):
+            self.parse(document)
+
+    def test_zero_and_negative_starts_are_outside_supported_sequence(self):
+        for value in ['0', '-1']:
+            with self.subTest(value=value), self.assertRaisesRegex(ValueError, 'startwaarde'):
+                self.parse(self.regular_document([(801, None)], base_start=value))
+
+    def test_level_override_without_start_uses_abstract_start(self):
+        document = self.regular_document([(801, 1)], base_start='5')
+        num = next(n for n in document.part.numbering_part.element.findall(qn('w:num')) if n.get(qn('w:numId')) == '801')
+        override = num.find(qn('w:lvlOverride'))
+        override.remove(override.find(qn('w:startOverride')))
+        with self.assertRaisesRegex(ValueError, 'effectieve startwaarde'):
+            self.parse(document)
+
+    def test_duplicate_start_definitions_are_rejected(self):
+        from copy import deepcopy
+        for location in ['abstract', 'override']:
+            with self.subTest(location=location):
+                document = self.regular_document([(801, None if location == 'abstract' else 1)])
+                numbering = document.part.numbering_part.element
+                if location == 'abstract':
+                    abstract = next(a for a in numbering.findall(qn('w:abstractNum')) if a.get(qn('w:abstractNumId')) == '800')
+                    parent = abstract.find(qn('w:lvl')); child = parent.find(qn('w:start'))
+                else:
+                    num = next(n for n in numbering.findall(qn('w:num')) if n.get(qn('w:numId')) == '801')
+                    parent = num.find(qn('w:lvlOverride')); child = parent.find(qn('w:startOverride'))
+                parent.append(deepcopy(child))
+                with self.assertRaisesRegex(ValueError, 'startmetadata'):
+                    self.parse(document)

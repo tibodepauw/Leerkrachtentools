@@ -843,5 +843,131 @@
         "sha256": "fca4ca86a8bf9a203e4c59cb1412177ec5cda216926a7aab57486a10d4292ada"
       }
     ]
+  },
+  "reviewEffectiveStartCorrection": {
+    "reviewedHead": "81653020293d3ae1f4026082437151691a415e6c",
+    "effectiveStartPriority": [
+      "startOverride",
+      "abstract w:start",
+      "OOXML omitted start = 0 (unsupported)"
+    ],
+    "firstUseOnly": true,
+    "documentLocalState": true,
+    "pythonTests": 89,
+    "realKovRecords": 13,
+    "correctedSecondaryRecords": 382,
+    "correctedSecondarySha256": "bba39c3494a486c2b36852cf044362089be52dece9da5373c8cc55262f775d7d",
+    "originalSourcesAndCorporaUnchanged": true,
+    "evidenceRoot": "/workspace/corpus-validation-2026-10-04/followup/review-start-2026-10-05",
+    "privateEvidence": [
+      {
+        "path": "evidence/analytics-browser-final.log",
+        "sha256": "47d36751b9f5af013ef20c95f7f978813b378037722e74d6e5bd0625295fd630"
+      },
+      {
+        "path": "evidence/audit-final.log",
+        "sha256": "6ef1d65eb9b8e9a0ae6ef0e00f14e7e7acd7ab4c56f77311345b0f266e6afeae"
+      },
+      {
+        "path": "evidence/build-final.log",
+        "sha256": "e0850287b24cf356e6ad4c59c430d1f8815d1effa3834dfd8df0e9116543c5ad"
+      },
+      {
+        "path": "evidence/client-browser-final.log",
+        "sha256": "ed6134b1e85653610afa857f5e30f041e8f11aab7d7ac4e5af80d02254af6f94"
+      },
+      {
+        "path": "evidence/corpus-summary.json",
+        "sha256": "7d0fce26096463e822c635636688f02559ebeebf49b23b6772afd6510ca0d0ac"
+      },
+      {
+        "path": "evidence/final-status.txt",
+        "sha256": "09cb63862e293d8ab7a66aeb201e871b035c739ef4ff43eca17a702875ace797"
+      },
+      {
+        "path": "evidence/http-results.json",
+        "sha256": "f5f5591586faa3aa885569bc1dbdcbb39337b92fdf170fa04925ed18c6e0271d"
+      },
+      {
+        "path": "evidence/http-server.log",
+        "sha256": "6b9bfa1ddccc329bdf29794481b151b3165caab35628f72c0ba7dca27a1ae5e4"
+      },
+      {
+        "path": "evidence/http.log",
+        "sha256": "06a3978d3ae6bed442c7ec7fa42caa3de307043417ac8840344337bee42964cc"
+      },
+      {
+        "path": "evidence/lint-final.log",
+        "sha256": "269f1dd6ce0beb0c634631bac8a0b7b6bc7c033cfcc0c0271552f4f46e6f92a2"
+      },
+      {
+        "path": "evidence/loader-results.json",
+        "sha256": "49642c46130deb8b786445868fd76b75e99ba7b747225f39beda934229e8d5f8"
+      },
+      {
+        "path": "evidence/loader.log",
+        "sha256": "8b99006406af873bd585e3c8cd7c7522524372091a3f95b959071885911cd746"
+      },
+      {
+        "path": "evidence/node-tests-final.log",
+        "sha256": "cf640d101a5886e2b07fecb2a3cd9eb37632a438f2d1b2e7fcf90d1b1107fdb4"
+      },
+      {
+        "path": "evidence/npm-ci-final.log",
+        "sha256": "e56247616120ff7cd419e7bc3f9dbb4d84498c362c4d14ff14592f2835b60363"
+      },
+      {
+        "path": "evidence/ooxml-start-reference.html",
+        "sha256": "a97423b6a9fb64f6f70a7d16032cc098ea42cc1d863953c99e18e48727436058"
+      },
+      {
+        "path": "evidence/ooxml-start-reference.txt",
+        "sha256": "9a55fc40a19b50b30cb9d58843161a6519cdbbe592ece2c9ec5d267d90c10cb4"
+      },
+      {
+        "path": "evidence/preview-browser-final.log",
+        "sha256": "a9a257d1056f12f027c9f1b32c33de486229f5ca0ae0a00f83c3e0b053ec84d3"
+      },
+      {
+        "path": "evidence/python-tests.log",
+        "sha256": "841071ecd8813fdce3f6d52be84aade41b017430490109b5c56234f382ca33c1"
+      },
+      {
+        "path": "evidence/real-kov-assertions.json",
+        "sha256": "31dc5bba16cb9578b1ea3240fb77ab9155678bb0c076a9189550fdeb0c4d3054"
+      },
+      {
+        "path": "evidence/regeneration.log",
+        "sha256": "352b9a358d6de67a8e6fd0faf0396112fc23f1feaf9677373493bffc03b0c71a"
+      },
+      {
+        "path": "evidence/reproduction.log",
+        "sha256": "2f78c2d98644eeb0b0de2930f8f5f5f078b043b954bafc071e1889b8c67c4c71"
+      },
+      {
+        "path": "evidence/routes-results.json",
+        "sha256": "f24dbac0c146aafb42835fdf5e7dfe23bee3b0f6bff4da73f5cb553b73da43ed"
+      },
+      {
+        "path": "evidence/routes.log",
+        "sha256": "ed75a4294cb3c9650fc60308fb35304ea5b62db714af96bb1028b3b3d30e0bb2"
+      },
+      {
+        "path": "evidence/standalone-browser-final.log",
+        "sha256": "9aab74292289493dc6f8da7008856146c0d12d8b18028ec975ac4c8cafc3eebe"
+      },
+      {
+        "path": "evidence/standalone-final.log",
+        "sha256": "357a6b6e0118cedd2c36c157f3462c2ca8ea1a4ff6446faf7fb52962b7bca954"
+      },
+      {
+        "path": "evidence/typecheck-final.log",
+        "sha256": "e5031d6dc830039bf05939c2794e8c9adcfff437f1dc604f35ebfb6d3d8a390c"
+      },
+      {
+        "path": "evidence/typegen-final.log",
+        "sha256": "fca4ca86a8bf9a203e4c59cb1412177ec5cda216926a7aab57486a10d4292ada"
+      }
+    ]
   }
 }

@@ -1,3 +1,49 @@
+# Reviewcorrectie PR #37 — effectieve startwaarde (5 oktober 2026)
+
+Op head `81653020293d3ae1f4026082437151691a415e6c` is eerst een falende
+end-to-endregressie toegevoegd: één reguliere Doel-paragraaf met directe numId,
+niveau nul, decimal/LPD %1, abstracte start 5 en geen startOverride werd stil
+als LPD 1 geëxporteerd. De test verwacht een expliciete weigering en faalde vóór de fix.
+
+Bij eerste toepassing van een expliciete nummeringsinstantie geldt nu de concrete
+startOverride indien aanwezig, anders de abstracte w:start. De effectieve waarde
+moet overeenkomen met de ondersteunde doelvolgorde; afwijkingen worden geweigerd,
+zonder een code te exporteren. De bestaande controle eenmaal per instantie,
+documentlokale toestand en controle op voortzetting blijven behouden.
+
+Ontbrekende w:start betekent volgens OOXML **0**, niet 1; die start wordt expliciet
+geweigerd omdat de ondersteunde LPD-volgorde bij 1 begint. Een geldige override 1
+heeft voorrang op basisstart 5 of een ontbrekende basisstart. Een aanwezige start
+zonder w:val, niet-gehele waarde of dubbele startdefinitie wordt expliciet geweigerd;
+een ongeldige override valt nooit stil terug op de abstracte start. Niveauvervangingen
+en andere onbevestigde structuren blijven buiten de ondersteunde parsergrenzen.
+De bestaande bronbewezen verwerking van stijlgebonden reguliere doelen blijft behouden.
+
+Referentie: [OOXML start / StartNumberingValue](https://learn.microsoft.com/en-us/dotnet/api/documentformat.openxml.wordprocessing.startnumberingvalue?view=openxml-3.0.1):
+“If this element is omitted, then the starting value shall be zero (0).”
+Een kopie van de geraadpleegde referentie blijft bij het private bewijs.
+
+Validatie: **89 Python-tests** geslaagd, inclusief basisstart 1 met voortzetting,
+basisstart 5 zonder override (weigering), basisstart 5 met override 1,
+ontbrekende/ongeldige/dubbele metadata, override zonder start en alle eerdere
+voortzettings-, conflict-, extra-doel- en exportcontextregressies.
+Het echte KOV-document levert opnieuw 13 doelen: LPD 6 +, reguliere LPD 7–13,
+minimumdoelkoppelingen en exportcontext behouden. De opnieuw afgeleide steekproef
+blijft 369 GO! + 13 KOV = 382 records met exact dezelfde SHA-256
+`bba39c3494a486c2b36852cf044362089be52dece9da5373c8cc55262f775d7d`.
+Oorspronkelijke bron- en corpushashes zijn gecontroleerd en ongewijzigd.
+
+Echte loader-/handler-/HTTPcontroles zijn herhaald zonder fixtures. Volledige npm ci
+met scripts, Node 22.23.3, typegen, lint, typecheck, Node-tests, build, standalone,
+lokale browsercontroles en actuele audit zijn geslaagd; logs staan bij het nieuwe bewijs.
+De bestaande braces-mitigatie en vervaldatum blijven ongewijzigd. Definitieve head
+en volledige GitHub-CI worden op de bijgewerkte draft-PR en in de oplevering vastgelegd.
+Bewijsroot: `/workspace/corpus-validation-2026-10-04/followup/review-start-2026-10-05/`;
+[observations.json](observations.json) bewaart de hashes. Geen bronnen/corpora gecommit.
+Eerdere dataset- en rechtenblokkades hieronder blijven gelden. Geen merge, release of deployment.
+
+---
+
 # Reviewcorrectie PR #37 — expliciete lijstherstart
 
 Review van head `268cabc59318efe4b421fe57b6dd33a6f1f8c2b6` bevestigde een regressie:

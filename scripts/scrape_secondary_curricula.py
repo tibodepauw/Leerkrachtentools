@@ -619,11 +619,6 @@ def _check_kov_explicit_restart(
                      if n.get(qn("w:numId")) == num_id), None)
     if instance is None:
         raise ValueError("Onbevestigde KOV doelnummering")
-    for override in instance.findall(qn("w:lvlOverride")):
-        if override.get(qn("w:ilvl")) == "0":
-            start = override.find(qn("w:startOverride"))
-            if num_id not in next_by_instance and start is not None and start.get(qn("w:val")) != str(number):
-                raise ValueError("KOV doelnummering wijkt af van expliciete herstart")
     # A startOverride belongs to the list instance, not to every paragraph.
     # Keep continuation state in parse_kov_docx so documents cannot affect each other.
     level_ref = num_pr.find(qn("w:ilvl"))
@@ -633,6 +628,24 @@ def _check_kov_explicit_restart(
     level = next((l for l in abstract.findall(qn("w:lvl"))
                   if l.get(qn("w:ilvl")) == "0"), None) if abstract is not None else None
     values = {child.tag: child.get(qn("w:val")) for child in level} if level is not None else {}
+    if num_id not in next_by_instance:
+        overrides = [o for o in instance.findall(qn("w:lvlOverride"))
+                     if o.get(qn("w:ilvl")) == "0"]
+        starts = [start for override in overrides
+                  for start in override.findall(qn("w:startOverride"))]
+        base_starts = level.findall(qn("w:start")) if level is not None else []
+        if len(overrides) > 1 or len(starts) > 1 or (not starts and len(base_starts) > 1):
+            raise ValueError("Onbevestigde KOV startmetadata: dubbele startdefinitie")
+        effective_start = starts[0] if starts else (base_starts[0] if base_starts else None)
+        # OOXML defaults an omitted w:start to zero, not one. Zero-based lists
+        # are outside the supported LPD sequence and must never become LPD 1.
+        raw_start = effective_start.get(qn("w:val")) if effective_start is not None else "0"
+        if raw_start is None or re.fullmatch(r"[+-]?[0-9]+", raw_start) is None:
+            raise ValueError("Onbevestigde KOV startmetadata: ongeldige startwaarde")
+        if int(raw_start) != number:
+            if starts:
+                raise ValueError("KOV doelnummering wijkt af van expliciete herstart")
+            raise ValueError("KOV doelnummering wijkt af van effectieve startwaarde")
     if (level_ref is not None and level_ref.get(qn("w:val")) != "0"
             or values.get(qn("w:numFmt")) != "decimal"
             or clean_text(values.get(qn("w:lvlText"))) != "LPD %1"
