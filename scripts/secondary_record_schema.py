@@ -110,7 +110,7 @@ def _record_as_dict(record: Any) -> dict[str, Any]:
     raise TypeError(f"Onverwacht recordtype: {type(record)!r}")
 
 
-def normalize_curriculum_record(record: Any) -> dict[str, str]:
+def normalize_curriculum_record(record: Any) -> dict[str, Any]:
     data = _record_as_dict(record)
     graad = normalize_graad(data.get("graad", ""))
     if not graad and data.get("leerjaar_route"):
@@ -124,7 +124,7 @@ def normalize_curriculum_record(record: Any) -> dict[str, str]:
         route = str(data.get("leerjaar_route", ""))
         finaliteit = normalize_finaliteit(route, route)
 
-    return {
+    normalized: dict[str, Any] = {
         "code": clean_text(data.get("code", "")),
         "discipline": clean_text(data.get("discipline", "")),
         "graad": graad,
@@ -135,6 +135,15 @@ def normalize_curriculum_record(record: Any) -> dict[str, str]:
         "onderwijsniveau": "SECUNDAIR",
         "bron_url": clean_text(data.get("bron_url", "")),
     }
+    for field in ("subdomein", "stroom", "leerjaar_route", "bron_titel",
+                  "sleutelcompetentie_nr", "sleutelcompetentie", "doel_type"):
+        value = clean_text(data.get(field, ""))
+        if value:
+            normalized[field] = value
+    links = data.get("minimumdoel_codes")
+    if isinstance(links, list):
+        normalized["minimumdoel_codes"] = [clean_text(value) for value in links if clean_text(value)]
+    return normalized
 
 
 def normalize_minimum_goal_record(

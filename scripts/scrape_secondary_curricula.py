@@ -36,6 +36,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 from docx import Document
+from docx.oxml.ns import qn
 from pypdf import PdfReader
 
 from secondary_record_schema import normalize_curriculum_record
@@ -177,6 +178,7 @@ class GoalRecord:
     minimumdoel_codes: list[str] = field(default_factory=list)
     sleutelcompetentie_nr: str = ""
     sleutelcompetentie: str = ""
+    doel_type: str = ""
 
     def key(self) -> tuple[str, ...]:
         return (
@@ -564,6 +566,96 @@ def _lpds_from_reference(text: str) -> list[int]:
     return values
 
 
+def _kov_extra_label(document: Any, paragraph: Any, number: int) -> str:
+    """Accept the evidenced level-zero decimal LPD-plus layout, never guess it."""
+    num_id = None
+    style = paragraph.style
+    properties = [paragraph._p.pPr]
+    while style is not None:
+        properties.append(style.element.pPr)
+        style = style.base_style
+    for props in properties:
+        if props is None:
+            continue
+        num_pr = props.find(qn("w:numPr"))
+        if num_pr is None:
+            continue
+        level = num_pr.find(qn("w:ilvl"))
+        if level is not None and level.get(qn("w:val")) != "0":
+            raise ValueError("Onbevestigde KOV extra-doelnummering: niet niveau nul")
+        reference = num_pr.find(qn("w:numId"))
+        if reference is not None:
+            num_id = reference.get(qn("w:val"))
+            break
+    numbering = document.part.numbering_part.element
+    instance = next((n for n in numbering.findall(qn("w:num"))
+                     if n.get(qn("w:numId")) == num_id), None)
+    if instance is None or instance.findall(qn("w:lvlOverride")):
+        raise ValueError("Onbevestigde KOV extra-doelnummering")
+    abstract_id = instance.find(qn("w:abstractNumId"))
+    abstract = next((a for a in numbering.findall(qn("w:abstractNum"))
+                     if abstract_id is not None and a.get(qn("w:abstractNumId")) == abstract_id.get(qn("w:val"))), None)
+    level = next((l for l in abstract.findall(qn("w:lvl"))
+                  if l.get(qn("w:ilvl")) == "0"), None) if abstract is not None else None
+    values = {child.tag: child.get(qn("w:val")) for child in level} if level is not None else {}
+    if (values.get(qn("w:numFmt")) != "decimal"
+            or clean_text(values.get(qn("w:lvlText"))) != "LPD %1 +"
+            or values.get(qn("w:start")) != str(number)):
+        raise ValueError("Onbevestigde KOV extra-doelnummering: start of label wijkt af")
+    return f"LPD {number} +"
+
+
+def _check_kov_explicit_restart(
+    document: Any, paragraph: Any, number: int, next_by_instance: dict[str, int]
+) -> None:
+    props = paragraph._p.pPr
+    num_pr = props.find(qn("w:numPr")) if props is not None else None
+    reference = num_pr.find(qn("w:numId")) if num_pr is not None else None
+    if reference is None:
+        return
+    num_id = reference.get(qn("w:val"))
+    numbering = document.part.numbering_part.element
+    instance = next((n for n in numbering.findall(qn("w:num"))
+                     if n.get(qn("w:numId")) == num_id), None)
+    if instance is None:
+        raise ValueError("Onbevestigde KOV doelnummering")
+    # A startOverride belongs to the list instance, not to every paragraph.
+    # Keep continuation state in parse_kov_docx so documents cannot affect each other.
+    level_ref = num_pr.find(qn("w:ilvl"))
+    abstract_ref = instance.find(qn("w:abstractNumId"))
+    abstract = next((a for a in numbering.findall(qn("w:abstractNum"))
+                     if abstract_ref is not None and a.get(qn("w:abstractNumId")) == abstract_ref.get(qn("w:val"))), None)
+    level = next((l for l in abstract.findall(qn("w:lvl"))
+                  if l.get(qn("w:ilvl")) == "0"), None) if abstract is not None else None
+    values = {child.tag: child.get(qn("w:val")) for child in level} if level is not None else {}
+    if num_id not in next_by_instance:
+        overrides = [o for o in instance.findall(qn("w:lvlOverride"))
+                     if o.get(qn("w:ilvl")) == "0"]
+        starts = [start for override in overrides
+                  for start in override.findall(qn("w:startOverride"))]
+        base_starts = level.findall(qn("w:start")) if level is not None else []
+        if len(overrides) > 1 or len(starts) > 1 or (not starts and len(base_starts) > 1):
+            raise ValueError("Onbevestigde KOV startmetadata: dubbele startdefinitie")
+        effective_start = starts[0] if starts else (base_starts[0] if base_starts else None)
+        # OOXML defaults an omitted w:start to zero, not one. Zero-based lists
+        # are outside the supported LPD sequence and must never become LPD 1.
+        raw_start = effective_start.get(qn("w:val")) if effective_start is not None else "0"
+        if raw_start is None or re.fullmatch(r"[+-]?[0-9]+", raw_start) is None:
+            raise ValueError("Onbevestigde KOV startmetadata: ongeldige startwaarde")
+        if int(raw_start) != number:
+            if starts:
+                raise ValueError("KOV doelnummering wijkt af van expliciete herstart")
+            raise ValueError("KOV doelnummering wijkt af van effectieve startwaarde")
+    if (level_ref is not None and level_ref.get(qn("w:val")) != "0"
+            or values.get(qn("w:numFmt")) != "decimal"
+            or clean_text(values.get(qn("w:lvlText"))) != "LPD %1"
+            or any(o.find(qn("w:lvl")) is not None for o in instance.findall(qn("w:lvlOverride")))):
+        raise ValueError("Onbevestigde KOV doelnummering")
+    if num_id in next_by_instance and next_by_instance[num_id] != number:
+        raise ValueError("KOV doelnummering wijkt af van lijstvoortzetting")
+    next_by_instance[num_id] = number + 1
+
+
 def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
     document = Document(BytesIO(payload))
     subject_code = urlparse(source.page_url).path.strip("/").split("/")[0]
@@ -572,26 +664,31 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
         if paragraph.style.name != "MD + SMD + BK":
             continue
         text = clean_text(paragraph.text)
-        code_match = re.match(r"(?:MD|SMD)\s+([A-Z0-9.]+)", text, re.I)
+        code_match = re.match(r"(?:MD|SMD)\s+([A-Z0-9]+(?:\.\s*[A-Z0-9]+)+)\b", text, re.I)
         if not code_match:
             continue
         for number in _lpds_from_reference(text):
-            minimum_by_lpd.setdefault(number, []).append(code_match.group(1))
+            minimum_by_lpd.setdefault(number, []).append(re.sub(r"\s+", "", code_match.group(1)))
 
     records: list[GoalRecord] = []
     section = ""
     lpd_number = 0
+    next_by_instance: dict[str, int] = {}
     for paragraph in document.paragraphs:
         text = clean_text(paragraph.text)
         if paragraph.style.name == "Heading 2" and text:
             section = text
             continue
-        if paragraph.style.name != "Doel" or not text:
+        if paragraph.style.name not in {"Doel", "Doel: Extra"} or not text:
             continue
         lpd_number += 1
+        extra = paragraph.style.name == "Doel: Extra"
+        if not extra:
+            _check_kov_explicit_restart(document, paragraph, lpd_number, next_by_instance)
+        label = _kov_extra_label(document, paragraph, lpd_number) if extra else f"LPD {lpd_number}"
         records.append(
             GoalRecord(
-                code=f"{subject_code} LPD {lpd_number}",
+                code=f"{subject_code} {label}",
                 titel=text,
                 discipline=source.discipline,
                 subdomein=section,
@@ -606,7 +703,8 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
                 netwerk=source.provider,
                 bron_url=source.url,
                 bron_titel=source.title,
-                minimumdoel_codes=minimum_by_lpd.get(lpd_number, []),
+                minimumdoel_codes=[] if extra else minimum_by_lpd.get(lpd_number, []),
+                doel_type="extra" if extra else "",
             )
         )
     return records
