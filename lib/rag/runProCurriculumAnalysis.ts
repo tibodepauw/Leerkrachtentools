@@ -86,6 +86,7 @@ export async function runProCurriculumAnalysis({
         mock: {
           picks: [
             {
+              nr: 1,
               code: "UNUSED",
               why: "unused",
               lessonPhase: "Verwerking",
@@ -134,7 +135,7 @@ export async function runProCurriculumAnalysis({
       return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.quota, fallbackLimit);
     }
 
-    const grounded = groundProPicks(retrieved, tracked.result.data.picks);
+    const grounded = groundProPicks(retrieved, tracked.result.data.picks, kind);
     if (grounded.length === 0) {
       return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.ungrounded, fallbackLimit);
     }

@@ -17,7 +17,9 @@ De RAG-zoekcache was nog ongescopeerd in sessionStorage opgeslagen, ook in gedee
 | --- | --- | --- |
 | `SERVER_AI_DAILY_CALL_LIMIT` | 500 | Gezamenlijk maximum van werkelijke server-key AI-pogingen per UTC-dag: gewone analyses, queryherschrijving en B2B samen. Iedere fallbackpoging telt apart. |
 | `DISCOVERY_DAILY_CALL_LIMIT` | 1000 | Maximum nieuwe Google Discovery-zoekaanroepen per UTC-dag. Cachehits en gelijktijdig samengevoegde identieke queries tellen niet opnieuw. |
+| `DISCOVERY_USER_DAILY_CALL_LIMIT` | 100 | Maximum nieuwe Discovery-zoekaanroepen per gebruiker per UTC-dag, binnen het totaal. De teller hangt aan een HMAC van het e-mailadres en overleeft accountverwijdering tot zeven dagen. Zonder geldige identiteit gaat er geen aanroep naar buiten; lokaal zoeken blijft werken. |
 | `BREVO_DAILY_EMAIL_LIMIT` | 500 | Login- en feedbackmailpogingen samen, ongeacht account/ontvanger. Een onzekere of mislukte verzending telt mee; bij uitputting wordt vóór fetch gestopt. |
+| (deel van `BREVO_DAILY_EMAIL_LIMIT`) | 20 % | Naar boven afgerond en minstens 1 mail: alleen loginmail naar een adres met bestaand account mag dit deel gebruiken. Eerste logins en feedback stoppen bij de rest. Geen extra budget boven de limiet. |
 | `ORG_AI_DAILY_LIMIT` / `ORG_AI_GLOBAL_DAILY_LIMIT` | 100 / 500 | Bestaande aanvullende B2B-analysegrenzen blijven gelden. |
 
 De nieuwe limieten staan in een gedeelde SQLite-tabel met een atomaire immediate-transactie; herstart en accountverwijdering resetten ze niet. De tabel bewaart alleen dienst, UTC-dag en aantal, maximaal zeven dagen historie plus de huidige dag. Nul, lege of ongeldige configuratie schakelt de betreffende externe dienst uit. Mislukte/afgebroken aanroepen worden niet terugbetaald. Een nieuwe limiet verhoogt geen bestaande gebruikers- of organisatiequota.

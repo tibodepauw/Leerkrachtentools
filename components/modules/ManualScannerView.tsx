@@ -19,7 +19,9 @@ import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparation
 import {
   isGeminiDirectManualFile,
   isManualScannerFile,
-  LESSON_DOCUMENT_MAX_BYTES,
+  MANUAL_SCANNER_MAX_BYTES,
+  MANUAL_SCANNER_MAX_TEXT_CHARS,
+  manualScannerMediaType,
   MANUAL_SCANNER_ACCEPT,
   MANUAL_SCANNER_FORMATS_LABEL,
   MANUAL_SCANNER_UPLOAD_HELPER,
@@ -28,7 +30,7 @@ import { useLessonStore } from "@/stores/useLessonStore";
 import type { ManualExtraction } from "@/types";
 import { captureStorageSession } from "@/lib/storage/userStorageScope";
 
-const MAX_FILE_BYTES = LESSON_DOCUMENT_MAX_BYTES;
+const MAX_FILE_BYTES = MANUAL_SCANNER_MAX_BYTES;
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -132,22 +134,30 @@ function ManualScannerContent() {
     }
 
     if (file.size > MAX_FILE_BYTES) {
-      setUploadError("Het bestand mag maximaal 8 MB zijn.");
+      setUploadError("Het bestand mag maximaal 6 MB zijn.");
       return;
     }
 
     try {
       if (isGeminiDirectManualFile(file)) {
-        const dataUrl = await readFileAsDataUrl(file);
-        const base64 = dataUrl.includes(",") ? dataUrl.split(",")[1] : dataUrl;
-        const nextMediaType = file.type || "application/octet-stream";
-        const nextContent =
-          file.type.startsWith("text/") ||
-          file.name.endsWith(".txt") ||
-          file.name.endsWith(".md") ||
-          file.name.endsWith(".csv")
-            ? await file.text()
-            : content;
+        const directMediaType = manualScannerMediaType(file);
+        const isText = directMediaType === "text/plain";
+        const nextContent = isText ? await file.text() : content;
+        if (isText && !nextContent.trim()) {
+          setUploadError("Dit tekstbestand is leeg.");
+          return;
+        }
+        if (isText && nextContent.length > MANUAL_SCANNER_MAX_TEXT_CHARS) {
+          setUploadError(
+            `Dit tekstbestand bevat te veel tekst (maximaal ${MANUAL_SCANNER_MAX_TEXT_CHARS} tekens).`,
+          );
+          return;
+        }
+        // Platte tekst gaat alleen als tekst mee, niet nog eens als bijlage.
+        const base64 = isText
+          ? ""
+          : (await readFileAsDataUrl(file)).split(",")[1] ?? "";
+        const nextMediaType = isText ? "" : (directMediaType ?? "");
 
         session.assertCurrent();
         setFileName(file.name);

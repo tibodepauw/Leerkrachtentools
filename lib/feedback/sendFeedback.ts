@@ -7,6 +7,7 @@ import {
   feedbackRecipientEmail,
   normalizeFeedbackKind,
   normalizeFeedbackMessage,
+  normalizeFeedbackModule,
 } from "@/lib/feedback/feedback";
 
 export async function sendFeedbackEmail({
@@ -19,7 +20,7 @@ export async function sendFeedbackEmail({
   fromEmail?: string;
   kind?: unknown;
   message: string;
-  activeModule?: string;
+  activeModule?: unknown;
   anonymous?: boolean;
 }) {
   if (!isBrevoConfigured()) {
@@ -35,9 +36,7 @@ export async function sendFeedbackEmail({
   const senderLine = anonymous
     ? "Van: Anoniem"
     : `Van: ${fromEmail?.trim() || "Onbekend"}`;
-  const moduleLine = activeModule?.trim()
-    ? `Actieve module: ${activeModule.trim()}`
-    : "Actieve module: onbekend";
+  const moduleLine = `Actieve module: ${normalizeFeedbackModule(activeModule)}`;
 
   const text = [
     `Nieuwe ${kindLabel.toLowerCase()} via Leerkrachtentools`,
@@ -64,6 +63,7 @@ export async function sendFeedbackEmail({
     subject: `[Leerkrachtentools] ${kindLabel}${anonymous ? " (anoniem)" : ""} van ${subjectSender}`,
     text,
     html,
+    mailClass: "feedback",
   });
 
   return { recipient };

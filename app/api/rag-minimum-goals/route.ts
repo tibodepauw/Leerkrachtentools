@@ -4,6 +4,7 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { aiBudgetSubjectFromEmail } from "@/lib/auth/aiBudgetIdentity";
 import { requireModuleAccess } from "@/lib/auth/moduleRouteGuard";
 import { approvedTierResponse } from "@/lib/ai/serverAccess";
 import { searchDiscoveryEngine } from "@/lib/rag/discoveryEngine";
@@ -26,7 +27,7 @@ import { publicErrorMessage } from "@/lib/http/clientError";
 import { resolveTrackedRagSearchQuery } from "@/lib/rag/ragQueryAccess";
 import { readJsonBody } from "@/lib/http/requestBody";
 import { withRequestConcurrency } from "@/lib/http/rateLimit";
-import { isValidRagTargetContext } from "@/lib/rag/requestValidation";
+import { isValidRagTargetContext, isValidRagBody } from "@/lib/rag/requestValidation";
 import { runProCurriculumAnalysis } from "@/lib/rag/runProCurriculumAnalysis";
 import {
   CURRICULUM_PRO_RETRIEVAL_N,
@@ -89,7 +90,9 @@ export async function POST(request: Request) {
   if (moduleDenied) return moduleDenied;
 
   try {
-    const body = (await readJsonBody(request, 64_000)) as {
+    const raw = await readJsonBody(request, 64_000);
+    if (!isValidRagBody(raw)) return NextResponse.json({ error: "De zoekopdracht bevat ongeldige gegevens." }, { status: 400 });
+    const body = raw as {
       limit?: unknown;
       goal?: string;
       educationLevel?: EducationLevelFilter;
@@ -166,6 +169,11 @@ export async function POST(request: Request) {
 
     let discoveryCandidates: Array<CurriculumSearchResult & { score: number }> =
       [];
+    // No usable identity gives an empty subject, which Discovery refuses (local results remain).
+    const budgetSubject =
+      typeof session.email === "string" && session.email
+        ? aiBudgetSubjectFromEmail(session.email)
+        : "";
     try {
       const discovery = await withRequestConcurrency({
         scope: "rag-search",
@@ -176,6 +184,7 @@ export async function POST(request: Request) {
             query: searchQuery,
             network: "ALL",
             pageSize: 16,
+            budgetSubject,
           }),
       });
 
@@ -267,6 +276,7 @@ export async function POST(request: Request) {
       fallbackErrors: [],
     });
   } catch (error) {
+    if (error instanceof SyntaxError) return NextResponse.json({ error: "Ongeldige JSON." }, { status: 400 });
     return NextResponse.json(
       {
         error: publicErrorMessage(

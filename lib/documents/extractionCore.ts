@@ -2,6 +2,9 @@ import "server-only";
 
 import { createInflateRaw } from "node:zlib";
 import JSZip from "jszip";
+import { DocumentUserError } from "@/lib/documents/documentErrors";
+import { decodeXmlText } from "@/lib/documents/xmlText";
+import { MAX_LESSON_TEXT_CHARS } from "@/lib/documents/supportedFormats";
 import mammoth from "mammoth";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -15,21 +18,70 @@ export const MAX_ARCHIVE_ENTRY_BYTES = 20 * 1024 * 1024;
 export const MAX_ARCHIVE_TOTAL_BYTES = 50 * 1024 * 1024;
 export const MAX_UNZIP_MS = 8_000;
 export const MAX_ZIP_INFLATION_RATIO = 100;
-const MAX_EXTRACTED_TEXT_CHARS = 500_000;
+const MAX_EXTRACTED_TEXT_CHARS = MAX_LESSON_TEXT_CHARS;
 
 function normalizeText(value: string) {
   return value.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+const RTF_HIDDEN_DESTINATIONS = new Set([
+  "fonttbl", "colortbl", "stylesheet", "info", "pict", "object", "header",
+  "headerl", "headerr", "headerf", "footer", "footerl", "footerr", "footerf",
+]);
+const RTF_SYMBOLS: Record<string, string> = {
+  par: "\n", line: "\n", sect: "\n", page: "\n", row: "\n", tab: "\t", cell: "\t",
+  emdash: "\u2014", endash: "\u2013", bullet: "\u2022", lquote: "\u2018",
+  rquote: "\u2019", ldblquote: "\u201C", rdblquote: "\u201D",
+};
+
+/** RTF is 7-bits; ruwe hoge bytes zijn UTF-8 bij moderne tools, anders cp1252. */
+function decodeRtfBytes(buffer: Buffer) {
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(buffer); }
+  catch { return new TextDecoder("windows-1252").decode(buffer); }
+}
+
 function stripRtf(content: string) {
-  return normalizeText(
-    content
-      .replace(/\\par[d]?/gi, "\n")
-      .replace(/\\'[0-9a-f]{2}/gi, " ")
-      .replace(/\\[a-z]+\d*(?:\s)?/gi, " ")
-      .replace(/[{}]/g, "")
-      .replace(/[ \t]+\n/g, "\n"),
-  );
+  const decoder = new TextDecoder("windows-1252");
+  const stack: Array<{ uc: number; hidden: boolean }> = [];
+  let state = { uc: 1, hidden: false };
+  let fallback = 0;
+  const output: string[] = [];
+  const tokens = /\\(?:'[0-9a-f]{2}|[a-z]+-?\d* ?|[\s\S])|[{}]|[^\\{}]+/gi;
+  for (let match = tokens.exec(content); match; match = tokens.exec(content)) {
+    const token = match[0];
+    // Een groepsgrens beëindigt het overslaan van \u-fallbacktekens.
+    if (token === "{") {
+      if (stack.length >= 10_000) throw new Error("rtf depth");
+      fallback = 0; stack.push({ ...state }); continue;
+    }
+    if (token === "}") { fallback = 0; state = stack.pop() ?? { uc: 1, hidden: false }; continue; }
+    if (token[0] !== "\\") {
+      const text = token.replace(/[\r\n]/g, "");
+      const skip = Math.min(fallback, text.length);
+      fallback -= skip;
+      if (!state.hidden) output.push(text.slice(skip));
+      continue;
+    }
+    const control = /^\\([a-z]+)(-?\d+)?/i.exec(token);
+    if (control) {
+      const word = control[1].toLowerCase();
+      const value = Number(control[2]);
+      if (RTF_HIDDEN_DESTINATIONS.has(word)) state.hidden = true;
+      if (word === "uc" && Number.isInteger(value)) state.uc = Math.max(0, Math.min(32, value));
+      if (word === "bin" && Number.isSafeInteger(value) && value >= 0) tokens.lastIndex = Math.min(content.length, tokens.lastIndex + value);
+      if (state.hidden) continue;
+      if (word === "u" && Number.isInteger(value)) { output.push(String.fromCharCode(value & 0xffff)); fallback = state.uc; }
+      else if (RTF_SYMBOLS[word] !== undefined) { if (fallback > 0) fallback--; else output.push(RTF_SYMBOLS[word]); }
+      continue;
+    }
+    if (token === "\\*") { state.hidden = true; continue; }
+    if (fallback > 0) { fallback--; continue; }
+    if (state.hidden) continue;
+    if (token.startsWith("\\'")) output.push(decoder.decode(new Uint8Array([parseInt(token.slice(2), 16)])));
+    else if (["\\\\", "\\{", "\\}"].includes(token)) output.push(token[1]);
+    else if (token === "\\~") output.push(" ");
+  }
+  return normalizeText(output.join(""));
 }
 
 export function assertSafeZipPath(name: string) {
@@ -38,7 +90,8 @@ export function assertSafeZipPath(name: string) {
     !normalized ||
     normalized.includes("\0") ||
     normalized.startsWith("/") ||
-    normalized.includes("..")
+    normalized.split("/").includes("..") ||
+    /^[a-z]:/i.test(normalized)
   ) {
     throw new Error("Het document bevat een ongeldig pad.");
   }
@@ -285,15 +338,13 @@ async function extractOdtText(buffer: Buffer) {
   }
 
   return normalizeText(
-    content
-      .replace(/<text:p[^<>]*>/g, "\n")
-      .replace(/<text:line-break\/>/g, "\n")
+    decodeXmlText(content
+      .replace(/<text:[ph](?=[\s>])[^<>]*>/g, "\n")
+      .replace(/<text:line-break\s*\/>/g, "\n")
+      .replace(/<text:tab\s*\/>/g, "\t")
       .replace(/<text:s[^<>]*\/>/g, " ")
       // Do not rescan the remainder for every unmatched '<' in malformed XML.
-      .replace(/<[^<>]+>/g, "")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">"),
+      .replace(/<[^<>]+>/g, "")),
   );
 }
 
@@ -319,7 +370,7 @@ export async function extractDocumentText(buffer: Buffer, fileName: string, sign
       extracted = normalizeText(source.toString("utf8"));
       break;
     case "rtf":
-      extracted = stripRtf(source.toString("utf8"));
+      extracted = stripRtf(decodeRtfBytes(source));
       break;
     case "docx":
       extracted = normalizeText(
@@ -347,7 +398,9 @@ export async function extractDocumentText(buffer: Buffer, fileName: string, sign
   }
 
   if (extracted.length > MAX_EXTRACTED_TEXT_CHARS) {
-    throw new Error("Het document bevat te veel tekst.");
+    throw new DocumentUserError(
+      `Het document bevat te veel tekst (maximaal ${MAX_EXTRACTED_TEXT_CHARS} tekens). Upload een korter document.`,
+    );
   }
   return extracted;
 }

@@ -6,6 +6,16 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Beveiliging en betrouwbaarheid
+
+- Browsergebonden inlogcodes, afzonderlijke verificatiepogingen en instelbare daglimiet per vertrouwd IP. Reeds verstuurde codes moeten na deze update opnieuw worden aangevraagd; bestaande sessies blijven geldig.
+- Marketingtoestemming van bestaande accounts blijft behouden bij inloggen. Mailreserve voor bestaande accounts, dagplafond per gebruiker voor betaalde zoekopdrachten en uniforme loginantwoorden bij mailbudgetuitputting.
+- Publieke zelfgehoste productie vereist expliciete proxytrust en een loopbacklistener. Afzonderlijke limiet voor avataruploads zonder het documentbudget bij gewone paginaweergaven te belasten.
+- Begrensde uploadvalidatie en Word-verwerking, herstel van exportvelden over tekstruns, behouden regeleinden en opmaak, correcte entiteiten en veilige downloadnamen. Scanner maximaal 6 MiB; gewone documentimport maximaal 8 MiB. Import en export maximaal 500000 teksttekens.
+- Herbruikbare corpusindexen met verversing, overslaan van ongeldige JSONL-regels, kandidaatgebonden Pro-selectie en lescontext in de clientcache. Verkeerd getypeerde zoekvelden geven een validatiefout.
+- Eindreview: lege zelfsluitende Word-paragrafen met attributen blijven geldig, herhaalde loginaanvragen bewaren de laatst ingediende marketingkeuze en een nieuwe corpusindex gebruikt geen verouderde ruwe data.
+- Next.js en lintconfig bijgewerkt naar 16.4.6, overige dependencyfixes toegepast. De componentstylesheet is met licentie lokaal opgenomen; de ongebruikte generator is verwijderd uit de afhankelijkheden.
+
 ### Privacy en gegevensbeheer
 
 - Versiegebonden akkoordbewijs met vaste tekst en hash, gescheiden van privacyinformatie en analyticskeuze.

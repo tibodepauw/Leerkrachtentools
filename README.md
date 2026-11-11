@@ -284,14 +284,15 @@ Before exposing the service publicly:
 - Set `NODE_ENV=production`, `APP_ORIGIN`, `AUTH_SECRET` and a separate
   `API_KEY_ENCRYPTION_SECRET`. Generate both secrets randomly with at least
   32 characters.
-- Put the app behind HTTPS and enforce a request-body limit of at most 10 MB
+- Put the app behind HTTPS and enforce a request-body limit of at most 12 MB
   at the reverse proxy. The app adds HSTS, a per-request nonce CSP and
   same-origin checks.
 - Set `TRUST_PROXY_IP_HEADERS=true` only when the reverse proxy removes
   incoming forwarded-IP headers and writes trusted values itself. Do not
-  turn this on to "fix" missing IPs. Without a trusted proxy, login limits
-  use the e-mail address plus a high global emergency cap, not one shared
-  visitor bucket. Vercel is detected automatically.
+  turn this on to "fix" missing IPs. Public production requires this explicit
+  opt-in and `HOSTNAME=127.0.0.1` (or another loopback address). `VERCEL=1` is
+  rejected for this deployment because it requires the local parser service.
+  Loopback development and smoke tests need no forwarded-header trust.
 - Run one application instance per SQLite database. Use a persistent,
   access-restricted volume, database and WAL permissions readable only by the
   service account, encrypted backups, and regular restore tests. Use a shared
@@ -346,3 +347,32 @@ Before exposing the service publicly:
 Current version: **5.21.0-rc.1** (pre-release for staging validation)
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).
+
+### Login and external-call limits
+
+Login codes can only be verified in the browser that requested them. Pending
+codes from older application versions expire and must be requested again after
+this update. Existing accounts change marketing consent in account settings.
+
+`LOGIN_CODE_IP_DAILY_LIMIT` defaults to 30 accepted requests per trusted public
+IP in a rolling 24-hour window. A school or campus may share one IP: size that
+limit for the expected cohort. The per-mailbox request ceiling still applies
+to stop unsolicited mail. Someone can consume that mailbox ceiling, but cannot
+replace or spend attempts on a code already issued to another browser.
+
+The shared `BREVO_DAILY_EMAIL_LIMIT` includes failed attempts. Twenty percent
+(rounded up) is reserved for login mail to existing accounts; first logins and
+feedback cannot consume that reserve. This reduces anonymous exhaustion but
+is not protection against a distributed attack targeting known accounts.
+Discovery outbound calls additionally use `DISCOVERY_USER_DAILY_CALL_LIMIT`
+(default 100). Cache hits and joined searches do not count; local corpus search
+remains available when a remote budget is exhausted.
+
+The scanner accepts at most 6 MiB and only the displayed supported formats.
+Document import and export both allow 500000 extracted/preparation characters.
+
+Component utilities are vendored unchanged from shadcn 4.23.0 in
+`app/styles/component-utilities.css`, with the upstream MIT license alongside.
+The generator CLI is not an installed build dependency. To regenerate UI, use
+an explicitly selected, audited CLI version and review changes to the checked-in
+components and utilities.

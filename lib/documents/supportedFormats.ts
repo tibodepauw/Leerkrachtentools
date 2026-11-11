@@ -1,14 +1,14 @@
 export const LESSON_DOCUMENT_ACCEPT =
   ".pdf,.doc,.docx,.odt,.rtf,.txt,.md,.csv";
 
-export const MANUAL_SCANNER_ACCEPT = `${LESSON_DOCUMENT_ACCEPT},image/*`;
+export const MANUAL_SCANNER_ACCEPT = `${LESSON_DOCUMENT_ACCEPT},.jpg,.jpeg,.png,.gif,.webp`;
 
 export const LESSON_DOCUMENT_FORMATS_LABEL =
   "PDF, DOC, DOCX, ODT, RTF, TXT, MD, CSV";
 
-export const MANUAL_SCANNER_FORMATS_LABEL = `${LESSON_DOCUMENT_FORMATS_LABEL} of afbeelding`;
+export const MANUAL_SCANNER_FORMATS_LABEL = `${LESSON_DOCUMENT_FORMATS_LABEL} of afbeelding (JPG, PNG, GIF, WEBP)`;
 
-export const MANUAL_SCANNER_UPLOAD_HELPER = `${MANUAL_SCANNER_FORMATS_LABEL} · max. 8 MB`;
+export const MANUAL_SCANNER_UPLOAD_HELPER = `${MANUAL_SCANNER_FORMATS_LABEL} · max. 6 MB`;
 
 export const LESSON_DOCUMENT_EXTENSIONS = new Set([
   "pdf",
@@ -20,6 +20,21 @@ export const LESSON_DOCUMENT_EXTENSIONS = new Set([
   "md",
   "csv",
 ]);
+
+export const MAX_DOCUMENT_JOB_BYTES = 16_000_000;
+export const MAX_LESSON_TEXT_CHARS = 500_000;
+export const MANUAL_SCANNER_MAX_BYTES = 6 * 1024 * 1024;
+/** Gelijk aan de tekstgrens van de AI-routes (MAX_AI_TEXT_CHARS). */
+export const MANUAL_SCANNER_MAX_TEXT_CHARS = 200_000;
+export const MANUAL_SCANNER_MEDIA_TYPES = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "text/plain",
+] as const;
+export type ManualScannerMediaType = (typeof MANUAL_SCANNER_MEDIA_TYPES)[number];
 
 export const LESSON_DOCUMENT_MAX_BYTES = 8 * 1024 * 1024;
 
@@ -57,21 +72,39 @@ export function hasValidLessonDocumentSignature(
 }
 
 export function isManualScannerImage(file: Pick<File, "name" | "type">) {
-  return file.type.startsWith("image/") || /\.(jpe?g|png|gif|webp|bmp|heic)$/i.test(file.name);
+  return manualScannerMediaType(file)?.startsWith("image/") ?? false;
 }
 
 export function isManualScannerFile(file: Pick<File, "name" | "type">) {
   return isSupportedLessonDocument(file.name) || isManualScannerImage(file);
 }
 
-/** PDF, images and plain text can go straight to Gemini; Office formats need local text extraction. */
+/**
+ * PDF, images and plain text can go straight to Gemini; Office formats need
+ * local text extraction. De extensie beslist: een browser meldt bv. RTF soms
+ * als text/rtf, en dat is geen platte tekst.
+ */
 export function isGeminiDirectManualFile(file: Pick<File, "name" | "type">) {
-  if (isManualScannerImage(file)) return true;
+  return manualScannerMediaType(file) !== undefined;
+}
 
+const MANUAL_SCANNER_MEDIA_BY_EXTENSION: Record<string, ManualScannerMediaType> = {
+  txt: "text/plain",
+  md: "text/plain",
+  csv: "text/plain",
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+};
+
+export function manualScannerMediaType(
+  file: Pick<File, "name" | "type">,
+): ManualScannerMediaType | undefined {
   const extension = lessonDocumentExtension(file.name);
-  if (extension === "pdf" || file.type === "application/pdf") return true;
-  if (extension === "txt" || extension === "md" || extension === "csv") return true;
-  if (file.type.startsWith("text/")) return true;
-
-  return false;
+  return Object.hasOwn(MANUAL_SCANNER_MEDIA_BY_EXTENSION, extension)
+    ? MANUAL_SCANNER_MEDIA_BY_EXTENSION[extension]
+    : undefined;
 }

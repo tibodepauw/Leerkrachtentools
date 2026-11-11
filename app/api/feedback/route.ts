@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const body = (await readJsonBody(request, 16_384)) as {
       message?: string;
       kind?: string;
-      activeModule?: string;
+      activeModule?: unknown;
       anonymous?: boolean;
     };
 

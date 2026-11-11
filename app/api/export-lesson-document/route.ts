@@ -9,6 +9,7 @@ import {
   hasValidLessonDocumentSignature,
   lessonDocumentExtension,
   LESSON_DOCUMENT_MAX_BYTES,
+  MAX_LESSON_TEXT_CHARS,
 } from "@/lib/documents/supportedFormats";
 import { withUploadCapacity } from "@/lib/http/uploadCapacity";
 import { publicErrorMessage } from "@/lib/http/clientError";
@@ -38,16 +39,24 @@ const exportSchema = z.object({
     .max(12),
   totalMinutes: z.number().min(1).max(240),
   educationNetwork: z.enum(["ZILL", "OVSG", "GO"]),
-  lessonPreparation: z.string().max(200_000),
+  lessonPreparation: z.string().max(MAX_LESSON_TEXT_CHARS, "De lesvoorbereiding bevat te veel tekst (maximaal 500000 tekens)."),
 });
+
+// Een headerwaarde moet een ByteString zijn. De worker levert al een
+// ASCII-naam; deze controle houdt de route ook veilig als dat ooit wijzigt.
+function headerSafeFileName(fileName: string) {
+  return /^[A-Za-z0-9_.() -]{1,130}$/.test(fileName)
+    ? fileName
+    : "lesvoorbereiding.docx";
+}
 
 async function readExportInput(request: Request) {
   const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
-  const maxBytes = LESSON_DOCUMENT_MAX_BYTES + 1_000_000;
+  const maxBytes = LESSON_DOCUMENT_MAX_BYTES + 3_100_000;
 
   if (contentType.includes("application/json")) {
     const lesson = exportSchema.parse(
-      await readJsonBody(request, 1_000_000),
+      await readJsonBody(request, 3_100_000),
     ) as LessonExportPayload;
     return {
       lesson,
@@ -114,7 +123,7 @@ export async function POST(request: Request) {
         headers: {
           "Content-Type":
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "Content-Disposition": `attachment; filename="${exported.fileName}"`,
+          "Content-Disposition": `attachment; filename="${headerSafeFileName(exported.fileName)}"`,
           "Cache-Control": "no-store",
           "X-Export-Mode": exported.exportMode,
         },
@@ -125,7 +134,7 @@ export async function POST(request: Request) {
       {
         error:
           error instanceof z.ZodError
-            ? "De lesvoorbereiding bevat ongeldige gegevens."
+            ? error.issues.find((issue) => issue.path[0] === "lessonPreparation" && issue.code === "too_big")?.message ?? "De lesvoorbereiding bevat ongeldige gegevens."
             : publicErrorMessage(
                 error,
                 "Het Word-document kon niet worden gemaakt.",

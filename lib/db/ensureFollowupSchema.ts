@@ -77,6 +77,18 @@ export function ensureFollowupSchema(db: Database.Database) {
     );
   `);
 
+  // Browser-bound login challenge (2026-11). Rows from before this column have
+  // NULL and can no longer be verified; they expire within ten minutes.
+  if (tableExists(db, "login_codes")) {
+    if (!columnNames(db, "login_codes").has("challenge_hash")) {
+      db.exec("ALTER TABLE login_codes ADD COLUMN challenge_hash TEXT");
+    }
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS login_codes_email_challenge_created
+        ON login_codes(email, challenge_hash, created_at);
+    `);
+  }
+
   if (!columnNames(db, "api_organizations").has("closed_at")) db.exec("ALTER TABLE api_organizations ADD COLUMN closed_at INTEGER");
 
   const idempotencyExists = tableExists(db, "api_idempotency_keys");

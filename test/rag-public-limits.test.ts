@@ -32,6 +32,20 @@ it.each(routes)("%s rejects invalid limits before retrieval or provider work", a
   }
   expect(searchLocalCorpus).not.toHaveBeenCalled(); expect(runProCurriculumAnalysis).not.toHaveBeenCalled();
 });
+it.each(routes)("%s rejects malformed JSON field types through the real route", async (name, post) => {
+  const valid = { goal: "De leerlingen kunnen optellen.", network: "ALL", educationLevel: "BASISONDERWIJS" };
+  for (const body of [null, [], "doel", { ...valid, goal: null }, { ...valid, goal: {} }, { ...valid, grade: ["l1"] }, { ...valid, phases: [null] }]) {
+    const response = await post(new Request(`http://localhost/api/rag-${name}`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body),
+    }));
+    expect(response.status).toBe(400);
+    const payload = await response.json();
+    expect(payload.error).toEqual(expect.any(String));
+    expect(payload.error).not.toMatch(/TypeError|Cannot read|\.trim|is not a function/);
+  }
+  expect(searchLocalCorpus).not.toHaveBeenCalled();
+  expect(runProCurriculumAnalysis).not.toHaveBeenCalled();
+});
 it.each(routes)("%s honors 1–5 and default 5 in fast, Pro and failed Pro flows", async (_name, post) => {
   for (const mode of ["snel", "pro", "pro-failure"]) {
     for (const limit of [1, 2, 3, 4, 5, undefined]) {

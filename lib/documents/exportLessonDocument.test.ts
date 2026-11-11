@@ -72,6 +72,11 @@ async function createMinimalLessonDocx(
   return Buffer.from(await zip.generateAsync({ type: "nodebuffer" }));
 }
 
+// De export is gecomprimeerd; lees de inhoud zoals Word dat doet.
+async function documentXml(docx: Buffer) {
+  return (await JSZip.loadAsync(docx)).file("word/document.xml")!.async("string");
+}
+
 describe("exportLessonDocument", () => {
   it("updates LESDOEL-teksten in een geüpload formulier", async () => {
     const sampleDocx = await createMinimalLessonDocx([
@@ -84,7 +89,7 @@ describe("exportLessonDocument", () => {
       "LESDOEL 1 (MC): oud doel Gekoppeld aan minimumdoel: 1.2.12",
     ]);
     const exported = await patchLessonDocx(sampleDocx, sampleLesson);
-    const xml = exported.toString("utf8");
+    const xml = await documentXml(exported);
 
     expect(xml).toContain("De leerlingen kunnen een nieuw doel uit de app schrijven.");
     expect(xml).toContain("De leerlingen gebruiken beeldende bijvoeglijke naamwoorden.");
@@ -98,7 +103,7 @@ describe("exportLessonDocument", () => {
     expect(exported.fileName).toContain("creatief-schrijven");
     expect(exported.buffer.byteLength).toBeGreaterThan(0);
 
-    const xml = exported.buffer.toString("utf8");
+    const xml = await documentXml(exported.buffer);
     expect(xml).toContain("Lesvoorbereiding export");
     expect(xml).toContain("Leergebied: Nederlands");
     expect(xml).toContain("De leerlingen kunnen een nieuw doel uit de app schrijven.");

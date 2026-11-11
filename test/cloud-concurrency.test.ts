@@ -8,6 +8,7 @@ import { getDatabase } from "@/lib/db/sqlite";
 import { completeOrgApiCall, reserveOrgApiCall, STALE_IN_FLIGHT_MS } from "@/lib/api/orgQuota";
 import { closeOrganization } from "@/lib/privacy/dataControls";
 import { createHmac } from "node:crypto";
+import { hashLoginChallenge } from "@/lib/auth/loginChallenge";
 import { registerTermsDocument } from "@/lib/legal/acceptance";
 
 // At most 16 short-lived processes, 64 MiB V8 heap each, 8 seconds per
@@ -18,7 +19,7 @@ beforeAll(async () => {
   getDatabase();
   await build({ stdin: { resolveDir: process.cwd(), contents: `
     import {getDatabase,closeDatabase} from './lib/db/sqlite';
-    import {reserveExternalCall} from './lib/ai/externalBudget';
+    import {reserveExternalCall,reserveEmailSend} from './lib/ai/externalBudget';
     import {reserveOrgAiBudget} from './lib/ai/orgBudget';
     import {reserveOrgApiCall} from './lib/api/orgQuota';
     import {generateApiKey} from './lib/api-keys';
@@ -26,12 +27,12 @@ beforeAll(async () => {
     import {verifyLoginCode} from './lib/auth/service';
     const p=JSON.parse(process.argv[2]); let result;
     try {
-      if(p.action==='external') result=reserveExternalCall(p.service,p.now);
+      if(p.action==='external') result=p.service==='email'?reserveEmailSend('account-login',p.now):reserveExternalCall(p.service,p.now);
       if(p.action==='org-ai') result=reserveOrgAiBudget(p.orgId,p.now);
       if(p.action==='reserve' || p.action==='reserve-crash') result=reserveOrgApiCall(p.reserve);
       if(p.action==='issue') result={keyId:generateApiKey(p.orgId,'race',['curriculum:match']).id};
       if(p.action==='close') result=closeOrganization(getDatabase(),p.orgId,true);
-      if(p.action==='verify') result={verified:!!verifyLoginCode(p.email,p.code)};
+      if(p.action==='verify') result={verified:!!verifyLoginCode(p.email,p.code,p.challenge)};
       if(p.action==='reserve-crash') process.stdout.write(JSON.stringify({ok:true,result}),()=>process.kill(process.pid,'SIGKILL'));
       else console.log(JSON.stringify({ok:true,result}));
     } catch(error) { console.log(JSON.stringify({ok:false,errorCode:error.code,errorName:error.name})); }
@@ -110,13 +111,13 @@ it("serializes key issuance against closure and refuses closure while work is ac
   expect(() => reserveOrgApiCall(reserve)).toThrow("afgesloten");
 }, 30_000);
 it("consumes a valid OTP exactly once under parallel verification without duplicating first terms evidence", async () => {
-  const db = getDatabase(), email = "parallel@example.test", code = "234567", now = Date.now();
+  const db = getDatabase(), email = "parallel@example.test", code = "234567", challenge = "A".repeat(43), now = Date.now();
   const hash = createHmac("sha256", process.env.AUTH_SECRET!).update(`otp:${email}:${code}`).digest("hex");
-  db.prepare("INSERT INTO login_codes(id,email,code_hash,ip_hash,privacy_accepted,created_at,expires_at,terms_hash,terms_accepted_at) VALUES ('parallel-code',?,?,'synthetic',1,?,?,?,?)")
-    .run(email, hash, now, now + 60_000, registerTermsDocument(db), now);
-  const outcomes = await Promise.all(Array.from({ length: 8 }, () => run({ action: "verify", email, code })));
+  db.prepare("INSERT INTO login_codes(id,email,code_hash,ip_hash,challenge_hash,privacy_accepted,created_at,expires_at,terms_hash,terms_accepted_at) VALUES ('parallel-code',?,?,'synthetic',?,1,?,?,?,?)")
+    .run(email, hash, hashLoginChallenge(challenge), now, now + 60_000, registerTermsDocument(db), now);
+  const outcomes = await Promise.all(Array.from({ length: 8 }, () => run({ action: "verify", email, code, challenge })));
   expect(outcomes.filter(o => o.ok)).toHaveLength(1);
   expect(db.prepare("SELECT COUNT(*) AS n FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email=?)").get(email)).toEqual({ n: 1 });
   expect(db.prepare("SELECT accepted_at FROM terms_acceptances WHERE user_id IN (SELECT id FROM users WHERE email=?)").all(email)).toEqual([{ accepted_at: now }]);
-  expect((await run({ action: "verify", email, code })).ok).toBe(false);
+  expect((await run({ action: "verify", email, code, challenge })).ok).toBe(false);
 }, 30_000);

@@ -14,7 +14,8 @@ import {
   resolveCorpusLevel,
 } from "@/lib/rag/curriculumCorpus";
 import {
-  registerCorpusLevelUnloadListener,
+  createCorpusDerivedCache,
+  CORPUS_LEVELS,
   type CorpusLevel,
 } from "@/lib/rag/corpusLevelCache";
 import { decodeHtmlEntities } from "@/lib/rag/curriculumDisplay";
@@ -66,12 +67,7 @@ type MinimumGoalTokenIndex = {
 
 type MinimumGoalIndexKey = CorpusLevel | "ALL";
 
-const minimumGoalIndexCache = new Map<MinimumGoalIndexKey, MinimumGoalTokenIndex>();
-
-registerCorpusLevelUnloadListener((level) => {
-  minimumGoalIndexCache.delete(level);
-  minimumGoalIndexCache.delete("ALL");
-});
+const minimumGoalIndexCache = createCorpusDerivedCache<MinimumGoalTokenIndex>({ maxEntries: 2 });
 
 function isSecondaryMinimumGoalRaw(raw: RawRecord): boolean {
   if (isDomainCorpusRecord(raw)) {
@@ -220,10 +216,8 @@ function getMinimumGoalTokenIndex(
   educationLevel: EducationLevelFilter = "ALL",
 ): MinimumGoalTokenIndex {
   const cacheKey = minimumGoalIndexKey(educationLevel);
-  const cached = minimumGoalIndexCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
+  const levels = educationLevel === "ALL" ? CORPUS_LEVELS : [resolveCorpusLevel(educationLevel)];
+  return minimumGoalIndexCache.get(cacheKey, levels, () => {
 
   const records: IndexedMinimumGoalRecord[] = [];
   const tokenToRecordIndices = new Map<string, number[]>();
@@ -249,9 +243,8 @@ function getMinimumGoalTokenIndex(
     }
   }
 
-  const built = { records, tokenToRecordIndices };
-  minimumGoalIndexCache.set(cacheKey, built);
-  return built;
+  return { records, tokenToRecordIndices };
+  });
 }
 
 export function warmMinimumGoalTokenIndex(

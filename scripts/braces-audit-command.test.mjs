@@ -4,7 +4,8 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, write
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-const policy = JSON.parse(readFileSync("scripts/proposals/braces-exception-policy.json", "utf8"));
+import { writeApprovedInputs, writeApprovedManifests } from "./test-fixtures/braces-approved-fixture.mjs";
+
 const advisory = JSON.parse(readFileSync("docs/audit-evidence/2026-10-03/braces-advisory.json", "utf8"));
 const directories = [];
 const json = (file, value) => writeFileSync(file, JSON.stringify(value));
@@ -19,13 +20,11 @@ function fixture() {
     mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
     cpSync(file, path.join(root, file));
   }
-  for (const location of Object.keys(policy.chainPackages)) {
-    mkdirSync(path.join(root, location), { recursive: true });
-    cpSync(path.join(location, "package.json"), path.join(root, location, "package.json"));
-  }
+  writeApprovedInputs(root);
+  writeApprovedManifests(root);
   cpSync("node_modules/braces", path.join(root, "node_modules/braces"), { recursive: true });
   mkdirSync(path.join(standalone, ".next"), { recursive: true });
-  cpSync("package.json", path.join(standalone, "package.json"));
+  writeApprovedInputs(standalone, false);
   for (const file of [".next/BUILD_ID", ".next/standalone/.next/BUILD_ID"]) writeFileSync(path.join(root, file), "synthetic-build");
   writeFileSync(path.join(standalone, "server.js"), "// Synthetic standalone");
   cpSync("scripts/test-fixtures/braces-audit-preload.mjs", path.join(base, "preload.mjs"));

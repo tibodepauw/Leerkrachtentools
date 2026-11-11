@@ -4,10 +4,11 @@ import {
   REFLECTION_AUDIO_MEDIA_TYPES,
 } from "@/lib/ai/audioMediaType";
 import { WRITING_STYLES } from "@/lib/ai/writingStyle";
-import { binaryUploadString } from "@/lib/ai/binaryUpload";
+import { binaryUploadString, MAX_ENCODED_UPLOAD_CHARS } from "@/lib/ai/binaryUpload";
+import { MANUAL_SCANNER_MEDIA_TYPES } from "@/lib/documents/supportedFormats";
 
 export const MAX_AI_TEXT_CHARS = 200_000;
-export const MAX_BASE64_CHARS = 8_000_000;
+export const MAX_BASE64_CHARS = MAX_ENCODED_UPLOAD_CHARS;
 
 export const aiProviderSchema = z.enum([
   "google",
@@ -17,14 +18,7 @@ export const aiProviderSchema = z.enum([
   "cloudflare",
 ]);
 
-const manualMediaTypes = [
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-  "text/plain",
-] as const;
+const manualMediaTypes = MANUAL_SCANNER_MEDIA_TYPES;
 
 const reflectionMediaTypes = REFLECTION_AUDIO_MEDIA_TYPES;
 

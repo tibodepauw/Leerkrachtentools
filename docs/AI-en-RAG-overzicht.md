@@ -151,6 +151,7 @@ gestopt bij deadline, disconnect of leaseverlies.
 | --- | --- | --- |
 | `SERVER_AI_DAILY_CALL_LIMIT` | 500 | Server-key AI-pogingen van web, queryherschrijving en B2B samen |
 | `DISCOVERY_DAILY_CALL_LIMIT` | 1000 | Nieuwe Discovery-zoekaanroepen |
+| `DISCOVERY_USER_DAILY_CALL_LIMIT` | 100 | Nieuwe Discovery-zoekaanroepen per gebruiker, binnen het totaal |
 | `BREVO_DAILY_EMAIL_LIMIT` | 500 | Login- en feedbackmailpogingen samen |
 | `ORG_AI_DAILY_LIMIT` | 100 | B2B AI-budget per organisatie |
 | `ORG_AI_GLOBAL_DAILY_LIMIT` | 500 | Gezamenlijk B2B AI-budget |

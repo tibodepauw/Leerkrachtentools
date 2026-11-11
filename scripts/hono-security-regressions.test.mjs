@@ -2,11 +2,19 @@ import { expect, it } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { Hono } from "hono";
-import { serveStatic } from "hono/serve-static";
-import { serveStatic as serveNodeStatic } from "@hono/node-server/serve-static";
-import { jsx, Suspense, createContext } from "hono/jsx";
-import { renderToString, renderToReadableStream } from "hono/jsx/dom/server";
+import { readFileSync } from "node:fs";
+const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
+const hasHono = Object.keys(lock.packages).some((name) => name.endsWith("/hono"));
+if (!hasHono) {
+  it("keeps the unused Hono server out of the dependency tree", () => {
+    expect(Object.keys(lock.packages).filter((name) => name.endsWith("/hono") || name.endsWith("/@hono/node-server"))).toEqual([]);
+  });
+} else {
+const { Hono } = await import("hono");
+const { serveStatic } = await import("hono/serve-static");
+const { serveStatic: serveNodeStatic } = await import("@hono/node-server/serve-static");
+const { jsx, Suspense, createContext } = await import("hono/jsx");
+const { renderToString, renderToReadableStream } = await import("hono/jsx/dom/server");
 
 const input = '<img src=x onerror="alert(1)"> & lesinhoud';
 const escaped = "&lt;img src=x onerror=&quot;alert(1)&quot;&gt; &amp; lesinhoud";
@@ -47,3 +55,5 @@ it.each(["core", "node adapter"])("protects static prefixes with %s middleware (
     await rm(root, { recursive: true, force: true });
   }
 });
+
+}

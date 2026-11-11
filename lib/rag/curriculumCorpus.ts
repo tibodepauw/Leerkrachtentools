@@ -26,7 +26,9 @@ import {
   DOMAIN_CORPUS_PATHS,
   getCorpusForEducationLevel,
   getCorpusForLevel as getCorpusRecordsForLevel,
-  registerCorpusLevelUnloadListener,
+  createCorpusDerivedCache,
+  CORPUS_LEVELS,
+  withCorpusLevelScope,
   resolveCorpusLevel,
   type CorpusLevel,
   SECONDARY_CURRICULUM_PROD,
@@ -77,14 +79,30 @@ type IndexedCorpusRecord = {
   raw: RawRecord;
   haystack: string;
   record: CurriculumSearchResult | null;
+  /** Netwerk uit de bron zelf, zonder de standaardwaarde van een ALL-zoekopdracht. */
+  sourceNetwork: CurriculumNetworkFilter | null;
 };
 
 type CorpusTokenIndex = {
   records: IndexedCorpusRecord[];
   tokenToRecordIndices: Map<string, number[]>;
+  byCode: Map<string, IndexedCorpusRecord[]>;
+  fuzzyPrefixes: Map<string, string[]> | null;
+  candidatesByQuery: Map<string, Set<number>>;
 };
 
-const corpusIndexCache = new Map<string, CorpusTokenIndex>();
+// Eén index per (niveau, netwerk). Voor "alle niveaus" is dat hoogstens één
+// volledige index plus één deelindex per netwerk; die delen dezelfde records.
+const MAX_CORPUS_INDEXES = 10;
+const MAX_MEMOIZED_CANDIDATE_QUERIES = 8;
+
+const corpusIndexCache = createCorpusDerivedCache<CorpusTokenIndex>({
+  maxEntries: MAX_CORPUS_INDEXES,
+});
+
+// Secundaire records zonder netwerk krijgen in een ALL-zoekopdracht "GO" als
+// weergavenetwerk. Ze horen daardoor niet bij een netwerkspecifieke deelindex.
+const defaultTaggedNetworkRecords = new WeakSet<RawRecord>();
 
 function corpusIndexKey(
   network: CurriculumNetworkFilter,
@@ -95,14 +113,6 @@ function corpusIndexKey(
   }
   return `${resolveCorpusLevel(educationLevel, network)}:${network}`;
 }
-
-registerCorpusLevelUnloadListener((level) => {
-  for (const key of [...corpusIndexCache.keys()]) {
-    if (key.startsWith(`${level}:`) || key.startsWith("ALL:")) {
-      corpusIndexCache.delete(key);
-    }
-  }
-});
 
 function expandLookupTokens(tokens: Iterable<string>): Set<string> {
   const expanded = new Set<string>();
@@ -133,52 +143,99 @@ function buildQueryLookupTokens(query: string): Set<string> {
   return expandLookupTokens(tokens);
 }
 
+function indexCorpusRecord(raw: RawRecord): IndexedCorpusRecord {
+  const sourceNetwork = networkFromRaw(raw);
+  return {
+    raw,
+    haystack: buildRecordHaystack(raw),
+    record: normalizeRecord(raw, sourceNetwork),
+    sourceNetwork: defaultTaggedNetworkRecords.has(raw) ? null : sourceNetwork,
+  };
+}
+
+function buildCorpusTokenIndex(records: IndexedCorpusRecord[]): CorpusTokenIndex {
+  const tokenToRecordIndices = new Map<string, number[]>();
+  const byCode = new Map<string, IndexedCorpusRecord[]>();
+
+  records.forEach((entry, index) => {
+    for (const token of buildRecordIndexTokens(entry.haystack)) {
+      const indices = tokenToRecordIndices.get(token);
+      if (indices) {
+        indices.push(index);
+      } else {
+        tokenToRecordIndices.set(token, [index]);
+      }
+    }
+
+    const code = asString(entry.raw.code);
+    if (code) {
+      const matches = byCode.get(code);
+      if (matches) {
+        matches.push(entry);
+      } else {
+        byCode.set(code, [entry]);
+      }
+    }
+  });
+
+  return {
+    records,
+    tokenToRecordIndices,
+    byCode,
+    fuzzyPrefixes: null,
+    candidatesByQuery: new Map(),
+  };
+}
+
 function getCorpusTokenIndex(
   network: CurriculumNetworkFilter,
   educationLevel: EducationLevelFilter = "ALL",
 ): CorpusTokenIndex {
   const cacheKey = corpusIndexKey(network, educationLevel);
-  const cached = corpusIndexCache.get(cacheKey);
-  if (cached) {
-    return cached;
-  }
 
-  const records: IndexedCorpusRecord[] = [];
-  const tokenToRecordIndices = new Map<string, number[]>();
-
-  for (const raw of recordsForNetwork(network, educationLevel)) {
-    const index = records.length;
-    const haystack = buildRecordHaystack(raw);
-    records.push({
-      raw,
-      haystack,
-      record: normalizeRecord(raw, networkFromRaw(raw)),
+  if (educationLevel === "ALL") {
+    return corpusIndexCache.get(cacheKey, CORPUS_LEVELS, () => {
+      if (network === "ALL") {
+        return buildCorpusTokenIndex(
+          recordsForNetwork("ALL", "ALL").map(indexCorpusRecord),
+        );
+      }
+      // Een netwerk over alle niveaus is exact de deelverzameling van de
+      // volledige index. Zo leest elk netwerk het corpus niet opnieuw in.
+      return buildCorpusTokenIndex(
+        getCorpusTokenIndex("ALL", "ALL").records.filter(
+          (entry) => entry.sourceNetwork === network,
+        ),
+      );
     });
-
-    for (const token of buildRecordIndexTokens(haystack)) {
-      let indices = tokenToRecordIndices.get(token);
-      if (!indices) {
-        indices = [];
-        tokenToRecordIndices.set(token, indices);
-      }
-      if (indices[indices.length - 1] !== index) {
-        indices.push(index);
-      }
-    }
   }
 
-  const built = { records, tokenToRecordIndices };
-  corpusIndexCache.set(cacheKey, built);
-  return built;
+  return corpusIndexCache.get(
+    cacheKey,
+    [resolveCorpusLevel(educationLevel, network)],
+    () =>
+      buildCorpusTokenIndex(
+        recordsForNetwork(network, educationLevel).map(indexCorpusRecord),
+      ),
+  );
 }
 
-function expandFuzzyIndexTokens(
-  tokens: Set<string>,
-  tokenToRecordIndices: Map<string, number[]>,
-): Set<string> {
-  const extra = new Set<string>();
+/** Alleen voor tests: de ruwe records van een index, in indexvolgorde. */
+export function corpusIndexRawRecords(
+  network: CurriculumNetworkFilter,
+  educationLevel: EducationLevelFilter = "ALL",
+): RawRecord[] {
+  return getCorpusTokenIndex(network, educationLevel).records.map(
+    (entry) => entry.raw,
+  );
+}
+
+function fuzzyPrefixesFor(index: CorpusTokenIndex): Map<string, string[]> {
+  if (index.fuzzyPrefixes) {
+    return index.fuzzyPrefixes;
+  }
   const byPrefix = new Map<string, string[]>();
-  for (const key of tokenToRecordIndices.keys()) {
+  for (const key of index.tokenToRecordIndices.keys()) {
     if (key.length < 4) continue;
     const prefix = key.slice(0, 3);
     const list = byPrefix.get(prefix);
@@ -188,6 +245,16 @@ function expandFuzzyIndexTokens(
       byPrefix.set(prefix, [key]);
     }
   }
+  index.fuzzyPrefixes = byPrefix;
+  return byPrefix;
+}
+
+function expandFuzzyIndexTokens(
+  tokens: Set<string>,
+  index: CorpusTokenIndex,
+): Set<string> {
+  const extra = new Set<string>();
+  const byPrefix = fuzzyPrefixesFor(index);
 
   for (const token of tokens) {
     if (token.length < 4 || DIDACTIC_STOPWORDS.has(token)) continue;
@@ -200,7 +267,34 @@ function expandFuzzyIndexTokens(
   return extra;
 }
 
+/**
+ * Kandidaten hangen alleen af van de zoektekst en de index. Het resultaat wordt
+ * per index onthouden, zodat alle Discovery-hits van één zoekopdracht dezelfde
+ * set hergebruiken. De teruggegeven set mag niet gewijzigd worden.
+ */
 function candidateIndicesFromQuery(
+  query: string,
+  index: CorpusTokenIndex,
+  memoize = true,
+): ReadonlySet<number> {
+  const memoized = index.candidatesByQuery.get(query);
+  if (memoized) {
+    return memoized;
+  }
+  const candidates = computeCandidateIndices(query, index);
+  if (memoize) {
+    if (index.candidatesByQuery.size >= MAX_MEMOIZED_CANDIDATE_QUERIES) {
+      const oldest = index.candidatesByQuery.keys().next().value;
+      if (oldest !== undefined) {
+        index.candidatesByQuery.delete(oldest);
+      }
+    }
+    index.candidatesByQuery.set(query, candidates);
+  }
+  return candidates;
+}
+
+function computeCandidateIndices(
   query: string,
   index: CorpusTokenIndex,
 ): Set<number> {
@@ -220,7 +314,7 @@ function candidateIndicesFromQuery(
   if (candidates.size === 0) {
     lookupTokens = new Set([
       ...lookupTokens,
-      ...expandFuzzyIndexTokens(lookupTokens, index.tokenToRecordIndices),
+      ...expandFuzzyIndexTokens(lookupTokens, index),
     ]);
     for (const token of lookupTokens) {
       const indices = index.tokenToRecordIndices.get(token);
@@ -241,10 +335,7 @@ function candidateIndicesFromQuery(
       }
     }
     if (unmatched.size > 0) {
-      for (const token of expandFuzzyIndexTokens(
-        unmatched,
-        index.tokenToRecordIndices,
-      )) {
+      for (const token of expandFuzzyIndexTokens(unmatched, index)) {
         const indices = index.tokenToRecordIndices.get(token);
         if (!indices) continue;
         for (const recordIndex of indices) {
@@ -292,8 +383,8 @@ export function recordsForNetwork(
   educationLevel: EducationLevelFilter = "ALL",
 ): RawRecord[] {
   if (educationLevel === "ALL") {
-    return ALL_SEARCH_LEVELS.flatMap((level) =>
-      recordsForNetwork(network, level),
+    return withCorpusLevelScope(() =>
+      ALL_SEARCH_LEVELS.flatMap((level) => recordsForNetwork(network, level)),
     );
   }
 
@@ -317,10 +408,14 @@ export function recordsForNetwork(
       ),
     );
     if (network === "ALL") {
-      return secundairRecords.map((raw) => ({
-        ...raw,
-        netwerk: asString(raw.netwerk ?? raw.network) || "GO",
-      }));
+      return secundairRecords.map((raw) => {
+        const netwerk = asString(raw.netwerk ?? raw.network);
+        const tagged = { ...raw, netwerk: netwerk || "GO" };
+        if (!netwerk) {
+          defaultTaggedNetworkRecords.add(tagged);
+        }
+        return tagged;
+      });
     }
     return secundairRecords
       .filter((raw) => recordMatchesNetwork(raw, network))
@@ -354,11 +449,13 @@ export function educationDomainRecords(
   level: EducationLevelFilter = "ALL",
 ): RawRecord[] {
   if (level === "ALL") {
-    return (
-      Object.keys(DOMAIN_CORPUS_PATHS) as Array<
-        Exclude<CorpusLevel, "BASISONDERWIJS" | "SECUNDAIR">
-      >
-    ).flatMap((domainLevel) => getCorpusRecordsForLevel(domainLevel));
+    return withCorpusLevelScope(() =>
+      (
+        Object.keys(DOMAIN_CORPUS_PATHS) as Array<
+          Exclude<CorpusLevel, "BASISONDERWIJS" | "SECUNDAIR">
+        >
+      ).flatMap((domainLevel) => getCorpusRecordsForLevel(domainLevel)),
+    );
   }
 
   const corpusLevel = resolveCorpusLevel(level);
@@ -372,8 +469,8 @@ export function allMinimumGoalRecords(
   educationLevel: EducationLevelFilter = "ALL",
 ): RawRecord[] {
   if (educationLevel === "ALL") {
-    return ALL_SEARCH_LEVELS.flatMap((level) =>
-      allMinimumGoalRecords(level),
+    return withCorpusLevelScope(() =>
+      ALL_SEARCH_LEVELS.flatMap((level) => allMinimumGoalRecords(level)),
     );
   }
   const corpusLevel = resolveCorpusLevel(educationLevel);
@@ -708,18 +805,14 @@ export function findCorpusRecordByCode(
   if (!needle) {
     return null;
   }
-  for (const raw of recordsForNetwork(network, educationLevel)) {
-    if (
-      !recordMatchesNetwork(raw, network) ||
-      !recordMatchesEducationLevel(raw, educationLevel)
-    ) {
-      continue;
-    }
-    if (asString(raw.code) === needle) {
-      return normalizeRecord(raw, networkFromRaw(raw));
-    }
-  }
-  return null;
+  const matches =
+    getCorpusTokenIndex(network, educationLevel).byCode.get(needle) ?? [];
+  const match = matches.find(
+    ({ raw }) =>
+      recordMatchesNetwork(raw, network) &&
+      recordMatchesEducationLevel(raw, educationLevel),
+  );
+  return match?.record ? { ...match.record } : null;
 }
 
 export function findBestCorpusMatch({
@@ -758,11 +851,19 @@ export function findBestCorpusMatch({
     | null = null;
 
   const index = getCorpusTokenIndex(network, educationLevel);
-  const candidateIndices = candidateIndicesFromQuery(query, index);
-  const indicesToScore =
-    candidateIndices.size > 0
-      ? candidateIndices
-      : new Set(index.records.map((_, recordIndex) => recordIndex));
+  // Met querykandidaten blijft de selectie zoals voorheen. Zonder vallen we
+  // terug op snippet en titel via de index, en pas als ook dat niets oplevert
+  // op het volledige niveau, in plaats van per hit alles opnieuw te scoren.
+  let indicesToScore: Iterable<number> = candidateIndicesFromQuery(query, index);
+  if ((indicesToScore as ReadonlySet<number>).size === 0) {
+    const contextCandidates = candidateIndicesFromQuery(
+      `${snippet} ${title ?? ""}`,
+      index,
+      false,
+    );
+    indicesToScore =
+      contextCandidates.size > 0 ? contextCandidates : index.records.keys();
+  }
 
   for (const recordIndex of indicesToScore) {
     const indexed = index.records[recordIndex];
@@ -864,7 +965,7 @@ export function searchLocalCorpus({
 
   const index = getCorpusTokenIndex(scopedNetwork, educationLevel);
   const candidateIndices = candidateIndicesFromQuery(query, index);
-  let indicesToScore: Set<number> = candidateIndices;
+  let indicesToScore: ReadonlySet<number> = candidateIndices;
   if (indicesToScore.size === 0) {
     return [];
   }
