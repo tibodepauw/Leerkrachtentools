@@ -1,0 +1,315 @@
+{
+  "package": "{\n  \"name\": \"leerkrachtentools\",\n  \"version\": \"5.21.0-rc.1\",\n  \"private\": true,\n  \"scripts\": {\n    \"postinstall\": \"node scripts/apply-braces-security-patch.mjs\",\n    \"dev\": \"next dev\",\n    \"build\": \"next build && node scripts/copy-standalone-assets.mjs\",\n    \"start\": \"next start\",\n    \"lint\": \"eslint\",\n    \"typecheck\": \"tsc --noEmit\",\n    \"test\": \"vitest run\",\n    \"test:rag-benchmark\": \"vitest run test/rag-benchmark.test.ts lib/rag/ragBenchmark.test.ts\",\n    \"manage-api-keys\": \"tsx --require ./scripts/allow-server-only.cjs scripts/manage-api-keys.ts\",\n    \"migrate:quota-ledgers\": \"tsx --require ./scripts/allow-server-only.cjs scripts/migrate-quota-ledgers.ts\",\n    \"fetch:secundair\": \"python3 scripts/fetch_secundair_full.py\",\n    \"fetch:all\": \"python3 scripts/fetch_all_curriculum.py\",\n    \"fetch:domains\": \"python3 scripts/fetch_onderwijsdoelen_domains.py\",\n    \"export:secundair\": \"python3 scripts/export_secundair_zip.py\",\n    \"export:banner\": \"node scripts/export-banner-prod.mjs\",\n    \"export:banner:dev\": \"node scripts/export-banner-assets.mjs\",\n    \"export:pwa-icons\": \"node scripts/generate-pwa-icons.mjs\",\n    \"security:audit\": \"node scripts/audit-production-dependencies.mjs\",\n    \"check:corpora\": \"tsx scripts/check-corpora.ts\",\n    \"build:workers\": \"node scripts/build-workers.mjs\",\n    \"prebuild\": \"npm run build:workers\",\n    \"pretest\": \"npm run build:workers\",\n    \"predev\": \"npm run build:workers\"\n  },\n  \"dependencies\": {\n    \"@ai-sdk/cerebras\": \"^3.0.49\",\n    \"@ai-sdk/google\": \"^4.0.72\",\n    \"@ai-sdk/groq\": \"^4.0.42\",\n    \"@ai-sdk/openai\": \"^4.0.67\",\n    \"@google-cloud/discoveryengine\": \"^2.9.0\",\n    \"ai\": \"^7.0.102\",\n    \"better-sqlite3\": \"^13.0.3\",\n    \"class-variance-authority\": \"^0.7.1\",\n    \"clsx\": \"^2.1.1\",\n    \"docx-preview\": \"^0.4.0\",\n    \"input-otp\": \"^1.5.0\",\n    \"jszip\": \"^3.10.1\",\n    \"lucide-react\": \"^1.34.0\",\n    \"mammoth\": \"^1.12.2\",\n    \"next\": \"16.3.6\",\n    \"next-themes\": \"^0.4.6\",\n    \"pdf-parse\": \"^2.4.5\",\n    \"posthog-js\": \"^1.433.5\",\n    \"radix-ui\": \"^1.6.7\",\n    \"react\": \"19.3.0\",\n    \"react-dom\": \"19.3.0\",\n    \"sonner\": \"^2.0.8\",\n    \"sharp\": \"^0.35.4\",\n    \"tailwind-merge\": \"^3.6.0\",\n    \"tw-animate-css\": \"^1.4.0\",\n    \"word-extractor\": \"^1.0.4\",\n    \"zod\": \"^4.4.3\",\n    \"zustand\": \"^5.0.15\"\n  },\n  \"devDependencies\": {\n    \"@tailwindcss/postcss\": \"^4\",\n    \"@types/better-sqlite3\": \"^9.6.0\",\n    \"@types/node\": \"^22\",\n    \"@types/pdf-parse\": \"^1.1.5\",\n    \"@types/react\": \"^19\",\n    \"@types/react-dom\": \"^19\",\n    \"eslint\": \"^9\",\n    \"eslint-config-next\": \"16.3.6\",\n    \"playwright\": \"^1.63.0\",\n    \"shadcn\": \"^4.21.0\",\n    \"tailwindcss\": \"^4\",\n    \"tsx\": \"^4.23.13\",\n    \"typescript\": \"^5\",\n    \"vitest\": \"^5.0.1\",\n    \"esbuild\": \"^0.28.2\"\n  },\n  \"overrides\": {\n    \"qs\": \"6.16.0\",\n    \"brace-expansion@1\": \"1.1.21\",\n    \"brace-expansion@2\": \"2.1.7\",\n    \"brace-expansion@5\": \"5.0.12\",\n    \"fast-uri\": \"3.1.8\",\n    \"ip-address\": \"10.7.1\",\n    \"undici\": \"7.29.1\",\n    \"@grpc/grpc-js\": \"1.14.5\",\n    \"dompurify\": \"3.4.16\",\n    \"hono\": \"4.13.12\",\n    \"@hono/node-server\": \"2.1.3\"\n  }\n}\n",
+  "lock": {
+    "name": "leerkrachtentools",
+    "version": "5.21.0-rc.1",
+    "lockfileVersion": 3,
+    "requires": true,
+    "packages": {
+      "": {
+        "name": "leerkrachtentools",
+        "version": "5.21.0-rc.1",
+        "hasInstallScript": true,
+        "dependencies": {
+          "@ai-sdk/cerebras": "^3.0.49",
+          "@ai-sdk/google": "^4.0.72",
+          "@ai-sdk/groq": "^4.0.42",
+          "@ai-sdk/openai": "^4.0.67",
+          "@google-cloud/discoveryengine": "^2.9.0",
+          "ai": "^7.0.102",
+          "better-sqlite3": "^13.0.3",
+          "class-variance-authority": "^0.7.1",
+          "clsx": "^2.1.1",
+          "docx-preview": "^0.4.0",
+          "input-otp": "^1.5.0",
+          "jszip": "^3.10.1",
+          "lucide-react": "^1.34.0",
+          "mammoth": "^1.12.2",
+          "next": "16.3.6",
+          "next-themes": "^0.4.6",
+          "pdf-parse": "^2.4.5",
+          "posthog-js": "^1.433.5",
+          "radix-ui": "^1.6.7",
+          "react": "19.3.0",
+          "react-dom": "19.3.0",
+          "sharp": "^0.35.4",
+          "sonner": "^2.0.8",
+          "tailwind-merge": "^3.6.0",
+          "tw-animate-css": "^1.4.0",
+          "word-extractor": "^1.0.4",
+          "zod": "^4.4.3",
+          "zustand": "^5.0.15"
+        },
+        "devDependencies": {
+          "@tailwindcss/postcss": "^4",
+          "@types/better-sqlite3": "^9.6.0",
+          "@types/node": "^22",
+          "@types/pdf-parse": "^1.1.5",
+          "@types/react": "^19",
+          "@types/react-dom": "^19",
+          "esbuild": "^0.28.2",
+          "eslint": "^9",
+          "eslint-config-next": "16.3.6",
+          "playwright": "^1.63.0",
+          "shadcn": "^4.21.0",
+          "tailwindcss": "^4",
+          "tsx": "^4.23.13",
+          "typescript": "^5",
+          "vitest": "^5.0.1"
+        }
+      },
+      "node_modules/next": {
+        "version": "16.3.6",
+        "resolved": "https://registry.npmjs.org/next/-/next-16.3.6.tgz",
+        "integrity": "sha512-L+otWM/aQbYTx98aZhgEoMb4bZAXx1YVW4UMA/vuCyCoWG5HJyZUili8QAkqzrcC+5///tsz3s0M+SlyB5bLMw==",
+        "license": "MIT",
+        "dependencies": {
+          "@next/env": "16.3.6",
+          "@swc/helpers": "0.5.23",
+          "baseline-browser-mapping": "^2.9.19",
+          "caniuse-lite": "^1.0.30001579",
+          "postcss": "8.5.23",
+          "styled-jsx": "5.1.6"
+        },
+        "bin": {
+          "next": "dist/bin/next"
+        },
+        "engines": {
+          "node": ">=20.9.0"
+        },
+        "optionalDependencies": {
+          "@next/swc-darwin-arm64": "16.3.6",
+          "@next/swc-darwin-x64": "16.3.6",
+          "@next/swc-linux-arm64-gnu": "16.3.6",
+          "@next/swc-linux-arm64-musl": "16.3.6",
+          "@next/swc-linux-x64-gnu": "16.3.6",
+          "@next/swc-linux-x64-musl": "16.3.6",
+          "@next/swc-win32-arm64-msvc": "16.3.6",
+          "@next/swc-win32-x64-msvc": "16.3.6",
+          "sharp": "^0.35.4"
+        },
+        "peerDependencies": {
+          "@opentelemetry/api": "^1.1.0",
+          "@playwright/test": "^1.51.1",
+          "babel-plugin-react-compiler": "*",
+          "react": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+          "react-dom": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+          "sass": "^1.3.0"
+        },
+        "peerDependenciesMeta": {
+          "@opentelemetry/api": {
+            "optional": true
+          },
+          "@playwright/test": {
+            "optional": true
+          },
+          "babel-plugin-react-compiler": {
+            "optional": true
+          },
+          "sass": {
+            "optional": true
+          }
+        }
+      },
+      "node_modules/@next/eslint-plugin-next": {
+        "version": "16.3.6",
+        "resolved": "https://registry.npmjs.org/@next/eslint-plugin-next/-/eslint-plugin-next-16.3.6.tgz",
+        "integrity": "sha512-jowwDX+7DOlDIjJLgTMxudw+k37QnWu1JkZLkSi9MaJBfDYcfhAPMKBhXL0idYzFN/AGg//axnOR4cLkHX/Rng==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "@eslint-community/eslint-utils": "4.9.1",
+          "fast-glob": "3.3.1"
+        }
+      },
+      "node_modules/@ts-morph/common": {
+        "version": "0.27.0",
+        "resolved": "https://registry.npmjs.org/@ts-morph/common/-/common-0.27.0.tgz",
+        "integrity": "sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "fast-glob": "^3.3.3",
+          "minimatch": "^10.0.1",
+          "path-browserify": "^1.0.1"
+        }
+      },
+      "node_modules/@ts-morph/common/node_modules/fast-glob": {
+        "version": "3.3.3",
+        "resolved": "https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.3.tgz",
+        "integrity": "sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "@nodelib/fs.stat": "^2.0.2",
+          "@nodelib/fs.walk": "^1.2.3",
+          "glob-parent": "^5.1.2",
+          "merge2": "^1.3.0",
+          "micromatch": "^4.0.8"
+        },
+        "engines": {
+          "node": ">=8.6.0"
+        }
+      },
+      "node_modules/braces": {
+        "version": "3.0.3",
+        "resolved": "https://registry.npmjs.org/braces/-/braces-3.0.3.tgz",
+        "integrity": "sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "fill-range": "^7.1.1"
+        },
+        "engines": {
+          "node": ">=8"
+        }
+      },
+      "node_modules/eslint-config-next": {
+        "version": "16.3.6",
+        "resolved": "https://registry.npmjs.org/eslint-config-next/-/eslint-config-next-16.3.6.tgz",
+        "integrity": "sha512-1Upt3U7BDwU+ilpe2byZjAfts9oNq4d4fv/zXEvs8/4yS+cwOQW/WCxUNy8gCDquX67SzeehDvKblVC6ZBMocQ==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "@next/eslint-plugin-next": "16.3.6",
+          "eslint-import-resolver-node": "^0.3.6",
+          "eslint-import-resolver-typescript": "^3.5.2",
+          "eslint-plugin-import": "^2.32.0",
+          "eslint-plugin-jsx-a11y": "^6.10.0",
+          "eslint-plugin-react": "^7.37.0",
+          "eslint-plugin-react-hooks": "^7.0.0",
+          "globals": "16.4.0",
+          "typescript-eslint": "^8.46.0"
+        },
+        "peerDependencies": {
+          "eslint": ">=9.0.0",
+          "typescript": ">=3.3.1"
+        },
+        "peerDependenciesMeta": {
+          "typescript": {
+            "optional": true
+          }
+        }
+      },
+      "node_modules/fast-glob": {
+        "version": "3.3.1",
+        "resolved": "https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.1.tgz",
+        "integrity": "sha512-kNFPyjhh5cKjrUltxs+wFx+ZkbRaxxmZ+X0ZU31SOsxCEtP9VPgtq2teZw1DebupL5GmDaNQ6yKMMVcM41iqDg==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "@nodelib/fs.stat": "^2.0.2",
+          "@nodelib/fs.walk": "^1.2.3",
+          "glob-parent": "^5.1.2",
+          "merge2": "^1.3.0",
+          "micromatch": "^4.0.4"
+        },
+        "engines": {
+          "node": ">=8.6.0"
+        }
+      },
+      "node_modules/micromatch": {
+        "version": "4.0.8",
+        "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-4.0.8.tgz",
+        "integrity": "sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "braces": "^3.0.3",
+          "picomatch": "^2.3.1"
+        },
+        "engines": {
+          "node": ">=8.6"
+        }
+      },
+      "node_modules/shadcn": {
+        "version": "4.21.0",
+        "resolved": "https://registry.npmjs.org/shadcn/-/shadcn-4.21.0.tgz",
+        "integrity": "sha512-UU2mFNusW8C5rvadKdH69vERYZqUlOOlXBcf0MYhYLdTGP6DPti7X4qovCu+RTfCqsAgq/T+YfE0Vnttxh9aiw==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "@babel/core": "^7.28.0",
+          "@babel/parser": "^7.28.0",
+          "@babel/plugin-transform-typescript": "^7.28.0",
+          "@babel/preset-typescript": "^7.27.1",
+          "@dotenvx/dotenvx": "^1.48.4",
+          "@modelcontextprotocol/sdk": "^1.26.0",
+          "@types/validate-npm-package-name": "^4.0.2",
+          "browserslist": "^4.26.2",
+          "cn": "^0.2.4",
+          "commander": "^14.0.0",
+          "cosmiconfig": "^9.0.0",
+          "dedent": "^1.6.0",
+          "deepmerge": "^4.3.1",
+          "diff": "^8.0.2",
+          "execa": "^9.6.0",
+          "fast-glob": "^3.3.3",
+          "fs-extra": "^11.3.1",
+          "fuzzysort": "^3.1.0",
+          "kleur": "^4.1.5",
+          "open": "^11.0.0",
+          "ora": "^8.2.0",
+          "postcss": "^8.5.6",
+          "postcss-selector-parser": "^7.1.0",
+          "prompts": "^2.4.2",
+          "recast": "^0.23.11",
+          "socks": "^2.8.8",
+          "stringify-object": "^5.0.0",
+          "ts-morph": "^26.0.0",
+          "tsconfig-paths": "^4.2.0",
+          "undici": "^7.27.2",
+          "validate-npm-package-name": "^7.0.1",
+          "zod": "^3.24.1",
+          "zod-to-json-schema": "^3.24.6"
+        },
+        "bin": {
+          "shadcn": "dist/index.js"
+        },
+        "engines": {
+          "node": ">=20.18.1"
+        }
+      },
+      "node_modules/shadcn/node_modules/fast-glob": {
+        "version": "3.3.3",
+        "resolved": "https://registry.npmjs.org/fast-glob/-/fast-glob-3.3.3.tgz",
+        "integrity": "sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "@nodelib/fs.stat": "^2.0.2",
+          "@nodelib/fs.walk": "^1.2.3",
+          "glob-parent": "^5.1.2",
+          "merge2": "^1.3.0",
+          "micromatch": "^4.0.8"
+        },
+        "engines": {
+          "node": ">=8.6.0"
+        }
+      },
+      "node_modules/ts-morph": {
+        "version": "26.0.0",
+        "resolved": "https://registry.npmjs.org/ts-morph/-/ts-morph-26.0.0.tgz",
+        "integrity": "sha512-ztMO++owQnz8c/gIENcM9XfCEzgoGphTv+nKpYNM1bgsdOVC/jRZuEBf6N+mLLDNg68Kl+GgUZfOySaRiG1/Ug==",
+        "dev": true,
+        "license": "MIT",
+        "dependencies": {
+          "@ts-morph/common": "~0.27.0",
+          "code-block-writer": "^13.0.3"
+        }
+      }
+    }
+  },
+  "manifests": {
+    "node_modules/@next/eslint-plugin-next": "{\n  \"name\": \"@next/eslint-plugin-next\",\n  \"version\": \"16.3.6\",\n  \"description\": \"ESLint plugin for Next.js.\",\n  \"main\": \"dist/index.js\",\n  \"types\": \"dist/index.d.ts\",\n  \"license\": \"MIT\",\n  \"repository\": {\n    \"url\": \"vercel/next.js\",\n    \"directory\": \"packages/eslint-plugin-next\"\n  },\n  \"files\": [\n    \"dist\"\n  ],\n  \"dependencies\": {\n    \"@eslint-community/eslint-utils\": \"4.9.1\",\n    \"fast-glob\": \"3.3.1\"\n  },\n  \"devDependencies\": {\n    \"@types/eslint\": \"9.6.1\",\n    \"@types/estree\": \"1.0.8\",\n    \"eslint\": \"9.37.0\"\n  },\n  \"scripts\": {\n    \"dev\": \"pnpm build\",\n    \"build\": \"swc -d dist src && pnpm types\",\n    \"types\": \"tsc --project tsconfig.json --skipLibCheck --declaration --emitDeclarationOnly --esModuleInterop --declarationDir dist\"\n  }\n}",
+    "node_modules/@ts-morph/common": "{\n  \"name\": \"@ts-morph/common\",\n  \"version\": \"0.27.0\",\n  \"description\": \"Common functionality for ts-morph packages.\",\n  \"main\": \"dist/ts-morph-common.js\",\n  \"author\": \"David Sherret\",\n  \"license\": \"MIT\",\n  \"repository\": \"git+https://github.com/dsherret/ts-morph.git\",\n  \"types\": \"lib/ts-morph-common.d.ts\",\n  \"scripts\": {\n    \"build\": \"deno task build:declarations && deno task build:node\",\n    \"build:node\": \"rimraf dist && deno task createLibFile && deno task rollup && deno run -A scripts/bundleLocalTs.ts\",\n    \"build:deno\": \"rimraf ../../deno/common && rimraf dist-deno && deno task rollup --environment BUILD:deno && deno task build:declarations && deno run -A scripts/buildDeno.ts\",\n    \"build:declarations\": \"deno run -A scripts/buildDeclarations.ts\",\n    \"createLibFile\": \"deno run -A scripts/createLibFile.ts\",\n    \"test\": \"deno run -A npm:mocha\",\n    \"test:ci\": \"deno task test\",\n    \"test:debug\": \"deno task test --inspect-brk\",\n    \"rollup\": \"rollup --config\"\n  },\n  \"dependencies\": {\n    \"minimatch\": \"^10.0.1\",\n    \"path-browserify\": \"^1.0.1\",\n    \"fast-glob\": \"^3.3.3\"\n  },\n  \"devDependencies\": {\n    \"@rollup/plugin-typescript\": \"^12.1.2\",\n    \"@types/chai\": \"^5.2.1\",\n    \"@types/mocha\": \"^10.0.10\",\n    \"@types/node\": \"^22.14.1\",\n    \"chai\": \"^5.2.0\",\n    \"cross-env\": \"^7.0.3\",\n    \"mocha\": \"^11.1.0\",\n    \"rimraf\": \"^6.0.1\",\n    \"rollup\": \"=4.40.0\",\n    \"ts-node\": \"^10.9.2\",\n    \"tslib\": \"^2.8.1\",\n    \"typescript\": \"5.8.3\"\n  },\n  \"publishConfig\": {\n    \"access\": \"public\"\n  },\n  \"browser\": {\n    \"fs\": false,\n    \"fs/promises\": false,\n    \"os\": false,\n    \"fs.realpath\": false,\n    \"mkdirp\": false,\n    \"dir-glob\": false,\n    \"graceful-fs\": false,\n    \"fast-glob\": false,\n    \"source-map-support\": false,\n    \"glob-parent\": false,\n    \"glob\": false,\n    \"path\": false,\n    \"crypto\": false,\n    \"buffer\": false,\n    \"@microsoft/typescript-etw\": false,\n    \"inspector\": false\n  }\n}\n",
+    "node_modules/@ts-morph/common/node_modules/fast-glob": "{\n  \"name\": \"fast-glob\",\n  \"version\": \"3.3.3\",\n  \"description\": \"It's a very fast and efficient glob library for Node.js\",\n  \"license\": \"MIT\",\n  \"repository\": \"mrmlnc/fast-glob\",\n  \"author\": {\n    \"name\": \"Denis Malinochkin\",\n    \"url\": \"https://mrmlnc.com\"\n  },\n  \"engines\": {\n    \"node\": \">=8.6.0\"\n  },\n  \"main\": \"out/index.js\",\n  \"typings\": \"out/index.d.ts\",\n  \"files\": [\n    \"out\",\n    \"!out/{benchmark,tests}\",\n    \"!out/**/*.map\",\n    \"!out/**/*.spec.*\"\n  ],\n  \"keywords\": [\n    \"glob\",\n    \"patterns\",\n    \"fast\",\n    \"implementation\"\n  ],\n  \"devDependencies\": {\n    \"@nodelib/fs.macchiato\": \"^1.0.1\",\n    \"@types/glob-parent\": \"^5.1.0\",\n    \"@types/merge2\": \"^1.1.4\",\n    \"@types/micromatch\": \"^4.0.0\",\n    \"@types/mocha\": \"^5.2.7\",\n    \"@types/node\": \"^14.18.53\",\n    \"@types/picomatch\": \"^2.3.0\",\n    \"@types/sinon\": \"^7.5.0\",\n    \"bencho\": \"^0.1.1\",\n    \"eslint\": \"^6.5.1\",\n    \"eslint-config-mrmlnc\": \"^1.1.0\",\n    \"execa\": \"^7.1.1\",\n    \"fast-glob\": \"^3.0.4\",\n    \"fdir\": \"6.0.1\",\n    \"glob\": \"^10.0.0\",\n    \"hereby\": \"^1.8.1\",\n    \"mocha\": \"^6.2.1\",\n    \"rimraf\": \"^5.0.0\",\n    \"sinon\": \"^7.5.0\",\n    \"snap-shot-it\": \"^7.9.10\",\n    \"typescript\": \"^4.9.5\"\n  },\n  \"dependencies\": {\n    \"@nodelib/fs.stat\": \"^2.0.2\",\n    \"@nodelib/fs.walk\": \"^1.2.3\",\n    \"glob-parent\": \"^5.1.2\",\n    \"merge2\": \"^1.3.0\",\n    \"micromatch\": \"^4.0.8\"\n  },\n  \"scripts\": {\n    \"clean\": \"rimraf out\",\n    \"lint\": \"eslint \\\"src/**/*.ts\\\" --cache\",\n    \"compile\": \"tsc\",\n    \"test\": \"mocha \\\"out/**/*.spec.js\\\" -s 0\",\n    \"test:e2e\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0\",\n    \"test:e2e:sync\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(sync\\\\)\\\"\",\n    \"test:e2e:async\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(async\\\\)\\\"\",\n    \"test:e2e:stream\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(stream\\\\)\\\"\",\n    \"build\": \"npm run clean && npm run compile && npm run lint && npm test\",\n    \"watch\": \"npm run clean && npm run compile -- -- --sourceMap --watch\",\n    \"bench:async\": \"npm run bench:product:async && npm run bench:regression:async\",\n    \"bench:stream\": \"npm run bench:product:stream && npm run bench:regression:stream\",\n    \"bench:sync\": \"npm run bench:product:sync && npm run bench:regression:sync\",\n    \"bench:product\": \"npm run bench:product:async && npm run bench:product:sync && npm run bench:product:stream\",\n    \"bench:product:async\": \"hereby bench:product:async\",\n    \"bench:product:sync\": \"hereby bench:product:sync\",\n    \"bench:product:stream\": \"hereby bench:product:stream\",\n    \"bench:regression\": \"npm run bench:regression:async && npm run bench:regression:sync && npm run bench:regression:stream\",\n    \"bench:regression:async\": \"hereby bench:regression:async\",\n    \"bench:regression:sync\": \"hereby bench:regression:sync\",\n    \"bench:regression:stream\": \"hereby bench:regression:stream\"\n  }\n}\n",
+    "node_modules/braces": "{\n  \"name\": \"braces\",\n  \"description\": \"Bash-like brace expansion, implemented in JavaScript. Safer than other brace expansion libs, with complete support for the Bash 4.3 braces specification, without sacrificing speed.\",\n  \"version\": \"3.0.3\",\n  \"homepage\": \"https://github.com/micromatch/braces\",\n  \"author\": \"Jon Schlinkert (https://github.com/jonschlinkert)\",\n  \"contributors\": [\n    \"Brian Woodward (https://twitter.com/doowb)\",\n    \"Elan Shanker (https://github.com/es128)\",\n    \"Eugene Sharygin (https://github.com/eush77)\",\n    \"hemanth.hm (http://h3manth.com)\",\n    \"Jon Schlinkert (http://twitter.com/jonschlinkert)\"\n  ],\n  \"repository\": \"micromatch/braces\",\n  \"bugs\": {\n    \"url\": \"https://github.com/micromatch/braces/issues\"\n  },\n  \"license\": \"MIT\",\n  \"files\": [\n    \"index.js\",\n    \"lib\"\n  ],\n  \"main\": \"index.js\",\n  \"engines\": {\n    \"node\": \">=8\"\n  },\n  \"scripts\": {\n    \"test\": \"mocha\",\n    \"benchmark\": \"node benchmark\"\n  },\n  \"dependencies\": {\n    \"fill-range\": \"^7.1.1\"\n  },\n  \"devDependencies\": {\n    \"ansi-colors\": \"^3.2.4\",\n    \"bash-path\": \"^2.0.1\",\n    \"gulp-format-md\": \"^2.0.0\",\n    \"mocha\": \"^6.1.1\"\n  },\n  \"keywords\": [\n    \"alpha\",\n    \"alphabetical\",\n    \"bash\",\n    \"brace\",\n    \"braces\",\n    \"expand\",\n    \"expansion\",\n    \"filepath\",\n    \"fill\",\n    \"fs\",\n    \"glob\",\n    \"globbing\",\n    \"letter\",\n    \"match\",\n    \"matches\",\n    \"matching\",\n    \"number\",\n    \"numerical\",\n    \"path\",\n    \"range\",\n    \"ranges\",\n    \"sh\"\n  ],\n  \"verb\": {\n    \"toc\": false,\n    \"layout\": \"default\",\n    \"tasks\": [\n      \"readme\"\n    ],\n    \"lint\": {\n      \"reflinks\": true\n    },\n    \"plugins\": [\n      \"gulp-format-md\"\n    ]\n  }\n}\n",
+    "node_modules/eslint-config-next": "{\n  \"name\": \"eslint-config-next\",\n  \"version\": \"16.3.6\",\n  \"description\": \"ESLint configuration used by Next.js.\",\n  \"license\": \"MIT\",\n  \"repository\": {\n    \"url\": \"vercel/next.js\",\n    \"directory\": \"packages/eslint-config-next\"\n  },\n  \"homepage\": \"https://nextjs.org/docs/app/api-reference/config/eslint\",\n  \"files\": [\n    \"dist\"\n  ],\n  \"dependencies\": {\n    \"@next/eslint-plugin-next\": \"16.3.6\",\n    \"eslint-import-resolver-node\": \"^0.3.6\",\n    \"eslint-import-resolver-typescript\": \"^3.5.2\",\n    \"eslint-plugin-import\": \"^2.32.0\",\n    \"eslint-plugin-jsx-a11y\": \"^6.10.0\",\n    \"eslint-plugin-react\": \"^7.37.0\",\n    \"eslint-plugin-react-hooks\": \"^7.0.0\",\n    \"globals\": \"16.4.0\",\n    \"typescript-eslint\": \"^8.46.0\"\n  },\n  \"peerDependencies\": {\n    \"eslint\": \">=9.0.0\",\n    \"typescript\": \">=3.3.1\"\n  },\n  \"peerDependenciesMeta\": {\n    \"typescript\": {\n      \"optional\": true\n    }\n  },\n  \"devDependencies\": {\n    \"@types/eslint\": \"9.6.1\",\n    \"@types/eslint-plugin-jsx-a11y\": \"6.10.1\",\n    \"typescript\": \"6.0.2\"\n  },\n  \"exports\": {\n    \".\": {\n      \"types\": \"./dist/index.d.ts\",\n      \"default\": \"./dist/index.js\"\n    },\n    \"./core-web-vitals\": {\n      \"types\": \"./dist/core-web-vitals.d.ts\",\n      \"default\": \"./dist/core-web-vitals.js\"\n    },\n    \"./typescript\": {\n      \"types\": \"./dist/typescript.d.ts\",\n      \"default\": \"./dist/typescript.js\"\n    },\n    \"./parser\": {\n      \"types\": \"./dist/parser.d.ts\",\n      \"default\": \"./dist/parser.js\"\n    }\n  },\n  \"scripts\": {\n    \"dev\": \"pnpm build\",\n    \"build\": \"swc -d dist src && pnpm types\",\n    \"types\": \"tsc --skipLibCheck --declaration --emitDeclarationOnly --esModuleInterop --declarationDir dist --rootDir src\",\n    \"pack-for-isolated-tests\": \"pnpm pack --out ./packed.tgz\"\n  }\n}",
+    "node_modules/fast-glob": "{\n  \"name\": \"fast-glob\",\n  \"version\": \"3.3.1\",\n  \"description\": \"It's a very fast and efficient glob library for Node.js\",\n  \"license\": \"MIT\",\n  \"repository\": \"mrmlnc/fast-glob\",\n  \"author\": {\n    \"name\": \"Denis Malinochkin\",\n    \"url\": \"https://mrmlnc.com\"\n  },\n  \"engines\": {\n    \"node\": \">=8.6.0\"\n  },\n  \"main\": \"out/index.js\",\n  \"typings\": \"out/index.d.ts\",\n  \"files\": [\n    \"out\",\n    \"!out/{benchmark,tests}\",\n    \"!out/**/*.map\",\n    \"!out/**/*.spec.*\"\n  ],\n  \"keywords\": [\n    \"glob\",\n    \"patterns\",\n    \"fast\",\n    \"implementation\"\n  ],\n  \"devDependencies\": {\n    \"@nodelib/fs.macchiato\": \"^1.0.1\",\n    \"@types/glob-parent\": \"^5.1.0\",\n    \"@types/merge2\": \"^1.1.4\",\n    \"@types/micromatch\": \"^4.0.0\",\n    \"@types/mocha\": \"^5.2.7\",\n    \"@types/node\": \"^14.18.53\",\n    \"@types/picomatch\": \"^2.3.0\",\n    \"@types/sinon\": \"^7.5.0\",\n    \"bencho\": \"^0.1.1\",\n    \"eslint\": \"^6.5.1\",\n    \"eslint-config-mrmlnc\": \"^1.1.0\",\n    \"execa\": \"^7.1.1\",\n    \"fast-glob\": \"^3.0.4\",\n    \"fdir\": \"^6.0.1\",\n    \"glob\": \"^10.0.0\",\n    \"hereby\": \"^1.8.1\",\n    \"mocha\": \"^6.2.1\",\n    \"rimraf\": \"^5.0.0\",\n    \"sinon\": \"^7.5.0\",\n    \"snap-shot-it\": \"^7.9.10\",\n    \"typescript\": \"^4.9.5\"\n  },\n  \"dependencies\": {\n    \"@nodelib/fs.stat\": \"^2.0.2\",\n    \"@nodelib/fs.walk\": \"^1.2.3\",\n    \"glob-parent\": \"^5.1.2\",\n    \"merge2\": \"^1.3.0\",\n    \"micromatch\": \"^4.0.4\"\n  },\n  \"scripts\": {\n    \"clean\": \"rimraf out\",\n    \"lint\": \"eslint \\\"src/**/*.ts\\\" --cache\",\n    \"compile\": \"tsc\",\n    \"test\": \"mocha \\\"out/**/*.spec.js\\\" -s 0\",\n    \"test:e2e\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0\",\n    \"test:e2e:sync\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(sync\\\\)\\\"\",\n    \"test:e2e:async\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(async\\\\)\\\"\",\n    \"test:e2e:stream\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(stream\\\\)\\\"\",\n    \"build\": \"npm run clean && npm run compile && npm run lint && npm test\",\n    \"watch\": \"npm run clean && npm run compile -- --sourceMap --watch\",\n    \"bench:async\": \"npm run bench:product:async && npm run bench:regression:async\",\n    \"bench:stream\": \"npm run bench:product:stream && npm run bench:regression:stream\",\n    \"bench:sync\": \"npm run bench:product:sync && npm run bench:regression:sync\",\n    \"bench:product\": \"npm run bench:product:async && npm run bench:product:sync && npm run bench:product:stream\",\n    \"bench:product:async\": \"hereby bench:product:async\",\n    \"bench:product:sync\": \"hereby bench:product:sync\",\n    \"bench:product:stream\": \"hereby bench:product:stream\",\n    \"bench:regression\": \"npm run bench:regression:async && npm run bench:regression:sync && npm run bench:regression:stream\",\n    \"bench:regression:async\": \"hereby bench:regression:async\",\n    \"bench:regression:sync\": \"hereby bench:regression:sync\",\n    \"bench:regression:stream\": \"hereby bench:regression:stream\"\n  }\n}\n",
+    "node_modules/micromatch": "{\n  \"name\": \"micromatch\",\n  \"description\": \"Glob matching for javascript/node.js. A replacement and faster alternative to minimatch and multimatch.\",\n  \"version\": \"4.0.8\",\n  \"homepage\": \"https://github.com/micromatch/micromatch\",\n  \"author\": \"Jon Schlinkert (https://github.com/jonschlinkert)\",\n  \"contributors\": [\n    \"(https://github.com/DianeLooney)\",\n    \"Amila Welihinda (amilajack.com)\",\n    \"Bogdan Chadkin (https://github.com/TrySound)\",\n    \"Brian Woodward (https://twitter.com/doowb)\",\n    \"Devon Govett (http://badassjs.com)\",\n    \"Elan Shanker (https://github.com/es128)\",\n    \"Fabr\u00edcio Matt\u00e9 (https://ultcombo.js.org)\",\n    \"Jon Schlinkert (http://twitter.com/jonschlinkert)\",\n    \"Martin Kol\u00e1rik (https://kolarik.sk)\",\n    \"Olsten Larck (https://i.am.charlike.online)\",\n    \"Paul Miller (paulmillr.com)\",\n    \"Tom Byrer (https://github.com/tomByrer)\",\n    \"Tyler Akins (http://rumkin.com)\",\n    \"Peter Bright <drpizza@quiscalusmexicanus.org> (https://github.com/drpizza)\",\n    \"Kuba Juszczyk (https://github.com/ku8ar)\"\n  ],\n  \"repository\": \"micromatch/micromatch\",\n  \"bugs\": {\n    \"url\": \"https://github.com/micromatch/micromatch/issues\"\n  },\n  \"license\": \"MIT\",\n  \"files\": [\n    \"index.js\"\n  ],\n  \"main\": \"index.js\",\n  \"engines\": {\n    \"node\": \">=8.6\"\n  },\n  \"scripts\": {\n    \"test\": \"mocha\"\n  },\n  \"dependencies\": {\n    \"braces\": \"^3.0.3\",\n    \"picomatch\": \"^2.3.1\"\n  },\n  \"devDependencies\": {\n    \"fill-range\": \"^7.0.1\",\n    \"gulp-format-md\": \"^2.0.0\",\n    \"minimatch\": \"^5.0.1\",\n    \"mocha\": \"^9.2.2\",\n    \"time-require\": \"github:jonschlinkert/time-require\"\n  },\n  \"keywords\": [\n    \"bash\",\n    \"bracket\",\n    \"character-class\",\n    \"expand\",\n    \"expansion\",\n    \"expression\",\n    \"extglob\",\n    \"extglobs\",\n    \"file\",\n    \"files\",\n    \"filter\",\n    \"find\",\n    \"glob\",\n    \"globbing\",\n    \"globs\",\n    \"globstar\",\n    \"lookahead\",\n    \"lookaround\",\n    \"lookbehind\",\n    \"match\",\n    \"matcher\",\n    \"matches\",\n    \"matching\",\n    \"micromatch\",\n    \"minimatch\",\n    \"multimatch\",\n    \"negate\",\n    \"negation\",\n    \"path\",\n    \"pattern\",\n    \"patterns\",\n    \"posix\",\n    \"regex\",\n    \"regexp\",\n    \"regular\",\n    \"shell\",\n    \"star\",\n    \"wildcard\"\n  ],\n  \"verb\": {\n    \"toc\": \"collapsible\",\n    \"layout\": \"default\",\n    \"tasks\": [\n      \"readme\"\n    ],\n    \"plugins\": [\n      \"gulp-format-md\"\n    ],\n    \"lint\": {\n      \"reflinks\": true\n    },\n    \"related\": {\n      \"list\": [\n        \"braces\",\n        \"expand-brackets\",\n        \"extglob\",\n        \"fill-range\",\n        \"nanomatch\"\n      ]\n    },\n    \"reflinks\": [\n      \"extglob\",\n      \"fill-range\",\n      \"glob-object\",\n      \"minimatch\",\n      \"multimatch\"\n    ]\n  }\n}\n",
+    "node_modules/shadcn": "{\n  \"name\": \"shadcn\",\n  \"version\": \"4.21.0\",\n  \"description\": \"Add components to your apps.\",\n  \"homepage\": \"https://ui.shadcn.com\",\n  \"publishConfig\": {\n    \"access\": \"public\"\n  },\n  \"license\": \"MIT\",\n  \"author\": {\n    \"name\": \"shadcn\",\n    \"url\": \"https://twitter.com/shadcn\"\n  },\n  \"repository\": {\n    \"type\": \"git\",\n    \"url\": \"https://github.com/shadcn-ui/ui.git\",\n    \"directory\": \"packages/shadcn\"\n  },\n  \"files\": [\n    \"dist\"\n  ],\n  \"keywords\": [\n    \"components\",\n    \"ui\",\n    \"tailwind\",\n    \"radix-ui\",\n    \"base-ui\",\n    \"shadcn\"\n  ],\n  \"type\": \"module\",\n  \"exports\": {\n    \".\": {\n      \"types\": \"./dist/index.d.ts\",\n      \"default\": \"./dist/index.js\"\n    },\n    \"./registry\": {\n      \"types\": \"./dist/registry/index.d.ts\",\n      \"default\": \"./dist/registry/index.js\"\n    },\n    \"./schema\": {\n      \"types\": \"./dist/schema/index.d.ts\",\n      \"default\": \"./dist/schema/index.js\"\n    },\n    \"./mcp\": {\n      \"types\": \"./dist/mcp/index.d.ts\",\n      \"default\": \"./dist/mcp/index.js\"\n    },\n    \"./utils\": {\n      \"types\": \"./dist/utils/index.d.ts\",\n      \"default\": \"./dist/utils/index.js\"\n    },\n    \"./icons\": {\n      \"types\": \"./dist/icons/index.d.ts\",\n      \"default\": \"./dist/icons/index.js\"\n    },\n    \"./preset\": {\n      \"types\": \"./dist/preset/index.d.ts\",\n      \"default\": \"./dist/preset/index.js\"\n    },\n    \"./tailwind.css\": \"./dist/tailwind.css\"\n  },\n  \"sideEffects\": [\n    \"./dist/tailwind.css\"\n  ],\n  \"bin\": \"./dist/index.js\",\n  \"engines\": {\n    \"node\": \">=20.18.1\"\n  },\n  \"dependencies\": {\n    \"@babel/core\": \"^7.28.0\",\n    \"@babel/parser\": \"^7.28.0\",\n    \"@babel/plugin-transform-typescript\": \"^7.28.0\",\n    \"@babel/preset-typescript\": \"^7.27.1\",\n    \"@dotenvx/dotenvx\": \"^1.48.4\",\n    \"@modelcontextprotocol/sdk\": \"^1.26.0\",\n    \"@types/validate-npm-package-name\": \"^4.0.2\",\n    \"browserslist\": \"^4.26.2\",\n    \"cn\": \"^0.2.4\",\n    \"commander\": \"^14.0.0\",\n    \"cosmiconfig\": \"^9.0.0\",\n    \"dedent\": \"^1.6.0\",\n    \"deepmerge\": \"^4.3.1\",\n    \"diff\": \"^8.0.2\",\n    \"execa\": \"^9.6.0\",\n    \"fast-glob\": \"^3.3.3\",\n    \"fs-extra\": \"^11.3.1\",\n    \"fuzzysort\": \"^3.1.0\",\n    \"kleur\": \"^4.1.5\",\n    \"open\": \"^11.0.0\",\n    \"ora\": \"^8.2.0\",\n    \"postcss\": \"^8.5.6\",\n    \"postcss-selector-parser\": \"^7.1.0\",\n    \"prompts\": \"^2.4.2\",\n    \"recast\": \"^0.23.11\",\n    \"socks\": \"^2.8.8\",\n    \"stringify-object\": \"^5.0.0\",\n    \"ts-morph\": \"^26.0.0\",\n    \"tsconfig-paths\": \"^4.2.0\",\n    \"undici\": \"^7.27.2\",\n    \"validate-npm-package-name\": \"^7.0.1\",\n    \"zod\": \"^3.24.1\",\n    \"zod-to-json-schema\": \"^3.24.6\"\n  },\n  \"devDependencies\": {\n    \"@antfu/ni\": \"^25.0.0\",\n    \"@types/babel__core\": \"^7.20.5\",\n    \"@types/fs-extra\": \"^11.0.4\",\n    \"@types/prompts\": \"^2.4.9\",\n    \"@types/stringify-object\": \"^4.0.5\",\n    \"msw\": \"^2.10.4\",\n    \"rimraf\": \"^6.0.1\",\n    \"tsup\": \"^8.5.0\",\n    \"type-fest\": \"^4.41.0\",\n    \"typescript\": \"^5.9.2\"\n  },\n  \"scripts\": {\n    \"dev\": \"tsup --watch\",\n    \"build\": \"tsup\",\n    \"typecheck\": \"tsc --noEmit\",\n    \"clean\": \"rimraf dist && rimraf components\",\n    \"start:dev\": \"cross-env REGISTRY_URL=http://localhost:4000/r SHADCN_TEMPLATE_DIR=../../templates node dist/index.js\",\n    \"start:prod\": \"cross-env REGISTRY_URL=https://ui.shadcn.com/r node dist/index.js\",\n    \"start\": \"node dist/index.js\",\n    \"format:write\": \"prettier --write \\\"**/*.{ts,tsx,mdx}\\\" --cache\",\n    \"format:check\": \"prettier --check \\\"**/*.{ts,tsx,mdx}\\\" --cache\",\n    \"release\": \"changeset version\",\n    \"pub:beta\": \"pnpm build && pnpm publish --no-git-checks --access public --tag beta\",\n    \"pub:rc\": \"pnpm build && pnpm publish --no-git-checks --access public --tag rc\",\n    \"pub:next\": \"pnpm build && pnpm publish --no-git-checks --access public --tag next\",\n    \"pub:release\": \"pnpm build && pnpm publish --access public\",\n    \"test\": \"vitest run\",\n    \"test:dev\": \"REGISTRY_URL=http://localhost:4000/r SHADCN_TEMPLATE_DIR=../../templates vitest run\",\n    \"mcp:inspect\": \"pnpm dlx @modelcontextprotocol/inspector node dist/index.js mcp\"\n  }\n}",
+    "node_modules/shadcn/node_modules/fast-glob": "{\n  \"name\": \"fast-glob\",\n  \"version\": \"3.3.3\",\n  \"description\": \"It's a very fast and efficient glob library for Node.js\",\n  \"license\": \"MIT\",\n  \"repository\": \"mrmlnc/fast-glob\",\n  \"author\": {\n    \"name\": \"Denis Malinochkin\",\n    \"url\": \"https://mrmlnc.com\"\n  },\n  \"engines\": {\n    \"node\": \">=8.6.0\"\n  },\n  \"main\": \"out/index.js\",\n  \"typings\": \"out/index.d.ts\",\n  \"files\": [\n    \"out\",\n    \"!out/{benchmark,tests}\",\n    \"!out/**/*.map\",\n    \"!out/**/*.spec.*\"\n  ],\n  \"keywords\": [\n    \"glob\",\n    \"patterns\",\n    \"fast\",\n    \"implementation\"\n  ],\n  \"devDependencies\": {\n    \"@nodelib/fs.macchiato\": \"^1.0.1\",\n    \"@types/glob-parent\": \"^5.1.0\",\n    \"@types/merge2\": \"^1.1.4\",\n    \"@types/micromatch\": \"^4.0.0\",\n    \"@types/mocha\": \"^5.2.7\",\n    \"@types/node\": \"^14.18.53\",\n    \"@types/picomatch\": \"^2.3.0\",\n    \"@types/sinon\": \"^7.5.0\",\n    \"bencho\": \"^0.1.1\",\n    \"eslint\": \"^6.5.1\",\n    \"eslint-config-mrmlnc\": \"^1.1.0\",\n    \"execa\": \"^7.1.1\",\n    \"fast-glob\": \"^3.0.4\",\n    \"fdir\": \"6.0.1\",\n    \"glob\": \"^10.0.0\",\n    \"hereby\": \"^1.8.1\",\n    \"mocha\": \"^6.2.1\",\n    \"rimraf\": \"^5.0.0\",\n    \"sinon\": \"^7.5.0\",\n    \"snap-shot-it\": \"^7.9.10\",\n    \"typescript\": \"^4.9.5\"\n  },\n  \"dependencies\": {\n    \"@nodelib/fs.stat\": \"^2.0.2\",\n    \"@nodelib/fs.walk\": \"^1.2.3\",\n    \"glob-parent\": \"^5.1.2\",\n    \"merge2\": \"^1.3.0\",\n    \"micromatch\": \"^4.0.8\"\n  },\n  \"scripts\": {\n    \"clean\": \"rimraf out\",\n    \"lint\": \"eslint \\\"src/**/*.ts\\\" --cache\",\n    \"compile\": \"tsc\",\n    \"test\": \"mocha \\\"out/**/*.spec.js\\\" -s 0\",\n    \"test:e2e\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0\",\n    \"test:e2e:sync\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(sync\\\\)\\\"\",\n    \"test:e2e:async\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(async\\\\)\\\"\",\n    \"test:e2e:stream\": \"mocha \\\"out/**/*.e2e.js\\\" -s 0 --grep \\\"\\\\(stream\\\\)\\\"\",\n    \"build\": \"npm run clean && npm run compile && npm run lint && npm test\",\n    \"watch\": \"npm run clean && npm run compile -- -- --sourceMap --watch\",\n    \"bench:async\": \"npm run bench:product:async && npm run bench:regression:async\",\n    \"bench:stream\": \"npm run bench:product:stream && npm run bench:regression:stream\",\n    \"bench:sync\": \"npm run bench:product:sync && npm run bench:regression:sync\",\n    \"bench:product\": \"npm run bench:product:async && npm run bench:product:sync && npm run bench:product:stream\",\n    \"bench:product:async\": \"hereby bench:product:async\",\n    \"bench:product:sync\": \"hereby bench:product:sync\",\n    \"bench:product:stream\": \"hereby bench:product:stream\",\n    \"bench:regression\": \"npm run bench:regression:async && npm run bench:regression:sync && npm run bench:regression:stream\",\n    \"bench:regression:async\": \"hereby bench:regression:async\",\n    \"bench:regression:sync\": \"hereby bench:regression:sync\",\n    \"bench:regression:stream\": \"hereby bench:regression:stream\"\n  }\n}\n",
+    "node_modules/ts-morph": "{\n  \"name\": \"ts-morph\",\n  \"version\": \"26.0.0\",\n  \"description\": \"TypeScript compiler wrapper for static analysis and code manipulation.\",\n  \"main\": \"dist/ts-morph.js\",\n  \"types\": \"lib/ts-morph.d.ts\",\n  \"scripts\": {\n    \"dopublish\": \"deno task type-check-docs && deno task code-generate && deno task package && deno task publish-code-verification && echo \\\"Run: npm publish\\\"\",\n    \"build\": \"deno task build:declarations && deno task build:node\",\n    \"build:node\": \"rimraf dist && rollup -c \",\n    \"build:deno\": \"deno task build:declarations && rimraf dist-deno && rollup -c --environment BUILD:deno && deno run -A scripts/buildDeno.ts\",\n    \"build:declarations\": \"deno run -A scripts/generation/main.ts create-declaration-file\",\n    \"test\": \"deno run -A npm:mocha\",\n    \"test:debug\": \"deno task test --inspect-brk\",\n    \"test:watch\": \"deno task test --watch-extensions ts --watch\",\n    \"test:ci\": \"deno task test\",\n    \"test:ts-versions\": \"deno run -A scripts/test/testTypeScriptVersions.ts\",\n    \"type-check\": \"deno run -A scripts/typeCheckLibrary.ts\",\n    \"code-generate\": \"deno run -A scripts/generation/main.ts\",\n    \"output-wrapped-nodes\": \"deno run -A scripts/generation/outputWrappedNodesInfo.ts\",\n    \"package\": \"deno task build\",\n    \"publish-code-verification\": \"deno task code-verification && deno task ensure-no-declaration-file-errors\",\n    \"code-verification\": \"deno run -A scripts/verification/main.ts ensure-structures-match-classes ensure-overload-structures-match ensure-array-inputs-readonly ensure-classes-implement-structure-methods ensure-mixin-not-applied-multiple-times validate-public-api-class-member-names validate-compiler-node-to-wrapped-type validate-code-fences\",\n    \"ensure-structures-match-classes\": \"deno run -A scripts/verification/main.ts ensure-structures-match-classes\",\n    \"ensure-overload-structures-match\": \"deno run -A scripts/verification/main.ts ensure-overload-structures-match\",\n    \"ensure-no-project-compile-errors\": \"deno run -A scripts/verification/ensureNoProjectCompileErrors.ts\",\n    \"ensure-no-declaration-file-errors\": \"deno run -A scripts/verification/ensureNoDeclarationFileErrors.ts\",\n    \"ensure-array-inputs-readonly\": \"deno run -A scripts/verification/main ensure-array-inputs-readonly.ts\",\n    \"ensure-or-throw-exists\": \"deno run -A scripts/verification/main ensure-or-throw-exists.ts\",\n    \"type-check-docs\": \"deno run -A scripts/typeCheckDocumentation.ts\"\n  },\n  \"repository\": \"git+https://github.com/dsherret/ts-morph.git\",\n  \"keywords\": [\n    \"typescript\",\n    \"ast\",\n    \"static analysis\",\n    \"code generation\",\n    \"code refactor\"\n  ],\n  \"author\": \"David Sherret\",\n  \"license\": \"MIT\",\n  \"bugs\": {\n    \"url\": \"https://github.com/dsherret/ts-morph/issues\"\n  },\n  \"homepage\": \"https://github.com/dsherret/ts-morph#readme\",\n  \"dependencies\": {\n    \"@ts-morph/common\": \"~0.27.0\",\n    \"code-block-writer\": \"^13.0.3\"\n  },\n  \"devDependencies\": {\n    \"@rollup/plugin-typescript\": \"^12.1.2\",\n    \"@types/chai\": \"^5.2.1\",\n    \"@types/diff\": \"^7.0.2\",\n    \"@types/mocha\": \"^10.0.10\",\n    \"@types/node\": \"^22.14.1\",\n    \"chai\": \"^5.2.0\",\n    \"conditional-type-checks\": \"^1.0.6\",\n    \"cross-env\": \"^7.0.3\",\n    \"diff\": \"^7.0.0\",\n    \"mocha\": \"11.1.0\",\n    \"standard-version\": \"^9.5.0\",\n    \"rimraf\": \"^6.0.1\",\n    \"rollup\": \"=4.40.0\",\n    \"ts-node\": \"10.9.2\",\n    \"typescript\": \"~5.8.3\"\n  },\n  \"standard-version\": {\n    \"tagPrefix\": \"\",\n    \"skip\": {\n      \"tag\": true,\n      \"commit\": true\n    }\n  },\n  \"browser\": {\n    \"fs\": false,\n    \"os\": false,\n    \"fs.realpath\": false,\n    \"mkdirp\": false,\n    \"dir-glob\": false,\n    \"graceful-fs\": false,\n    \"source-map-support\": false,\n    \"glob-parent\": false,\n    \"glob\": false\n  }\n}\n"
+  }
+}

@@ -61,9 +61,11 @@ it("preserves normal ranges, nesting, escapes and every installed fast-glob cons
     const folder = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'braces-glob-'));
     try {
       for (const file of ['lesson-a.txt', 'lesson-b.txt', 'other.txt']) fs.writeFileSync(path.join(folder, file), 'synthetic');
-      const paths = ['fast-glob', 'shadcn/node_modules/fast-glob', '@ts-morph/common/node_modules/fast-glob'];
+      const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+    const paths = Object.keys(lock.packages).filter(p => p.endsWith('/fast-glob'));
+    assert(paths.length > 0);
       for (const dependency of paths) {
-        const fg = require(path.resolve('node_modules', dependency));
+        const fg = require(path.resolve(dependency));
         const options = { cwd: folder, onlyFiles: true };
         assert.deepEqual(fg.sync('lesson-{a,b}.txt', options).sort(), ['lesson-a.txt','lesson-b.txt']);
         assert.throws(() => fg.sync('{'.repeat(101)+'a,b'+'}'.repeat(101), options), /exceeds max depth/);

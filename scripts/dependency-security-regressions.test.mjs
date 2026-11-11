@@ -17,6 +17,10 @@ it.each(bracePaths)("keeps hostile brace parsing bounded with normal expansion i
   expect(execFileSync(process.execPath, ["--max-old-space-size=64", "-e", source], { encoding: "utf8", timeout: 4000, stdio: "pipe" }).trim()).toBe("bounded");
 });
 it("rejects malformed URI authorities and ports and normalizes escaped host case", () => {
+  if (!lock.packages["node_modules/fast-uri"]) {
+    expect(Object.keys(lock.packages).some(p => p.endsWith("/fast-uri"))).toBe(false);
+    return;
+  }
   const uri = require("fast-uri");
   expect(uri.parse("http://[127.0.0.1/").error).toBeTruthy();
   expect(uri.parse("http://example.test]/").error).toBeTruthy();
@@ -25,6 +29,10 @@ it("rejects malformed URI authorities and ports and normalizes escaped host case
   expect(uri.serialize({ scheme: "http", host: "example.test", port: 8124, path: "/lesson" })).toBe("http://example.test:8124/lesson");
 });
 it("classifies special-use IPv6, rejects cross-family subnets and bounds diagnostics", () => {
+  if (!lock.packages["node_modules/ip-address"]) {
+    expect(Object.keys(lock.packages).some(p => p.endsWith("/ip-address"))).toBe(false);
+    return;
+  }
   const { Address4, Address6, AddressError } = require("ip-address");
   expect(new Address6("64:ff9b:1::7f00:1").isPrivate()).toBe(true);
   expect(new Address6("fe81::1").isLinkLocal()).toBe(true);

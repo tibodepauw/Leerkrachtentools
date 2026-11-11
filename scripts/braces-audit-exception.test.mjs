@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { assessBracesException } from "./proposals/braces-audit-exception.mjs";
 
-const policy = JSON.parse(readFileSync(new URL("./proposals/braces-exception-policy.json", import.meta.url), "utf8"));
+import { writeApprovedInputs, writeApprovedManifests } from "./test-fixtures/braces-approved-fixture.mjs";
 const patch = JSON.parse(readFileSync("patches/braces-3.0.3-depth.json", "utf8"));
 const advisory = JSON.parse(readFileSync("docs/audit-evidence/2026-10-03/braces-advisory.json", "utf8"));
 const target = { package: "braces", version: "3.0.3", id: "GHSA-vfj7-8cjw-p6xm", summary: "Known recursion vulnerability" };
@@ -20,15 +20,11 @@ function fixture() {
   const standaloneRoot = path.join(root, ".next/standalone");
   for (const directory of [root, productionRoot, standaloneRoot]) {
     mkdirSync(directory, { recursive: true });
-    cpSync("package.json", path.join(directory, "package.json"));
+    writeApprovedInputs(directory, directory !== standaloneRoot);
   }
-  for (const directory of [root, productionRoot]) cpSync("package-lock.json", path.join(directory, "package-lock.json"));
   mkdirSync(path.join(root, "patches"));
   cpSync("patches/braces-3.0.3-depth.json", path.join(root, "patches/braces-3.0.3-depth.json"));
-  for (const location of Object.keys(policy.chainPackages)) {
-    mkdirSync(path.join(root, location), { recursive: true });
-    cpSync(path.join(location, "package.json"), path.join(root, location, "package.json"));
-  }
+  writeApprovedManifests(root);
   cpSync("node_modules/braces", path.join(root, "node_modules/braces"), { recursive: true });
   mkdirSync(path.join(productionRoot, "node_modules/next"), { recursive: true });
   writeJson(path.join(productionRoot, "node_modules/next/package.json"), { name: "next", version: "16.3.6" });

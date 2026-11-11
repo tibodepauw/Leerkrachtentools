@@ -1,0 +1,644 @@
+{
+  "baseCommit": "ecdb06ad1924399ef0f1537a69a3c4805dcae279",
+  "scope": "Required Next release-blocking dependency repair; no application logic, behavior or server configuration from the separate local audit.",
+  "priorAuditQueries": 960,
+  "priorAffectedPackageVersionRecords": 19,
+  "resolutions": [
+    {
+      "package": "@modelcontextprotocol/sdk",
+      "priorVersion": "1.30.0",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-22jm-h49p-29qw",
+          "url": "https://github.com/advisories/GHSA-22jm-h49p-29qw",
+          "fixedVersions": [
+            "1.32.0"
+          ]
+        },
+        {
+          "id": "GHSA-46jr-4wx8-v453",
+          "url": "https://github.com/advisories/GHSA-46jr-4wx8-v453",
+          "fixedVersions": [
+            "1.32.0"
+          ]
+        },
+        {
+          "id": "GHSA-6prh-2h8m-c8cw",
+          "url": "https://github.com/advisories/GHSA-6prh-2h8m-c8cw",
+          "fixedVersions": [
+            "1.32.0"
+          ]
+        },
+        {
+          "id": "GHSA-6qxp-vccf-f47h",
+          "url": "https://github.com/advisories/GHSA-6qxp-vccf-f47h",
+          "fixedVersions": [
+            "1.31.0"
+          ]
+        },
+        {
+          "id": "GHSA-f897-62hf-6gxq",
+          "url": "https://github.com/advisories/GHSA-f897-62hf-6gxq",
+          "fixedVersions": [
+            "1.30.1"
+          ]
+        },
+        {
+          "id": "GHSA-rvq5-wwqv-78pq",
+          "url": "https://github.com/advisories/GHSA-rvq5-wwqv-78pq",
+          "fixedVersions": [
+            "1.32.0"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "minimatch",
+      "priorVersion": "10.2.6",
+      "current": [
+        {
+          "path": "node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch",
+          "version": "11.0.7",
+          "dev": true
+        },
+        {
+          "path": "node_modules/glob/node_modules/minimatch",
+          "version": "11.0.8",
+          "dev": false
+        },
+        {
+          "path": "node_modules/minimatch",
+          "version": "3.1.5",
+          "dev": true
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+          "fixedVersions": [
+            "11.0.1"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "@vitest/mocker",
+      "priorVersion": "5.0.1",
+      "current": [
+        {
+          "path": "node_modules/@vitest/mocker",
+          "version": "5.1.0",
+          "dev": true
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-qxg6-89mg-rqv8",
+          "url": "https://github.com/advisories/GHSA-qxg6-89mg-rqv8",
+          "fixedVersions": [
+            "4.1.12",
+            "5.0.3"
+          ]
+        },
+        {
+          "id": "GHSA-xp26-3454-mjgp",
+          "url": "https://github.com/advisories/GHSA-xp26-3454-mjgp",
+          "fixedVersions": [
+            "4.1.12",
+            "5.0.3"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "body-parser",
+      "priorVersion": "2.3.0",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-27r3-jxmh-p828",
+          "url": "https://github.com/advisories/GHSA-27r3-jxmh-p828",
+          "fixedVersions": [
+            "1.20.9",
+            "2.4.0"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "deepmerge",
+      "priorVersion": "4.3.1",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-gcqx-w48m-w2h4",
+          "url": "https://github.com/advisories/GHSA-gcqx-w48m-w2h4",
+          "fixedVersions": []
+        }
+      ]
+    },
+    {
+      "package": "dompurify",
+      "priorVersion": "3.4.16",
+      "current": [
+        {
+          "path": "node_modules/dompurify",
+          "version": "3.4.17",
+          "dev": false
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-c6gr-qvv4-5v3f",
+          "url": "https://github.com/advisories/GHSA-c6gr-qvv4-5v3f",
+          "fixedVersions": [
+            "3.4.17"
+          ]
+        },
+        {
+          "id": "GHSA-cg2g-xh64-v4q7",
+          "url": "https://github.com/advisories/GHSA-cg2g-xh64-v4q7",
+          "fixedVersions": [
+            "3.4.17"
+          ]
+        },
+        {
+          "id": "GHSA-mrv2-3pqr-j5jr",
+          "url": "https://github.com/advisories/GHSA-mrv2-3pqr-j5jr",
+          "fixedVersions": [
+            "3.4.17"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "fast-uri",
+      "priorVersion": "3.1.8",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-333x-w4r6-6crp",
+          "url": "https://github.com/advisories/GHSA-333x-w4r6-6crp",
+          "fixedVersions": [
+            "2.4.8",
+            "3.1.9",
+            "4.2.3"
+          ]
+        },
+        {
+          "id": "GHSA-w74x-v6f9-j3xg",
+          "url": "https://github.com/advisories/GHSA-w74x-v6f9-j3xg",
+          "fixedVersions": [
+            "2.4.8",
+            "3.1.9",
+            "4.2.3"
+          ]
+        },
+        {
+          "id": "GHSA-wjr9-j795-jxcr",
+          "url": "https://github.com/advisories/GHSA-wjr9-j795-jxcr",
+          "fixedVersions": [
+            "2.4.8",
+            "3.1.9",
+            "4.2.3"
+          ]
+        },
+        {
+          "id": "GHSA-xhq7-xmqj-769h",
+          "url": "https://github.com/advisories/GHSA-xhq7-xmqj-769h",
+          "fixedVersions": [
+            "2.4.8",
+            "3.1.9",
+            "4.2.3"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "glob",
+      "priorVersion": "10.5.0",
+      "current": [
+        {
+          "path": "node_modules/glob",
+          "version": "14.0.4",
+          "dev": false
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-3g3m-2fjr-6pw4",
+          "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4",
+          "fixedVersions": [
+            "14.0.2"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "minimatch",
+      "priorVersion": "9.0.9",
+      "current": [
+        {
+          "path": "node_modules/@typescript-eslint/typescript-estree/node_modules/minimatch",
+          "version": "11.0.7",
+          "dev": true
+        },
+        {
+          "path": "node_modules/glob/node_modules/minimatch",
+          "version": "11.0.8",
+          "dev": false
+        },
+        {
+          "path": "node_modules/minimatch",
+          "version": "3.1.5",
+          "dev": true
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-g3hv-75wg-m249",
+          "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+          "fixedVersions": [
+            "11.0.1"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "ip-address",
+      "priorVersion": "10.7.1",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-rxp7-6hxx-x8q5",
+          "url": "https://github.com/advisories/GHSA-rxp7-6hxx-x8q5",
+          "fixedVersions": [
+            "10.7.4"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "postcss-selector-parser",
+      "priorVersion": "7.1.5",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-rj75-hqrm-r3gf",
+          "url": "https://github.com/advisories/GHSA-rj75-hqrm-r3gf",
+          "fixedVersions": [
+            "6.1.5",
+            "7.1.6"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "proxy-addr",
+      "priorVersion": "2.0.7",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-jqcg-44mw-7w3h",
+          "url": "https://github.com/advisories/GHSA-jqcg-44mw-7w3h",
+          "fixedVersions": [
+            "2.0.8"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "qs",
+      "priorVersion": "6.16.0",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-6pq8-jhm2-2vcw",
+          "url": "https://github.com/advisories/GHSA-6pq8-jhm2-2vcw",
+          "fixedVersions": [
+            "6.16.1"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "zod",
+      "priorVersion": "3.25.76",
+      "current": [
+        {
+          "path": "node_modules/zod",
+          "version": "4.6.7",
+          "dev": false
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-mrhx-c7xc-m3w5",
+          "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+          "fixedVersions": [
+            "4.6.6"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "source-map-js",
+      "priorVersion": "1.2.1",
+      "current": [
+        {
+          "path": "node_modules/source-map-js",
+          "version": "1.2.2",
+          "dev": false
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-68fv-2mgg-jv7q",
+          "url": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q",
+          "fixedVersions": [
+            "1.2.2"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "systeminformation",
+      "priorVersion": "5.33.4",
+      "current": [],
+      "resolution": "removed with unused shadcn CLI",
+      "advisories": [
+        {
+          "id": "GHSA-3f7j-7jwc-fxfj",
+          "url": "https://github.com/advisories/GHSA-3f7j-7jwc-fxfj",
+          "fixedVersions": [
+            "5.33.16"
+          ]
+        },
+        {
+          "id": "GHSA-4vjg-vx72-qq4g",
+          "url": "https://github.com/advisories/GHSA-4vjg-vx72-qq4g",
+          "fixedVersions": [
+            "5.33.14"
+          ]
+        },
+        {
+          "id": "GHSA-7648-jmwf-vw7j",
+          "url": "https://github.com/advisories/GHSA-7648-jmwf-vw7j",
+          "fixedVersions": [
+            "5.33.13"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "undici",
+      "priorVersion": "7.29.1",
+      "current": [
+        {
+          "path": "node_modules/undici",
+          "version": "7.30.2",
+          "dev": false
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-2m5v-pch6-74hx",
+          "url": "https://github.com/advisories/GHSA-2m5v-pch6-74hx",
+          "fixedVersions": [
+            "6.29.1",
+            "7.30.1",
+            "8.12.2"
+          ]
+        },
+        {
+          "id": "GHSA-4qv8-2p9j-2685",
+          "url": "https://github.com/advisories/GHSA-4qv8-2p9j-2685",
+          "fixedVersions": [
+            "6.29.1",
+            "7.30.1",
+            "8.12.2"
+          ]
+        },
+        {
+          "id": "GHSA-4w7w-5xrc-9h26",
+          "url": "https://github.com/advisories/GHSA-4w7w-5xrc-9h26",
+          "fixedVersions": [
+            "7.30.1",
+            "8.12.2"
+          ]
+        },
+        {
+          "id": "GHSA-55wc-3pg8-jfw6",
+          "url": "https://github.com/advisories/GHSA-55wc-3pg8-jfw6",
+          "fixedVersions": [
+            "7.30.1",
+            "8.12.2"
+          ]
+        },
+        {
+          "id": "GHSA-9fm3-97px-rjf6",
+          "url": "https://github.com/advisories/GHSA-9fm3-97px-rjf6",
+          "fixedVersions": [
+            "6.29.1",
+            "7.30.1",
+            "8.12.2"
+          ]
+        },
+        {
+          "id": "GHSA-f72v-6w45-q472",
+          "url": "https://github.com/advisories/GHSA-f72v-6w45-q472",
+          "fixedVersions": [
+            "7.30.1",
+            "8.12.2"
+          ]
+        },
+        {
+          "id": "GHSA-qrxm-fqhp-jwvm",
+          "url": "https://github.com/advisories/GHSA-qrxm-fqhp-jwvm",
+          "fixedVersions": [
+            "6.29.1",
+            "7.30.1",
+            "8.12.2"
+          ]
+        },
+        {
+          "id": "GHSA-xjj6-f33q-929c",
+          "url": "https://github.com/advisories/GHSA-xjj6-f33q-929c",
+          "fixedVersions": [
+            "6.29.1",
+            "7.30.1",
+            "8.12.2"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "vite",
+      "priorVersion": "8.3.0",
+      "current": [
+        {
+          "path": "node_modules/vite",
+          "version": "8.3.8",
+          "dev": true
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-587h-7wmj-h5pm",
+          "url": "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+          "fixedVersions": [
+            "6.4.4",
+            "7.3.7",
+            "8.1.6",
+            "8.2.4",
+            "8.3.3"
+          ]
+        },
+        {
+          "id": "GHSA-698v-4r3x-3vcv",
+          "url": "https://github.com/advisories/GHSA-698v-4r3x-3vcv",
+          "fixedVersions": [
+            "6.4.4",
+            "7.3.7",
+            "8.1.6",
+            "8.2.4",
+            "8.3.3"
+          ]
+        },
+        {
+          "id": "GHSA-9jrq-w75r-8gcw",
+          "url": "https://github.com/advisories/GHSA-9jrq-w75r-8gcw",
+          "fixedVersions": [
+            "6.4.4",
+            "7.3.7",
+            "8.1.6",
+            "8.2.4",
+            "8.3.3"
+          ]
+        },
+        {
+          "id": "GHSA-r825-w8mm-5pxw",
+          "url": "https://github.com/advisories/GHSA-r825-w8mm-5pxw",
+          "fixedVersions": [
+            "6.4.4",
+            "7.3.7",
+            "8.1.6",
+            "8.2.4",
+            "8.3.3"
+          ]
+        },
+        {
+          "id": "GHSA-rq7h-c2jc-7f22",
+          "url": "https://github.com/advisories/GHSA-rq7h-c2jc-7f22",
+          "fixedVersions": [
+            "6.4.4",
+            "7.3.7",
+            "8.1.6",
+            "8.2.4",
+            "8.3.3"
+          ]
+        },
+        {
+          "id": "GHSA-vfpm-58rq-9qcg",
+          "url": "https://github.com/advisories/GHSA-vfpm-58rq-9qcg",
+          "fixedVersions": [
+            "8.2.4",
+            "8.3.3"
+          ]
+        }
+      ]
+    },
+    {
+      "package": "zod",
+      "priorVersion": "4.4.3",
+      "current": [
+        {
+          "path": "node_modules/zod",
+          "version": "4.6.7",
+          "dev": false
+        }
+      ],
+      "resolution": "upgraded to a verified fixed version or retained unaffected major",
+      "advisories": [
+        {
+          "id": "GHSA-mrhx-c7xc-m3w5",
+          "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+          "fixedVersions": [
+            "4.6.6"
+          ]
+        }
+      ]
+    }
+  ],
+  "newAudit": {
+    "command": "npm run security:audit -- --all",
+    "queries": 750,
+    "findings": 0,
+    "exitCode": 0,
+    "actualClock": true,
+    "findingsFiltering": false,
+    "exceptionUsed": false
+  },
+  "majorOverrideReview": {
+    "glob": "14.0.4 replaces vulnerable glob10; incoming rimraf5 uses named glob/globSync exports. Node22 supported.",
+    "minimatch": "Only major10 is overridden to11.0.7; current glob14 resolves its own11.0.8. Unaffected minimatch3.1.5 retained because actual ESLint consumers call its CommonJS function export."
+  },
+  "stylesheet": {
+    "source": "https://registry.npmjs.org/shadcn/-/shadcn-4.21.0.tgz",
+    "integrity": "sha512-UU2mFNusW8C5rvadKdH69vERYZqUlOOlXBcf0MYhYLdTGP6DPti7X4qovCu+RTfCqsAgq/T+YfE0Vnttxh9aiw==",
+    "verified": true,
+    "cssSha256": "bc7d83425702955b4cb67cb14ede9d603f9d912376d57a2d81d661094d2a782a",
+    "cssBytes": 16041,
+    "relativeImportsOrUrls": false,
+    "preservedExactVendorBytes": true,
+    "onlyOriginalImportChanged": true
+  },
+  "cliUsageReview": "Committed source, scripts and CI contain no shadcn CLI execution. The only build import was shadcn/tailwind.css. It is replaced by exact vendor bytes with original MIT license; there are no relative imports or assets. Existing generated UI components remain unchanged.",
+  "fixtures": {
+    "purpose": "Exercise the original historical16.3.6approval independently from the changing current application dependency graph. The fixture retains ten pinned dev/build chainrecords and one production-queryrecord; guard code and original policy are unchanged.",
+    "frozenChainPackages": 10,
+    "frozenLockRecordsIncludingRoot": 12,
+    "allPackageManifestsAndLockRecordsVerifiedAgainstPolicy": true,
+    "realCurrentAuditUnchanged": true,
+    "backportBytesUnchanged": true,
+    "expiresAtUnchanged": "2026-10-17T00:00:00.000Z",
+    "negativeAssertionsPreserved": true,
+    "frozenNextLintVersion": "16.3.6",
+    "originalPolicyByteIdenticalToBaseline": true,
+    "policyFingerprintUpdates": false
+  },
+  "validationLimits": [
+    "Full clean Node22 install, lint, typecheck, app regression tests and build are to be run by the root agent on a complete source snapshot before publication.",
+    "No services, production requests, database operations or deployment performed."
+  ],
+  "honoRegressions": {
+    "cause": "The removed shadcn CLI also removed Hono and its Node adapter. Unconditional top-level Hono imports failed before any test could run.",
+    "fix": "Check every lock location and canonical alias name for complete absence. Import only present components. Preserve the original XSS and static-prefix attack assertions whenever their component is installed.",
+    "checks": {
+      "bothAbsent": "1 active absence test passed",
+      "bothPresent": "All 6 original attack cases passed with the earlier pinned Hono4.13.12 and adapter2.1.3",
+      "adapterAbsentOnly": "6 passed: original4XSS+coreprefix attacks and explicit adapter-absence assertion",
+      "orphanAdapter": "Intentionally inconsistent fixture correctly fails; no silent suite skip"
+    },
+    "productionCodeChanged": false
+  }
+}
