@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { writeApprovedInputs, writeApprovedManifests } from "./test-fixtures/braces-approved-fixture.mjs";
-
 const advisory = JSON.parse(readFileSync("docs/audit-evidence/2026-10-03/braces-advisory.json", "utf8"));
 const directories = [];
 const json = (file, value) => writeFileSync(file, JSON.stringify(value));

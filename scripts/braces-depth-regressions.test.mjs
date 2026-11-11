@@ -62,7 +62,8 @@ it("preserves normal ranges, nesting, escapes and every installed fast-glob cons
     try {
       for (const file of ['lesson-a.txt', 'lesson-b.txt', 'other.txt']) fs.writeFileSync(path.join(folder, file), 'synthetic');
       const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
-      const paths = Object.keys(lock.packages).filter(p => p.endsWith('/fast-glob'));
+    const paths = Object.keys(lock.packages).filter(p => p.endsWith('/fast-glob'));
+    assert(paths.length > 0);
       for (const dependency of paths) {
         const fg = require(path.resolve(dependency));
         const options = { cwd: folder, onlyFiles: true };

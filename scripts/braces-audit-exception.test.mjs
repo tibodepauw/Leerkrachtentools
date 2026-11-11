@@ -5,7 +5,6 @@ import path from "node:path";
 import { assessBracesException } from "./proposals/braces-audit-exception.mjs";
 
 import { writeApprovedInputs, writeApprovedManifests } from "./test-fixtures/braces-approved-fixture.mjs";
-
 const patch = JSON.parse(readFileSync("patches/braces-3.0.3-depth.json", "utf8"));
 const advisory = JSON.parse(readFileSync("docs/audit-evidence/2026-10-03/braces-advisory.json", "utf8"));
 const target = { package: "braces", version: "3.0.3", id: "GHSA-vfj7-8cjw-p6xm", summary: "Known recursion vulnerability" };
@@ -23,7 +22,6 @@ function fixture() {
     mkdirSync(directory, { recursive: true });
     writeApprovedInputs(directory, directory !== standaloneRoot);
   }
-
   mkdirSync(path.join(root, "patches"));
   cpSync("patches/braces-3.0.3-depth.json", path.join(root, "patches/braces-3.0.3-depth.json"));
   writeApprovedManifests(root);
