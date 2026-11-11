@@ -104,6 +104,18 @@ describe("begrensde verwerking van vijandige Word-XML", () => {
 });
 
 describe("Word-velden over meerdere runs", () => {
+  it("vult een LESDOEL-kop in wanneer de gekoppelde velden in volgende paragrafen staan", () => {
+    const label = `<w:p>${run("LESDOEL ", "<w:b/>")}${run("1 (MC-DAS-SPM): oud doel")}</w:p>`;
+    const metadata = `<w:p>${run("Gekoppeld aan minimumdoel: broncode")}</w:p><w:p>${run("Gekoppeld aan leerplandoel: brontekst")}</w:p>`;
+    const result = __testables.patchDocumentXmlDetailed(label + metadata, lesson);
+    expect(result.fields).toBe(1);
+    expect(visible(result.xml)).toBe(`LESDOEL 1 (DAS): ${lesson.goals[0].text}` + visible(metadata));
+    expect(result.xml).toContain(metadata);
+    expect(result.xml).toContain("<w:b/>");
+    expect(result.xml).not.toContain("oud doel");
+    expect(visible(patch(result.xml))).toBe(visible(result.xml));
+  });
+
   it("vult de waarde eenmaal in en behoudt de opmaak van label en waarde", () => {
     const xml = `<w:p><w:pPr><w:jc w:val="left"/></w:pPr>${run("Leer", "<w:b/>")}${run("gebied:", "<w:b/>")}${run(" ")}${run("Ne", "<w:i/>")}${run("der")}${run("lands")}<w:bookmarkEnd w:id="1"/></w:p>`;
     const patched = patch(xml);

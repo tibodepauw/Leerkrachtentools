@@ -163,6 +163,7 @@ function stripGeneratedExportHeader(documentXml: string) {
 }
 
 const GOAL_HEADER = /(▪\s{0,8})?LESDOEL\s{1,8}(\d{1,2})\s{0,8}\([^)\n]{1,80}\):/giu;
+const PARAGRAPH_GOAL_HEADER = new RegExp(`^${GOAL_HEADER.source}`, "iu");
 const GOAL_END = /Gekoppeld aan minimumdoel:/giu;
 
 /**
@@ -229,6 +230,18 @@ function patchParagraph(paragraph: string, lesson: LessonExportPayload, activeGo
   const text = paragraphText(paragraph);
   const blobEdits = formBlobEdits(text, lesson);
   if (blobEdits.length > 0) return spliceParagraphText(paragraph, blobEdits);
+
+  // Word forms commonly put the goal and its source fields in separate
+  // paragraphs. The source fields then cannot delimit the value in this one.
+  const goalHeader = PARAGRAPH_GOAL_HEADER.exec(text);
+  const numberedGoal = goalHeader && activeGoals[Number(goalHeader[2]) - 1];
+  if (goalHeader && numberedGoal) {
+    return spliceParagraphText(paragraph, [{
+      start: 0,
+      end: text.length,
+      text: `${goalHeader[1] ?? ""}LESDOEL ${Number(goalHeader[2])} (${numberedGoal.taxonomy ?? "MC"}): ${singleLine(numberedGoal.text)}`,
+    }]);
+  }
 
   const fields: Array<[string, string]> = [
     ["Leergebied:", lesson.learningArea],

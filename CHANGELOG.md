@@ -14,6 +14,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 - Begrensde uploadvalidatie en Word-verwerking, herstel van exportvelden over tekstruns, behouden regeleinden en opmaak, correcte entiteiten en veilige downloadnamen. Scanner maximaal 6 MiB; gewone documentimport maximaal 8 MiB. Import en export maximaal 500000 teksttekens.
 - Herbruikbare corpusindexen met verversing, overslaan van ongeldige JSONL-regels, kandidaatgebonden Pro-selectie en lescontext in de clientcache. Verkeerd getypeerde zoekvelden geven een validatiefout.
 - Eindreview: lege zelfsluitende Word-paragrafen met attributen blijven geldig, herhaalde loginaanvragen bewaren de laatst ingediende marketingkeuze en een nieuwe corpusindex gebruikt geen verouderde ruwe data.
+- Acceptatie met echte bronformulieren: lesdoelen met een eigen LESDOEL-kop worden ook ingevuld als hun bronkoppelingen in volgende paragrafen staan.
 - Next.js en lintconfig bijgewerkt naar 16.4.6, overige dependencyfixes toegepast. De componentstylesheet is met licentie lokaal opgenomen; de ongebruikte generator is verwijderd uit de afhankelijkheden.
 
 ### Privacy en gegevensbeheer
