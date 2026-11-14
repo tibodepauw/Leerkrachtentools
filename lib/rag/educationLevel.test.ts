@@ -6,6 +6,13 @@ import {
 import type { CurriculumSearchResult } from "@/types";
 
 describe("educationLevel", () => {
+  it("herkent expliciet basisonderwijs en gebruikt een bekende leeftijd vóór de faseheuristiek", () => {
+    const raw = { onderwijsniveau: "Basisonderwijs", fase: "Fase 2", leeftijd: "6" };
+    expect(recordMatchesEducationLevel(raw, "BASISONDERWIJS")).toBe(true);
+    expect(recordMatchesEducationLevel(raw, "LAGER")).toBe(true);
+    expect(recordMatchesEducationLevel(raw, "KLEUTER")).toBe(false);
+    expect(recordMatchesEducationLevel({ ...raw, leeftijd: "2,5" }, "KLEUTER")).toBe(true);
+  });
   it("herkent kleuter- en lagerbereiken in leeftijdsdata", () => {
     const sharedGoal = {
       leerlijn: [{ leeftijd: "2.5-12j" }],

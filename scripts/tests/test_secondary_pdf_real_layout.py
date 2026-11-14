@@ -7,6 +7,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scrape_secondary_curricula import SourceDocument, parse_pdf, SecondaryCurriculumScraper, GoalRecord
 
 class SecondaryPdfLayoutTests(unittest.TestCase):
+    def test_ovsg_goal_code_defines_its_stream_when_a_shared_download_label_differs(self):
+        source = SourceDocument(provider='OVSG', title='A-stroom SC01', url='https://example.test/shared.pdf',
+                                page_url='https://example.test/', grade='1ste graad', stream='A-stroom')
+        text = 'B-LGZ.11.B.09\nDe leerlingen passen veiligheidsregels toe.\n'
+        with patch('scrape_secondary_curricula.PdfReader', return_value=Mock(pages=[Mock(extract_text=lambda:text)])):
+            record = parse_pdf(b'synthetic', source)[0]
+        self.assertEqual(record.stroom, 'B-stroom')
+        self.assertEqual(record.bron_stroom, 'A-stroom')
+        self.assertIn('B-stroom', record.leerjaar_route)
+        self.assertNotIn('A-stroom', record.leerjaar_route)
+        self.assertIn('veiligheidsregels', record.bron_tekstblok)
+
     def source(self, grade='1ste graad', stream='A-stroom'):
         return SourceDocument(provider='GO', title='Synthetisch plan', url='https://example.test/plan.pdf', page_url='https://example.test/', grade=grade, stream=stream)
 

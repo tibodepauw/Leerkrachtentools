@@ -139,6 +139,62 @@ describe("corpuscache met kleine fixtures op schijf", () => {
     expect(reads()).toEqual([]);
   });
 
+  it("zoekt zelfstandige officiële minimumdoelen zonder ze aan een onderwijsnet te koppelen", async () => {
+    write("data/basisonderwijs/minimumdoelen_basisonderwijs.jsonl", jsonl([
+      { code: "1.2", titel: "De kleuters vergelijken appels en tellen aantallen", netwerk: "AHOVOKS", onderwijsniveau: "KLEUTER", corpus_dataset: "BASISONDERWIJS_MINIMUMDOELEN" },
+      { code: "2.3", titel: "De leerlingen vergelijken appels en tellen aantallen", netwerk: "AHOVOKS", onderwijsniveau: "LAGER", corpus_dataset: "BASISONDERWIJS_MINIMUMDOELEN" },
+    ]));
+    modules = await loadModules();
+    const { corpus, minimumGoals } = modules;
+    expect(corpus.allMinimumGoalRecords("BASISONDERWIJS").filter(row => row.netwerk === "AHOVOKS")).toHaveLength(2);
+    const candidates = minimumGoals.collectMinimumGoalCandidates({ query: "appels vergelijken tellen", educationLevel: "KLEUTER", limit: 10 });
+    const official = candidates.filter(row => row.netwerk === "VLAANDEREN");
+    expect(official.map(row => row.gelinktMinimumdoel?.code)).toEqual(["1.2"]);
+    const { buildCorpusFaithfulnessIndex } = await import("@/lib/rag/ragBenchmark");
+    expect(buildCorpusFaithfulnessIndex("KLEUTER").codes.has("1.2")).toBe(true);
+    expect(corpus.recordsForNetwork("GO_NIEUW", "BASISONDERWIJS").some(row => row.netwerk === "AHOVOKS")).toBe(false);
+  });
+
+  it("behandelt zelfstandige secundaire AHOVOKS-doelen als minimumdoelen", async () => {
+    write("data/secundair/minimumdoelen_secundair.jsonl", jsonl([
+      { code: "06.01", titel: "De leerlingen vergelijken aantallen appels", netwerk: "AHOVOKS", onderwijsniveau: "SECUNDAIR" },
+    ]));
+    modules = await loadModules();
+    expect(modules.corpus.allMinimumGoalRecords("SECUNDAIR").some(row => row.code === "06.01")).toBe(true);
+    expect(modules.corpus.recordsForNetwork("ALL", "SECUNDAIR").some(row => row.code === "06.01")).toBe(false);
+  });
+
+  it("houdt de nieuwe OVSG-editie apart en toont schooljaar en juiste leeftijdsgroep", async () => {
+    write("data/ovsg/ovsg_volledig.jsonl", jsonl([
+      { code: "OUD.1", titel: "Appels tellen in de oude editie", netwerk: "OVSG", fase: "Fase 2" },
+    ]));
+    write("data/ovsg/ovsg_2027_2028_volledig.jsonl", jsonl([
+      { code: "WIS 1 B.1", titel: "Appels tellen en getallen vergelijken", netwerk: "OVSG", onderwijsniveau: "Basisonderwijs", fase: "Fase 2", leeftijd: "6", bron_schooljaar: "2027-2028", leerjaar_route: "Leer Lokaal 2027-2028 · Fase 2", bron_record: { is_goedgekeurd: false } },
+    ]));
+    modules = await loadModules();
+    const records = modules.corpus.recordsForNetwork("OVSG", "BASISONDERWIJS");
+    expect(records.map(row => row.code)).toEqual(["WIS 1 B.1"]);
+    const hits = modules.corpus.searchLocalCorpus({ query: "appels tellen vergelijken", network: "OVSG", educationLevel: "LAGER" });
+    expect(hits[0]?.toelichting).toContain("Bronstatus: niet goedgekeurd.");
+    expect(hits[0]?.leerjaarRoute).toContain("2027-2028");
+    expect(hits[0]?.leerjaarRoute).toContain("Lager onderwijs");
+    expect(modules.corpus.searchLocalCorpus({ query: "appels tellen vergelijken", network: "OVSG", educationLevel: "KLEUTER" })).toEqual([]);
+  });
+
+  it("verkiest volledige secundaire OVSG-data en behoudt andere netwerken", async () => {
+    appendFileSync(path.join(root, FILES.secundair), jsonl([
+      { code: "OVSG-OUD", titel: "Appels meten oude bron", netwerk: "OVSG", onderwijsniveau: "Secundair" },
+    ]));
+    write("data/secundair/leerplannen_ovsg_2025.jsonl", jsonl([
+      { code: "A bv WIS 01 B 1", titel: "Appels meten in de nieuwe bron", netwerk: "OVSG", onderwijsniveau: "Secundair", graad: "1ste graad" },
+    ]));
+    modules = await loadModules();
+    const ovsg = modules.corpus.recordsForNetwork("OVSG", "SECUNDAIR");
+    expect(ovsg.map(row => row.code)).toEqual(["A bv WIS 01 B 1"]);
+    expect(modules.corpus.recordsForNetwork("GO", "SECUNDAIR").some(row => row.code === "SEC.1")).toBe(true);
+    expect(modules.corpus.searchLocalCorpus({ query: "appels meten", network: "OVSG", educationLevel: "SECUNDAIR" })[0]?.code).toBe("A bv WIS 01 B 1");
+  });
+
   it("herleest niets bij codeopzoekingen en matches per netwerk over alle niveaus", () => {
     const { corpus, reads, resetReads } = modules;
     corpus.warmCorpusTokenIndex("ALL", "ALL");

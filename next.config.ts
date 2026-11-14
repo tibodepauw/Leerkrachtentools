@@ -35,6 +35,10 @@ function resolveGitHubRepo() {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Maintenance catalog and original source archives are not application inputs.
+  outputFileTracingExcludes: {
+    "/*": ["./data/corpus/**/*"],
+  },
   // Child processes resolve parsers with Node rather than Turbopack module IDs.
   outputFileTracingIncludes: {
     "/*": [

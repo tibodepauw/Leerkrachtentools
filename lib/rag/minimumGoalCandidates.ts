@@ -360,6 +360,8 @@ function asString(value: unknown): string {
 function isDomainCorpusRecord(raw: RawRecord): boolean {
   const level = asString(raw.onderwijsniveau).toUpperCase();
   return (
+    level === "KLEUTER" ||
+    level === "LAGER" ||
     level === "SECUNDAIR" ||
     level === "BUBAO" ||
     level === "BUSO" ||

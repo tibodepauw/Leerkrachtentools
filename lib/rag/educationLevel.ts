@@ -122,6 +122,8 @@ export function recordMatchesEducationLevel(
       return false;
     }
     return (
+      String(raw.onderwijsniveau ?? "").toUpperCase() === "BASISONDERWIJS" ||
+      /\bfase\s*[1-4]\b/u.test(text) ||
       /\b(kleuter|peuter|kleuterklas|\.kl\d*)\b/u.test(text) ||
       /\b(lager onderwijs|leerjaar|\.gl\d*)\b/u.test(text) ||
       ageRanges(raw).length > 0
@@ -143,6 +145,14 @@ export function recordMatchesEducationLevel(
       : "";
   if (/^K-/iu.test(linkedCode)) return level === "KLEUTER";
   if (/^[46]-/u.test(linkedCode)) return level === "LAGER";
+
+  // The new OVSG edition has explicit ages; a phase can cross the age-six
+  // boundary, so a known age is more precise than the old phase heuristic.
+  const ageText = String(raw.leeftijd ?? "").trim();
+  if (/^\d{1,2}(?:[.,]\d+)?(?:\s*j(?:aar)?)?$/iu.test(ageText)) {
+    const age = Number.parseFloat(ageText.replace(",", "."));
+    return level === "KLEUTER" ? age < KLEUTER_MAX_AGE : age >= LAGER_MIN_AGE && age <= LAGER_MAX_AGE;
+  }
 
   if (/\b(kleuter|peuter|kleuterklas|\.kl\d*)\b/u.test(text)) {
     return level === "KLEUTER";

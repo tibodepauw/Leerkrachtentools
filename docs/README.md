@@ -13,6 +13,7 @@ De nieuwe toestemmings-, akkoordbewijs- en gegevensbeheerwijzigingen staan in [P
 | Document | Gebruik |
 | --- | --- |
 | [Privacybeheer](privacy-operations.md) | Toestemming, export, opruiming en onbekende productiefeiten |
+| [Leerplanbronnen handmatig vernieuwen](curriculum-handmatig-vernieuwen.md) | Bronkopieën, catalogus, actualiteit, toegang en herstel zonder automatische planning |
 | [README](../README.md) | Functies, lokale start, B2B-overzicht en configuratie |
 | [AI en RAG](AI-en-RAG-overzicht.md) | Huidige architectuur, opslag en externe datastromen |
 | [Eerste DigitalOcean-installatie](digitalocean-first-deployment.md) | Nieuwe VM, parserisolatie, corpora, kostenlimieten en herstel |

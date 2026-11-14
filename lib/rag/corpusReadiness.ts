@@ -1,12 +1,17 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import path from "node:path";
-import { OPSTAP_CORPUS_PROD, OVSG_CORPUS_PROD, GO_NIEUW_CORPUS_PROD, GO_OUD_CORPUS_PROD, ZILL_CORPUS_PROD, SECONDARY_CURRICULUM_PROD, SECONDARY_MINIMUM_GOALS_PROD, SECONDARY_POV_CURRICULUM_PROD, DOMAIN_CORPUS_PATHS } from "./corpusLevelCache";
+import { OPSTAP_CORPUS_PROD, OVSG_CORPUS_PROD, OVSG_NEW_CORPUS_PROD, GO_NIEUW_CORPUS_PROD, GO_OUD_CORPUS_PROD, ZILL_CORPUS_PROD, SECONDARY_CURRICULUM_PROD, SECONDARY_OVSG_CORPUS_PROD, SECONDARY_MINIMUM_GOALS_PROD, PRIMARY_MINIMUM_GOALS_PROD, SECONDARY_POV_CURRICULUM_PROD, DOMAIN_CORPUS_PATHS } from "./corpusLevelCache";
 
 export function corpusTargets(dataRoot = path.resolve("data")) {
+  const newOvsg = existsSync(path.join(dataRoot, path.relative(path.resolve("data"), OVSG_NEW_CORPUS_PROD)));
   const paths = [
-    ["OPSTAP", OPSTAP_CORPUS_PROD], ["OVSG", OVSG_CORPUS_PROD], ["GO_NIEUW", GO_NIEUW_CORPUS_PROD],
+    ["OPSTAP", OPSTAP_CORPUS_PROD],
+    newOvsg ? ["OVSG_BAO_2027_2028", OVSG_NEW_CORPUS_PROD] : ["OVSG", OVSG_CORPUS_PROD],
+    ["GO_NIEUW", GO_NIEUW_CORPUS_PROD],
     ["GO_OUD", GO_OUD_CORPUS_PROD], ["ZILL", ZILL_CORPUS_PROD], ["SECUNDAIR_LEERPLANNEN", SECONDARY_CURRICULUM_PROD],
     ["SECUNDAIR_MINIMUMDOELEN", SECONDARY_MINIMUM_GOALS_PROD], ["POV", SECONDARY_POV_CURRICULUM_PROD],
+    ["BASISONDERWIJS_MINIMUMDOELEN", PRIMARY_MINIMUM_GOALS_PROD],
+    ["OVSG_SECUNDAIR_2025", SECONDARY_OVSG_CORPUS_PROD],
     ...Object.entries(DOMAIN_CORPUS_PATHS).map(([id, entry]) => [id, entry.prod]),
   ];
   return paths.map(([id, file]) => ({ id, file: path.join(dataRoot, path.relative(path.resolve("data"), file)) }));

@@ -6,6 +6,15 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Curriculumgegevens
+
+- Afzonderlijke volledige OVSG-accountverzameling voor de vijf aangeboden eerste-graadleerplannen: 4341 centrale doelen uit 320 leerlijnen. Bronconcordanties, ondersteuning en relaties behouden; oude OVSG-vermeldingen worden vervangen zonder andere netwerken te verwijderen. Offline herverwerking en aparte lokale activering.
+- Afzonderlijke rustige accountverzameling voor OVSG Leer Lokaal 2027-2028. Doelentotalen worden per leerlijn gecontroleerd; oorspronkelijke ondersteuning, verdieping en relaties blijven behouden. Veilige statische paginadecodering, offline herstel en gescheiden edities in de app.
+- Handmatige bronvernieuwing met een afzonderlijke, vastgepinde Pythonomgeving. Bronkopieën, context, versies, geldigheid en foutstatussen blijven lokaal bewaard in een SQLite-catalogus met compacte JSONL-uitvoer en gecomprimeerde snapshots.
+- Voorwaardelijke downloads, strikte paginacontrole, procesgrenzen voor bronparsers en behoud van de vorige bruikbare export bij fouten. Geen automatische planning, installatie tijdens vernieuwen of upload naar een zoekdienst.
+- Zelfstandige officiële minimumdoelen voor kleuter- en lageronderwijs doorzoekbaar zonder koppeling aan een onderwijsnet. Bronidentiteit onderscheidt gelijke codes in verschillende doelensets en bijlagen; onbekende geldigheid blijft buiten de actieve export.
+- Actuele bronroutes, toegangsbeperkingen en handmatig herstel gedocumenteerd. Vermelde brondekking is geen onafhankelijke inhoudelijke acceptatie van ieder leerplan.
+
 ### Beveiliging en betrouwbaarheid
 
 - Browsergebonden inlogcodes, afzonderlijke verificatiepogingen en instelbare daglimiet per vertrouwd IP. Reeds verstuurde codes moeten na deze update opnieuw worden aangevraagd; bestaande sessies blijven geldig.
