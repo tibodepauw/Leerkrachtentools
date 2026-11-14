@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { POST as postCurriculum } from "@/app/api/rag-curriculum/route";
 import { POST as postMinimumGoals } from "@/app/api/rag-minimum-goals/route";
 import {
@@ -11,6 +11,14 @@ import {
   type RagBenchmarkCase,
   type RagBenchmarkCaseResult,
 } from "@/lib/rag/ragBenchmark";
+
+const corpus = await vi.hoisted(async () => {
+  const { createCorpusTestRoot } = await import("./helpers/corpusTestRoot");
+  const corpus = createCorpusTestRoot(process.cwd());
+  vi.spyOn(process, "cwd").mockReturnValue(corpus.root);
+  return corpus;
+});
+afterAll(() => { vi.restoreAllMocks(); corpus.cleanup(); });
 
 vi.mock("@/lib/auth/guard", () => ({
   sessionFromRequest: () => ({
@@ -104,7 +112,7 @@ describe("RAG benchmark suite", () => {
     });
   }, 60_000);
 
-  it("evalueert 10 randgevallen en rapporteert kwaliteitsscore", async () => {
+  it("evalueert 10 vaste testcases zonder geïnstalleerde corpusdata", async () => {
     const caseResults: RagBenchmarkCaseResult[] = [];
 
     for (const benchmarkCase of RAG_BENCHMARK_CASES) {
@@ -148,8 +156,8 @@ describe("RAG benchmark suite", () => {
     console.info(
       [
         "",
-        "=== RAG Benchmark Report ===",
-        `Kwaliteitsscore: ${report.qualityScore}% (${report.passed}/${report.total - report.skipped} geslaagd, ${report.skipped} overgeslagen)`,
+        "=== RAG-regressies met synthetische bronnen ===",
+        `Testscore: ${report.qualityScore}% (${report.passed}/${report.total - report.skipped} geslaagd, ${report.skipped} overgeslagen)`,
         ...lines,
         "==============================",
         "",
