@@ -271,10 +271,8 @@ async function runCurriculumSearch(
   );
 
   merged = applyTargetGroupRanking(merged, {
-    grade: options?.targetGroup?.grade,
-    ageRange: options?.targetGroup?.ageRange,
-    secondaryGrade: options?.targetGroup?.secondaryGrade,
-    secondaryFinality: options?.targetGroup?.secondaryFinality,
+    ...options.targetGroup,
+    educationLevel,
   });
 
   merged = applyMultiIntentDiversity(query, merged, topN);

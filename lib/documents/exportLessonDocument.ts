@@ -187,13 +187,13 @@ function formBlobEdits(text: string, lesson: LessonExportPayload) {
   }
 
   const activeGoals = lesson.goals.filter((goal) => goal.text.trim());
-  if (activeGoals.length > 0) {
+  {
     const seen = new Set<number>();
     GOAL_HEADER.lastIndex = 0;
     for (let header = GOAL_HEADER.exec(text); header; header = GOAL_HEADER.exec(text)) {
       const goalNumber = Number(header[2]);
-      const goal = activeGoals[goalNumber - 1];
-      if (!goal || seen.has(goalNumber)) continue;
+      const goal = activeGoals.find(goal => goal.id === `D${goalNumber}`);
+      if (goalNumber < 1 || goalNumber > 12 || seen.has(goalNumber)) continue;
       seen.add(goalNumber);
       GOAL_END.lastIndex = GOAL_HEADER.lastIndex;
       const end = GOAL_END.exec(text);
@@ -201,9 +201,8 @@ function formBlobEdits(text: string, lesson: LessonExportPayload) {
       edits.push({
         start: header.index,
         end: end.index,
-        text: `${header[1] ?? ""}LESDOEL ${goalNumber} (${goal.taxonomy ?? "MC"}): ${singleLine(goal.text)} `,
+        text: `${header[1] ?? ""}LESDOEL ${goalNumber} (${goal?.taxonomy ?? "MC"}): ${singleLine(goal?.text ?? "")} `,
       });
-      if (seen.size === activeGoals.length) break;
     }
   }
 
@@ -234,12 +233,12 @@ function patchParagraph(paragraph: string, lesson: LessonExportPayload, activeGo
   // Word forms commonly put the goal and its source fields in separate
   // paragraphs. The source fields then cannot delimit the value in this one.
   const goalHeader = PARAGRAPH_GOAL_HEADER.exec(text);
-  const numberedGoal = goalHeader && activeGoals[Number(goalHeader[2]) - 1];
-  if (goalHeader && numberedGoal) {
+  const numberedGoal = goalHeader && activeGoals.find(goal => goal.id === `D${Number(goalHeader[2])}`);
+  if (goalHeader && Number(goalHeader[2]) >= 1 && Number(goalHeader[2]) <= 12) {
     return spliceParagraphText(paragraph, [{
       start: 0,
       end: text.length,
-      text: `${goalHeader[1] ?? ""}LESDOEL ${Number(goalHeader[2])} (${numberedGoal.taxonomy ?? "MC"}): ${singleLine(numberedGoal.text)}`,
+      text: `${goalHeader[1] ?? ""}LESDOEL ${Number(goalHeader[2])} (${numberedGoal?.taxonomy ?? "MC"}): ${singleLine(numberedGoal?.text ?? "")}`,
     }]);
   }
 
@@ -254,7 +253,9 @@ function patchParagraph(paragraph: string, lesson: LessonExportPayload, activeGo
   }
 
   const exportGoal = activeGoals.find((goal) => text.startsWith(`${goal.id}:`));
-  return exportGoal ? replaceGoalParagraph(paragraph, `${exportGoal.id}:`, exportGoal) : undefined;
+  if (exportGoal) return replaceGoalParagraph(paragraph, `${exportGoal.id}:`, exportGoal);
+  const removedGoal = /^(D(?:[1-9]|1[0-2])):/.exec(text);
+  return removedGoal ? replaceParagraphValue(paragraph, removedGoal[0], "") : undefined;
 }
 
 /** `fields` telt de herkende velden, ook wanneer de waarde al gelijk was. */
@@ -264,15 +265,33 @@ function patchDocumentXmlDetailed(documentXml: string, lesson: LessonExportPaylo
   const chunks: string[] = [];
   let previous = 0;
   let fields = 0;
+  const represented = new Set<string>();
   for (const [start, end] of paragraphRanges(xml)) {
-    const patched = patchParagraph(xml.slice(start, end), lesson, activeGoals);
+    const paragraph = xml.slice(start, end);
+    const text = paragraphText(paragraph);
+    const direct = /^(D(?:[1-9]|1[0-2])):/.exec(text);
+    if (direct) represented.add(direct[1]);
+    for (const header of text.matchAll(new RegExp(GOAL_HEADER.source, "giu"))) represented.add(`D${Number(header[2])}`);
+    const patched = patchParagraph(paragraph, lesson, activeGoals);
     if (patched === undefined) continue;
     fields += 1;
     chunks.push(xml.slice(previous, start), patched);
     previous = end;
   }
   chunks.push(xml.slice(previous));
-  return { xml: chunks.join(""), fields };
+  let result = chunks.join("");
+  const missing = activeGoals.filter(goal => !represented.has(goal.id));
+  if (fields > 0 && missing.length > 0) {
+    const bodyEnd = result.lastIndexOf("</w:body>");
+    // Paragraph section properties occur before their closing paragraph. Only
+    // the body's final section may follow its last paragraph/table; choose the
+    // first opener there so tracked sectPrChange data cannot split a section.
+    const lastBlockEnd = Math.max(result.lastIndexOf("</w:p>"), result.lastIndexOf("</w:tbl>"));
+    const section = result.indexOf("<w:sectPr", Math.max(0, lastBlockEnd));
+    const insertAt = section >= 0 && section < bodyEnd ? section : bodyEnd;
+    if (insertAt >= 0) result = result.slice(0, insertAt) + missing.map(goal => paragraphXml(`${goal.id}: ${goal.text}${goal.taxonomy ? ` (${goal.taxonomy})` : ""}`)).join("") + result.slice(insertAt);
+  }
+  return { xml: result, fields };
 }
 
 function patchDocumentXml(documentXml: string, lesson: LessonExportPayload) {

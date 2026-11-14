@@ -15,13 +15,20 @@ export async function syncPreparationTextFromDocument(
     return lesson.lessonPreparation;
   }
 
+  const isUnchanged = () => {
+    const current = useLessonStore.getState().lesson;
+    return session.isCurrent() && current.preparationDocument?.id === document.id &&
+      current.lessonPreparation === lesson.lessonPreparation;
+  };
+  if (!isUnchanged()) return null;
+
   const key = `${session.userId}:${document.id}`;
   const existing = syncInFlight.get(key);
   if (existing && !existing.signal.aborted) return existing.promise;
 
   const promise = (async () => {
     const blob = await getLessonDocument(document.id);
-    if (!blob || !session.isCurrent()) return null;
+    if (!blob || !isUnchanged()) return null;
 
     const file = new File([blob], document.fileName, {
       type: document.mimeType || blob.type || "application/octet-stream",
@@ -39,7 +46,7 @@ export async function syncPreparationTextFromDocument(
       text?: string;
     };
 
-    if (!session.isCurrent() || !response.ok || !payload.text?.trim()) {
+    if (!isUnchanged() || !response.ok || !payload.text?.trim()) {
       return null;
     }
 

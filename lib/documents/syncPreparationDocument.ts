@@ -1,4 +1,4 @@
-import { saveLessonDocument } from "@/lib/documents/documentStorage";
+import { saveLessonDocument, deleteLessonDocument } from "@/lib/documents/documentStorage";
 import {
   createLessonDocumentId,
   mimeTypeFromFileName,
@@ -9,7 +9,8 @@ import { captureStorageSession } from "@/lib/storage/userStorageScope";
 
 export async function syncPreparationDocumentFromFile(file: File) {
   const session = captureStorageSession();
-  const currentDocument = useLessonStore.getState().lesson.preparationDocument;
+  const original = useLessonStore.getState().lesson;
+  const currentDocument = original.preparationDocument;
   const id = createLessonDocumentId();
   const document: LessonPreparationDocument = {
     id,
@@ -20,6 +21,31 @@ export async function syncPreparationDocumentFromFile(file: File) {
 
   await saveLessonDocument(id, file);
   session.assertCurrent();
+  if (useLessonStore.getState().lesson !== original) {
+    await deleteLessonDocument(id);
+    throw new Error("Je les is intussen gewijzigd. Upload het document opnieuw om het te vervangen.");
+  }
   useLessonStore.getState().setPreparationDocument(document, currentDocument?.id);
   return document;
+}
+
+/** Validate first: a failed upload must not replace the last usable document. */
+export async function importPreparationDocumentFromFile(file: File) {
+  const session = captureStorageSession();
+  const original = useLessonStore.getState().lesson;
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await fetch("/api/import-lesson-document", {
+    method: "POST", body: formData, signal: session.signal,
+  });
+  const payload = await response.json() as { error?: string; text?: string };
+  if (!response.ok || !payload.text?.trim()) throw new Error(payload.error ?? "Upload mislukt.");
+  session.assertCurrent();
+  if (useLessonStore.getState().lesson !== original) {
+    throw new Error("Je les is intussen gewijzigd. Upload het document opnieuw om het te vervangen.");
+  }
+  await syncPreparationDocumentFromFile(file);
+  session.assertCurrent();
+  useLessonStore.getState().syncPreparation(payload.text);
+  return payload.text;
 }
