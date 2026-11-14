@@ -307,6 +307,13 @@ class GoNieuwFetcher:
                         "doelenset_nummer": doelenset_nummer,
                         "discipline": discipline_from_label(discipline),
                         "component": component,
+                        "onderwerp": current_onderwerp,
+                        "bron_werkblad": sheet_name,
+                        "bron_veldwaarden": [
+                            {"kolom": index + 1, "naam": clean_text(header[index]) if index < len(header) else "",
+                             "waarde": value if isinstance(value, (str, int, float, bool)) else str(value)}
+                            for index, value in enumerate(row) if value is not None
+                        ],
                         "code": code,
                         "titel": titel,
                         "leerjaren": leerjaren,

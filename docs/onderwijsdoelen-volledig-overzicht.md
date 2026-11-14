@@ -1,8 +1,34 @@
 # Onderwijsdoelen.be: volledig overzicht Vlaamse onderwijsdomeinen
 
-> Brononderzoek op de hieronder genoemde momenten. De volledige corpora zijn nog niet aangeleverd voor de komende installatie; aantallen en domeinlijsten zijn geen bewijs van actuele dekking. Controleer bestanden en zoekresultaten volgens de [installatiehandleiding](digitalocean-first-deployment.md). Externe bronnen zijn bij deze documentatiecorrectie niet opnieuw opgehaald.
+## Aanvulling: OVSG-toegang op 13 november 2026
 
-Documentatie gegenereerd op basis van portaal- en API-onderzoek (augustus 2026).
+Schooltoegang voor de nieuwe OVSG-portalen voor basis- en secundair onderwijs is bevestigd. Op expliciete vraag is een afzonderlijke rustige accountverzameling gebouwd en uitgevoerd voor de aangeboden basiseditie **2027-2028**. Alle negen leergebieden en 129 leerlijnen leveren exact **3937 leerplandoelen**, met daarnaast **5463 ondersteuningsdoelen** en **2017 verdiepingsdoelen**. Alle relatieverwijzingen zijn opgelost; bron-HTML, entiteitvarianten en grafen zijn lokaal bewaard. De bestaande app doorzoekt de nieuwe editie met het schooljaar zichtbaar. Daarmee zijn **19719 actieve centrale doelrecords in elf datasets** beschikbaar. Ondersteuning en verdieping tellen niet nogmaals mee als centrale doelen.
+
+Ook de vijf aangeboden secundaire accountleerplannen zijn nu compleet verzameld: **4341 centrale doelen uit 320 leerlijnen**. De zelfstandige dataset `OVSG_SECUNDAIR_2025` is lokaal doorzoekbaar. Daarmee zijn **24060 centrale apprecords in twaalf datasets** beschikbaar. Dit zijn broncontexten uit meerdere netwerken en doelensets, geen telling van unieke leerinhouden en geen rechtstreeks vergelijkbaar totaal met de historische overheidscensus.
+
+Het aparte updateportaal voor 2026-2027 accepteert het geteste basisaccount niet. De nieuwe collecties bewijzen dus geen dekking van die editie of van alle secundaire graden en koepels. De publieke crawler houdt zijn robotsbeleid; de afzonderlijke accountworkflows lezen alleen de aangeboden gewone leerplanpagina's. Wachtwoorden staan niet in de repository. De onderstaande aantallen en constatering over ontbrekende inloggegevens beschrijven de eerdere stand van 12 november.
+
+## Gecontroleerde stand op 12 november 2026
+
+De lokale volledige API-bronkopie van **11 november 2026** bevat **24019 bronrecords**. Daarvan zijn 12079 door de bron als geldig aangeduid, 9863 niet meer geldig en 2077 met onbekende geldigheid. Alle records blijven bewaard in `data/corpus/catalog.sqlite3`, tabel `source_records`. Alleen de geldig aangeduide records binnen hun datumbereik gaan naar de actieve overheidsexports.
+
+De app heeft daarnaast 3490 GO!-nieuwe doelrecords en 213 generieke ZILL-doelen met 1218 opgeslagen ontwikkelstappen. Daardoor staan nu **15782 actieve doelrecords in tien datasets** klaar. Een generiek doel met meerdere ontwikkelstappen telt hierbij als één doelrecord. Dit is geen volledige verzameling van alle koepelleerplannen.
+
+Het hieronder genoemde totaal van 24571 is een historische documentatieclaim uit augustus 2026. De oorspronkelijke volledige bronrecords achter dat getal zijn hier niet beschikbaar. Het verschil van 552 met de bronkopie van november is daarom niet op recordniveau verklaard. De historische domeinaantallen zijn geen actuele acceptatienorm.
+
+Nog ontbrekend in de actieve publicatie:
+
+- **OVSG basisonderwijs:** inloggegevens ontbreken lokaal. De nieuwe handmatige adapter ondersteunt nog geen ingelogde import en stopt expliciet. Een toegestane export of aanvullende integratie is nodig; credentials toevoegen is op zichzelf niet voldoende.
+- **POV:** de officiële API-sleutel ontbreekt lokaal.
+- **Op.stap:** de bekende bulk-API sluit automatisch ophalen uit. Een ontbrekende login is niet als oorzaak vastgesteld.
+- **GO! oud:** de gescande wiskunde-PDF blokkeert volledige normalisatie, geen loginprobleem.
+- **Secundaire leerplannen:** een defecte officiële KOV-bronlink blokkeert de gezamenlijke dataset, geen vastgesteld loginprobleem. De audit van 4 oktober noemt bovendien niet volledig gevalideerde KOV-uitbreidingsdoelen; volledige documentdekking is niet bewezen.
+
+Zie de [handmatige onderhoudshandleiding](curriculum-handmatig-vernieuwen.md) en de [actuele broningangen](curriculum-bronnen-urls.md). Er zijn geen automatische controles ingepland. Voor de onderwijsdoelenroute wordt de publieke portaalconfiguratie gebruikt; een persoonlijke `ONDERWIJSDOELEN_API_KEY` ontbreekt, maar is voor die route niet nodig.
+
+## Historisch brononderzoek: augustus 2026
+
+Onderstaande routes, aantallen en categorieën komen uit het oudere onderzoek. Ze bewijzen geen actuele beschikbaarheid of volledigheid.
 
 ## Bronnen
 

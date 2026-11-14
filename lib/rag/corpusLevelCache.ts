@@ -43,6 +43,9 @@ const OVSG_CORPUS_FIXTURE = path.join(
   "fixtures",
   "curriculum-ovsg.jsonl",
 );
+const OVSG_NEW_CORPUS_PROD = path.join(
+  process.cwd(), "data", "ovsg", "ovsg_2027_2028_volledig.jsonl",
+);
 const GO_NIEUW_CORPUS_PROD = path.join(
   process.cwd(),
   "data",
@@ -85,6 +88,7 @@ const SECONDARY_CURRICULUM_PROD = path.join(
   "secundair",
   "leerplannen_secundair.jsonl",
 );
+const SECONDARY_OVSG_CORPUS_PROD = path.join(process.cwd(), "data", "secundair", "leerplannen_ovsg_2025.jsonl");
 const SECONDARY_MINIMUM_GOALS_PROD = path.join(
   process.cwd(),
   "data",
@@ -96,6 +100,9 @@ const SECONDARY_POV_CURRICULUM_PROD = path.join(
   "data",
   "secundair",
   "leerplannen_pov_secundair.jsonl",
+);
+const PRIMARY_MINIMUM_GOALS_PROD = path.join(
+  process.cwd(), "data", "basisonderwijs", "minimumdoelen_basisonderwijs.jsonl",
 );
 
 const DOMAIN_CORPUS_PATHS: Record<
@@ -130,6 +137,7 @@ const DOMAIN_CORPUS_PATHS: Record<
 
 const SECUNDAIR_PATHS = [
   SECONDARY_CURRICULUM_PROD,
+  SECONDARY_OVSG_CORPUS_PROD,
   SECONDARY_POV_CURRICULUM_PROD,
   SECONDARY_MINIMUM_GOALS_PROD,
 ];
@@ -309,13 +317,15 @@ function tagNetwork(records: RawRecord[], network: string): RawRecord[] {
 }
 
 function ingestBasisonderwijsRecords(): RawRecord[] {
+  const newOvsg = loadJsonlAt(OVSG_NEW_CORPUS_PROD);
   return [
+    ...loadJsonlAt(PRIMARY_MINIMUM_GOALS_PROD),
     ...tagNetwork(
       loadCorpusWithFallback(OPSTAP_CORPUS_PROD, OPSTAP_CORPUS_FIXTURE),
       "OPSTAP",
     ),
     ...tagNetwork(
-      loadCorpusWithFallback(OVSG_CORPUS_PROD, OVSG_CORPUS_FIXTURE),
+      newOvsg.length ? newOvsg : loadCorpusWithFallback(OVSG_CORPUS_PROD, OVSG_CORPUS_FIXTURE),
       "OVSG",
     ),
     ...tagNetwork(
@@ -334,8 +344,10 @@ function ingestBasisonderwijsRecords(): RawRecord[] {
 }
 
 function ingestSecundairRecords(): RawRecord[] {
+  const ovsg = loadJsonlAt(SECONDARY_OVSG_CORPUS_PROD);
   return [
-    ...loadJsonlAt(SECONDARY_CURRICULUM_PROD),
+    ...loadJsonlAt(SECONDARY_CURRICULUM_PROD).filter(raw => !ovsg.length || String(raw.netwerk ?? raw.network).toUpperCase() !== "OVSG"),
+    ...ovsg,
     ...loadJsonlAt(SECONDARY_POV_CURRICULUM_PROD),
     ...loadJsonlAt(SECONDARY_MINIMUM_GOALS_PROD),
   ];
@@ -443,12 +455,14 @@ function trackLoadedPaths(level: CorpusLevel): Set<string> {
         OPSTAP_CORPUS_FIXTURE,
         OVSG_CORPUS_PROD,
         OVSG_CORPUS_FIXTURE,
+        OVSG_NEW_CORPUS_PROD,
         GO_NIEUW_CORPUS_PROD,
         GO_NIEUW_CORPUS_FIXTURE,
         GO_OUD_CORPUS_PROD,
         GO_OUD_CORPUS_FIXTURE,
         ZILL_CORPUS_PROD,
         ZILL_CORPUS_FIXTURE,
+        PRIMARY_MINIMUM_GOALS_PROD,
       ]);
     case "SECUNDAIR":
       return new Set(SECUNDAIR_PATHS);
@@ -717,6 +731,7 @@ export {
   OPSTAP_CORPUS_PROD,
   OPSTAP_CORPUS_FIXTURE,
   OVSG_CORPUS_PROD,
+  OVSG_NEW_CORPUS_PROD,
   OVSG_CORPUS_FIXTURE,
   GO_NIEUW_CORPUS_PROD,
   GO_NIEUW_CORPUS_FIXTURE,
@@ -726,6 +741,8 @@ export {
   ZILL_CORPUS_FIXTURE,
   SECONDARY_CURRICULUM_PROD,
   SECONDARY_MINIMUM_GOALS_PROD,
+  SECONDARY_OVSG_CORPUS_PROD,
+  PRIMARY_MINIMUM_GOALS_PROD,
   SECONDARY_POV_CURRICULUM_PROD,
   DOMAIN_CORPUS_PATHS,
 };

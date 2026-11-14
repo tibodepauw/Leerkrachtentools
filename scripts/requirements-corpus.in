@@ -1,0 +1,6 @@
+# Handmatige pipeline, zonder browser of systeempakketten.
+requests==2.34.2
+beautifulsoup4==4.14.3
+openpyxl==3.1.5
+pypdf==7.0.1
+python-docx==1.2.0

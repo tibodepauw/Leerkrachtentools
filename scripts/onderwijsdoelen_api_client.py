@@ -38,6 +38,22 @@ def _goal_identity(record: dict[str, Any]) -> str:
     new entity. Preserve the complete goal-set object, including its structure,
     instead of guessing which source context fields distinguish two goals.
     """
+    source_id = record.get("@id")
+    if isinstance(source_id, (str, int)) and not isinstance(source_id, bool) and str(source_id):
+        # Real API records can share code, text and set while belonging to
+        # different title hierarchies. The official primary key distinguishes
+        # those; the same primary key may never inflate pagination totals.
+        goal_set = record.get("onderwijsdoelenset")
+        goal_set = goal_set if isinstance(goal_set, dict) else {}
+        validity = record.get("geldigheid")
+        validity = validity if isinstance(validity, dict) else {}
+        return json.dumps({"source_id": source_id,
+                           "source_set": goal_set.get("onderwijsdoelenset_id", goal_set),
+                           "title_context": record.get("titels"),
+                           "valid_from": validity.get("geldig_van_dt"),
+                           "valid_until": validity.get("geldig_tot_dt"),
+                           "type": record.get("onderwijsdoel_type"), "dataset": record.get("_dataset")},
+                          sort_keys=True, separators=(",", ":"))
     if record.get("code") is not None:
         identity = {field: record.get(field) for field in (
             "code", "onderwijsdoelenset", "onderwijsdoel_type", "_dataset",

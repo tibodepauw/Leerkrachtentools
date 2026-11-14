@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Iterable
-from urllib.parse import urljoin, urlparse
+from urllib.parse import unquote, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -177,6 +177,9 @@ class GoalRecord:
     minimumdoel_codes: list[str] = field(default_factory=list)
     sleutelcompetentie_nr: str = ""
     sleutelcompetentie: str = ""
+    bron_tekstblok: str = ""
+    bron_paginas: list[int] = field(default_factory=list)
+    bron_stroom: str = ""
 
     def key(self) -> tuple[str, ...]:
         return (
@@ -497,7 +500,7 @@ def parse_pdf(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
     records: list[GoalRecord] = []
     current_section = ""
 
-    for page in reader.pages:
+    for page_number, page in enumerate(reader.pages, 1):
         text = page.extract_text() or ""
         section_match = re.search(
             r"(?im)^Sleutelcompetentie\s+(\d+)\s*:\s*(.+)$",
@@ -513,6 +516,9 @@ def parse_pdf(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
         matches = list(GOAL_CODE_RE.finditer(text))
         for index, match in enumerate(matches):
             code = clean_text(match.group(1))
+            goal_stream = source.stream
+            if source.provider == "OVSG" and re.match(r"^[AB]-", code):
+                goal_stream = code[0] + "-stroom"
             block_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
             block = text[match.end() : block_end]
             # GO! introductory numbering examples also contain valid goal codes.
@@ -533,18 +539,21 @@ def parse_pdf(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
                     subdomein=current_section,
                     toelichting="",
                     leerjaar_route=" · ".join(
-                        value for value in (source.grade, source.finality, source.stream) if value
+                        value for value in (source.grade, source.finality, goal_stream) if value
                     ),
                     onderwijsniveau="secundair onderwijs",
                     graad=source.grade,
                     finaliteit=source.finality,
-                    stroom=source.stream,
+                    stroom=goal_stream,
                     netwerk=source.provider,
                     bron_url=source.url,
                     bron_titel=source.title,
                     minimumdoel_codes=[minimum.group(1)] if minimum else [],
                     sleutelcompetentie_nr=current_sc_nr,
                     sleutelcompetentie=current_sc_name,
+                    bron_tekstblok=block.strip(),
+                    bron_paginas=[page_number],
+                    bron_stroom=source.stream,
                 )
             )
     return records
@@ -566,7 +575,14 @@ def _lpds_from_reference(text: str) -> list[int]:
 
 def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
     document = Document(BytesIO(payload))
-    subject_code = urlparse(source.page_url).path.strip("/").split("/")[0]
+    # Shared and redirected subject pages can have another curriculum's slug.
+    # The actual offered document's filename/label takes precedence.
+    pattern = r"(?i)\b((?:VII|III|II|I)-[a-z][a-z0-9-]*)"
+    filename = unquote(urlparse(source.url).path.rsplit("/", 1)[-1])
+    match = re.search(pattern, filename) or re.search(pattern, source.title)
+    subject_code = match[1] if match else urlparse(source.page_url).path.strip("/").split("/")[0]
+    if not re.fullmatch(pattern, subject_code):
+        raise ValueError("KOV: leerplancode niet controleerbaar uit de documentbron.")
     minimum_by_lpd: dict[int, list[str]] = {}
     for paragraph in document.paragraphs:
         if paragraph.style.name != "MD + SMD + BK":
@@ -607,6 +623,7 @@ def parse_kov_docx(payload: bytes, source: SourceDocument) -> list[GoalRecord]:
                 bron_url=source.url,
                 bron_titel=source.title,
                 minimumdoel_codes=minimum_by_lpd.get(lpd_number, []),
+                bron_tekstblok=paragraph.text,
             )
         )
     return records

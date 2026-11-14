@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -14,7 +14,17 @@ describe("deployment corpus checks", () => {
     expect((await inspectCorpus(fixture())).ok).toBe(false);
     expect((await inspectCorpus(fixture("\n "))).ok).toBe(false);
     expect(corpusTargets().every(target => !target.file.includes("fixtures"))).toBe(true);
-    expect(corpusTargets()).toHaveLength(14);
+    expect(corpusTargets()).toHaveLength(16);
+  });
+  it("checks the selected OVSG edition without requiring an unused older corpus", () => {
+    const root = path.dirname(fixture());
+    expect(corpusTargets(root).some(target => target.id === "OVSG")).toBe(true);
+    mkdirSync(path.join(root, "ovsg"));
+    writeFileSync(path.join(root, "ovsg/ovsg_2027_2028_volledig.jsonl"), '{"code":"synthetic"}\n');
+    const targets = corpusTargets(root);
+    expect(targets.some(target => target.id === "OVSG")).toBe(false);
+    expect(targets.find(target => target.id === "OVSG_BAO_2027_2028")?.file).toBe(path.join(root, "ovsg/ovsg_2027_2028_volledig.jsonl"));
+    expect(targets).toHaveLength(16);
   });
   it("counts valid records without returning content", async () => {
     const result = await inspectCorpus(fixture('{"titel":"Synthetic private text"}\r\n\n{"code":"1"}'));

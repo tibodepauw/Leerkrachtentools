@@ -198,6 +198,14 @@ class SecondaryCurriculumParserTests(unittest.TestCase):
         self.assertEqual(normalized["finaliteit"], "A-stroom")
         self.assertEqual(normalized["onderwijsniveau"], "SECUNDAIR")
 
+        shared_page = SourceDocument(
+            provider="KOV", title="I-Aar-a oktober 24 word 302KB",
+            url="https://example.test/I-Aar-a_oktober_24.docx",
+            page_url="https://pro.katholiekonderwijs.vlaanderen/ii-aar-da/leerplan",
+            grade="1ste graad", stream="A-stroom", discipline="Aardrijkskunde", file_type="docx",
+        )
+        self.assertEqual(parse_kov_docx(payload.getvalue(), shared_page)[0].code, "I-Aar-a LPD 1")
+
 
 class SecondaryMinimumGoalsParserTests(unittest.TestCase):
     def test_normalizes_official_api_goal(self) -> None:

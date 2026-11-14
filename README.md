@@ -103,13 +103,13 @@ Local search supports the following official goal sources. Full corpora are supp
 | Network | Source |
 | ------- | ------ |
 | ZILL | Katholiek onderwijs ZILL selector (learning lines + nested content) |
-| OVSG | Leer Lokaal |
+| OVSG | Leer Lokaal 2027-2028, afzonderlijke ingelogde basisverzameling met ondersteuning en verdieping |
 | Op.stap | Katholiek onderwijs Op.stap |
-| GO! / Oud leerplan | GO! basisonderwijs vakleerplannen (9 vakboeken, via Discovery Engine) |
+| GO! / Oud leerplan | GO! basisonderwijs, oudere vakleerplannen; afzonderlijke editie, verwerking van scan-PDF's vraagt controle |
 | GO! / Nieuw leerplan | GO! basisonderwijs 12 doelensets (lokaal corpus) |
 | Secundair | GO!, Katholiek Onderwijs Vlaanderen, OVSG en POV leerplannen (lokaal) |
 | AHOVOKS-domeinen | Corpusbestanden via onderwijsdoelen.be voor OKAN, BuBaO, BuSO, DKO, volwassenenonderwijs en hoger onderwijs; volledigheid en actualiteit na aanlevering controleren |
-| Vlaamse overheid | Officiële secundaire minimumdoelen (lokaal, via scripts) |
+| Vlaamse overheid | Officiële minimumdoelen voor kleuter-, lager- en secundair onderwijs (lokaal, via scripts) |
 
 Leerplandoelen doorzoekt koepelnetwerken (Op.stap, ZILL, KOV, …); minimumdoelen en AHOVOKS-domeinen (buitengewoon, kunst, OKAN, …) lopen via dezelfde onderwijsniveau-filter in de UI.
 
@@ -117,32 +117,32 @@ Domain corpusdata (`data/okan/`, `data/bubao/`, …) en secundaire corpusdata (`
 
 **Wat wél in git mag:** scraper- en fetch-**code** onder `scripts/`, plus kleine **test-fixtures** in `test/fixtures/` (~100 KB snippets voor CI). Dat is geen volledige leerplancorpus; volledige JSONL/PDF-output hoort lokaal in `data/` te blijven.
 
-Maintenance scripts (optional, not required to run the app UI):
+Curriculum updates are **manual only**. Setup is separate from fetching; refreshes never install packages, start a browser, upload to a search service or schedule another run.
 
 ```bash
-# npm run fetch:all installs Python packages and Playwright Chromium if needed.
-# Optional: ONDERWIJSDOELEN_API_KEY in .env.local (faster than the public portal fallback)
+# Once: isolated Python environment with pinned, hash-checked packages
+npm run corpus:setup
+
+# Refresh sources manually; a failed source keeps its previous usable export
 npm run fetch:all
 
-# Only AHOVOKS domains (OKAN, BuBaO, BuSO, DKO, volwassenen, hoger)
+# Choose a source, or only the additional education domains
+npm run fetch:all -- --datasets GO_NIEUW ZILL
 npm run fetch:domains
-
-# Secondary curricula + minimum goals
 npm run fetch:secundair
-python3 scripts/fetch_secundair_full.py
 
-python3 scripts/fetch_curriculum_data.py
-python3 scripts/scrape_zill_full.py
-python3 scripts/scrape_opstap_full.py
-python3 scripts/fetch_go_nieuw.py
-python3 scripts/scrape_ovsg_full.py        # requires OVSG credentials in env
-python3 scripts/scrape_secondary_curricula.py
-python3 scripts/fetch_secondary_minimum_goals.py  # API-key optional; portal fallback
-python3 scripts/scrape_onderwijsdoelen_portal.py  # explicit portal-only fetch
-python3 scripts/fetch_pov_secondary_curricula.py  # requires POV_API_KEY
+# Authenticated OVSG primary collection; credentials are read from private files
+npm run fetch:ovsg -- --username-file /private/user --password-file /private/password
+
+# Separate authenticated secondary inventory; validates locally before activation
+npm run fetch:ovsg-secundair -- --username-file /private/user --password-file /private/password
+
+# Local verification, or recover JSONL from the canonical catalog without scraping
+npm run corpus:verify
+npm run corpus:export -- --datasets GO_NIEUW
 ```
 
-See `docs/curriculum-bronnen-urls.md` for official source URLs.
+See [manual refresh and recovery](docs/curriculum-handmatig-vernieuwen.md) for the format, coverage limits, access requirements and failure handling. The authoritative local run report is `data/corpus/manifest.json`. A successful file check is not proof of semantic completeness. Official entries are listed in [source URLs](docs/curriculum-bronnen-urls.md). Older individual scraper scripts remain for compatibility and format research; use the commands above for normal updates.
 
 Corpus files live under `data/` and are gitignored by default. Never commit scraped credentials or personal login details.
 

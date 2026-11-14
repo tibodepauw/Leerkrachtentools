@@ -1,10 +1,9 @@
 import {
-  getCorpusForLevel,
+  allMinimumGoalRecords,
   recordsForNetwork,
   searchLocalCorpus,
   warmCorpusTokenIndex,
 } from "@/lib/rag/curriculumCorpus";
-import { normalizeCorpusLevel } from "@/lib/rag/corpusLevelCache";
 import { collectMinimumGoalCandidates, warmMinimumGoalTokenIndex } from "@/lib/rag/minimumGoalCandidates";
 import { rankMinimumGoalResults } from "@/lib/rag/minimumGoalRanking";
 import type {
@@ -129,11 +128,9 @@ export function buildCorpusFaithfulnessIndex(
     }
   }
 
-  if (normalizeCorpusLevel(educationLevel) === "SECUNDAIR") {
-    for (const raw of getCorpusForLevel("SECUNDAIR")) {
-      addCode(index, raw.code);
-      addTitel(index, raw.titel ?? raw.text ?? raw.title);
-    }
+  for (const raw of allMinimumGoalRecords(educationLevel)) {
+    addCode(index, raw.code);
+    addTitel(index, raw.titel ?? raw.text ?? raw.title);
   }
 
   cachedFaithfulnessIndex.set(educationLevel, index);

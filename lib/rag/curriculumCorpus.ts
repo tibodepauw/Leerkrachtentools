@@ -32,9 +32,11 @@ import {
   resolveCorpusLevel,
   type CorpusLevel,
   SECONDARY_CURRICULUM_PROD,
+  SECONDARY_OVSG_CORPUS_PROD,
   SECONDARY_POV_CURRICULUM_PROD,
   OPSTAP_CORPUS_PROD,
   OVSG_CORPUS_PROD,
+  OVSG_NEW_CORPUS_PROD,
   GO_NIEUW_CORPUS_PROD,
   GO_OUD_CORPUS_PROD,
   ZILL_CORPUS_PROD,
@@ -442,7 +444,8 @@ export function isStandaloneSecundairMinimumGoal(raw: RawRecord): boolean {
   if (!isSecundair) {
     return false;
   }
-  return !asString(raw.netwerk ?? raw.network);
+  const network = asString(raw.netwerk ?? raw.network).toUpperCase();
+  return !network || network === "AHOVOKS" || network === "VLAANDEREN";
 }
 
 export function educationDomainRecords(
@@ -475,7 +478,11 @@ export function allMinimumGoalRecords(
   }
   const corpusLevel = resolveCorpusLevel(educationLevel);
   if (corpusLevel === "BASISONDERWIJS") {
-    return recordsForNetwork("OPSTAP", educationLevel);
+    return getCorpusRecordsForLevel("BASISONDERWIJS").filter((raw) =>
+      raw.corpus_dataset === "BASISONDERWIJS_MINIMUMDOELEN" ||
+      asString(raw.netwerk ?? raw.network).toUpperCase() === "AHOVOKS" ||
+      asString(raw.netwerk ?? raw.network).toUpperCase() === "OPSTAP",
+    );
   }
   if (corpusLevel === "SECUNDAIR") {
     return getCorpusRecordsForLevel("SECUNDAIR");
@@ -719,9 +726,14 @@ function normalizeRecord(
     asString(raw.discipline ?? raw.leergebied ?? raw.ontwikkelveld),
     subdomein,
   );
-  const toelichting = asString(raw.toelichting ?? raw.description);
+  const sourceRecord = raw.bron_record;
+  const approvalNote = asString(raw.netwerk ?? raw.network) === "OVSG" &&
+    sourceRecord && typeof sourceRecord === "object" &&
+    (sourceRecord as RawRecord).is_goedgekeurd === false
+    ? "Bronstatus: niet goedgekeurd." : "";
+  const toelichting = [asString(raw.toelichting ?? raw.description), approvalNote].filter(Boolean).join(" ");
   const leerjaren = raw.leerjaren;
-  const leerjaarRoute =
+  let leerjaarRoute =
     formatSecondaryRouteLabel(
       asString(raw.graad),
       asString(raw.finaliteit),
@@ -742,6 +754,11 @@ function normalizeRecord(
           : ""),
     );
   const netwerk = asString(raw.netwerk ?? raw.network) || network || "ALL";
+  if (netwerk === "OVSG" && raw.bron_schooljaar) {
+    const label = recordMatchesEducationLevel(raw, "KLEUTER")
+      ? "Kleuter" : recordMatchesEducationLevel(raw, "LAGER") ? "Lager onderwijs" : "";
+    if (label) leerjaarRoute = `${leerjaarRoute} · ${label}`;
+  }
   const bronUrl = asString(raw.bron_url ?? raw.sourceUrl ?? raw.source_url);
 
   return {
@@ -1381,7 +1398,7 @@ export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[
     case "OPSTAP":
       return [OPSTAP_CORPUS_PROD];
     case "OVSG":
-      return [OVSG_CORPUS_PROD, SECONDARY_CURRICULUM_PROD];
+      return [OVSG_NEW_CORPUS_PROD, OVSG_CORPUS_PROD, SECONDARY_CURRICULUM_PROD, SECONDARY_OVSG_CORPUS_PROD];
     case "GO_NIEUW":
       return [GO_NIEUW_CORPUS_PROD];
     case "GO_OUD":
@@ -1398,10 +1415,12 @@ export function corpusFilesForNetwork(network: CurriculumNetworkFilter): string[
       return [
         OPSTAP_CORPUS_PROD,
         OVSG_CORPUS_PROD,
+        OVSG_NEW_CORPUS_PROD,
         GO_NIEUW_CORPUS_PROD,
         GO_OUD_CORPUS_PROD,
         ZILL_CORPUS_PROD,
         SECONDARY_CURRICULUM_PROD,
+        SECONDARY_OVSG_CORPUS_PROD,
         SECONDARY_POV_CURRICULUM_PROD,
       ];
   }

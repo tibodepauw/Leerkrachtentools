@@ -184,12 +184,13 @@ def normalize_api_goal_record(
     *,
     dataset: str = "",
     source_url: str = "",
+    min_text_length: int = 8,
 ) -> dict[str, str] | None:
     code = clean_text(raw.get("code"))
     titel = clean_text(raw.get("omschrijving"))
     titel = re.sub(r"<[^>]+>", " ", titel)
     titel = clean_text(titel)
-    if not code or len(titel) < 8:
+    if not code or len(titel) < min_text_length:
         return None
 
     goal_set = raw.get("onderwijsdoelenset")

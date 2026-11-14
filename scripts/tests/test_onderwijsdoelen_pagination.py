@@ -24,6 +24,28 @@ class OnderwijsdoelenPaginationTests(unittest.TestCase):
     def test_reads_every_page_until_reported_total(self):
         self.assertEqual(self.fetch([page([{"code": "1"}], 2), page([{"code": "2"}], 2)]), [{"code": "1"}, {"code": "2"}])
 
+    def test_official_ids_preserve_distinct_title_hierarchies_with_the_same_goal_code(self):
+        first = {"@id": 101, "code": "11.01.01", "onderwijsdoelenset": {"onderwijsdoelenset_id": 1}, "titels": ["Context A"]}
+        second = {**first, "@id": 102, "titels": ["Context B"]}
+        self.assertEqual(self.fetch([page([first, second], 2)]), [first, second])
+
+    def test_same_official_id_with_changed_metadata_cannot_inflate_total(self):
+        first = {"@id": 101, "code": "1", "omschrijving": "Eerste tekst"}
+        second = {**first, "omschrijving": "Gewijzigde tekst", "publicatie_dt": "2026-11-11"}
+        with self.assertRaisesRegex(RuntimeError, "overlap"):
+            self.fetch([page([first], 2), page([second], 2)])
+
+    def test_same_official_goal_in_distinct_source_sets_preserves_both_contexts(self):
+        first = {"@id": 101, "code": "1", "onderwijsdoelenset": {"onderwijsdoelenset_id": 1}}
+        second = {**first, "onderwijsdoelenset": {"onderwijsdoelenset_id": 2}}
+        self.assertEqual(self.fetch([page([first, second], 2)]), [first, second])
+
+    def test_same_goal_and_set_in_distinct_source_appendices_preserves_context(self):
+        first = {"@id": 101, "code": "1", "onderwijsdoelenset": {"onderwijsdoelenset_id": 1},
+                 "titels": {"1": {"nr": "2.3", "titel": "Rekenen", "bijlage": "Begripsvorming"}}}
+        second = {**first, "titels": {"1": {"nr": "2.3", "titel": "Rekenen", "bijlage": "Procedures"}}}
+        self.assertEqual(self.fetch([page([first, second], 2)]), [first, second])
+
     def test_page_cap_cannot_return_a_truncated_corpus_as_success(self):
         with self.assertRaisesRegex(RuntimeError, "onvolledig"):
             self.fetch([page([{"code": "1"}], 3), page([{"code": "2"}], 3)], max_pages=2)
