@@ -53,7 +53,7 @@ def graph_nodes(data, key, kind, expected=None):
         raise IncompleteSource("OVSG secundair: inventarisgroep ontbreekt.")
     validate_graph({"graaf":graph["bronnen"], "register":graph["entiteiten"]})
     nodes = graph["bronnen"].get(kind, [])
-    if (not nodes and expected != 0 and kind != "slot") or len({node["uuid"] for node in nodes}) != len(nodes):
+    if (not nodes and (expected != 0 or kind == "slot")) or len({node["uuid"] for node in nodes}) != len(nodes):
         raise IncompleteSource("OVSG secundair: lege of dubbele inventaris.")
     if expected is not None and len(nodes) != expected:
         raise IncompleteSource("OVSG secundair: inventaristotaal wijkt af van bovenliggend overzicht.")
@@ -108,6 +108,8 @@ def secondary_rows(graph, plan, section, line, resource):
             "bron_sha256":resource.sha256, "bron_record":raw, "bron_leerplan":plan,
             "bron_relatieverwijzingen":references.get(identifier, []),
             "onderwijsdoelenset":{"onderwijsdoelenset_id":plan["leerplan_uuid"]}})
+    if not rows:
+        raise IncompleteSource("OVSG secundair: leerlijn bevat geen centrale doelen; vorige export blijft behouden.")
     return rows
 
 

@@ -8,6 +8,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ### Curriculumgegevens
 
+- Bronaanvragen nemen geen onverwachte `.netrc`-aanmelding of omgevingsproxy over. Lege secundaire leerlijnen blokkeren vervanging van een eerdere volledige export.
 - Afzonderlijke volledige OVSG-accountverzameling voor de vijf aangeboden eerste-graadleerplannen: 4341 centrale doelen uit 320 leerlijnen. Bronconcordanties, ondersteuning en relaties behouden; oude OVSG-vermeldingen worden vervangen zonder andere netwerken te verwijderen. Offline herverwerking en aparte lokale activering.
 - Afzonderlijke rustige accountverzameling voor OVSG Leer Lokaal 2027-2028. Doelentotalen worden per leerlijn gecontroleerd; oorspronkelijke ondersteuning, verdieping en relaties blijven behouden. Veilige statische paginadecodering, offline herstel en gescheiden edities in de app.
 - Handmatige bronvernieuwing met een afzonderlijke, vastgepinde Pythonomgeving. Bronkopieën, context, versies, geldigheid en foutstatussen blijven lokaal bewaard in een SQLite-catalogus met compacte JSONL-uitvoer en gecomprimeerde snapshots.
@@ -17,6 +18,7 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ### Beveiliging en betrouwbaarheid
 
+- Een net opgeslagen privacykeuze blijft geldig wanneer de klok tijdens het opslaan een milliseconde vooruitgaat; tijdstip en vervaldatum gebruiken dezelfde klokmeting.
 - Browsergebonden inlogcodes, afzonderlijke verificatiepogingen en instelbare daglimiet per vertrouwd IP. Reeds verstuurde codes moeten na deze update opnieuw worden aangevraagd; bestaande sessies blijven geldig.
 - Marketingtoestemming van bestaande accounts blijft behouden bij inloggen. Mailreserve voor bestaande accounts, dagplafond per gebruiker voor betaalde zoekopdrachten en uniforme loginantwoorden bij mailbudgetuitputting.
 - Publieke zelfgehoste productie vereist expliciete proxytrust en een loopbacklistener. Afzonderlijke limiet voor avataruploads zonder het documentbudget bij gewone paginaweergaven te belasten.

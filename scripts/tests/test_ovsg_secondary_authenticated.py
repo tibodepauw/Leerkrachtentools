@@ -50,3 +50,13 @@ class SecondaryAccountTests(unittest.TestCase):
         with self.assertRaises(IncompleteSource):graph_nodes({"data_leerlijnen":graph},"data_leerlijnen","leerlijn",2)
         graph["entiteiten"]["leerlijn"].clear()
         with self.assertRaises(IncompleteSource):graph_nodes({"data_leerlijnen":graph},"data_leerlijnen","leerlijn",1)
+
+    def test_empty_line_cannot_replace_the_complete_inventory(self):
+        graph={"bronnen":{"slot":[]}, "entiteiten":{"slot":{}}}
+        with self.assertRaises(IncompleteSource):
+            graph_nodes({"data_slots_en_sporen":graph},"data_slots_en_sporen","slot")
+        resource=Resource("https://leerlokaal.ovsg.be/so/leerplannen",Path("unused"),{"sha256":"a"*64})
+        graph={"bronnen":{"slot":[{"uuid":"prior","entiteit":"slot"}]},
+               "entiteiten":{"slot":{"prior":{}},"schakel_voorkennis_bao":{
+                   "prior":{"slot_uuid":"prior","slug":"voorkennis-bao"}}}}
+        with self.assertRaises(IncompleteSource):secondary_rows(graph,{},{},{},resource)

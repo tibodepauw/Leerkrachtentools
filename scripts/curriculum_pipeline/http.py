@@ -66,6 +66,10 @@ class HttpCache:
         self.root, self.hosts = root, hosts
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.session = session or requests.Session()
+        # Only explicit account headers/configuration may affect source access.
+        # requests otherwise replaces Authorization from ~/.netrc and inherits
+        # proxy settings even for the public, fixed-host crawler.
+        self.session.trust_env = False
         self.pause, self.max_bytes = pause, max_bytes
         self.request_limit, self.offline = request_limit, offline
         self.recent_seconds = recent_seconds

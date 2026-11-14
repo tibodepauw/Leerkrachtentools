@@ -134,6 +134,8 @@ De gecontroleerde collectie van 13 november 2026 bevat 3937 centrale doelen. Daa
 
 De publieke updater controleert robotsregels, vaste toegestane HTTPS-hosts en iedere redirect. Een aanvraag met een API-key mag geen redirect volgen. Op.stap gebruikt een API-pad dat momenteel geautomatiseerd ophalen uitsluit. Hiervoor blijft een toegestane actuele bulkexport nodig. OVSG's publieke robotsbeleid is ongewijzigd; de hierboven beschreven afzonderlijke accountworkflow leest op expliciete opdracht alleen de aangemelde basispagina's. POV ondersteunt de officiële Doelenverdeler-API met `POV_API_KEY` uit de lokale omgeving. Sleutels staan niet in URL's, rapporten of logs.
 
+De HTTP-client neemt geen authenticatie uit `.netrc` of proxyinstellingen uit de omgeving over. Alleen expliciet ingestelde bronaanmelding wordt gebruikt. Een secundaire leerlijn zonder slots of centrale doelen stopt de verwerking; zo vervangt een lege bronrespons geen eerdere volledige export.
+
 Een bron heeft maximaal 32 MiB per bestand, een run maximaal 512 MiB downloads en 5000 aanvragen. De eigen HTTP-cache is begrensd op 2 GiB. Tijdelijke fouten krijgen maximaal drie pogingen; een langere Retry-After stopt de bron. Een parser draait in een apart proces met een uitvoerlimiet, maximaal 45 seconden wandtijd en op Linux maximaal 768 MiB adresruimte en 30 CPU-seconden. ZIP-bestanden worden vóór verwerking begrensd. Dit is procesbegrenzing, geen OS-netwerksandbox.
 
 De OS-lock sluit gelijktijdige updates uit. JSONL-vervanging gebeurt atomisch. Catalogustransacties en integriteitscontroles beschermen tegen halfgeschreven uitvoer; een onderbreking tussen bestand en database kan daarna via `corpus:export` worden hersteld. Dat controleert eerst de inhoudshash van de catalogus.

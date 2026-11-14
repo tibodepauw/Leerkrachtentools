@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -44,6 +45,29 @@ class HttpTests(unittest.TestCase):
         session = Session(*responses)
         return HttpCache(self.root, {"source.example.test", "cdn.example.test"},
                          session=session, pause=0, **options), session
+
+    def test_public_downloads_do_not_inherit_netrc_credentials_or_environment_proxies(self):
+        netrc = self.root / "synthetic.netrc"
+        netrc.write_text("default login synthetic-netrc-user password synthetic-netrc-password\n")
+        netrc.chmod(0o600)
+        client = HttpCache(self.root / "cache", {"source.example.test"}, pause=0)
+        responses = [Response(body=b"User-agent: *\nDisallow:\n"), Response(body=b"source")]
+        with patch.dict(os.environ, {"NETRC":str(netrc), "HTTPS_PROXY":"http://proxy.invalid:3128", "ALL_PROXY":"http://proxy.invalid:3128", "NO_PROXY":""}), \
+             patch.object(client.session, "send", side_effect=responses) as send:
+            self.assertEqual(client.fetch("https://source.example.test/goals").content, b"source")
+        for call in send.call_args_list:
+            self.assertNotIn("Authorization", call.args[0].headers)
+            self.assertFalse(call.kwargs["proxies"])
+
+    def test_account_authorization_is_not_replaced_by_netrc(self):
+        from curriculum_pipeline.ovsg_authenticated import AuthenticatedOVSGClient, ROOT_URL
+        netrc = self.root / "synthetic.netrc"
+        netrc.write_text("machine leerlokaal.ovsg.be login synthetic-other-user password synthetic-other-password\n")
+        netrc.chmod(0o600)
+        client = AuthenticatedOVSGClient(self.root / "cache", "explicit-user", "synthetic-explicit-password", minimum=0, maximum=0)
+        with patch.dict(os.environ, {"NETRC":str(netrc)}), patch.object(client.session, "send", return_value=Response(body=b"source")) as send:
+            client.fetch(ROOT_URL)
+        self.assertEqual(send.call_args.args[0].headers["Authorization"], client.authorization)
 
     def test_conditional_request_reuses_exact_verified_bytes(self):
         client, session = self.client(Response(body=b"User-agent: *\nDisallow:\n"),
