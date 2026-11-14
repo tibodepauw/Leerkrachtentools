@@ -166,6 +166,7 @@ export interface LinkedMinimumGoal {
   tekst: string;
   type: string;
   rawCode?: string;
+  sourceIdentity?: string;
   ijkpuntLabel?: string;
   ijkpuntShort?: string;
 }
@@ -186,6 +187,7 @@ export interface CurriculumSearchResult {
   verrijking?: "corpus" | "fragment";
   score?: number;
   proWhy?: string;
+  bronContext?: Array<{ leeftijd: string; tekst: string }>;
   proLessonPhase?: "Instap" | "Instructie" | "Verwerking" | "Afronding";
 }
 

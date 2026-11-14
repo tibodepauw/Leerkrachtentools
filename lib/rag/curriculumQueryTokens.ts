@@ -87,6 +87,23 @@ const EXPRESSIVE_HIGH_IDF_STEMS = [
 const EXPRESSION_TOPIC_PATTERN =
   /drama|mimiek|uitbeeld|\btoneel\b|lichaamstaal|lichaamshouding|emoties|\bemotie\b|gevoelens|\bgevoel\b|\brolspel\b|\brol\b/i;
 
+const CLOCK_TOPIC = /klok|klokkijken|kwartier|wijzer|\bkwart\s+(?:voor|over)/i;
+const PRIVACY_TOPIC = /wachtwoord|persoonsgegeven|privacy|(?:veilig|bescherm).{0,40}(?:online|internet)|(?:online|internet).{0,40}(?:veilig|bescherm)/i;
+const SOUND_TOPIC = /begin.?klank|eind.?klank|foneem|fonem|fonolog|\bklank\w*.{0,70}\b(?:woord|woorden|letter|letters)\b|\b(?:woord|woorden|letter|letters)\b.{0,70}\bklank/i;
+const MONEY_TOPIC = /wisselgeld|\bgeld\b|\beuro|betalen|betaal|aankoop/i;
+const TRAFFIC_TOPIC = /overstek|zebrapad|voetganger|verkeer(?:s|\b)|\bsteken\b.{0,20}\bover\b/i;
+const PERCENT_TOPIC = /procent|percent|korting/i;
+const ELECTRIC_TOPIC = /stroomkring|elektric|elektrisch|batterij|lampje|schakelaar/i;
+const SUBJECT_HINTS: Array<{pattern:RegExp; stems:string[]}> = [
+  {pattern:CLOCK_TOPIC,stems:["klok","tijd","uur","kwartier","wijzer"]},
+  {pattern:PRIVACY_TOPIC,stems:["wachtwoord","persoonsgegeven","privacy","online","internet","digitaal"]},
+  {pattern:SOUND_TOPIC,stems:["klank","foneem","fonem","uitspraak","beginklank","eindklank","fonologisch","auditief"]},
+  {pattern:MONEY_TOPIC,stems:["geld","betaal","aankoop","euro","teruggeven"]},
+  {pattern:TRAFFIC_TOPIC,stems:["verkeer","oversteek","overstek","zebrapad","voetganger","mobiliteit"]},
+  {pattern:PERCENT_TOPIC,stems:["procent","percent","korting","verhouding"]},
+  {pattern:ELECTRIC_TOPIC,stems:["stroom","elektr","batterij","lamp","schakel"]},
+];
+
 const QUERY_STEM_HINTS: Array<{ pattern: RegExp; stems: string[] }> = [
   {
     pattern: /vermenigvuld|vermeningvuld|maaltafel|maal[^a-z]|tafel/i,
@@ -540,34 +557,32 @@ const DUTCH_NUMBER_WORDS: Array<[string, string]> = [
   ["vier", "4"],
   ["drie", "3"],
   ["twee", "2"],
-  ["een", "1"],
-  ["eén", "1"],
-  ["één", "1"],
 ];
 
 export function normalizeDutchNumberWords(text: string): string {
-  let result = text;
+  let result = text.replace(/(?<![\p{L}\p{N}])(?:één|eén)(?![\p{L}\p{N}])/giu, "1");
   for (const [word, digit] of DUTCH_NUMBER_WORDS) {
     result = result.replace(
       new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "giu"),
       digit,
     );
   }
-  return result;
+  // "een" is usually an article. Only numerical context makes it one.
+  return result.replace(/\been\b/giu, (word, offset: number) => {
+    const before = result.slice(0, offset);
+    const after = result.slice(offset + word.length);
+    return /(?:\bplus|\bmin|\bmaal|\bkeer|gedeeld door|\btot)\s*$/iu.test(before) ||
+      /^\s*(?:plus|min|maal|keer|gedeeld door)\b/iu.test(after) ||
+      (/\btussen\s*$/iu.test(before) && /^\s+en\s+\d/iu.test(after)) ? "1" : word;
+  });
 }
 
 export function normalizeQueryText(text: string): string {
-  return applyPhoneticTypos(
-    normalizeDutchNumberWords(
-      stripDidacticPhrases(
-        text
-          .toLocaleLowerCase("nl-BE")
-          .normalize("NFD")
-          .replace(/\p{Diacritic}/gu, "")
-          .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2"),
-      ),
-    ),
-  );
+  return applyPhoneticTypos(stripDidacticPhrases(
+    normalizeDutchNumberWords(text.toLocaleLowerCase("nl-BE"))
+      .normalize("NFD").replace(/\p{Diacritic}/gu, "")
+      .replace(/(\d)[.\s](\d{3})(?!\d)/g, "$1$2"),
+  ));
 }
 
 function queryWords(value: string): string[] {
@@ -594,6 +609,34 @@ export function extractContentTokens(query: string): Set<string> {
   return tokens;
 }
 
+type QueryProfile = {
+  normalized: string;
+  content: Set<string>;
+  subjects: typeof SUBJECT_HINTS;
+  math: boolean;
+  tech: boolean;
+  spelling: boolean;
+  expression: boolean;
+};
+const queryProfiles = new Map<string, QueryProfile>();
+function queryProfile(query: string): QueryProfile {
+  const cached = queryProfiles.get(query);
+  if (cached) return cached;
+  const normalized = normalizeQueryText(query);
+  const profile = {
+    normalized,
+    content: extractContentTokens(query),
+    subjects: SUBJECT_HINTS.filter(({ pattern }) => pattern.test(normalized)),
+    math: queryMatchesMathTopic(query),
+    tech: queryMatchesTechTopic(query),
+    spelling: queryMatchesSpellingTopic(query),
+    expression: queryMatchesExpressionTopic(query),
+  };
+  queryProfiles.set(query, profile);
+  if (queryProfiles.size > 64) queryProfiles.delete(queryProfiles.keys().next().value!);
+  return profile;
+}
+
 function isContentToken(token: string, contentTokens: Set<string>): boolean {
   if (contentTokens.has(token)) {
     return true;
@@ -612,13 +655,14 @@ function isContentToken(token: string, contentTokens: Set<string>): boolean {
 }
 
 export function queryMatchesMathTopic(query: string): boolean {
-  return /maaltafel|vermenigvuld|vermeningvuld|optell|aftrek|\bdel(?:en|ing)\b|breuk|kommagetal|cijferen|meetlat|vraagstuk|wiskunde|reken|\btafel(?:s)?\b/i.test(
-    normalizeQueryText(query),
-  );
+  const text = normalizeQueryText(query);
+  if (CLOCK_TOPIC.test(text) || MONEY_TOPIC.test(text) || PERCENT_TOPIC.test(text)) return true;
+  if (/maaltafel|vermenigvuld|vermeningvuld|optell|aftrek|breuk|kommagetal|cijferen|meetlat|vraagstuk|wiskunde|reken|\btafel(?:s)?\b/i.test(text)) return true;
+  return !PRIVACY_TOPIC.test(text) && /\bdel(?:en|ing)\b|deeltafel|\bverdel|quotient/i.test(text);
 }
 
 export function queryMatchesTechTopic(query: string): boolean {
-  return /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem|handzaag|schuurpapier|schuurblok|zaagbeugel|gereedschap/i.test(
+  return ELECTRIC_TOPIC.test(normalizeQueryText(query)) || /(?:stevige\s+)?brug|bouwen|constructie|krantenpapier|\btape\b|gewicht van|\bkilo\b|technisch systeem|handzaag|schuurpapier|schuurblok|zaagbeugel|gereedschap/i.test(
     normalizeQueryText(query),
   );
 }
@@ -651,26 +695,27 @@ function tokenMatchesHighIdfStem(
 }
 
 function isHighIdfToken(token: string, query: string): boolean {
-  if (/^\d{1,7}$/.test(token) && queryMatchesMathTopic(query)) {
+  if (queryProfile(query).subjects.some(({stems}) => stems.some(stem=>token===stem || (stem.length>=4 && token.startsWith(stem))))) return true;
+  if (/^\d{1,7}$/.test(token) && queryProfile(query).math) {
     return true;
   }
-  if (queryMatchesMathTopic(query) && tokenMatchesHighIdfStem(token, MATH_HIGH_IDF_STEMS)) {
+  if (queryProfile(query).math && tokenMatchesHighIdfStem(token, MATH_HIGH_IDF_STEMS)) {
     if (token === "tafel" || token.startsWith("tafel")) {
       return /maal|reken|wiskunde|cijfer|vraagstuk/.test(normalizeQueryText(query));
     }
     return true;
   }
-  if (queryMatchesTechTopic(query) && tokenMatchesHighIdfStem(token, TECH_HIGH_IDF_STEMS)) {
+  if (queryProfile(query).tech && tokenMatchesHighIdfStem(token, TECH_HIGH_IDF_STEMS)) {
     return true;
   }
   if (
-    queryMatchesSpellingTopic(query) &&
+    queryProfile(query).spelling &&
     tokenMatchesHighIdfStem(token, SPELLING_HIGH_IDF_STEMS)
   ) {
     return true;
   }
   if (
-    queryMatchesExpressionTopic(query) &&
+    queryProfile(query).expression &&
     tokenMatchesHighIdfStem(token, EXPRESSIVE_HIGH_IDF_STEMS)
   ) {
     return true;
@@ -683,7 +728,7 @@ export function tokenWeight(token: string, contentTokens: Set<string>, query = "
     return STOPWORD_TOKEN_WEIGHT;
   }
   if (query && isHighIdfToken(token, query)) {
-    return HIGH_IDF_TOKEN_WEIGHT;
+    return contentTokens.has(token) ? HIGH_IDF_TOKEN_WEIGHT * 1.5 : HIGH_IDF_TOKEN_WEIGHT;
   }
   if (isContentToken(token, contentTokens)) {
     return CONTENT_TOKEN_WEIGHT;
@@ -693,6 +738,7 @@ export function tokenWeight(token: string, contentTokens: Set<string>, query = "
 
 function expandFuzzyCanonicalStems(tokens: Set<string>, normalized: string): void {
   for (const word of queryWords(normalized)) {
+    if (isDidacticStopword(word)) continue;
     for (const { canonical, stems } of CANONICAL_QUERY_TERMS) {
       if (
         canonical === "opstel" &&
@@ -767,7 +813,9 @@ export function tokenizeCurriculumQuery(value: string): Set<string> {
     tokens.add(match[0]);
   }
 
-  for (const { pattern, stems } of QUERY_STEM_HINTS) {
+  for (const { pattern, stems } of [...QUERY_STEM_HINTS, ...SUBJECT_HINTS]) {
+    if (stems.includes("deeltafel") && !queryMatchesMathTopic(normalized)) continue;
+    if (stems.includes("sleutelwoord") && CLOCK_TOPIC.test(normalized)) continue;
     if (pattern.test(normalized)) {
       for (const stem of stems) {
         tokens.add(stem);
@@ -849,7 +897,7 @@ export function countCurriculumTokenMatches(
   query = "",
 ): number {
   const normalizedHaystack = normalizeQueryText(haystack);
-  const contentTokens = query ? extractContentTokens(query) : new Set<string>();
+  const contentTokens = query ? queryProfile(query).content : new Set<string>();
   const haystackWords = haystackWordsFromText(normalizedHaystack);
   let weightedMatches = 0;
 
@@ -883,7 +931,7 @@ export function scoreCurriculumOverlap(
   }
 
   const normalizedHaystack = normalizeQueryText(haystack);
-  const contentTokens = query ? extractContentTokens(query) : new Set<string>();
+  const contentTokens = query ? queryProfile(query).content : new Set<string>();
   const haystackWords = haystackWordsFromText(normalizedHaystack);
   let weightedMatches = 0;
   let totalWeight = 0;
@@ -913,7 +961,13 @@ export function scoreCurriculumOverlap(
 
 export function inferDisciplineFromQuery(query: string): string | null {
   const normalized = normalizeQueryText(query);
+  if (PRIVACY_TOPIC.test(normalized)) return "ICT";
+  if (CLOCK_TOPIC.test(normalized) || MONEY_TOPIC.test(normalized)) return "Wiskunde";
+  if (/\bfrans|\bfrench/i.test(normalized)) return "Frans";
+  if (/\bengels|\benglish/i.test(normalized)) return "Engels";
+  if (SOUND_TOPIC.test(normalized) || /persoonsvorm|zinsdeel|werkwoord|tegenwoordige tijd|verleden tijd/i.test(normalized)) return "Nederlands";
   for (const { pattern, discipline } of DISCIPLINE_HINTS) {
+    if (discipline === "Wiskunde" && !queryMatchesMathTopic(normalized) && !queryMatchesMathFunctionTopic(normalized)) continue;
     if (pattern.test(normalized)) {
       return discipline;
     }
@@ -1452,12 +1506,10 @@ function applyDomainMultiplier(
   code: string,
   subdomein: string,
 ): number {
-  const mathQuery = queryMatchesMathTopic(query);
-  const techQuery = queryMatchesTechTopic(query);
-  const expressionQuery = queryMatchesExpressionTopic(query);
-  const spellingQuery = queryMatchesSpellingTopic(query);
+  const {math:mathQuery,tech:techQuery,expression:expressionQuery,spelling:spellingQuery,normalized} = queryProfile(query);
+  const soundQuery = SOUND_TOPIC.test(normalized) && !/\bfrans|\bengels/i.test(normalized);
 
-  if (spellingQuery && !mathQuery && !techQuery) {
+  if ((spellingQuery || soundQuery) && !mathQuery && !techQuery) {
     return score * (isDutchLanguageDomain(discipline, code, subdomein)
       ? MATH_DOMAIN_MULTIPLIER
       : WRONG_DOMAIN_MULTIPLIER);
@@ -1528,16 +1580,24 @@ export function scoreCurriculumCandidate({
 }): { score: number; tokenMatches: number } {
   const tokens = tokenizeCurriculumQuery(query);
   const tokenMatches = countCurriculumTokenMatches(haystack, tokens, query);
+  if (tokenMatches === 0) return {score:0,tokenMatches:0};
   const titelScore = scoreCurriculumOverlap(titel, tokens, query);
   const contextScore = scoreCurriculumOverlap(haystack, tokens, query);
 
+  // Specific subject evidence must outweigh generic actions or shared
+  // minimum-goal context (e.g. "herkennen" or "veilig").
+  const {subjects:subjectHints,content} = queryProfile(query);
+  const normalizedHaystack = normalizeQueryText(haystack);
+  if (subjectHints.length && !subjectHints.some(({stems})=>stems.some(stem=>normalizedHaystack.includes(stem)))) return {score:0,tokenMatches:0};
   let score =
     titelScore * 0.55 +
     contextScore * 0.45 +
     scoreDisciplineBonus(query, discipline, code, subdomein);
 
-  const queryLower = normalizeQueryText(query);
+  const queryLower = queryProfile(query).normalized;
   const titelLower = normalizeQueryText(titel);
+  const namedSubjects = new Set(subjectHints.flatMap(({stems})=>stems).filter(stem=>[...content].some(word=>word.includes(stem))));
+  if ([...namedSubjects].some(stem=>titelLower.includes(stem))) score += 0.35;
 
   if (
     (queryLower.includes("vermenigvuld") ||
@@ -1579,6 +1639,10 @@ export function scoreCurriculumCandidate({
     score += 0.12;
   }
 
+  if (SOUND_TOPIC.test(queryLower) && /eerste|laatste|begin|eind/.test(queryLower) && !/schrijf|spell/.test(queryLower)) {
+    if (/klank|fonem|foneem/.test(titelLower) && /herken|aangeven|onderscheid|isoler|luister/.test(titelLower)) score += 0.35;
+    if (/schrijv|schrijf|spell/.test(titelLower)) score -= 0.2;
+  }
   score = applyDomainMultiplier(score, query, discipline, code, subdomein);
   return { score: Math.max(0, Math.min(6, score)), tokenMatches };
 }

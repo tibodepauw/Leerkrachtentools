@@ -292,3 +292,25 @@ describe("selectProCurriculumGoals", () => {
     expect(PRO_FALLBACK_NOTICES.noProvider).toMatch(/snelle zoekkaarten/);
   });
 });
+
+it('includes matched development steps without replacing the official goal title', () => {
+  const candidate = goal({code: 'SYN.1', titel: 'Synthetisch overkoepelend doel'});
+  Object.assign(candidate, {bronContext: [{leeftijd: '6-9j', tekst: 'Een gevoel zichtbaar maken met lichaamshouding.'}]});
+  const prompt = buildProCurriculumPrompt({query: 'Gevoelens uitbeelden', retrieved: [candidate], lesson: parseProLessonContext({grade: 'l3'})});
+  expect(prompt).toContain('Een gevoel zichtbaar maken met lichaamshouding.');
+  expect(prompt).toContain('6-9j');
+  expect(prompt).toContain('Synthetisch overkoepelend doel');
+});
+
+it('excludes foreign-language goals unless the activity or learning area requests that language', async () => {
+  const {filterProLanguageCandidates} = await import('./selectProCurriculumGoals');
+  const dutch = goal({code: 'NL.1', titel: 'Een kernidee bepalen', discipline: 'Nederlands'});
+  const french = goal({code: 'FR.1', titel: 'Een kernidee bepalen', discipline: 'Frans'});
+  const english = goal({code: 'EN.1', titel: 'Een kernidee bepalen', discipline: 'Engels'});
+  const pool = [french, english, dutch];
+  expect(filterProLanguageCandidates(pool, 'De hoofdgedachte van een tekst bepalen', parseProLessonContext({}))).toEqual([dutch]);
+  expect(filterProLanguageCandidates(pool, 'De hoofdgedachte van een tekst bepalen', parseProLessonContext({learningArea: 'Frans'}))).toEqual([french, dutch]);
+  expect(filterProLanguageCandidates(pool, 'De hoofdgedachte van een tekst bepalen', parseProLessonContext({topic: 'Franse leesles'}))).toEqual([french, dutch]);
+  expect(filterProLanguageCandidates(pool, 'De hoofdgedachte van een tekst bepalen', parseProLessonContext({phases: [{name: 'Verwerking', text: 'Leerlingen lezen een Engelse tekst.'}]}))).toEqual([english, dutch]);
+  expect(filterProLanguageCandidates(pool, 'De hoofdgedachte van een Engelse tekst bepalen', parseProLessonContext({}))).toEqual([english, dutch]);
+});

@@ -103,6 +103,29 @@ export function parseProLessonContext(input: {
 
 export type ProCurriculumKind = "leerplandoel" | "minimumdoel";
 
+const FOREIGN_LANGUAGE_SUBJECTS = [
+  /\bfrans(?:e)?\b|\bfrench\b/i,
+  /\bengels(?:e)?\b|\benglish\b/i,
+  /\bduits(?:e)?\b|\bgerman\b/i,
+  /\bspaans(?:e)?\b|\bspanish\b/i,
+  /\bitaliaans(?:e)?\b|\bitalian\b/i,
+];
+
+/** A translated activity does not by itself request a foreign-language goal. */
+export function filterProLanguageCandidates(
+  retrieved: CurriculumSearchResult[],
+  query: string,
+  lesson: ProLessonContext,
+): CurriculumSearchResult[] {
+  const requested = [query, lesson.learningArea, lesson.topic, ...lesson.phases.map((phase) => phase.text)].join(" ");
+  return retrieved.filter((item) => {
+    const subject = `${item.discipline} ${item.subdomein}`;
+    const languages = FOREIGN_LANGUAGE_SUBJECTS.filter((pattern) => pattern.test(subject));
+    return languages.length === 0 || /\bnederlands\b|\bdutch\b/i.test(subject) ||
+      languages.some((pattern) => pattern.test(requested)) || /vreemde\s+ta(?:al|len)/i.test(requested);
+  });
+}
+
 /** Code en tekst zoals de kandidaat voor dit soort doel getoond wordt. */
 function candidateFields(
   item: CurriculumSearchResult,
@@ -138,7 +161,7 @@ function outputIdentity(
   // Een minimumdoel is netwerkoverstijgend; een leerplandoel met dezelfde code
   // in een ander netwerk is een ander doel.
   return kind === "minimumdoel"
-    ? normalizedCode || normalizedTitel
+    ? item.gelinktMinimumdoel?.sourceIdentity || item.gelinktMinimumdoel?.rawCode || normalizedCode || normalizedTitel
     : [normalizedCode, normalizedTitel, item.netwerk].join("|");
 }
 
@@ -220,8 +243,13 @@ export function buildProCurriculumPrompt({
     netwerk: item.netwerk,
     discipline: item.discipline,
     subdomein: item.subdomein,
+    leerjaarRoute: item.leerjaarRoute,
     titel: candidateFields(item, kind).titel,
     toelichting: sanitizeSnippet(item.toelichting ?? "", 280),
+    bronContext: item.bronContext?.slice(0, 2).map((context) => ({
+      leeftijd: sanitizeSnippet(context.leeftijd, 60),
+      tekst: sanitizeSnippet(context.tekst, 600),
+    })),
   }));
 
   const phaseLines =
@@ -249,6 +277,6 @@ ${phaseLines}
 ${corpusLabel} als kandidaat-doelen (kies ALLEEN hieruit, verzin geen codes of doelteksten):
 ${JSON.stringify(goals, null, 2)}
 
-Selecteer 2 of 3 doelen die de activiteit het best dekken. Geef per keuze het exacte nr uit de lijst en de bijbehorende code. Het nr bepaalt de kandidaat, ook als codes in verschillende netwerken gelijk zijn.
+Selecteer maximaal 3 doelen die de activiteit inhoudelijk dekken. Kies slechts 1 als dat de enige sterke match is. Geef picks: [] wanneer geen kandidaat voldoende past. Geef per keuze het exacte nr uit de lijst en de bijbehorende code. Het nr bepaalt de kandidaat, ook als codes in verschillende netwerken gelijk zijn.
 Per doel: why (waarom dekt dit de activiteit, maximaal twee zinnen) en lessonPhase (Instap, Instructie, Verwerking of Afronding).`;
 }

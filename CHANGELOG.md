@@ -6,6 +6,16 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+### Doelen koppelen
+
+- Rangschikking houdt specifieke lesonderwerpen zoals klokkijken, online privacy, klanken, geld en stroomkringen beter vast. Lidwoorden en negaties leveren geen onterechte reken- of zoekmatch op.
+- Pro ontvangt relevante ontwikkelstappen met hun bronleeftijd en beoordeelt ook de concrete handeling en modaliteit. Zoekcaches worden eenmalig vernieuwd.
+- Pro kiest maximaal drie passende doelen en kan expliciet geen passende kandidaat melden. Code en doeltekst blijven aan de officiële opgehaalde kandidaten gebonden.
+- Ontbrekende curriculumbronnen worden buiten de testsuite nooit door testfragmenten vervangen. Testfragmenten worden niet in de zelfstandige productie-uitvoer opgenomen.
+- De zoekbenchmark wijst een lege respons af wanneer de lesvraag een doelkoppeling vereist.
+- Minimumdoelen gebruiken het officiële vakgebied en leerjaar uit nieuwe en oudere bronmetadata. Pro sluit ongevraagde vreemde-taaldoelen vóór de modelaanroep uit. Verschillende bronrecords met dezelfde doelcode blijven afzonderlijk beschikbaar voor zoeken en Pro-selectie.
+- Leerjaarbonussen blijven werkzaam bij sterke zoekresultaten doordat relevantiescores niet meer op hetzelfde plafond vastlopen.
+
 ## [5.21.0-rc.2] - 2026-11-14
 
 Releasekandidaat voor lokale productie- en stagingacceptatie. Bevat de gemergede audit- en curriculumwijzigingen tot en met #44. Brondata en toegangsgegevens worden afzonderlijk beheerd en zijn niet opgenomen.

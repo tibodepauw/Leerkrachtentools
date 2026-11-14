@@ -289,8 +289,10 @@ export function evaluateBenchmarkCase(
     }
   }
 
+  const resultsPresent = expectStatus !== 200 || testCase.expectEmpty === true || topResults.length > 0;
+  if (!resultsPresent) failures.push("Geen resultaten voor een zoekvraag die een koppeling vereist");
   const passed =
-    statusOk &&
+    resultsPresent && statusOk &&
     faithfulnessOk &&
     relevancyOk &&
     expectEmptyOk;

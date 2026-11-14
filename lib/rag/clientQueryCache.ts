@@ -30,7 +30,7 @@ export type RagQueryCacheScope = {
 };
 
 const STORAGE_KEY = "leerkrachtentools-rag-query-cache";
-const CACHE_VERSION = 7;
+const CACHE_VERSION = 8;
 
 function accountStorageKey() {
   const userId = getActiveUserId();

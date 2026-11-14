@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildCorpusFaithfulnessIndex,
+  evaluateBenchmarkCase,
   isFaithfulResult,
   matchesAllPatternGroups,
   matchesDisciplinePatterns,
@@ -71,3 +72,9 @@ describe("ragBenchmark", () => {
     expect(matchesDisciplinePatterns(results, [/wiskunde/i])).toBe(false);
   });
 });
+
+ it("does not report an empty successful response as a relevant match",()=>{
+   const report=evaluateBenchmarkCase({id:"expected-match",label:"known lesson",endpoint:"curriculum",query:"optellen",disciplinePatterns:[/wiskunde/i]}, {status:200,durationMs:1,body:{data:{goal:"niet gevonden",alternatives:[]}}}, {codes:new Set(),minimumCodes:new Set(),titels:new Set()});
+   expect(report.passed).toBe(false);
+   expect(report.failures.some(reason=>reason.includes("Geen resultaten"))).toBe(true);
+ });

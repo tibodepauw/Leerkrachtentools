@@ -86,6 +86,20 @@ async function postSearch(query: string, searchMode: "snel" | "pro") {
   );
 }
 
+function selectPromptCandidate(code: string, why: string) {
+  vi.mocked(runStructured).mockImplementationOnce(async ({ prompt }) => {
+    const block = prompt.match(/als kandidaat-doelen[^\n]*\n(\[[\s\S]*\])\n\nSelecteer/);
+    expect(block).not.toBeNull();
+    const candidates = JSON.parse(block![1]) as Array<{ nr: number; code: string }>;
+    const candidate = candidates.find(item => item.code === code);
+    expect(candidate).toBeDefined();
+    return {
+      provider: "google", fallbackErrors: [],
+      data: { picks: [{ nr: candidate!.nr, code, why, lessonPhase: "Verwerking" }] },
+    };
+  });
+}
+
 describe("Minimumdoelen spelling en techniek", () => {
   beforeEach(() => {
     vi.mocked(hasAnyAiProvider).mockReturnValue(true);
@@ -118,19 +132,7 @@ describe("Minimumdoelen spelling en techniek", () => {
   });
 
   it("houdt spellingdoel 1.2.5 in Pro na grounding", async () => {
-    vi.mocked(runStructured).mockResolvedValueOnce({
-      provider: "google",
-      fallbackErrors: [],
-      data: {
-        picks: [
-          {
-            code: "1.2.5",
-            why: "De les oefent open en gesloten lettergrepen.",
-            lessonPhase: "Verwerking",
-          },
-        ],
-      },
-    });
+    selectPromptCandidate("1.2.5", "De les oefent open en gesloten lettergrepen.");
 
     const response = await postSearch(SPELLING_QUERY, "pro");
     expect(response.status).toBe(200);
@@ -147,19 +149,7 @@ describe("Minimumdoelen spelling en techniek", () => {
   });
 
   it("houdt W&T-gereedschap in Pro na grounding", async () => {
-    vi.mocked(runStructured).mockResolvedValueOnce({
-      provider: "google",
-      fallbackErrors: [],
-      data: {
-        picks: [
-          {
-            code: "3.7.2",
-            why: "De les gebruikt handzaag en schuurpapier als basisgereedschap.",
-            lessonPhase: "Verwerking",
-          },
-        ],
-      },
-    });
+    selectPromptCandidate("3.7.2", "De les gebruikt handzaag en schuurpapier als basisgereedschap.");
 
     const response = await postSearch(TOOL_QUERY, "pro");
     expect(response.status).toBe(200);

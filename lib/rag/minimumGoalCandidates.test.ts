@@ -138,7 +138,7 @@ describe("minimumGoalCandidates", () => {
       collectMinimumGoalCandidates({ query: "optellen tot 20", limit: 20 }),
     ]);
 
-    const codes = merged.map((item) => item.gelinktMinimumdoel?.code);
+    const codes = merged.map((item) => item.gelinktMinimumdoel?.sourceIdentity || item.gelinktMinimumdoel?.rawCode || item.gelinktMinimumdoel?.code);
     expect(new Set(codes).size).toBe(codes.length);
   });
 
@@ -225,4 +225,16 @@ describe("minimumGoalCandidates", () => {
       ),
     ).toBe(true);
   });
+});
+
+it('uses the official subject instead of a school-stage label for standalone minimum goals', () => {
+  const record = normalizeMinimumGoalCandidate({
+    code: '2.1.99',
+    titel: 'Breuken vergelijken in een synthetische oefening.',
+    discipline: 'Lager Onderwijs 4de leerjaar',
+    onderwijsniveau: 'LAGER',
+    netwerk: 'AHOVOKS',
+    onderwijsdoelenset: {vakdiscipline: {naam: 'Wiskunde'}},
+  });
+  expect(record?.discipline).toBe('Wiskunde');
 });

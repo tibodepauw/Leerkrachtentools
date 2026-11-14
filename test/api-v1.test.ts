@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST as postMatch } from "@/app/api/v1/curriculum/match/route";
 import { POST as postAudit } from "@/app/api/v1/curriculum/audit/route";
@@ -15,6 +15,15 @@ import {
 } from "@/lib/api-keys";
 import { getDatabase } from "@/lib/db/sqlite";
 import { proxy } from "@/proxy";
+
+const corpus = await vi.hoisted(async () => {
+  const { createCorpusTestRoot } = await import("./helpers/corpusTestRoot");
+  const corpus = createCorpusTestRoot(process.cwd());
+  vi.spyOn(process, "cwd").mockReturnValue(corpus.root);
+  return corpus;
+});
+beforeEach(() => { vi.spyOn(process, "cwd").mockReturnValue(corpus.root); });
+afterAll(() => { vi.restoreAllMocks(); corpus.cleanup(); });
 
 function authHeader(token: string) {
   return { authorization: `Bearer ${token}` };

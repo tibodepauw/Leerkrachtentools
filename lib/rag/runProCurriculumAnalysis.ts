@@ -12,6 +12,7 @@ import { getUserAiConfig } from "@/lib/ai/userCredentials";
 import { CURRICULUM_TOP_N } from "@/lib/rag/curriculumCorpus";
 import {
   buildProCurriculumPrompt,
+  filterProLanguageCandidates,
   groundProPicks,
   PRO_FALLBACK_NOTICES,
   withProFallbackSentence,
@@ -62,6 +63,7 @@ export async function runProCurriculumAnalysis({
   signal?: AbortSignal;
 }): Promise<ProCurriculumAnalysisResult> {
   signal?.throwIfAborted();
+  retrieved = filterProLanguageCandidates(retrieved, query, lesson);
   if (retrieved.length === 0) {
     return {
       merged: [],
@@ -135,6 +137,14 @@ export async function runProCurriculumAnalysis({
       return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.quota, fallbackLimit);
     }
 
+    if (tracked.result.data.picks.length === 0) {
+      return {
+        merged: [],
+        provider: `jsonl-corpus+discovery-engine+${tracked.result.provider}`,
+        corpusNotice: "Geen voldoende passend doel gevonden in de opgehaalde kandidaten voor deze lesactiviteit.",
+        proFallback: false,
+      };
+    }
     const grounded = groundProPicks(retrieved, tracked.result.data.picks, kind);
     if (grounded.length === 0) {
       return fallbackResult(retrieved, PRO_FALLBACK_NOTICES.ungrounded, fallbackLimit);

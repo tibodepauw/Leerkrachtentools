@@ -103,6 +103,6 @@ export const proCurriculumPicksSchema = z.object({
         lessonPhase: z.enum(["Instap", "Instructie", "Verwerking", "Afronding"]),
       }),
     )
-    .min(1)
+    .min(0)
     .max(CURRICULUM_PRO_PICK_MAX),
 });
