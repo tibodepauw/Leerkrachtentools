@@ -18,6 +18,9 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ### Beveiliging en betrouwbaarheid
 
+- Codeaanvragen houden het e-mailadres vast; curriculumzoeken behoudt gekozen niveaus en geeft graad en finaliteit door aan de rangschikking.
+- Een geweigerde documentupload behoudt de vorige bron. Vertraagde tekstextractie en documentopslag overschrijven geen intussen gewijzigd werk.
+- Word-export verwerkt verwijderde en toegevoegde doelen met behoud van hun D-identiteit, ook wanneer het bronformulier niet voor ieder doel een veld heeft.
 - Een net opgeslagen privacykeuze blijft geldig wanneer de klok tijdens het opslaan een milliseconde vooruitgaat; tijdstip en vervaldatum gebruiken dezelfde klokmeting.
 - Browsergebonden inlogcodes, afzonderlijke verificatiepogingen en instelbare daglimiet per vertrouwd IP. Reeds verstuurde codes moeten na deze update opnieuw worden aangevraagd; bestaande sessies blijven geldig.
 - Marketingtoestemming van bestaande accounts blijft behouden bij inloggen. Mailreserve voor bestaande accounts, dagplafond per gebruiker voor betaalde zoekopdrachten en uniforme loginantwoorden bij mailbudgetuitputting.

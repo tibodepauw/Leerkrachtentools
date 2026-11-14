@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LessonDocumentPreview } from "@/components/shared/LessonDocumentPreview";
 import { getLessonDocument } from "@/lib/documents/documentStorage";
-import { syncPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
+import { importPreparationDocumentFromFile } from "@/lib/documents/syncPreparationDocument";
 import { LESSON_DOCUMENT_ACCEPT } from "@/lib/documents/supportedFormats";
 import { useLessonStore } from "@/stores/useLessonStore";
 import type { LessonExportPayload } from "@/types";
@@ -36,7 +36,6 @@ function fileNameFromDisposition(header: string | null) {
 
 export function ActiveLessonView() {
   const lesson = useLessonStore((state) => state.lesson);
-  const syncPreparation = useLessonStore((state) => state.syncPreparation);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -59,27 +58,8 @@ export function ActiveLessonView() {
     setUploadError("");
 
     try {
-      await syncPreparationDocumentFromFile(file);
+      await importPreparationDocumentFromFile(file);
       session.assertCurrent();
-
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/import-lesson-document", {
-        method: "POST",
-        body: formData,
-        signal: session.signal,
-      });
-      const payload = (await response.json()) as {
-        error?: string;
-        text?: string;
-      };
-
-      if (!response.ok || !payload.text) {
-        throw new Error(payload.error ?? "Upload mislukt.");
-      }
-
-      session.assertCurrent();
-      syncPreparation(payload.text);
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : "Upload mislukt.",

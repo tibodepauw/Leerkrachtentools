@@ -129,6 +129,7 @@ function AuthScreenContent() {
                     required
                     maxLength={254}
                     value={email}
+                    disabled={loading}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="naam@school.be"
                   />

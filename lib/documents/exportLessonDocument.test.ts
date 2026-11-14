@@ -140,3 +140,20 @@ describe("patchFormBlobText", () => {
     expect(patched).toContain("Lesonderwerp: creatief schrijven");
   });
 });
+
+describe("goal changes in an existing form", () => {
+  it("clears deleted goals and preserves goal identity across gaps", async () => {
+    const source = await createMinimalLessonDocx(["D1: VERWIJDERD_DOEL", "LESDOEL 2 (MC): VEROUDERD_DOEL"]);
+    const lesson = { ...sampleLesson, goals: [sampleLesson.goals[1]] };
+    const xml = await documentXml(await patchLessonDocx(source, lesson));
+    expect(xml).not.toContain("VERWIJDERD_DOEL");
+    expect(xml).not.toContain("VEROUDERD_DOEL");
+    expect(xml).toContain(sampleLesson.goals[1].text);
+  });
+  it("includes a new goal missing from the original form, without duplicating it on reexport", async () => {
+    const source = await createMinimalLessonDocx(["D1: oud"]);
+    const once = await patchLessonDocx(source, sampleLesson);
+    const xml = await documentXml(await patchLessonDocx(once, sampleLesson));
+    for (const goal of sampleLesson.goals) expect(xml.split(goal.text)).toHaveLength(2);
+  });
+});

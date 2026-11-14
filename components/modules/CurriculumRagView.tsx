@@ -53,7 +53,6 @@ import {
   supportsDomainDetailFilter,
   supportsDomainFinalityFilter,
 } from "@/lib/lesson/domainFilters";
-import { secondaryGradeFilterFromLessonGrade } from "@/lib/lesson/secondaryFilters";
 import { formatMinimumGoalCopy } from "@/lib/rag/minimumGoalCopy";
 import { useSelectedLessonGoal } from "@/hooks/useSelectedLessonGoal";
 import { filledGoals, MAX_LESSON_GOALS } from "@/lib/goals/lessonGoals";
@@ -389,9 +388,6 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
   const secondaryFinalityFilter = useLessonStore(
     (state) => state.secondaryFinalityFilter,
   );
-  const setSecondaryGradeFilter = useLessonStore(
-    (state) => state.setSecondaryGradeFilter,
-  );
   const setDomainDetailFilter = useLessonStore(
     (state) => state.setDomainDetailFilter,
   );
@@ -482,15 +478,6 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     educationLevelFilter,
     setCurriculumNetworkFilter,
   ]);
-
-  useEffect(() => {
-    const mappedGrade = secondaryGradeFilterFromLessonGrade(lesson.grade);
-    if (!mappedGrade) {
-      return;
-    }
-    setSecondaryGradeFilter(mappedGrade);
-    setEducationLevel("secundair_onderwijs");
-  }, [lesson.grade, setEducationLevel, setSecondaryGradeFilter]);
 
   function handleEducationLevelChange(value: EducationLevelPreference) {
     setEducationLevel(value);
