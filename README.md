@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/tibodepauw/Leerkrachtentools/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-v5.21.0--rc.1-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
+[![Version](https://img.shields.io/badge/version-v5.21.0--rc.2-blue)](https://github.com/tibodepauw/Leerkrachtentools/releases)
 
 # Leerkrachtentools
 
@@ -248,7 +248,9 @@ npm run test:rag-benchmark
 npm run build
 ```
 
-At the v5.21.0-rc.1 release commit, the extended audit suite passed 611 tests across 133 test files (one additional corpus-dependent
+The current candidate includes the merged audit fixes from #41, #42 and #44. Its local production acceptance covers login/logout, real corpus searches, adding goals and Word source import/export. See [the current release notes](docs/releases/v5.21.0-rc.2.md) for evidence and the remaining hosting/provider setup.
+
+Historical baseline: at the v5.21.0-rc.1 release commit, the extended audit suite passed 611 tests across 133 test files (one additional corpus-dependent
 test skipped; no remaining TODO cases). Tests cover curriculum retrieval and ranking,
 auth and authorization, credential encryption, organization API quotas,
 browser storage isolation, document handling, UI behavior, and core utilities.
@@ -327,7 +329,7 @@ Before exposing the service publicly:
 |------|-------------|
 | [CHANGELOG.md](./CHANGELOG.md) | Version history |
 | [docs/README.md](./docs/README.md) | Current documentation, audit history and remaining acceptance work |
-| [docs/releases/v5.21.0-rc.1.md](./docs/releases/v5.21.0-rc.1.md) | Current pre-release and validation evidence |
+| [docs/releases/v5.21.0-rc.2.md](./docs/releases/v5.21.0-rc.2.md) | Current pre-release and validation evidence |
 | [docs/digitalocean-first-deployment.md](./docs/digitalocean-first-deployment.md) | First VM installation and production acceptance |
 | [docs/AI-en-RAG-overzicht.md](./docs/AI-en-RAG-overzicht.md) | Architecture notes (Dutch) |
 | [docs/curriculum-bronnen-urls.md](./docs/curriculum-bronnen-urls.md) | Official curriculum URLs |
@@ -344,7 +346,7 @@ Before exposing the service publicly:
 
 ## Releases
 
-Current version: **5.21.0-rc.1** (pre-release for staging validation)
+Current version: **5.21.0-rc.2** (pre-release for staging validation)
 
 See [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/releases) and [CHANGELOG.md](./CHANGELOG.md).
 
