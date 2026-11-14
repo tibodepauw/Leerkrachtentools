@@ -6,6 +6,10 @@ Releases: [GitHub Releases](https://github.com/tibodepauw/Leerkrachtentools/rele
 
 ## [Unreleased]
 
+## [5.21.0-rc.2] - 2026-11-14
+
+Releasekandidaat voor lokale productie- en stagingacceptatie. Bevat de gemergede audit- en curriculumwijzigingen tot en met #44. Brondata en toegangsgegevens worden afzonderlijk beheerd en zijn niet opgenomen.
+
 ### Curriculumgegevens
 
 - Bronaanvragen nemen geen onverwachte `.netrc`-aanmelding of omgevingsproxy over. Lege secundaire leerlijnen blokkeren vervanging van een eerdere volledige export.

@@ -1,6 +1,6 @@
 # Eerste installatie op DigitalOcean (nog niet live)
 
-Status 19 september 2026: de codefixes zijn gemerged en gepubliceerd als [v5.21.0-rc.1](releases/v5.21.0-rc.1.md). De volledige [Linux-CI van de releasecommit](https://github.com/tibodepauw/Leerkrachtentools/actions/runs/35430856048), inclusief parserisolatie, browsers en koude apphersteltest, is geslaagd. Er is nog geen productieomgeving gedeployed. Acceptatie op de echte VM, met echte corpora en providerconfiguratie, blijft nodig. Zie de [documentatie-index](README.md) voor actuele uitleg en auditgeschiedenis.
+Status 14 november 2026: de actuele codebaseline is [v5.21.0-rc.2](releases/v5.21.0-rc.2.md). De gemergede audits tot en met #44, volledige app-CI en lokale productieacceptatie zijn geslaagd. Er is nog geen DigitalOcean-server ingericht. Echte providerconfiguratie, externe mailaflevering en acceptatie op de uiteindelijke host blijven nodig. Zie de [documentatie-index](README.md) voor actuele uitleg en auditgeschiedenis.
 
 ## Nieuwe installatie
 
@@ -13,7 +13,7 @@ Status 19 september 2026: de codefixes zijn gemerged en gepubliceerd als [v5.21.
 
 ## Corpusbestanden controleren vóór deployment
 
-De eigenaar heeft bevestigd dat de volledige corpora nog niet beschikbaar zijn. Voer na levering vanuit de repository uit:
+Niet alle bronbestanden zijn beschikbaar. De lokaal gecontroleerde build bevat twaalf geldige JSONL-bestanden; Op.stap, GO! Oud, het gecombineerde secundaire leerplanbestand en POV ontbreken. De afzonderlijke nieuwe OVSG-basis- en secundaire bestanden zijn wel aanwezig. Dit bewijst geen volledige inhoudelijke brondekking. Controleer na aanlevering vanuit de repository:
 
 ```sh
 npm run check:corpora

@@ -1,6 +1,6 @@
 {
   "name": "leerkrachtentools",
-  "version": "5.21.0-rc.1",
+  "version": "5.21.0-rc.2",
   "private": true,
   "scripts": {
     "postinstall": "node scripts/apply-braces-security-patch.mjs",

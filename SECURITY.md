@@ -2,13 +2,13 @@
 
 ## Supported versions
 
-Security fixes are developed on `main`. As of 19 September 2026, the latest
-published security baseline is **v5.21.0-rc.1**, a pre-release for staging and VM
+Security fixes are developed on `main`. As of 14 November 2026, the current
+code baseline is **v5.21.0-rc.2**, a pre-release for staging and VM
 acceptance. **v5.20.1** remains the latest stable-labelled release, but does not
 contain all subsequent security and privacy fixes. Older tags are historical
 snapshots; fixes on `main` do not update an existing tag.
 
-See the [release notes](docs/releases/v5.21.0-rc.1.md) and
+See the [release notes](docs/releases/v5.21.0-rc.2.md) and
 [documentation index](docs/README.md) for the tested scope and remaining
 production checks. A pre-release or passing CI is not production certification.
 
