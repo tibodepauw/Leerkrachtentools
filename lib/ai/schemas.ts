@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CURRICULUM_PRO_PICK_MAX, CURRICULUM_PRO_RETRIEVAL_N } from "@/lib/rag/selectProCurriculumGoals";
 import {
   goalImprovementSchema,
   goalTaxonomySchema,
@@ -96,11 +97,12 @@ export const proCurriculumPicksSchema = z.object({
   picks: z
     .array(
       z.object({
+        nr: z.number().int().min(1).max(CURRICULUM_PRO_RETRIEVAL_N),
         code: z.string().min(1).max(80),
         why: z.string().min(1).max(500),
         lessonPhase: z.enum(["Instap", "Instructie", "Verwerking", "Afronding"]),
       }),
     )
     .min(1)
-    .max(3),
+    .max(CURRICULUM_PRO_PICK_MAX),
 });

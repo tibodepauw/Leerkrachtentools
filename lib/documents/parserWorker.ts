@@ -1,3 +1,4 @@
+import { MAX_DOCUMENT_JOB_BYTES, MAX_LESSON_TEXT_CHARS } from "@/lib/documents/supportedFormats";
 import "server-only";
 import net from "node:net";
 import { runProcessJob, workerEntry } from "@/lib/workers/processJob";
@@ -10,7 +11,7 @@ export type DocumentJob = {
 };
 export type DocumentResult = { text?: string; bytes?: string; fileName?: string; exportMode?: string; error?: string };
 const state = globalThis as typeof globalThis & { documentParserWorkers?: number };
-const MAX_WIRE = 12_000_000;
+const MAX_WIRE = MAX_DOCUMENT_JOB_BYTES;
 
 async function runSocketJob(socketPath: string, input: DocumentJob, signal?: AbortSignal): Promise<DocumentResult> {
   signal?.throwIfAborted();
@@ -58,7 +59,7 @@ export async function runDocumentJob(input: DocumentJob, signal?: AbortSignal): 
     }
     const result = socketPath
       ? await runSocketJob(socketPath, input, signal)
-      : await runProcessJob<DocumentResult>(workerEntry("document"), input, { signal, timeoutMs: 8_000 });
+      : await runProcessJob<DocumentResult>(workerEntry("document"), input, { signal, timeoutMs: 8_000, maxInputBytes: MAX_WIRE, maxOutputBytes: MAX_WIRE });
     if (result.error) throw new Error(result.error);
     return result;
   } finally { state.documentParserWorkers = Math.max(0, (state.documentParserWorkers ?? 1) - 1); }
@@ -74,6 +75,6 @@ export async function parseInWorker(bytes: Buffer, name: string, signal?: AbortS
   if (bytes.length > 8 * 1024 * 1024) throw new Error("Het bestand mag maximaal 8 MB zijn.");
   const fileName = name.includes(".") ? name : `document.${name}`;
   const result = await runDocumentJob({ operation: "extract", bytes: bytes.toString("base64"), fileName }, signal);
-  if (typeof result.text !== "string" || result.text.length > 500_000) throw new Error("Het document kon niet veilig worden ingelezen.");
+  if (typeof result.text !== "string" || result.text.length > MAX_LESSON_TEXT_CHARS) throw new Error("Het document kon niet veilig worden ingelezen.");
   return result.text;
 }

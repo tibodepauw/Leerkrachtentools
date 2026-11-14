@@ -325,7 +325,7 @@ export const useLessonStore = create<LessonStore>()(
             previousText &&
             preparation.includes(previousText) &&
             preparation.split(previousText).length === 2
-              ? preparation.replace(previousText, text)
+              ? preparation.replace(previousText, () => text)
               : preparation;
 
           return {

@@ -13,33 +13,12 @@ import {
   contentSecurityPolicy,
   isSameOriginMutation,
 } from "@/lib/http/security";
+import { heavyRouteLimits } from "@/lib/http/heavyRouteLimits";
 
 const PUBLIC_API_PATHS = new Set([
   "/api/auth/request-code",
   "/api/auth/verify-code",
   "/api/auth/logout",
-]);
-const RAG_API_PATHS = new Set([
-  "/api/rag-curriculum",
-  "/api/rag-minimum-goals",
-]);
-const DOCUMENT_API_PATHS = new Set([
-  "/api/import-lesson-document",
-  "/api/export-lesson-document",
-  "/api/extract-manual",
-  "/api/transcribe-reflection",
-]);
-const AI_API_PATHS = new Set([
-  "/api/analyze-goals",
-  "/api/classify-goal-taxonomy",
-  "/api/format-dialogue",
-  "/api/spellcheck",
-  "/api/audit-timing",
-  "/api/audit-alignment",
-  "/api/audit-engagement",
-  "/api/full-audit",
-  "/api/extract-manual",
-  "/api/transcribe-reflection",
 ]);
 const RATE_WINDOW_MS = 15 * 60 * 1000;
 
@@ -107,27 +86,11 @@ export function proxy(request: NextRequest) {
           limit: 300,
           windowMs: RATE_WINDOW_MS,
         });
-        if (RAG_API_PATHS.has(pathname)) {
+        for (const { scope, limit } of heavyRouteLimits(pathname, request.method)) {
           assertRequestRateLimit({
-            scope: "rag",
+            scope,
             subject: session.id,
-            limit: 60,
-            windowMs: RATE_WINDOW_MS,
-          });
-        }
-        if (DOCUMENT_API_PATHS.has(pathname)) {
-          assertRequestRateLimit({
-            scope: "document",
-            subject: session.id,
-            limit: 20,
-            windowMs: RATE_WINDOW_MS,
-          });
-        }
-        if (AI_API_PATHS.has(pathname)) {
-          assertRequestRateLimit({
-            scope: "ai",
-            subject: session.id,
-            limit: 60,
+            limit,
             windowMs: RATE_WINDOW_MS,
           });
         }

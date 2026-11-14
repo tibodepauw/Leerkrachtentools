@@ -425,10 +425,12 @@ function CurriculumSearch({ variant }: { variant: SearchVariant }) {
     setActiveGoal(goalText);
     toast.success("Doel toegevoegd aan actieve les");
   }
+  const proContextScope = searchMode === "pro"
+    ? JSON.stringify([lesson.topic, lesson.learningArea, lesson.phases.map((phase) => [phase.name, phase.text])]) : "";
   const analysisScope =
     variant === "minimumdoel"
-      ? `${variant}:${searchMode}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`
-      : `${variant}:${searchMode}:${resolvedNetwork}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}`;
+      ? `${variant}:${searchMode}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}:${proContextScope}`
+      : `${variant}:${searchMode}:${resolvedNetwork}:${educationLevelFilter}:${domainDetailFilter}:${domainFinalityFilter}:${secondaryGradeFilter}:${secondaryFinalityFilter}:${selectedId}:${text.trim()}:${lesson.grade}:${lesson.ageRange}:${proContextScope}`;
   const { analyzeRag, result, loading, error } =
     useRagQueryAnalysis<MatcherResult>(analysisScope);
   const actionDisabled = loading || !text.trim();

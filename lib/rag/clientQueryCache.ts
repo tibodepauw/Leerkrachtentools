@@ -25,10 +25,12 @@ export type RagQueryCacheScope = {
   domainFinality?: string;
   enableLlmQueryRewriting?: boolean;
   searchMode?: "snel" | "pro" | string;
+  /** Lescontext die alleen de Pro-analyse beïnvloedt: topic, learningArea en phases. */
+  lessonContext?: unknown;
 };
 
 const STORAGE_KEY = "leerkrachtentools-rag-query-cache";
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 7;
 
 function accountStorageKey() {
   const userId = getActiveUserId();
@@ -49,6 +51,49 @@ export function normalizeCachedQuery(query: string): string {
     .replace(/\s+/g, " ");
 }
 
+function contextText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/**
+ * Deterministische vingerafdruk van de lescontext voor de Pro-cachesleutel.
+ * Dezelfde inhoud geeft dezelfde waarde, los van objectvolgorde of extra
+ * velden. De lestekst zelf komt zo niet in de opslagsleutel terecht.
+ */
+export function fingerprintLessonContext(context: unknown): string {
+  const source =
+    context && typeof context === "object" && !Array.isArray(context)
+      ? (context as { topic?: unknown; learningArea?: unknown; phases?: unknown })
+      : {};
+  const phases = Array.isArray(source.phases)
+    ? source.phases.map((phase) => {
+        const record =
+          phase && typeof phase === "object"
+            ? (phase as { name?: unknown; text?: unknown })
+            : {};
+        return [contextText(record.name), contextText(record.text)];
+      })
+    : [];
+  const canonical = JSON.stringify([
+    contextText(source.topic),
+    contextText(source.learningArea),
+    phases,
+  ]);
+
+  // cyrb53: twee verweven 32-bit hashes, ruim voldoende voor een cachesleutel.
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let index = 0; index < canonical.length; index += 1) {
+    const char = canonical.charCodeAt(index);
+    h1 = Math.imul(h1 ^ char, 2654435761);
+    h2 = Math.imul(h2 ^ char, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const hash = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  return `${canonical.length.toString(36)}-${hash.toString(36)}`;
+}
+
 export function buildRagQueryCacheKey(
   educationLevel: EducationLevelFilter,
   network: CurriculumNetworkFilter | "-",
@@ -63,9 +108,37 @@ export function buildRagQueryCacheKey(
     scope.domainDetail ?? "",
     scope.domainFinality ?? "",
     scope.enableLlmQueryRewriting ? "1" : "0",
-    scope.searchMode === "pro" ? "pro" : "snel",
+    // Alleen Pro hangt af van de lescontext; de snelle modus deelt zijn cache.
+    scope.searchMode === "pro"
+      ? `pro:${fingerprintLessonContext(scope.lessonContext)}`
+      : "snel",
   ].join("|");
   return `${educationLevel}:${network}:${normalizeCachedQuery(query)}:${scopeKey}`;
+}
+
+/**
+ * Leidt uit een zoekaanvraag alle velden af die het antwoord beïnvloeden, zodat
+ * hook en cache dezelfde sleutel gebruiken.
+ */
+export function ragCacheScopeFromBody(
+  body: Record<string, unknown>,
+): RagQueryCacheScope {
+  const text = (value: unknown) => (typeof value === "string" ? value : "");
+  return {
+    grade: text(body.grade),
+    ageRange: text(body.ageRange),
+    secondaryGrade: text(body.secondaryGrade),
+    secondaryFinality: text(body.secondaryFinality),
+    domainDetail: text(body.domainDetail),
+    domainFinality: text(body.domainFinality),
+    enableLlmQueryRewriting: body.enableLlmQueryRewriting === true,
+    searchMode: body.searchMode === "pro" ? "pro" : "snel",
+    lessonContext: {
+      topic: body.topic,
+      learningArea: body.learningArea,
+      phases: body.phases,
+    },
+  };
 }
 
 function endpointPrefix(endpoint: RagQueryEndpoint): string {

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { ALL_MODULE_IDS } from "@/lib/auth/moduleVisibilityConfig";
+
 export type FeedbackKind = "idea" | "feedback" | "bug";
 
 const kindLabels: Record<FeedbackKind, string> = {
@@ -35,6 +37,15 @@ export function normalizeFeedbackKind(value: unknown): FeedbackKind {
     return value;
   }
   return "feedback";
+}
+
+const MODULE_IDS: ReadonlySet<string> = new Set(ALL_MODULE_IDS);
+
+/** Client-supplied metadata. Only an exact canonical module id is echoed into
+ * the mail; anything else (other types, unknown ids, text with line breaks)
+ * becomes "onbekend" so it cannot add or forge metadata lines. */
+export function normalizeFeedbackModule(value: unknown): string {
+  return typeof value === "string" && MODULE_IDS.has(value) ? value : "onbekend";
 }
 
 export function feedbackKindLabel(kind: FeedbackKind) {

@@ -103,35 +103,55 @@ export function parseProLessonContext(input: {
 
 export type ProCurriculumKind = "leerplandoel" | "minimumdoel";
 
-function officialCandidateCode(item: CurriculumSearchResult): string {
-  return item.gelinktMinimumdoel?.code?.trim() || item.code;
-}
-
-function officialCandidateTitel(item: CurriculumSearchResult): string {
-  return item.gelinktMinimumdoel?.tekst?.trim() || item.titel;
-}
-
-function registerOfficialCode(
-  byCode: Map<string, CurriculumSearchResult>,
-  code: string,
+/** Code en tekst zoals de kandidaat voor dit soort doel getoond wordt. */
+function candidateFields(
   item: CurriculumSearchResult,
-) {
-  const key = normalizeCurriculumCode(code);
-  if (key && !byCode.has(key)) {
-    byCode.set(key, item);
+  kind: ProCurriculumKind,
+): { code: string; titel: string } {
+  if (kind === "minimumdoel") {
+    return {
+      code: item.gelinktMinimumdoel?.code?.trim() || item.code,
+      titel: item.gelinktMinimumdoel?.tekst?.trim() || item.titel,
+    };
   }
+  return { code: item.code, titel: item.titel };
 }
 
+function candidateCodes(item: CurriculumSearchResult): string[] {
+  return [item.code, item.gelinktMinimumdoel?.code ?? ""]
+    .map(normalizeCurriculumCode)
+    .filter(Boolean);
+}
+
+/** Wat de leerkracht als hetzelfde doel ziet: twee kaarten hiermee zijn dubbel. */
+function outputIdentity(
+  item: CurriculumSearchResult,
+  kind: ProCurriculumKind,
+  position: number,
+): string {
+  const { code, titel } = candidateFields(item, kind);
+  const normalizedCode = normalizeCurriculumCode(code);
+  const normalizedTitel = titel.trim().toLocaleLowerCase("nl-BE");
+  if (!normalizedCode && !normalizedTitel) {
+    return `#${position}`;
+  }
+  // Een minimumdoel is netwerkoverstijgend; een leerplandoel met dezelfde code
+  // in een ander netwerk is een ander doel.
+  return kind === "minimumdoel"
+    ? normalizedCode || normalizedTitel
+    : [normalizedCode, normalizedTitel, item.netwerk].join("|");
+}
+
+/**
+ * Koppelt AI-keuzes aan officiële kandidaten. Het kandidaatnummer bepaalt de
+ * kandidaat, want codes zijn niet uniek over netwerken. Een meegegeven code
+ * moet bij dat nummer horen; anders wordt de keuze genegeerd.
+ */
 export function groundProPicks(
   retrieved: CurriculumSearchResult[],
-  picks: Array<{ code?: string; why?: string; lessonPhase?: string }>,
+  picks: Array<{ nr?: number; code?: string; why?: string; lessonPhase?: string }>,
+  kind: ProCurriculumKind = "leerplandoel",
 ): GroundedProGoal[] {
-  const byCode = new Map<string, CurriculumSearchResult>();
-  for (const item of retrieved) {
-    registerOfficialCode(byCode, item.code, item);
-    registerOfficialCode(byCode, item.gelinktMinimumdoel?.code ?? "", item);
-  }
-
   const seen = new Set<string>();
   const grounded: GroundedProGoal[] = [];
 
@@ -139,21 +159,40 @@ export function groundProPicks(
     if (grounded.length >= CURRICULUM_PRO_PICK_MAX) {
       break;
     }
-    const key = normalizeCurriculumCode(String(pick.code ?? ""));
-    if (!key || seen.has(key)) {
-      continue;
+    const pickedCode = normalizeCurriculumCode(String(pick.code ?? ""));
+    let official: CurriculumSearchResult | undefined;
+    if (pick.nr !== undefined) {
+      if (
+        typeof pick.nr !== "number" ||
+        !Number.isInteger(pick.nr) ||
+        pick.nr < 1 ||
+        pick.nr > retrieved.length
+      ) {
+        continue;
+      }
+      official = retrieved[pick.nr - 1];
+      if (pickedCode && official && !candidateCodes(official).includes(pickedCode)) {
+        continue;
+      }
+    } else {
+      // Antwoorden zonder nr blijven alleen bruikbaar als de code precies één
+      // kandidaat aanwijst.
+      if (!pickedCode) continue;
+      const matches = retrieved.filter((item) =>
+        candidateCodes(item).includes(pickedCode),
+      );
+      if (matches.length === 1) official = matches[0];
     }
-    const official = byCode.get(key);
-    if (!official) {
-      continue;
-    }
+    if (!official) continue;
+    const identity = outputIdentity(official, kind, retrieved.indexOf(official));
+    if (seen.has(identity)) continue;
     const why = sanitizeSnippet(String(pick.why ?? ""), 400);
     if (!why) {
       continue;
     }
     const phaseRaw = String(pick.lessonPhase ?? "").trim();
     const lessonPhase = isProLessonPhase(phaseRaw) ? phaseRaw : "Verwerking";
-    seen.add(key);
+    seen.add(identity);
     grounded.push({
       ...official,
       proWhy: why,
@@ -177,11 +216,11 @@ export function buildProCurriculumPrompt({
 }): string {
   const goals = retrieved.map((item, index) => ({
     nr: index + 1,
-    code: officialCandidateCode(item),
+    code: candidateFields(item, kind).code,
     netwerk: item.netwerk,
     discipline: item.discipline,
     subdomein: item.subdomein,
-    titel: officialCandidateTitel(item),
+    titel: candidateFields(item, kind).titel,
     toelichting: sanitizeSnippet(item.toelichting ?? "", 280),
   }));
 
@@ -210,6 +249,6 @@ ${phaseLines}
 ${corpusLabel} als kandidaat-doelen (kies ALLEEN hieruit, verzin geen codes of doelteksten):
 ${JSON.stringify(goals, null, 2)}
 
-Selecteer 2 of 3 doelen die de activiteit het best dekken. Gebruik exact de code uit de lijst.
+Selecteer 2 of 3 doelen die de activiteit het best dekken. Geef per keuze het exacte nr uit de lijst en de bijbehorende code. Het nr bepaalt de kandidaat, ook als codes in verschillende netwerken gelijk zijn.
 Per doel: why (waarom dekt dit de activiteit, maximaal twee zinnen) en lessonPhase (Instap, Instructie, Verwerking of Afronding).`;
 }

@@ -11,6 +11,18 @@ function setup(confirmed = true) {
 }
 afterEach(()=>{ stopAnalytics(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe("explicit analytics consent boundary",()=>{
+  it.each(["accepted", "rejected"] as const)("keeps a new %s choice valid when the clock advances during the write", (choice)=>{
+    const storage=setup();
+    let now=1_800_000_000_000;
+    const clock=vi.spyOn(Date,"now").mockImplementation(()=>now++);
+    try {
+      setAnalyticsChoice(choice);
+      const saved=JSON.parse(storage.get(ANALYTICS_CHOICE_KEY)!);
+      expect(saved.expiresAt-saved.at).toBe(180*24*60*60*1000);
+      expect(readAnalyticsChoice()).toBe(choice);
+      expect(readAnalyticsChoice(saved.expiresAt)).toBe("unknown");
+    } finally { clock.mockRestore(); }
+  });
   it("does not send before consent, after refusal or with unverified configuration",()=>{
     setup(false); const fetch=vi.fn(); vi.stubGlobal("fetch",fetch);
     captureAnalytics("$pageview","/"); setAnalyticsChoice("accepted"); captureAnalytics("$pageview","/");

@@ -4,9 +4,9 @@ import { useCallback } from "react";
 import { captureStorageSession } from "@/lib/storage/userStorageScope";
 import { useAnalysis, type AnalysisResponse } from "@/hooks/useAnalysis";
 import {
+  ragCacheScopeFromBody,
   readRagQueryCache,
   writeRagQueryCache,
-  type RagQueryCacheScope,
   type RagQueryEndpoint,
 } from "@/lib/rag/clientQueryCache";
 import type { CurriculumNetworkFilter, EducationLevelFilter } from "@/types";
@@ -27,17 +27,7 @@ export function useRagQueryAnalysis<T>(scopeKey: string) {
       const session = captureStorageSession();
       const query = String(params.body.goal ?? "").trim();
       const network = params.network ?? "-";
-      const scope: RagQueryCacheScope = {
-        grade: String(params.body.grade ?? ""),
-        ageRange: String(params.body.ageRange ?? ""),
-        secondaryGrade: String(params.body.secondaryGrade ?? ""),
-        secondaryFinality: String(params.body.secondaryFinality ?? ""),
-        domainDetail: String(params.body.domainDetail ?? ""),
-        domainFinality: String(params.body.domainFinality ?? ""),
-        enableLlmQueryRewriting: params.body.enableLlmQueryRewriting === true,
-        searchMode:
-          params.body.searchMode === "pro" ? "pro" : "snel",
-      };
+      const scope = ragCacheScopeFromBody(params.body);
       const cached = readRagQueryCache<T>(
         params.endpoint,
         params.educationLevel,

@@ -5,6 +5,7 @@ import {
   sessionFromRequest,
   unauthorizedResponse,
 } from "@/lib/auth/guard";
+import { aiBudgetSubjectFromEmail } from "@/lib/auth/aiBudgetIdentity";
 import { requireModuleAccess } from "@/lib/auth/moduleRouteGuard";
 import { approvedTierResponse } from "@/lib/ai/serverAccess";
 import { networkBadgeLabel } from "@/lib/rag/curriculumDisplay";
@@ -32,8 +33,8 @@ import {
   parseProLessonContext,
 } from "@/lib/rag/selectProCurriculumGoals";
 import { readJsonBody } from "@/lib/http/requestBody";
-import { withRequestConcurrency } from "@/lib/http/rateLimit";
-import { isValidRagTargetContext } from "@/lib/rag/requestValidation";
+import { withRequestConcurrency, RequestRateLimitError } from "@/lib/http/rateLimit";
+import { isValidRagTargetContext, isValidRagBody } from "@/lib/rag/requestValidation";
 import type {
   CurriculumNetworkFilter,
   CurriculumSearchResult,
@@ -211,13 +212,14 @@ async function runCurriculumSearch(
   query: string,
   network: CurriculumNetworkFilter,
   educationLevel: EducationLevelFilter,
-  options?: {
+  options: {
+    budgetSubject: string;
     excludeNetwork?: CurriculumNetworkFilter;
     targetGroup?: TargetGroupSearchContext;
     topN?: number;
   },
 ): Promise<CurriculumSearchPayload> {
-  const topN = options?.topN ?? CURRICULUM_TOP_N;
+  const topN = options.topN ?? CURRICULUM_TOP_N;
   const localCandidates = searchLocalSafely(
     query,
     network,
@@ -236,6 +238,7 @@ async function runCurriculumSearch(
       query,
       network,
       pageSize: semanticFallback ? 20 : 16,
+      budgetSubject: options.budgetSubject,
     });
     timedOut = discovery.timedOut === true;
     failed = discovery.failed === true;
@@ -353,7 +356,9 @@ async function handleCurriculumSearch(request: Request) {
     };
 
     try {
-      body = (await readJsonBody(request, 64_000)) as typeof body;
+      const raw = await readJsonBody(request, 64_000);
+      if (!isValidRagBody(raw)) return NextResponse.json({ error: "De zoekopdracht bevat ongeldige gegevens." }, { status: 400 });
+      body = raw as typeof body;
     } catch (error) {
       if (error instanceof SyntaxError) {
         return NextResponse.json(
@@ -447,6 +452,11 @@ async function handleCurriculumSearch(request: Request) {
     }
 
     request.signal.throwIfAborted();
+    // No usable identity gives an empty subject, which Discovery refuses (local results remain).
+    const budgetSubject =
+      typeof session.email === "string" && session.email
+        ? aiBudgetSubjectFromEmail(session.email)
+        : "";
     let searchResult: CurriculumSearchPayload;
     try {
       searchResult = await withRequestConcurrency({
@@ -455,11 +465,13 @@ async function handleCurriculumSearch(request: Request) {
         limit: 2,
         task: () =>
           runCurriculumSearch(searchQuery, network, educationLevel, {
+            budgetSubject,
             targetGroup,
             topN,
           }),
       });
     } catch (error) {
+      if (error instanceof RequestRateLimitError) return NextResponse.json({ error: error.message }, { status: 429, headers: { "Retry-After": "5", "Cache-Control": "no-store" } });
       logSafeError("[rag-curriculum:search]", error);
       const local = searchLocalSafely(
         searchQuery,
@@ -497,6 +509,7 @@ async function handleCurriculumSearch(request: Request) {
           limit: 2,
           task: () =>
             runCurriculumSearch(searchQuery, "ALL", educationLevel, {
+              budgetSubject,
               excludeNetwork: network,
               targetGroup,
               topN,

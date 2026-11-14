@@ -19,7 +19,8 @@ export function readAnalyticsChoice(now = Date.now()): AnalyticsChoice {
 }
 export function setAnalyticsChoice(choice: AnalyticsChoice) {
   stopAnalytics();
-  memory = choice === "unknown" ? null : { choice, version: ANALYTICS_POLICY_VERSION, at: Date.now(), expiresAt: Date.now() + MAX_AGE, configuration: analyticsConfiguration().fingerprint };
+  const at = Date.now();
+  memory = choice === "unknown" ? null : { choice, version: ANALYTICS_POLICY_VERSION, at, expiresAt: at + MAX_AGE, configuration: analyticsConfiguration().fingerprint };
   try { if (memory) window.localStorage.setItem(ANALYTICS_CHOICE_KEY, JSON.stringify(memory)); else window.localStorage.removeItem(ANALYTICS_CHOICE_KEY); } catch { /* In-memory choice only. */ }
   if (typeof window !== "undefined") window.dispatchEvent(new Event(ANALYTICS_CHANGE_EVENT));
 }

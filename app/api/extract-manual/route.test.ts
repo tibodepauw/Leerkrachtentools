@@ -125,4 +125,31 @@ describe("extract-manual URL-uploads", () => {
     expect(file?.data).toBeInstanceOf(Uint8Array);
     expect(Buffer.from(file?.data as Uint8Array).toString("utf8")).toContain("%PDF-1.4");
   });
+  it("geeft Nederlandse meldingen bij een niet-ondersteund type of te grote upload", async () => {
+    const post = (body: string) => POST(new Request(absoluteAppUrl("/api/extract-manual"), {
+      method: "POST", headers: { "content-type": "application/json" }, body,
+    }));
+    const payload = Buffer.from("BM bitmap").toString("base64");
+
+    const unsupported = await post(JSON.stringify({ fileData: payload, mediaType: "image/bmp", fileName: "scan.bmp" }));
+    expect(unsupported.status).toBe(400);
+    expect((await unsupported.json()).error).toContain("Dit bestandstype wordt niet ondersteund");
+
+    const longText = await post(JSON.stringify({ content: "a".repeat(200_001) }));
+    expect(longText.status).toBe(400);
+    expect((await longText.json()).error).toBe("De tekst is te lang (maximaal 200000 tekens).");
+
+    const empty = await post(JSON.stringify({ content: "  " }));
+    expect((await empty.json()).error).toBe("Upload een handleiding of plak eerst tekst.");
+
+    // 6 MiB + 3 bytes: net boven de gedeelde grens, binnen de bodygrens.
+    const tooLarge = await post(JSON.stringify({ fileData: "QUFB".repeat(2 * 1024 * 1024 + 1), mediaType: "application/pdf" }));
+    expect(tooLarge.status).toBe(400);
+    expect((await tooLarge.json()).error).toBe("Het bestand is te groot. Upload maximaal 6 MB.");
+
+    const oversizedBody = await post("x".repeat(10_100_000));
+    expect(oversizedBody.status).toBe(413);
+    expect((await oversizedBody.json()).error).toBe("Het bestand is te groot. Upload maximaal 6 MB.");
+    expect(vi.mocked(runStructured)).not.toHaveBeenCalled();
+  });
 });

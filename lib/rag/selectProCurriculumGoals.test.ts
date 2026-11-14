@@ -142,6 +142,104 @@ describe("selectProCurriculumGoals", () => {
     expect(grounded[0]?.proLessonPhase).toBe("Verwerking");
   });
 
+  describe("kandidaten met dezelfde minimumdoelcode in verschillende netwerken", () => {
+    const linked = {
+      code: "4-2.2.16",
+      tekst: "De leerlingen tellen tot 20.",
+      type: "",
+    };
+    const retrieved = [
+      goal({
+        code: "WI.1",
+        titel: "Tellen in ZILL",
+        netwerk: "ZILL",
+        gelinktMinimumdoel: linked,
+      }),
+      goal({
+        code: "WI.1",
+        titel: "Tellen in OVSG",
+        netwerk: "OVSG",
+        gelinktMinimumdoel: linked,
+      }),
+    ];
+
+    it("kiest het tweede item via het kandidaatnummer", () => {
+      const grounded = groundProPicks(retrieved, [
+        { nr: 2, code: "WI.1", why: "Past bij de les.", lessonPhase: "Instap" },
+      ]);
+
+      expect(grounded).toHaveLength(1);
+      expect(grounded[0]?.netwerk).toBe("OVSG");
+      expect(grounded[0]?.titel).toBe("Tellen in OVSG");
+    });
+
+    it("houdt beide netwerken uit elkaar bij leerplandoelen", () => {
+      const grounded = groundProPicks(retrieved, [
+        { nr: 2, code: "WI.1", why: "Tweede.", lessonPhase: "Instap" },
+        { nr: 1, code: "4-2.2.16", why: "Eerste.", lessonPhase: "Afronding" },
+        { nr: 2, code: "WI.1", why: "Herhaling.", lessonPhase: "Instap" },
+      ]);
+
+      expect(grounded.map((item) => item.netwerk)).toEqual(["OVSG", "ZILL"]);
+    });
+
+    it("toont hetzelfde minimumdoel niet twee keer", () => {
+      const grounded = groundProPicks(
+        retrieved,
+        [
+          { nr: 2, code: "4-2.2.16", why: "Tweede.", lessonPhase: "Instap" },
+          { nr: 1, code: "4-2.2.16", why: "Eerste.", lessonPhase: "Instap" },
+        ],
+        "minimumdoel",
+      );
+
+      expect(grounded).toHaveLength(1);
+      expect(grounded[0]?.netwerk).toBe("OVSG");
+    });
+
+    it("weigert een nummer buiten de lijst, een niet-geheel nummer en een code die niet bij het nummer hoort", () => {
+      expect(
+        groundProPicks(retrieved, [
+          { nr: 0, code: "WI.1", why: "Te laag." },
+          { nr: 3, code: "WI.1", why: "Te hoog." },
+          { nr: 1.5, code: "WI.1", why: "Geen geheel getal." },
+          { nr: "2" as unknown as number, code: "WI.1", why: "Tekst." },
+          { nr: 1, code: "MUZ.D.3", why: "Andere code." },
+        ]),
+      ).toEqual([]);
+    });
+
+    it("weigert een antwoord zonder nummer als de code niet eenduidig is", () => {
+      expect(
+        groundProPicks(retrieved, [{ code: "WI.1", why: "Welke van de twee?" }]),
+      ).toEqual([]);
+    });
+
+    it("toont per soort doel de juiste code en tekst in de prompt", () => {
+      const lesson = parseProLessonContext({});
+      const curriculum = buildProCurriculumPrompt({
+        query: "tellen",
+        retrieved,
+        lesson,
+        kind: "leerplandoel",
+      });
+      expect(curriculum).toContain('"code": "WI.1"');
+      expect(curriculum).toContain("Tellen in OVSG");
+      expect(curriculum).not.toContain("4-2.2.16");
+      expect(curriculum).not.toContain("De leerlingen tellen tot 20.");
+
+      const minimum = buildProCurriculumPrompt({
+        query: "tellen",
+        retrieved,
+        lesson,
+        kind: "minimumdoel",
+      });
+      expect(minimum).toContain('"code": "4-2.2.16"');
+      expect(minimum).toContain("De leerlingen tellen tot 20.");
+      expect(minimum).toContain('"nr": 2');
+    });
+  });
+
   it("zet minimumdoelcodes in de Pro-prompt", () => {
     const prompt = buildProCurriculumPrompt({
       query: "tellen tot 20",

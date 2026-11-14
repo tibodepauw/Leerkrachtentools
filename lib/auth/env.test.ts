@@ -11,6 +11,9 @@ function configureValidProductionEnvironment() {
   vi.stubEnv("API_KEY_ENCRYPTION_SECRET", VALID_ENCRYPTION_SECRET);
   vi.stubEnv("APP_ORIGIN", "https://tools.example.be");
   vi.stubEnv("DOCUMENT_WORKER_SOCKET", "/run/leerkrachtentools-parser.sock");
+  vi.stubEnv("TRUST_PROXY_IP_HEADERS", "true");
+  vi.stubEnv("HOSTNAME", "127.0.0.1");
+  vi.stubEnv("VERCEL", "");
 }
 
 describe("validateProductionEnvironment", () => {
@@ -82,6 +85,58 @@ describe("validateProductionEnvironment", () => {
     vi.stubEnv("ALLOW_LOCAL_DOCUMENT_WORKER", "true");
     expect(() => validateProductionEnvironment()).toThrow("uitsluitend voor localhost");
   });
+  it.each([undefined, "", "false", "TRUE", "1", " true"])(
+    "weigert publieke productie zonder expliciet vertrouwde proxy: %j",
+    (value) => {
+      configureValidProductionEnvironment();
+      if (value === undefined) delete process.env.TRUST_PROXY_IP_HEADERS;
+      else vi.stubEnv("TRUST_PROXY_IP_HEADERS", value);
+      expect(() => validateProductionEnvironment()).toThrow("TRUST_PROXY_IP_HEADERS");
+    },
+  );
+
+  it("aanvaardt VERCEL=1 niet als vervanging voor de proxyconfiguratie", () => {
+    configureValidProductionEnvironment();
+    delete process.env.TRUST_PROXY_IP_HEADERS;
+    vi.stubEnv("VERCEL", "1");
+    expect(() => validateProductionEnvironment()).toThrow("TRUST_PROXY_IP_HEADERS");
+  });
+
+  it("weigert VERCEL=1 op de zelfgehoste deployment, ook met vertrouwde proxy", () => {
+    configureValidProductionEnvironment();
+    vi.stubEnv("VERCEL", "1");
+    expect(() => validateProductionEnvironment()).toThrow("VERCEL=1");
+  });
+
+  it.each([undefined, "", "0.0.0.0", "::", "tools.example.be", "203.0.113.7"])(
+    "weigert een publiek bereikbare Node-listener: %j",
+    (hostname) => {
+      configureValidProductionEnvironment();
+      if (hostname === undefined) delete process.env.HOSTNAME;
+      else vi.stubEnv("HOSTNAME", hostname);
+      expect(() => validateProductionEnvironment()).toThrow("HOSTNAME");
+    },
+  );
+
+  it.each(["127.0.0.1", "::1", "localhost"])("aanvaardt loopbacklistener %s", (hostname) => {
+    configureValidProductionEnvironment();
+    vi.stubEnv("HOSTNAME", hostname);
+    expect(() => validateProductionEnvironment()).not.toThrow();
+  });
+
+  it.each(["http://127.0.0.1:3000", "http://localhost:3000", "http://[::1]:3000"])(
+    "vraagt geen proxyconfiguratie voor loopback-smoketest %s",
+    (origin) => {
+      configureValidProductionEnvironment();
+      vi.stubEnv("APP_ORIGIN", origin);
+      vi.stubEnv("DOCUMENT_WORKER_SOCKET", "");
+      vi.stubEnv("HOSTNAME", "0.0.0.0");
+      vi.stubEnv("VERCEL", "1");
+      delete process.env.TRUST_PROXY_IP_HEADERS;
+      expect(() => validateProductionEnvironment()).not.toThrow();
+    },
+  );
+
   it("weigert publieke productie zonder documentservice", () => {
     configureValidProductionEnvironment();
     vi.stubEnv("DOCUMENT_WORKER_SOCKET", "");

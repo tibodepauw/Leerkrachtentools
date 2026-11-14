@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { MANUAL_SCANNER_MAX_BYTES } from "@/lib/documents/supportedFormats";
 
-export const MAX_DECODED_UPLOAD_BYTES = 6 * 1024 * 1024;
+export const MAX_DECODED_UPLOAD_BYTES = MANUAL_SCANNER_MAX_BYTES;
+export const MAX_ENCODED_UPLOAD_CHARS = 4 * Math.ceil(MAX_DECODED_UPLOAD_BYTES / 3);
 
-const URL_PROTOCOL = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i;
-const HAS_SCHEME = /[a-z][a-z0-9+.-]*:\/\//i;
 const BASE64_CHARS = /^[A-Za-z0-9+/=\s]+$/;
+const MAX_URL_PARSE_CHARS = 2_048;
 
 export class BinaryUploadError extends Error {
   constructor(message: string) {
@@ -13,10 +14,16 @@ export class BinaryUploadError extends Error {
   }
 }
 
+/**
+ * Lineair: alleen vaste zoektermen. Een patroon als /[a-z][a-z0-9+.-]*:\/\//
+ * zonder anker scant vanaf elke letter opnieuw en is kwadratisch op megabytes
+ * base64. Geldige base64 bevat nooit ':' en begint nooit met '//'.
+ */
 export function looksLikeUrlString(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return false;
-  if (URL_PROTOCOL.test(trimmed) || HAS_SCHEME.test(trimmed)) return true;
+  if (trimmed.startsWith("//") || trimmed.includes("://")) return true;
+  if (trimmed.length > MAX_URL_PARSE_CHARS) return false;
   try {
     const parsed = new URL(trimmed);
     return parsed.protocol === "http:" || parsed.protocol === "https:";
@@ -42,6 +49,16 @@ export function decodeBoundedBase64(
     throw new BinaryUploadError("Het bestand is geen geldige base64-inhoud.");
   }
   const compact = trimmed.replace(/\s+/g, "");
+  if (compact.length > 4 * Math.ceil(maxBytes / 3)) {
+    throw new BinaryUploadError("Het bestand is te groot.");
+  }
+  const paddingAt = compact.indexOf("=");
+  if (paddingAt !== -1) {
+    const padding = compact.length - paddingAt;
+    if (padding > 2 || compact.length % 4 !== 0 || !compact.endsWith("=".repeat(padding))) {
+      throw new BinaryUploadError("Het bestand is geen geldige base64-inhoud.");
+    }
+  }
   let decoded: Buffer;
   try {
     decoded = Buffer.from(compact, "base64");
@@ -51,9 +68,11 @@ export function decodeBoundedBase64(
   if (!decoded.length) {
     throw new BinaryUploadError("Het bestand is geen geldige base64-inhoud.");
   }
-  const roundTrip = decoded.toString("base64").replace(/=+$/, "");
-  const compactTrimmed = compact.replace(/=+$/, "");
-  if (roundTrip !== compactTrimmed) {
+  const roundTrip = decoded.toString("base64");
+  const roundTripPadding = roundTrip.indexOf("=");
+  const canonical = roundTripPadding === -1 ? roundTrip : roundTrip.slice(0, roundTripPadding);
+  const compactUnpadded = paddingAt === -1 ? compact : compact.slice(0, paddingAt);
+  if (canonical !== compactUnpadded) {
     throw new BinaryUploadError("Het bestand is geen geldige base64-inhoud.");
   }
   if (decoded.length > maxBytes) {
@@ -64,7 +83,7 @@ export function decodeBoundedBase64(
 
 export const binaryUploadString = z
   .string()
-  .max(8_000_000)
+  .max(MAX_ENCODED_UPLOAD_CHARS, "Het bestand is te groot.")
   .superRefine((value, ctx) => {
     if (!value.trim()) return;
     try {

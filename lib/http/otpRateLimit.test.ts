@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { getDatabase } from "@/lib/auth/database";
 import { assertOtpVerifyRateLimits } from "@/lib/http/otpRateLimit";
 import { RequestRateLimitError } from "@/lib/http/rateLimit";
+import { createLoginChallenge } from "@/lib/auth/loginChallenge";
+const challenge = createLoginChallenge();
 import { absoluteAppUrl } from "@/lib/http/appUrl";
 
 describe("OTP verify rate limits", () => {
@@ -19,7 +21,7 @@ describe("OTP verify rate limits", () => {
         new Request(absoluteAppUrl("/api/auth/verify-code"), {
           headers: { "x-forwarded-for": "1.1.1.1" },
         }),
-        "alpha@school.test",
+        "alpha@school.test", challenge,
       );
     }
 
@@ -28,7 +30,7 @@ describe("OTP verify rate limits", () => {
         new Request(absoluteAppUrl("/api/auth/verify-code"), {
           headers: { "x-forwarded-for": "2.2.2.2" },
         }),
-        "beta@school.test",
+        "beta@school.test", challenge,
       ),
     ).not.toThrow();
   });
@@ -37,10 +39,10 @@ describe("OTP verify rate limits", () => {
     vi.stubEnv("TRUST_PROXY_IP_HEADERS", "false");
     const request = new Request(absoluteAppUrl("/api/auth/verify-code"));
     for (let index = 0; index < 30; index += 1) {
-      assertOtpVerifyRateLimits(request, "zelfde@school.test");
+      assertOtpVerifyRateLimits(request, "zelfde@school.test", challenge);
     }
     expect(() =>
-      assertOtpVerifyRateLimits(request, "zelfde@school.test"),
+      assertOtpVerifyRateLimits(request, "zelfde@school.test", challenge),
     ).toThrow(RequestRateLimitError);
   });
 
@@ -51,12 +53,12 @@ describe("OTP verify rate limits", () => {
       headers: { "x-forwarded-for": "192.0.2.10" },
     });
     for (let index = 0; index < 30; index++) {
-      assertOtpVerifyRateLimits(request, `initial-${index}@example.test`);
+      assertOtpVerifyRateLimits(request, `initial-${index}@example.test`, challenge);
     }
     const count = () => (getDatabase().prepare("SELECT COUNT(*) AS n FROM request_rate_events WHERE scope LIKE 'otp-verify%'").get() as { n: number }).n;
     const before = count();
     for (let index = 0; index < 50; index++) {
-      expect(() => assertOtpVerifyRateLimits(request, `blocked-${index}@example.test`)).toThrow(RequestRateLimitError);
+      expect(() => assertOtpVerifyRateLimits(request, `blocked-${index}@example.test`, challenge)).toThrow(RequestRateLimitError);
     }
     expect(count()).toBe(before);
   });

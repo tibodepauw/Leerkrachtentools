@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, statSync } from "node:fs";
 import path from "node:path";
 import type { CurriculumNetworkFilter, EducationLevelFilter } from "@/types";
 
@@ -16,6 +16,8 @@ export type CorpusLevel =
 
 const MAX_ACTIVE_LEVEL_CACHES = 2;
 const CACHE_TTL_MS = 5 * 60 * 1000;
+// Hoe vaak een warme cache de bronbestanden (mtime + grootte) opnieuw vergelijkt.
+const REVALIDATE_INTERVAL_MS = 30 * 1000;
 
 const OPSTAP_CORPUS_PROD = path.join(
   process.cwd(),
@@ -132,27 +134,55 @@ const SECUNDAIR_PATHS = [
   SECONDARY_MINIMUM_GOALS_PROD,
 ];
 
+export type CorpusLevelUnloadReason = "evicted" | "expired" | "stale" | "reset";
+
+type IdleTimer = ReturnType<typeof setTimeout> | null;
+
 type LevelCacheEntry = {
   records: RawRecord[];
   paths: Set<string>;
+  signature: string;
+  checkedAt: number;
   lastAccessAt: number;
-  unloadTimer: ReturnType<typeof setTimeout> | null;
+  unloadTimer: IdleTimer;
 };
 
 const jsonlCache = new Map<string, RawRecord[]>();
 const levelCache = new Map<CorpusLevel, LevelCacheEntry>();
-const levelUnloadListeners = new Set<(level: CorpusLevel) => void>();
+const levelUnloadListeners = new Set<
+  (level: CorpusLevel, reason: CorpusLevelUnloadReason) => void
+>();
+const derivedCaches = new Set<{
+  invalidateLevel: (level: CorpusLevel) => void;
+  clear: () => void;
+}>();
 
+let levelScopeDepth = 0;
+const levelsLoadedInScope: CorpusLevel[] = [];
+
+/**
+ * Luistert naar het vrijgeven van ruwe niveaudata. Alleen `stale` en `reset`
+ * betekenen dat de inhoud veranderd kan zijn; `evicted` en `expired` geven
+ * enkel geheugen vrij.
+ */
 export function registerCorpusLevelUnloadListener(
-  listener: (level: CorpusLevel) => void,
+  listener: (level: CorpusLevel, reason: CorpusLevelUnloadReason) => void,
 ): () => void {
   levelUnloadListeners.add(listener);
   return () => levelUnloadListeners.delete(listener);
 }
 
-function notifyLevelUnload(level: CorpusLevel): void {
+function notifyLevelUnload(
+  level: CorpusLevel,
+  reason: CorpusLevelUnloadReason,
+): void {
+  if (reason === "stale" || reason === "reset") {
+    for (const cache of derivedCaches) {
+      cache.invalidateLevel(level);
+    }
+  }
   for (const listener of levelUnloadListeners) {
-    listener(level);
+    listener(level, reason);
   }
 }
 
@@ -203,6 +233,37 @@ export function resolveCorpusLevel(
   }
 }
 
+function parseJsonl(absolutePath: string, text: string): RawRecord[] {
+  const records: RawRecord[] = [];
+  let skipped = 0;
+  const source = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+  for (const line of source.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      continue;
+    }
+    try {
+      const parsed: unknown = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        records.push(parsed as RawRecord);
+      } else {
+        skipped += 1;
+      }
+    } catch {
+      skipped += 1;
+    }
+  }
+  if (skipped > 0) {
+    // Alleen bestandsnaam en aantallen: nooit regelinhoud of parserfouten loggen.
+    console.warn("[corpus:jsonl] ongeldige regels overgeslagen", {
+      file: path.basename(absolutePath),
+      skipped,
+      kept: records.length,
+    });
+  }
+  return records;
+}
+
 function loadJsonlAt(absolutePath: string): RawRecord[] {
   const cached = jsonlCache.get(absolutePath);
   if (cached) {
@@ -212,11 +273,20 @@ function loadJsonlAt(absolutePath: string): RawRecord[] {
     jsonlCache.set(absolutePath, []);
     return [];
   }
-  const records = readFileSync(absolutePath, "utf8")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => JSON.parse(line) as RawRecord);
+  let records: RawRecord[];
+  try {
+    records = parseJsonl(absolutePath, readFileSync(absolutePath, "utf8"));
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException | null)?.code;
+    console.warn("[corpus:jsonl] bestand niet leesbaar", {
+      file: path.basename(absolutePath),
+      code: typeof code === "string" && /^E[A-Z]+$/.test(code) ? code : "UNKNOWN",
+    });
+    records = [];
+  }
+  // Ook een leeg of deels ongeldig resultaat wordt gecachet, zodat een kapot
+  // bestand niet bij elke zoekopdracht opnieuw gelezen wordt. Een gewijzigd
+  // bestand valt op via de signatuurcontrole.
   jsonlCache.set(absolutePath, records);
   return records;
 }
@@ -227,16 +297,6 @@ function loadCorpusWithFallback(prodPath: string, fixturePath: string): RawRecor
     return prodRecords;
   }
   return loadJsonlAt(fixturePath);
-}
-
-function basisonderwijsLoadPaths(): string[] {
-  return [
-    OPSTAP_CORPUS_PROD,
-    OVSG_CORPUS_PROD,
-    GO_NIEUW_CORPUS_PROD,
-    GO_OUD_CORPUS_PROD,
-    ZILL_CORPUS_PROD,
-  ];
 }
 
 function tagNetwork(records: RawRecord[], network: string): RawRecord[] {
@@ -300,14 +360,37 @@ function ingestRecordsForLevel(level: CorpusLevel): RawRecord[] {
   }
 }
 
-function clearUnloadTimer(entry: LevelCacheEntry): void {
+function armIdleTimer(
+  entry: { lastAccessAt: number; unloadTimer: IdleTimer },
+  ttlMs: number,
+  onIdle: () => void,
+  delay = ttlMs,
+): void {
+  // Eén timer per entry: hits passen alleen `lastAccessAt` aan en de timer
+  // verlengt zichzelf, zodat een hit geen timers hoeft te vervangen.
+  const timer = setTimeout(() => {
+    entry.unloadTimer = null;
+    const idle = Date.now() - entry.lastAccessAt;
+    if (idle >= ttlMs) {
+      onIdle();
+    } else {
+      armIdleTimer(entry, ttlMs, onIdle, ttlMs - idle);
+    }
+  }, delay);
+  if (typeof timer.unref === "function") {
+    timer.unref();
+  }
+  entry.unloadTimer = timer;
+}
+
+function clearUnloadTimer(entry: { unloadTimer: IdleTimer }): void {
   if (entry.unloadTimer) {
     clearTimeout(entry.unloadTimer);
     entry.unloadTimer = null;
   }
 }
 
-export function unloadCorpusLevel(level: CorpusLevel): void {
+function unloadLevel(level: CorpusLevel, reason: CorpusLevelUnloadReason): void {
   const entry = levelCache.get(level);
   if (!entry) {
     return;
@@ -318,98 +401,283 @@ export function unloadCorpusLevel(level: CorpusLevel): void {
     jsonlCache.delete(absolutePath);
   }
   levelCache.delete(level);
-  notifyLevelUnload(level);
+  notifyLevelUnload(level, reason);
 }
 
-function scheduleUnload(level: CorpusLevel, entry: LevelCacheEntry): void {
-  clearUnloadTimer(entry);
-  entry.unloadTimer = setTimeout(() => {
-    unloadCorpusLevel(level);
-  }, CACHE_TTL_MS);
-  if (typeof entry.unloadTimer.unref === "function") {
-    entry.unloadTimer.unref();
+/** Geeft een niveau expliciet vrij en maakt afgeleide indexen ervan ongeldig. */
+export function unloadCorpusLevel(level: CorpusLevel): void {
+  if (!levelCache.has(level)) {
+    notifyLevelUnload(level, "reset");
+    return;
   }
+  unloadLevel(level, "reset");
 }
 
 function evictLeastRecentlyUsed(activeLevel: CorpusLevel): void {
-  if (levelCache.size < MAX_ACTIVE_LEVEL_CACHES) {
-    return;
-  }
+  while (levelCache.size >= MAX_ACTIVE_LEVEL_CACHES) {
+    let oldestLevel: CorpusLevel | null = null;
+    let oldestAccess = Number.POSITIVE_INFINITY;
 
-  let oldestLevel: CorpusLevel | null = null;
-  let oldestAccess = Number.POSITIVE_INFINITY;
-
-  for (const [level, entry] of levelCache) {
-    if (level === activeLevel) {
-      continue;
+    for (const [level, entry] of levelCache) {
+      if (level === activeLevel) {
+        continue;
+      }
+      if (entry.lastAccessAt < oldestAccess) {
+        oldestAccess = entry.lastAccessAt;
+        oldestLevel = level;
+      }
     }
-    if (entry.lastAccessAt < oldestAccess) {
-      oldestAccess = entry.lastAccessAt;
-      oldestLevel = level;
-    }
-  }
 
-  if (oldestLevel) {
-    unloadCorpusLevel(oldestLevel);
+    if (!oldestLevel) {
+      return;
+    }
+    unloadLevel(oldestLevel, "evicted");
   }
 }
 
 function trackLoadedPaths(level: CorpusLevel): Set<string> {
-  const paths = new Set<string>();
   switch (level) {
     case "BASISONDERWIJS":
-      for (const prodPath of basisonderwijsLoadPaths()) {
-        paths.add(prodPath);
-        if (prodPath === OPSTAP_CORPUS_PROD) paths.add(OPSTAP_CORPUS_FIXTURE);
-        if (prodPath === OVSG_CORPUS_PROD) paths.add(OVSG_CORPUS_FIXTURE);
-        if (prodPath === GO_NIEUW_CORPUS_PROD) paths.add(GO_NIEUW_CORPUS_FIXTURE);
-        if (prodPath === ZILL_CORPUS_PROD) paths.add(ZILL_CORPUS_FIXTURE);
-      }
-      break;
+      return new Set([
+        OPSTAP_CORPUS_PROD,
+        OPSTAP_CORPUS_FIXTURE,
+        OVSG_CORPUS_PROD,
+        OVSG_CORPUS_FIXTURE,
+        GO_NIEUW_CORPUS_PROD,
+        GO_NIEUW_CORPUS_FIXTURE,
+        GO_OUD_CORPUS_PROD,
+        GO_OUD_CORPUS_FIXTURE,
+        ZILL_CORPUS_PROD,
+        ZILL_CORPUS_FIXTURE,
+      ]);
     case "SECUNDAIR":
-      for (const prodPath of SECUNDAIR_PATHS) {
-        paths.add(prodPath);
-      }
-      break;
+      return new Set(SECUNDAIR_PATHS);
     default: {
       const { prod, fixture } = DOMAIN_CORPUS_PATHS[level];
-      paths.add(prod);
-      if (fixture) {
-        paths.add(fixture);
+      return new Set(fixture ? [prod, fixture] : [prod]);
+    }
+  }
+}
+
+/** Goedkope vingerafdruk (mtime + grootte) van de bronbestanden van een niveau. */
+function levelSignature(level: CorpusLevel): string {
+  const parts: string[] = [];
+  for (const absolutePath of trackLoadedPaths(level)) {
+    try {
+      const stats = statSync(absolutePath);
+      parts.push(`${stats.mtimeMs}:${stats.size}`);
+    } catch {
+      parts.push("-");
+    }
+  }
+  return parts.join("|");
+}
+
+function touchLoadedLevel(level: CorpusLevel, now: number): void {
+  const entry = levelCache.get(level);
+  if (entry) {
+    entry.lastAccessAt = now;
+  }
+}
+
+/**
+ * Voert een synchrone leesactie uit die meerdere niveaus nodig heeft (bv. een
+ * zoekopdracht over alle niveaus). Binnen de scope wordt niets verdrongen,
+ * zodat elk niveau hoogstens één keer van schijf komt en reeds geladen niveaus
+ * blijven staan. Na afloop worden de extra geladen niveaus weer vrijgegeven
+ * tot de LRU-grens.
+ */
+export function withCorpusLevelScope<T>(task: () => T): T {
+  levelScopeDepth += 1;
+  try {
+    return task();
+  } finally {
+    levelScopeDepth -= 1;
+    if (levelScopeDepth === 0) {
+      for (const level of levelsLoadedInScope.splice(0)) {
+        if (levelCache.size <= MAX_ACTIVE_LEVEL_CACHES) {
+          break;
+        }
+        unloadLevel(level, "evicted");
       }
     }
   }
-  return paths;
 }
 
 export function getCorpusForLevel(level: CorpusLevel): RawRecord[] {
+  const now = Date.now();
   const existing = levelCache.get(level);
   if (existing) {
-    existing.lastAccessAt = Date.now();
-    scheduleUnload(level, existing);
-    return existing.records;
-  }
-
-  evictLeastRecentlyUsed(level);
-
-  const records = ingestRecordsForLevel(level);
-  const paths = trackLoadedPaths(level);
-  for (const absolutePath of paths) {
-    if (!jsonlCache.has(absolutePath) && existsSync(absolutePath)) {
-      loadJsonlAt(absolutePath);
+    if (now - existing.checkedAt >= REVALIDATE_INTERVAL_MS) {
+      if (levelSignature(level) !== existing.signature) {
+        unloadLevel(level, "stale");
+      } else {
+        existing.checkedAt = now;
+      }
+    }
+    if (levelCache.has(level)) {
+      existing.lastAccessAt = now;
+      return existing.records;
     }
   }
+
+  if (levelScopeDepth > 0) {
+    levelsLoadedInScope.push(level);
+  } else {
+    evictLeastRecentlyUsed(level);
+  }
+
+  // Signatuur vóór het lezen: een wijziging tijdens het lezen wordt dan bij de
+  // volgende controle alsnog opgemerkt.
+  const signature = levelSignature(level);
+  const records = ingestRecordsForLevel(level);
+  const paths = trackLoadedPaths(level);
 
   const entry: LevelCacheEntry = {
     records,
     paths,
-    lastAccessAt: Date.now(),
+    signature,
+    checkedAt: now,
+    lastAccessAt: now,
     unloadTimer: null,
   };
   levelCache.set(level, entry);
-  scheduleUnload(level, entry);
+  armIdleTimer(entry, CACHE_TTL_MS, () => unloadLevel(level, "expired"));
   return records;
 }
+
+export type CorpusDerivedCache<T> = {
+  /**
+   * Geeft de afgeleide waarde voor `key`, of bouwt ze met `build`. `levels`
+   * zijn de niveaus waarvan de waarde afhangt: verandert een bronbestand
+   * daarvan, dan wordt opnieuw gebouwd.
+   */
+  get: (key: string, levels: readonly CorpusLevel[], build: () => T) => T;
+  delete: (key: string) => void;
+  clear: () => void;
+  keys: () => string[];
+};
+
+type DerivedEntry<T> = {
+  value: T;
+  levels: readonly CorpusLevel[];
+  signatures: string[];
+  checkedAt: number;
+  lastAccessAt: number;
+  unloadTimer: IdleTimer;
+};
+
+/**
+ * Begrensde cache voor indexen die uit corpusniveaus zijn afgeleid. Een entry
+ * is een zelfstandige momentopname: het verdringen of verlopen van ruwe
+ * niveaudata maakt haar niet ongeldig. Ze verdwijnt bij LRU-overschrijding,
+ * na `ttlMs` zonder gebruik (hits verlengen dit) of zodra een bronbestand
+ * gewijzigd is.
+ */
+export function createCorpusDerivedCache<T>({
+  maxEntries,
+  ttlMs = CACHE_TTL_MS,
+}: {
+  maxEntries: number;
+  ttlMs?: number;
+}): CorpusDerivedCache<T> {
+  const entries = new Map<string, DerivedEntry<T>>();
+
+  function drop(key: string): void {
+    const entry = entries.get(key);
+    if (!entry) {
+      return;
+    }
+    clearUnloadTimer(entry);
+    entries.delete(key);
+  }
+
+  function clear(): void {
+    for (const key of [...entries.keys()]) {
+      drop(key);
+    }
+  }
+
+  derivedCaches.add({
+    invalidateLevel(level) {
+      for (const [key, entry] of [...entries]) {
+        if (entry.levels.includes(level)) {
+          drop(key);
+        }
+      }
+    },
+    clear,
+  });
+
+  return {
+    get(key, levels, build) {
+      const now = Date.now();
+      const existing = entries.get(key);
+      if (existing) {
+        let usable = now - existing.lastAccessAt < ttlMs;
+        if (usable && now - existing.checkedAt >= REVALIDATE_INTERVAL_MS) {
+          usable = existing.levels.every(
+            (level, position) =>
+              levelSignature(level) === existing.signatures[position],
+          );
+          existing.checkedAt = now;
+        }
+        if (usable) {
+          existing.lastAccessAt = now;
+          entries.delete(key);
+          entries.set(key, existing);
+          for (const level of existing.levels) {
+            touchLoadedLevel(level, now);
+          }
+          return existing.value;
+        }
+        drop(key);
+      }
+
+      const signatures = levels.map(levelSignature);
+      // A raw level can still be inside its revalidation window. Never pair
+      // its old contents with a fresh signature when constructing an index.
+      levels.forEach((level, position) => {
+        const raw = levelCache.get(level);
+        if (raw && raw.signature !== signatures[position]) unloadLevel(level, "stale");
+      });
+      const value = withCorpusLevelScope(build);
+      drop(key);
+      while (entries.size >= Math.max(1, maxEntries)) {
+        const oldest = entries.keys().next().value;
+        if (oldest === undefined) {
+          break;
+        }
+        drop(oldest);
+      }
+      const entry: DerivedEntry<T> = {
+        value,
+        levels: [...levels],
+        signatures,
+        checkedAt: now,
+        lastAccessAt: now,
+        unloadTimer: null,
+      };
+      entries.set(key, entry);
+      armIdleTimer(entry, ttlMs, () => drop(key));
+      return value;
+    },
+    delete: drop,
+    clear,
+    keys: () => [...entries.keys()],
+  };
+}
+
+export const CORPUS_LEVELS: readonly CorpusLevel[] = [
+  "BASISONDERWIJS",
+  "SECUNDAIR",
+  "BUBAO",
+  "BUSO",
+  "OKAN",
+  "DKO",
+  "VOLWASSENEN",
+  "HOGER",
+];
 
 export function getCorpusForEducationLevel(
   educationLevel: EducationLevelFilter,
@@ -429,9 +697,12 @@ export function isPovCorpusAvailable(): boolean {
 
 export function resetCorpusLevelCache(): void {
   for (const level of [...levelCache.keys()]) {
-    unloadCorpusLevel(level);
+    unloadLevel(level, "reset");
   }
   jsonlCache.clear();
+  for (const cache of derivedCaches) {
+    cache.clear();
+  }
 }
 
 export function getActiveCorpusLevels(): CorpusLevel[] {

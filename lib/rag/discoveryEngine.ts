@@ -1,5 +1,5 @@
 import { EXTERNAL_API_TIMEOUT_MS } from "@/lib/http/externalTimeout";
-import { reserveExternalCall } from "@/lib/ai/externalBudget";
+import { reserveDiscoveryCall } from "@/lib/ai/externalBudget";
 import { SearchServiceClient } from "@google-cloud/discoveryengine/build/src/v1/search_service_client";
 import type { CurriculumNetworkFilter } from "@/types";
 
@@ -7,6 +7,9 @@ export interface DiscoverySearchOptions {
   query: string;
   network?: CurriculumNetworkFilter;
   pageSize?: number;
+  /** Stable pseudonymous subject of the signed-in user (aiBudgetSubjectFromEmail).
+   * Required for every outbound search; a missing subject is refused. */
+  budgetSubject: string;
 }
 
 export interface DiscoveryHit {
@@ -462,7 +465,9 @@ export async function searchDiscoveryEngine(
 
   // Charge only a new outbound search, never a cache hit or joined request.
   // Failure/timeout does not refund a potentially billed provider call.
-  if (!reserveExternalCall("discovery")) return emptyDiscoveryResponse("error");
+  // Global and per-user ceilings are reserved together; a caller without a
+  // valid subject gets no outbound search (the route keeps its local results).
+  if (!reserveDiscoveryCall(options.budgetSubject)) return emptyDiscoveryResponse("error");
 
   const abortController = new AbortController();
   const hangSignal = AbortSignal.any

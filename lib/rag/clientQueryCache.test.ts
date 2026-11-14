@@ -4,7 +4,9 @@ import { clearTemporaryStorage } from "@/lib/storage/sharedDevice";
 import {
   buildRagQueryCacheKey,
   clearRagQueryCache,
+  fingerprintLessonContext,
   normalizeCachedQuery,
+  ragCacheScopeFromBody,
   readRagQueryCache,
   writeRagQueryCache,
 } from "@/lib/rag/clientQueryCache";
@@ -234,6 +236,104 @@ describe("clientQueryCache", () => {
         { searchMode: "pro" },
       )?.data.goal,
     ).toBe("pro");
+  });
+
+  describe("Pro-lescontext", () => {
+    const body = {
+      goal: "Tellen tot 20",
+      grade: "l1",
+      ageRange: "6-7 jaar",
+      searchMode: "pro",
+      topic: "Fruit",
+      learningArea: "Wiskunde",
+      phases: [
+        { name: "Instap", text: "Twee appels tellen" },
+        { name: "Verwerking", text: "Werkblad" },
+      ],
+    };
+    const payload = {
+      data: { goal: { code: "WI.1" } },
+      provider: "test",
+      fallbackErrors: [],
+    };
+    const read = (requestBody: Record<string, unknown>) =>
+      readRagQueryCache(
+        "rag-curriculum",
+        "LAGER",
+        "ZILL",
+        "Tellen tot 20",
+        ragCacheScopeFromBody(requestBody),
+      );
+
+    beforeEach(() => {
+      writeRagQueryCache(
+        "rag-curriculum",
+        "LAGER",
+        "ZILL",
+        "Tellen tot 20",
+        payload,
+        ragCacheScopeFromBody(body),
+      );
+    });
+
+    it("geeft een cachehit bij ongewijzigde lescontext", () => {
+      expect(read(structuredClone(body))?.data).toEqual(payload.data);
+      expect(
+        read({
+          phases: body.phases.map(({ text, name }) => ({ text, name })),
+          learningArea: " Wiskunde ",
+          topic: "Fruit",
+          searchMode: "pro",
+          ageRange: "6-7 jaar",
+          grade: "l1",
+          goal: "Tellen tot 20",
+        })?.data,
+      ).toEqual(payload.data);
+    });
+
+    it.each([
+      ["topic", { topic: "Dieren" }],
+      ["learningArea", { learningArea: "Nederlands" }],
+      [
+        "fasetekst",
+        {
+          phases: [
+            { name: "Instap", text: "Drie peren tellen" },
+            { name: "Verwerking", text: "Werkblad" },
+          ],
+        },
+      ],
+      ["fasevolgorde", { phases: [...body.phases].reverse() }],
+      ["geen fasen", { phases: [] }],
+    ])("geeft een cachemiss bij gewijzigde lescontext: %s", (_label, change) => {
+      expect(read({ ...body, ...change })).toBeNull();
+    });
+
+    it("laat de snelle modus de lescontext negeren", () => {
+      const quick = { ...body, searchMode: "snel" };
+      writeRagQueryCache(
+        "rag-curriculum",
+        "LAGER",
+        "ZILL",
+        "Tellen tot 20",
+        { ...payload, provider: "snel" },
+        ragCacheScopeFromBody(quick),
+      );
+
+      expect(read({ ...quick, topic: "Dieren", phases: [] })?.provider).toBe("snel");
+      expect(read({ goal: "Tellen tot 20", grade: "l1", ageRange: "6-7 jaar" })?.provider).toBe("snel");
+    });
+
+    it("maakt een stabiele vingerafdruk zonder lestekst in de sleutel", () => {
+      const context = { topic: body.topic, learningArea: body.learningArea, phases: body.phases };
+      expect(fingerprintLessonContext(context)).toBe(
+        fingerprintLessonContext(structuredClone(context)),
+      );
+      expect(fingerprintLessonContext(null)).toBe(fingerprintLessonContext({}));
+      expect(
+        buildRagQueryCacheKey("LAGER", "ZILL", "Tellen", ragCacheScopeFromBody(body)),
+      ).not.toContain("appels");
+    });
   });
 
   it("slaat lege zoekresultaten niet op", () => {

@@ -110,7 +110,7 @@ function AuthScreenContent() {
             <CardDescription>
               {step === "email"
                 ? "Je ontvangt een eenmalige code. Geen wachtwoord nodig."
-                : `We stuurden een code van 6 cijfers naar ${email}.`}
+                : `Controleer ${email} voor een code van 6 cijfers.`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -173,7 +173,7 @@ function AuthScreenContent() {
                     onCheckedChange={setMarketingOptIn}
                     label={
                       <>
-                        <span className="font-semibold">Optioneel:</span> houd mij op de hoogte van het uitgebreidere project.
+                        <span className="font-semibold">Optioneel bij een nieuw account:</span> houd mij op de hoogte van het uitgebreidere project.
                       </>
                     }
                   />
