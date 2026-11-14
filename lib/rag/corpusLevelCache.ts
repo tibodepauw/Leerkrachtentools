@@ -304,7 +304,8 @@ function loadCorpusWithFallback(prodPath: string, fixturePath: string): RawRecor
   if (prodRecords.length > 0) {
     return prodRecords;
   }
-  return loadJsonlAt(fixturePath);
+  // Small test samples are not installed curriculum data.
+  return process.env.NODE_ENV === "test" ? loadJsonlAt(fixturePath) : [];
 }
 
 function tagNetwork(records: RawRecord[], network: string): RawRecord[] {

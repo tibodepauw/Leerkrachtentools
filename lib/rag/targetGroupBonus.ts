@@ -207,9 +207,7 @@ export function applyTargetGroupRanking<T extends CurriculumSearchResult & { sco
   return [...results]
     .map((result) => ({
       ...result,
-      score: Math.min(
-        1.45,
-        (result.score ?? 0) +
+      score: (result.score ?? 0) +
           scoreTargetGroupBonus(context, result) +
           scoreSecondaryFilterBonus(
             {
@@ -226,7 +224,6 @@ export function applyTargetGroupRanking<T extends CurriculumSearchResult & { sco
             },
             result,
           ),
-      ),
     }))
     .sort((left, right) => (right.score ?? 0) - (left.score ?? 0));
 }

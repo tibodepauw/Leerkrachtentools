@@ -45,6 +45,7 @@ import { recordMatchesEducationLevel } from "@/lib/rag/educationLevel";
 import { DIDACTIC_STOPWORDS } from "@/lib/rag/didacticStopwords";
 import { isFuzzySimilar } from "@/lib/rag/fuzzyMatch";
 import { formatSecondaryRouteLabel } from "@/lib/lesson/secondaryFilters";
+import { selectGoalEvidence } from "@/lib/rag/goalEvidence";
 
 type RawRecord = Record<string, unknown>;
 
@@ -1079,13 +1080,20 @@ export function searchLocalCorpus({
         entry.score >= MIN_LOCAL_SEARCH_SCORE || entry.tokenMatches >= 1,
     );
 
-  return filterByAbsoluteMinScore(
+  const selected = filterByAbsoluteMinScore(
     applyMultiIntentDiversity(
       query,
       ranked.map((entry) => ({ ...entry.record, score: entry.score })),
       limit,
     ),
   );
+  return selected.map((result) => {
+    const raw = index.byCode.get(result.code)?.find((entry) =>
+      entry.record?.titel === result.titel && entry.record?.netwerk === result.netwerk,
+    )?.raw;
+    const bronContext = raw ? selectGoalEvidence(raw, query) : [];
+    return bronContext.length ? { ...result, bronContext } : result;
+  });
 }
 
 export function mergeCurriculumResults(
@@ -1172,7 +1180,7 @@ export function dedupeByMinimumGoalCode(
 
   for (const result of results) {
     const code = result.gelinktMinimumdoel?.code?.trim();
-    const key = code || result.gelinktMinimumdoel?.tekst || result.titel;
+    const key = result.gelinktMinimumdoel?.sourceIdentity || result.gelinktMinimumdoel?.rawCode || code || result.gelinktMinimumdoel?.tekst || result.titel;
     const existing = seen.get(key);
     if (!existing || (result.score ?? 0) > (existing.score ?? 0)) {
       seen.set(key, result);

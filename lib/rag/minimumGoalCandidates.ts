@@ -429,6 +429,8 @@ function normalizeMinimumGoal(raw: RawRecord) {
 
   return {
     code,
+    rawCode: code,
+    sourceIdentity: asString(raw.corpus_id) || (typeof raw.bron_id === "number" ? `AHOVOKS:${raw.bron_id}` : undefined),
     tekst,
     type: asString(raw.toelichting),
   };
@@ -454,9 +456,15 @@ export function normalizeMinimumGoalCandidate(
   }
 
   const hasLinkedMinimum = Boolean(raw.gelinkt_minimumdoel);
-  const discipline = asString(
-    raw.discipline ?? raw.leergebied ?? raw.ontwikkelveld,
-  );
+  const goalSet = raw.onderwijsdoelenset as Record<string, unknown> | undefined;
+  const subject = goalSet?.vakdiscipline as Record<string, unknown> | undefined;
+  const legacySubject = goalSet?.indeling_onderwijsdoelen as Record<string, unknown> | undefined;
+  const structure = goalSet?.onderwijsstructuur as Record<string, unknown> | undefined;
+  const primaryYear = ["KLEUTER", "LAGER"].includes(asString(raw.onderwijsniveau).toUpperCase())
+    ? asString(structure?.leerjaar) : "";
+  const discipline = asString(subject?.naam) || asString(subject?.korte_naam) ||
+    asString(legacySubject?.waarde) || asString(goalSet?.korte_naam) ||
+    asString(raw.discipline ?? raw.leergebied ?? raw.ontwikkelveld);
 
   const candidate: CurriculumSearchResult = {
     code: "",
@@ -469,11 +477,11 @@ export function normalizeMinimumGoalCandidate(
       hasLinkedMinimum && !isSecondary
         ? asString(raw.toelichting ?? raw.description)
         : "",
-    leerjaarRoute:
+    leerjaarRoute: primaryYear ||
       formatSecondaryRouteLabel(
         asString(raw.graad),
         asString(raw.finaliteit),
-        asString(raw.leerjaar_route ?? raw.fase),
+        asString(raw.leerjaar_route ?? raw.fase ?? structure?.leerjaar),
       ) || asString(raw.leerjaar_route ?? raw.graad),
     gelinktMinimumdoel: minimum,
     netwerk: network,

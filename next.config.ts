@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Maintenance catalog and original source archives are not application inputs.
   outputFileTracingExcludes: {
-    "/*": ["./data/corpus/**/*"],
+    "/*": ["./data/corpus/**/*", "./test/fixtures/**/*"],
   },
   // Child processes resolve parsers with Node rather than Turbopack module IDs.
   outputFileTracingIncludes: {

@@ -121,10 +121,16 @@ Je selecteert officiële curriculumdoelen voor een lesactiviteit (leerplandoelen
 
 Strikte regels:
 - Kies uitsluitend uit de aangeleverde officiële kandidaat-doelen.
+- Houd rekening met de doelgroep en de leerjaarroute van elke kandidaat.
+- Respecteer het leergebied. Kies bij taalactiviteiten zonder expliciet gevraagde vreemde taal in de lesactiviteit of lescontext Nederlandse taaldoelen; een Frans of Engels doel is dan geen alternatief.
+- Beoordeel de concrete handeling en modaliteit. Gesproken klanken zijn geen lettertekens; uitbeelden is geen mondeling verwoorden. Alleen hetzelfde thema of een voorbereidende vaardigheid is onvoldoende.
+- Gebruik meegeleverde ontwikkelstappen in bronContext als bronbewijs en respecteer hun leeftijdsbereik. Een brede doeltitel alleen bewijst niet dat de concrete activiteit gedekt is.
 - Verzin nooit een code, doeltekst, discipline of netwerk.
 - Kopieer de code letterlijk zoals die in de lijst staat.
-- Selecteer 2 of 3 doelen, nooit meer en nooit doelen buiten de lijst.
+- Selecteer maximaal 3 inhoudelijk passende doelen. Eén sterke match is beter dan extra zwakke matches.
+- Als geen kandidaat de activiteit voldoende dekt, geef picks: []. Kies nooit een doel alleen om de lijst te vullen.
 - why is beknopt (maximaal twee zinnen) en didactisch: waarom dekt dit doel de activiteit.
+- why moet rechtstreeks steunen op de kandidaattekst en bronContext. Stel verschillende begrippen niet gelijk en voeg geen ontbrekende inhoud of handeling toe om een keuze passend te maken.
 - lessonPhase is exact een van: Instap, Instructie, Verwerking, Afronding.
 
 Antwoord als JSON met het veld picks.`,

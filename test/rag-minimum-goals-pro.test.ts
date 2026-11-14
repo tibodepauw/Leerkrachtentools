@@ -238,3 +238,24 @@ describe("RAG minimumdoelen Pro-modus", () => {
     expect(body.results?.[0]?.proLessonPhase).toBe("Verwerking");
   });
 });
+
+it('does not send an unrequested French candidate to Pro for a Dutch reading activity', async () => {
+  vi.mocked(runStructured).mockReset();
+  const dutch = {...minimumGoal('4-1.2.7', 'Het kernidee van een tekst bepalen.', 0.7), discipline: 'Nederlands'};
+  const french = {...minimumGoal('4-1.2.8', 'De hoofdgedachte van een Franse tekst bepalen.', 0.8), discipline: 'Frans'};
+  vi.mocked(hasAnyAiProvider).mockReturnValue(true);
+  vi.mocked(collectMinimumGoalCandidates).mockReturnValue([french, dutch]);
+  vi.mocked(runStructured).mockImplementationOnce(async ({prompt}) => {
+    expect(prompt).not.toContain('De hoofdgedachte van een Franse tekst bepalen.');
+    expect(prompt).toContain('Het kernidee van een tekst bepalen.');
+    return {provider: 'google', fallbackErrors: [], data: {picks: [{nr: 1, code: '4-1.2.7', why: 'Dit dekt het kernidee.', lessonPhase: 'Verwerking'}]}};
+  });
+  const response = await postMinimumGoals(new Request(absoluteAppUrl('/api/rag-minimum-goals'), {
+    method: 'POST', headers: {'content-type': 'application/json'},
+    body: JSON.stringify({goal: 'De hoofdgedachte van een tekst bepalen.', educationLevel: 'BASISONDERWIJS', searchMode: 'pro'}),
+  }));
+  const body = await response.json();
+  expect(response.status).toBe(200);
+  expect(body.data.proFallback).toBe(false);
+  expect(body.results.map((item: CurriculumSearchResult) => item.discipline)).toEqual(['Nederlands']);
+});

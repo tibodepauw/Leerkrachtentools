@@ -108,6 +108,15 @@ describe("RAG curriculum Pro-modus", () => {
     vi.mocked(runStructured).mockReset();
   });
 
+  it("respects an explicit model decision that no candidate sufficiently covers the activity", async () => {
+    vi.mocked(runStructured).mockResolvedValueOnce({data:{picks:[]},provider:"google",fallbackErrors:[]});
+    const response=await postSearch("pro");
+    const body=await response.json();
+    expect(body.results).toEqual([]);
+    expect(body.data.proFallback).toBe(false);
+    expect(body.data.corpusNotice).toMatch(/geen.*passend/i);
+  });
+
   it("roept geen AI aan in de Snel-modus", async () => {
     const response = await postSearch("snel");
     expect(response.status).toBe(200);
